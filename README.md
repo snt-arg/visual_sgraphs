@@ -1,13 +1,16 @@
-# ORB-SLAM3-ROS
+# Semantic ORB-SLAM3-ROS
 
-A ROS implementation of [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) V1.0 that focuses on the ROS part.
+A modified version of [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) ROS implementation version introduced [here](https://github.com/thien94/orb_slam3_ros) that supports adding semantic entities to the final map and hierarchical presentation.
 
-This package uses ```catkin build```. Tested on Ubuntu 20.04.
-## 1. Prerequisites
+## 📝 Prerequisites
+
+Install the required libraries that ORB-SLAM 3.0 uses:
+
 ### Eigen3
 ```
 sudo apt install libeigen3-dev
 ```
+
 ### Pangolin
 ```
 cd ~
@@ -18,6 +21,7 @@ cmake ..
 make
 sudo make install
 ```
+
 ### OpenCV
 Check the OpenCV version on your computer (required [at least 3.0](https://github.com/UZ-SLAMLab/ORB_SLAM3)):
 ```
@@ -25,17 +29,29 @@ python3 -c "import cv2; print(cv2.__version__)"
 ```
 On a freshly installed Ubuntu 20.04.4 LTS with desktop image, OpenCV 4.2.0 is already included. If a newer version is required (>= 3.0), follow [installation instruction](https://docs.opencv.org/4.x/d0/d3d/tutorial_general_install.html) and change the corresponding OpenCV version in `CMakeLists.txt`
 
-### (Optional) `hector-trajectory-server`
-Install `hector-trajectory-server` to visualize the real-time trajectory of the camera/imu. Note that this real-time trajectory might not be the same as the keyframes' trajectory.
+### `hector-trajectory-server` (optional)
+
+Using this library you can visualize the real-time trajectory of `camera/IMU`.
+
 ```
 sudo apt install ros-[DISTRO]-hector-trajectory-server
 ```
-## 2. Installation
+
+## ⚙️ Installation
+
+After installing the prerequisites, you can install the repository using commands below:
+
 ```
-cd ~/catkin_ws/src
+cd ~/[workspace]/src
 git clone https://github.com/thien94/orb_slam3_ros.git
 cd ../
 catkin build
+```
+
+You can then add a new alias to the `bashrc` file to run the environment whenever needed:
+
+```
+alias sourceorb3ros='source ~/workspace/ros/orbslam3_ros_ws/devel/setup.bash'
 ```
 
 ## 3. Run Examples
