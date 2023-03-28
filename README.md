@@ -6,12 +6,27 @@ A modified version of [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) ROS i
 
 Install the required libraries that ORB-SLAM 3.0 uses:
 
+### OpenCV
+
+Check the OpenCV version on your computer (required [at least 3.0](https://github.com/UZ-SLAMLab/ORB_SLAM3)):
+
+```
+python3 -c "import cv2; print(cv2.__version__)" 
+```
+On a freshly installed Ubuntu 20.04.4 LTS with desktop image, OpenCV 4.2.0 is already included. If a newer version is required (>= 3.0), follow [installation instruction](https://docs.opencv.org/4.x/d0/d3d/tutorial_general_install.html) and change the corresponding OpenCV version in `CMakeLists.txt`
+
 ### Eigen3
+
+Install `Eigen`, which is a C++ template library for linear algebra (including matrices, vectors, and numerical solvers):
+
 ```
 sudo apt install libeigen3-dev
 ```
 
 ### Pangolin
+
+Install `Pangolin`, which is a set of lightweight and portable utility libraries for prototyping 3D, numeric or video based programs and algorithms:
+
 ```
 cd ~
 git clone https://github.com/stevenlovegrove/Pangolin.git
@@ -21,13 +36,6 @@ cmake ..
 make
 sudo make install
 ```
-
-### OpenCV
-Check the OpenCV version on your computer (required [at least 3.0](https://github.com/UZ-SLAMLab/ORB_SLAM3)):
-```
-python3 -c "import cv2; print(cv2.__version__)" 
-```
-On a freshly installed Ubuntu 20.04.4 LTS with desktop image, OpenCV 4.2.0 is already included. If a newer version is required (>= 3.0), follow [installation instruction](https://docs.opencv.org/4.x/d0/d3d/tutorial_general_install.html) and change the corresponding OpenCV version in `CMakeLists.txt`
 
 ### `hector-trajectory-server` (optional)
 
@@ -48,7 +56,7 @@ cd ../
 catkin build
 ```
 
-You can then add a new alias to the `bashrc` file to run the environment whenever needed:
+Finally, you can add a new alias to the `bashrc` file to run the environment whenever needed:
 
 ```
 alias sourceorb3ros='source ~/workspace/ros/orbslam3_ros_ws/devel/setup.bash'
