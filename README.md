@@ -66,16 +66,12 @@ alias sourceorb3ros='source ~/workspace/ros/orbslam3_ros_ws/devel/setup.bash'
 
 You can find the configuration files for the application in the `config` folder. It contains some `Calibration` processes, camera parameter for various sensors, and some `rviz` files for different datasets. You can define your own `rviz` and `yaml` files according to the characteristics of the sensor you collected data with. A sample of how to set camera intrinsic and extrinsic parameters can be found [here](https://github.com/shanpenghui/ORB_SLAM3_Fixed#73-set-camera-intrinsic--extrinsic-parameters).
 
-## 3. Run Examples
+## 🚀 Run Examples
 
-### Mono mode with [NTU VIRAL](https://ntu-aris.github.io/ntu_viral_dataset/)'s [`eee_01.bag`](https://researchdata.ntu.edu.sg/api/access/datafile/68133):
+| Mode | Dataset | Command | Notes |
+| ------------ | ------------ | ------------ | ------------ |
+| Mono | [NTU VIRAL](https://ntu-aris.github.io/ntu_viral_dataset/)'s [`eee_01.bag`](https://researchdata.ntu.edu.sg/api/access/datafile/68133) | `roslaunch orb_slam3_ros ntuviral_mono.launch` <br /> `rosbag play eee_01.bag -s 50` | - |
 
-```
-# In one terminal:
-roslaunch orb_slam3_ros ntuviral_mono.launch
-# In another terminal:
-rosbag play eee_01.bag -s 50 # The UAV starts moving at t~50s
-```
 ### Stereo mode with [KITTI](https://www.cvlibs.net/datasets/kitti/index.php)'s [`2011_09_26`](https://www.cvlibs.net/datasets/kitti/raw_data.php):
 - First, download KITTI dataset and convert the raw data into bag file following [this instruction](https://stevenliu216.github.io/2018/08/05/working-with-kitti-ros/). You can automate the downloading process using [this script](https://github.com/Deepak3994/Kitti-Dataset).
 - Run the example:
