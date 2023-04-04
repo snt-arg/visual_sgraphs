@@ -62,6 +62,10 @@ Finally, you can add a new alias to the `bashrc` file to run the environment whe
 alias sourceorb3ros='source ~/workspace/ros/orbslam3_ros_ws/devel/setup.bash'
 ```
 
+## 🔨 Configurations
+
+You can find the configuration files for the application in the `config` folder. It contains some `Calibration` processes, camera parameter for various sensors, and some `rviz` files for different datasets. You can define your own `rviz` and `yaml` files according to the characteristics of the sensor you collected data with. A sample of how to set camera intrinsic and extrinsic parameters can be found [here](https://github.com/shanpenghui/ORB_SLAM3_Fixed#73-set-camera-intrinsic--extrinsic-parameters).
+
 ## 3. Run Examples
 
 ### Mono mode with [NTU VIRAL](https://ntu-aris.github.io/ntu_viral_dataset/)'s [`eee_01.bag`](https://researchdata.ntu.edu.sg/api/access/datafile/68133):
@@ -173,9 +177,3 @@ docker run --network host --privileged -v /dev:/dev -it [image_name]
 ```
 
 > **_NOTE:_**  `--network host` is recommended to listen to rostopics outside the container
-
-## To-do:
-- ~~Publish basic topics (camera pose, tracking image and point cloud)~~
-- ~~Publish more topics (odom, full map pointcloud, keyframe, etc.)~~
-- ~~Add other functions as services (map save/load, save estimated trajectory, etc.)~~
-- ~~Add docker support~~
