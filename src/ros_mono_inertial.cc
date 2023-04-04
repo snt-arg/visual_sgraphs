@@ -1,8 +1,8 @@
 /**
-* 
-* Adapted from ORB-SLAM3: Examples/ROS/src/ros_mono_inertial.cc
-*
-*/
+ *
+ * Adapted from ORB-SLAM3: Examples/ROS/src/ros_mono_inertial.cc
+ *
+ */
 
 #include "common.h"
 
@@ -22,9 +22,9 @@ public:
 class ImageGrabber
 {
 public:
-    ImageGrabber(ImuGrabber *pImuGb): mpImuGb(pImuGb){}
+    ImageGrabber(ImuGrabber *pImuGb) : mpImuGb(pImuGb) {}
 
-    void GrabImage(const sensor_msgs::ImageConstPtr& msg);
+    void GrabImage(const sensor_msgs::ImageConstPtr &msg);
     cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
     void SyncWithImu();
 
@@ -33,14 +33,13 @@ public:
     ImuGrabber *mpImuGb;
 };
 
-
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "Mono_Inertial");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
     if (argc > 1)
     {
-        ROS_WARN ("Arguments supplied via command line are ignored.");
+        ROS_WARN("Arguments supplied via command line are ignored.");
     }
 
     std::string node_name = ros::this_node::getName();
@@ -54,7 +53,7 @@ int main(int argc, char **argv)
 
     if (voc_file == "file_not_set" || settings_file == "file_not_set")
     {
-        ROS_ERROR("Please provide voc_file and settings_file in the launch file");       
+        ROS_ERROR("Please provide voc_file and settings_file in the launch file");
         ros::shutdown();
         return 1;
     }
@@ -62,7 +61,7 @@ int main(int argc, char **argv)
     bool enable_pangolin;
     node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
 
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "map");
+    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
     node_handler.param<std::string>(node_name + "/imu_frame_id", imu_frame_id, "imu");
 
@@ -73,12 +72,12 @@ int main(int argc, char **argv)
     ImuGrabber imugb;
     ImageGrabber igb(&imugb);
 
-    ros::Subscriber sub_imu = node_handler.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb); 
+    ros::Subscriber sub_imu = node_handler.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb);
     ros::Subscriber sub_img = node_handler.subscribe("/camera/image_raw", 100, &ImageGrabber::GrabImage, &igb);
 
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
-    
+
     std::thread sync_thread(&ImageGrabber::SyncWithImu, &igb);
 
     ros::spin();
@@ -111,12 +110,12 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
     {
         cv_ptr = cv_bridge::toCvShare(img_msg, sensor_msgs::image_encodings::MONO8);
     }
-    catch (cv_bridge::Exception& e)
+    catch (cv_bridge::Exception &e)
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
-    
-    if(cv_ptr->image.type()==0)
+
+    if (cv_ptr->image.type() == 0)
     {
         return cv_ptr->image.clone();
     }
@@ -129,17 +128,17 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
 
 void ImageGrabber::SyncWithImu()
 {
-    while(1)
+    while (1)
     {
-        if (!img0Buf.empty()&&!mpImuGb->imuBuf.empty())
+        if (!img0Buf.empty() && !mpImuGb->imuBuf.empty())
         {
             cv::Mat im;
             double tIm = 0;
 
             tIm = img0Buf.front()->header.stamp.toSec();
-            if(tIm>mpImuGb->imuBuf.back()->header.stamp.toSec())
+            if (tIm > mpImuGb->imuBuf.back()->header.stamp.toSec())
                 continue;
-            
+
             this->mBufMutex.lock();
             im = GetImage(img0Buf.front());
             ros::Time msg_time = img0Buf.front()->header.stamp;
@@ -153,16 +152,16 @@ void ImageGrabber::SyncWithImu()
             {
                 // Load imu measurements from buffer
                 vImuMeas.clear();
-                while(!mpImuGb->imuBuf.empty() && mpImuGb->imuBuf.front()->header.stamp.toSec() <= tIm)
+                while (!mpImuGb->imuBuf.empty() && mpImuGb->imuBuf.front()->header.stamp.toSec() <= tIm)
                 {
                     double t = mpImuGb->imuBuf.front()->header.stamp.toSec();
 
                     cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
-                    
+
                     cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
 
                     vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc, gyr, t));
-                    
+
                     Wbb << mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z;
 
                     mpImuGb->imuBuf.pop();
@@ -172,7 +171,7 @@ void ImageGrabber::SyncWithImu()
 
             // ORB-SLAM3 runs in TrackMonocular()
             Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tIm, vImuMeas);
-            
+
             publish_topics(msg_time, Wbb);
         }
 

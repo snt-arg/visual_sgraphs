@@ -160,6 +160,7 @@ rosservice call /orb_slam3/save_map [file_name]
 - `voc_file`: path to vocabulary file required by ORB-SLAM3
 - `settings_file`: path to settings file required by ORB-SLAM3
 - `enable_pangolin`: enable/disable ORB-SLAM3's Pangolin viewer and interface. (`true` by default)
+- `enable_publish_static_tf_transform`: enable/disable static transform between two coordinate frames. (`false` by default, needs to be `true` for some datasets like `UniLu`)
 
 ### Services
 - `rosservice call /orb_slam3/save_map [file_name]`: save the map as `[file_name].osa` in `ROS_HOME` folder.

@@ -1,8 +1,8 @@
 /**
-* 
-* Adapted from ORB-SLAM3: Examples/ROS/src/ros_mono.cc
-*
-*/
+ *
+ * Adapted from ORB-SLAM3: Examples/ROS/src/ros_mono.cc
+ *
+ */
 
 #include "common.h"
 
@@ -13,7 +13,7 @@ class ImageGrabber
 public:
     ImageGrabber(){};
 
-    void GrabImage(const sensor_msgs::ImageConstPtr& msg);
+    void GrabImage(const sensor_msgs::ImageConstPtr &msg);
 };
 
 int main(int argc, char **argv)
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
     if (argc > 1)
     {
-        ROS_WARN ("Arguments supplied via command line are ignored.");
+        ROS_WARN("Arguments supplied via command line are ignored.");
     }
 
     std::string node_name = ros::this_node::getName();
@@ -36,13 +36,18 @@ int main(int argc, char **argv)
 
     if (voc_file == "file_not_set" || settings_file == "file_not_set")
     {
-        ROS_ERROR("Please provide voc_file and settings_file in the launch file");       
+        ROS_ERROR("Please provide voc_file and settings_file in the launch file");
         ros::shutdown();
         return 1;
     }
 
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "map");
+    node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
+    node_handler.param<double>(node_name + "/roll", roll, 0.0);
+    node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
+    node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
+    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
+    node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     bool enable_pangolin;
     node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
@@ -70,7 +75,7 @@ int main(int argc, char **argv)
 // Functions
 //////////////////////////////////////////////////
 
-void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
+void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
 {
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptr;
@@ -78,7 +83,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr& msg)
     {
         cv_ptr = cv_bridge::toCvShare(msg);
     }
-    catch (cv_bridge::Exception& e)
+    catch (cv_bridge::Exception &e)
     {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;

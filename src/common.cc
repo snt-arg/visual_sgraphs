@@ -1,17 +1,19 @@
 /**
-* 
-* Common functions and variables across all modes (mono/stereo, with or w/o imu)
-*
-*/
+ *
+ * Common functions and variables across all modes (mono/stereo, with or w/o imu)
+ *
+ */
 
 #include "common.h"
 
 // Variables for ORB-SLAM3
-ORB_SLAM3::System* pSLAM;
+ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
-std::string world_frame_id, cam_frame_id, imu_frame_id;
+bool publish_static_transform;
+double roll = 0, pitch = 0, yaw = 0;
+std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
 image_transport::Publisher tracking_img_pub;
@@ -37,14 +39,19 @@ bool save_traj_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap:
     const string cam_traj_file = req.name + "_cam_traj.txt";
     const string kf_traj_file = req.name + "_kf_traj.txt";
 
-    try {
+    try
+    {
         pSLAM->SaveTrajectoryEuRoC(cam_traj_file);
         pSLAM->SaveKeyFrameTrajectoryEuRoC(kf_traj_file);
         res.success = true;
-    } catch (const std::exception &e) {
+    }
+    catch (const std::exception &e)
+    {
         std::cerr << e.what() << std::endl;
         res.success = false;
-    } catch (...) {
+    }
+    catch (...)
+    {
         std::cerr << "Unknows exeption" << std::endl;
         res.success = false;
     }
@@ -83,12 +90,16 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
 {
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
 
-    if (Twc.translation().array().isNaN()[0] || Twc.rotationMatrix().array().isNaN()(0,0)) // avoid publishing NaN
+    if (Twc.translation().array().isNaN()[0] || Twc.rotationMatrix().array().isNaN()(0, 0)) // avoid publishing NaN
         return;
-    
+
     // Common topics
     publish_camera_pose(Twc, msg_time);
     publish_tf_transform(Twc, world_frame_id, cam_frame_id, msg_time);
+
+    // If the boolean was provided, perform a transform
+    if (publish_static_transform)
+        publish_static_tf_transform(world_frame_id, map_frame_id, msg_time);
 
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
@@ -107,6 +118,8 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
         Eigen::Vector3f Wwb = Rwb * Wbb;
 
         publish_tf_transform(Twb, world_frame_id, imu_frame_id, msg_time);
+        if (publish_static_transform)
+            publish_static_tf_transform(world_frame_id, map_frame_id, msg_time);
         publish_body_odom(Twb, Vwb, Wwb, msg_time);
     }
 }
@@ -165,6 +178,40 @@ void publish_tf_transform(Sophus::SE3f T_SE3f, string frame_id, string child_fra
     tf_broadcaster.sendTransform(tf::StampedTransform(tf_transform, msg_time, frame_id, child_frame_id));
 }
 
+/**
+ * Publishes a static transform between two coordinate frames
+ */
+void publish_static_tf_transform(string frame_id, string child_frame_id, ros::Time msg_time)
+{
+    // Create a static transform broadcaster
+    static tf2_ros::StaticTransformBroadcaster static_broadcaster;
+    // Create a transform stamped message
+    geometry_msgs::TransformStamped static_stamped;
+
+    // Set the timestamp of the transform message
+    static_stamped.header.stamp = msg_time;
+    // Set the parent frame ID for the transform
+    static_stamped.header.frame_id = frame_id;
+    // Set the child frame ID for the transform
+    static_stamped.child_frame_id = child_frame_id;
+
+    // Set the translation of the transform to (0,0,0)
+    static_stamped.transform.translation.x = 0;
+    static_stamped.transform.translation.y = 0;
+    static_stamped.transform.translation.z = 0;
+
+    // Set the rotation of the transform to a fixed value
+    tf2::Quaternion quat;
+    quat.setRPY(roll, pitch, yaw);
+    static_stamped.transform.rotation.x = quat.x();
+    static_stamped.transform.rotation.y = quat.y();
+    static_stamped.transform.rotation.z = quat.z();
+    static_stamped.transform.rotation.w = quat.w();
+
+    // Publish the static transform using the broadcaster
+    static_broadcaster.sendTransform(static_stamped);
+}
+
 void publish_tracking_img(cv::Mat image, ros::Time msg_time)
 {
     std_msgs::Header header;
@@ -178,17 +225,17 @@ void publish_tracking_img(cv::Mat image, ros::Time msg_time)
     tracking_img_pub.publish(rendered_image_msg);
 }
 
-void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint*> tracked_points, ros::Time msg_time)
+void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *> tracked_points, ros::Time msg_time)
 {
     sensor_msgs::PointCloud2 cloud = mappoint_to_pointcloud(tracked_points, msg_time);
-    
+
     tracked_mappoints_pub.publish(cloud);
 }
 
-void publish_all_points(std::vector<ORB_SLAM3::MapPoint*> map_points, ros::Time msg_time)
+void publish_all_points(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
 {
     sensor_msgs::PointCloud2 cloud = mappoint_to_pointcloud(map_points, msg_time);
-    
+
     all_mappoints_pub.publish(cloud);
 }
 
@@ -198,7 +245,7 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
     int numKFs = vKFposes.size();
     if (numKFs == 0)
         return;
-    
+
     visualization_msgs::Marker kf_markers;
     kf_markers.header.frame_id = world_frame_id;
     kf_markers.ns = "kf_markers";
@@ -222,7 +269,7 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
         kf_marker.z = vKFposes[i].translation().z();
         kf_markers.points.push_back(kf_marker);
     }
-    
+
     kf_markers_pub.publish(kf_markers);
 }
 
@@ -230,7 +277,7 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
 // Miscellaneous functions
 //////////////////////////////////////////////////
 
-sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint*> map_points, ros::Time msg_time)
+sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
 {
     const int num_channels = 3; // x y z
 
@@ -251,7 +298,7 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint*
     cloud.row_step = cloud.point_step * cloud.width;
     cloud.fields.resize(num_channels);
 
-    std::string channel_id[] = { "x", "y", "z"};
+    std::string channel_id[] = {"x", "y", "z"};
 
     for (int i = 0; i < num_channels; i++)
     {
@@ -265,7 +312,6 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint*
 
     unsigned char *cloud_data_ptr = &(cloud.data[0]);
 
-
     for (unsigned int i = 0; i < cloud.width; i++)
     {
         if (map_points[i])
@@ -277,10 +323,9 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint*
             float data_array[num_channels] = {
                 point_translation.x(),
                 point_translation.y(),
-                point_translation.z()
-            };
+                point_translation.z()};
 
-            memcpy(cloud_data_ptr+(i*cloud.point_step), data_array, num_channels*sizeof(float));
+            memcpy(cloud_data_ptr + (i * cloud.point_step), data_array, num_channels * sizeof(float));
         }
     }
     return cloud;
@@ -292,7 +337,7 @@ cv::Mat SE3f_to_cvMat(Sophus::SE3f T_SE3f)
 
     Eigen::Matrix4f T_Eig3f = T_SE3f.matrix();
     cv::eigen2cv(T_Eig3f, T_cvmat);
-    
+
     return T_cvmat;
 }
 
@@ -304,14 +349,12 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
     tf::Matrix3x3 R_tf(
         R_mat(0, 0), R_mat(0, 1), R_mat(0, 2),
         R_mat(1, 0), R_mat(1, 1), R_mat(1, 2),
-        R_mat(2, 0), R_mat(2, 1), R_mat(2, 2)
-    );
+        R_mat(2, 0), R_mat(2, 1), R_mat(2, 2));
 
     tf::Vector3 t_tf(
         t_vec(0),
         t_vec(1),
-        t_vec(2)
-    );
+        t_vec(2));
 
     return tf::Transform(R_tf, t_tf);
 }
