@@ -13,10 +13,10 @@ Camera1.fy: 909.399169921875 # Fy
 Camera1.cx: 647.531494140625 # PPX
 Camera1.cy: 367.141082763672 # PPY
 # distortion parameters
-Camera1.k1: 0
-Camera1.k2: 0
-Camera1.p1: 0
-Camera1.p2: 0
+Camera1.k1: 0.0
+Camera1.k2: 0.0
+Camera1.p1: 0.0
+Camera1.p2: 0.0
 
 # Camera resolution
 Camera.width: 1280
