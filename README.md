@@ -72,50 +72,11 @@ You can find the configuration files for the application in the `config` folder.
 | ------------ | ------------ | ------------ | ------------ |
 | Mono | [NTU VIRAL](https://ntu-aris.github.io/ntu_viral_dataset/)'s [`eee_01.bag`](https://researchdata.ntu.edu.sg/api/access/datafile/68133) | `roslaunch orb_slam3_ros ntuviral_mono.launch` <br /> `rosbag play eee_01.bag -s 50` | - |
 | Mono | [UniLu](https://uniluxembourg-my.sharepoint.com/:f:/g/personal/ali_tourani_uni_lu/EpmLAimeFdxAgXk4TAhSxEMBi4b1JOoWrWW_KFWewmyuNQ?e=l2Larj)'s Test Offices | `roslaunch orb_slam3_ros unilu_mono.launch` <br /> `rosbag play Test-Offices.bag --clock` | data collected by RealSense from ARG offices |
+| Mono-Inertial | [EuRoC](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets)'s [`MH_01_easy.bag`](http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_01_easy/MH_01_easy.bag) | `roslaunch orb_slam3_ros euroc_mono_inertial.launch` <br /> `rosbag play MH_01_easy.bag --clock` | - |
+| Stereo-Inertial | [TUM-VI](https://vision.in.tum.de/data/datasets/visual-inertial-dataset)'s [`dataset-corridor1_512_16.bag`](https://vision.in.tum.de/tumvi/calibrated/512_16/dataset-corridor1_512_16.bag) | `roslaunch orb_slam3_ros tum_vi_stereo_inertial.launch` <br /> `rosbag play dataset-corridor1_512_16.bag --clock` | - |
+| RGB-D | [TUM](http://vision.in.tum.de/data/datasets/rgbd-dataset/download)'s [`rgbd_dataset_freiburg1_xyz.bag`](https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.bag) | `roslaunch orb_slam3_ros tum_rgbd.launch` <br /> `rosbag play rgbd_dataset_freiburg1_xyz.bag --clock` | Change `TUMX.yaml` to `TUM1.yaml`,`TUM2.yaml` or `TUM3.yaml` for freiburg1, freiburg2 and freiburg3 sequences respectively. |
+| RGB-D-Inertial | [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/) | `roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch` <br /> `rosbag play Normal.bag --clock` | Decompress the downloaded bag using `rosbag decompress Normal.bag` and change the params in `RealSense_D435i.yaml` if necessary. |
 
-### Stereo mode with [KITTI](https://www.cvlibs.net/datasets/kitti/index.php)'s [`2011_09_26`](https://www.cvlibs.net/datasets/kitti/raw_data.php):
-- First, download KITTI dataset and convert the raw data into bag file following [this instruction](https://stevenliu216.github.io/2018/08/05/working-with-kitti-ros/). You can automate the downloading process using [this script](https://github.com/Deepak3994/Kitti-Dataset).
-- Run the example:
-```
-# In one terminal:
-roslaunch orb_slam3_ros kitti_stereo.launch
-# In another terminal:
-rosbag play kitti_2011_09_26_drive_0002_synced.bag
-```
-
-### Mono-inertial mode with [EuRoC](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets)'s [`MH_01_easy.bag`]( http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_01_easy/MH_01_easy.bag):
-```
-# In one terminal:
-roslaunch orb_slam3_ros euroc_mono_inertial.launch
-# In another terminal:
-rosbag play MH_01_easy.bag
-```
-### Stereo-inertial mode with [TUM-VI](https://vision.in.tum.de/data/datasets/visual-inertial-dataset)'s [`dataset-corridor1_512_16.bag`](https://vision.in.tum.de/tumvi/calibrated/512_16/dataset-corridor1_512_16.bag)
-```
-# In one terminal:
-roslaunch orb_slam3_ros tum_vi_stereo_inertial.launch
-# In another terminal:
-rosbag play dataset-corridor1_512_16.bag
-```
-### RGB-D mode with [TUM](http://vision.in.tum.de/data/datasets/rgbd-dataset/download)'s [`rgbd_dataset_freiburg1_xyz.bag`](https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.bag)
-```
-# In one terminal:
-roslaunch orb_slam3_ros tum_rgbd.launch
-# In another terminal:
-rosbag play rgbd_dataset_freiburg1_xyz.bag
-```
-- **Note**: change `TUMX.yaml` to `TUM1.yaml`,`TUM2.yaml` or `TUM3.yaml` for freiburg1, freiburg2 and freiburg3 sequences respectively.
-
-### RGB-D-Inertial mode with [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.bag)
-- Download the bag files, for example [Normal.bag](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/).
-- Decompress the bag, run `rosbag decompress Normal.bag`.
-- Change the calibration params in `RealSense_D435i.yaml` if necessary.
-```
-# In one terminal:
-roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch.launch
-# In another terminal:
-rosbag play Normal.bag
-```
 
 ### Live stereo-inertial mode with Realsense T265
 - Modify the original `rs_t265.launch` to enable fisheye images and imu data (change `unite_imu_method` to `linear_interpolation`).
