@@ -45,6 +45,31 @@ Using this library you can visualize the real-time trajectory of `camera/IMU`.
 sudo apt install ros-[DISTRO]-hector-trajectory-server
 ```
 
+### `aruco_ros` (contribution)
+
+This package (available [here](https://github.com/pal-robotics/aruco_ros)) enables you to detect ArUco Markers in cameras' field of view. Accordingly, install it using `sudo apt-get install ros-[DISTRO]-aruco-ros
+` or the commands below:
+
+```
+# Catkin workspace folder
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src/
+
+# Cloning the latest code
+git clone git@github.com:pal-robotics/aruco_ros.git
+cd aruco_ros/
+
+# Installing the library
+catkin init
+catkin build
+
+# Sourcing the new configurations
+# nano ~/.bashrc -> Add "alias sourcearuco='source ~/workspace/ros/aruco_ros_ws/devel/setup.bash'"
+sourcearuco
+```
+
+As a quick test, run `roslaunch aruco_ros single.launch`.
+
 ## ⚙️ Installation
 
 After installing the prerequisites, you can install the repository using commands below:
@@ -78,7 +103,7 @@ You can find the configuration files for the application in the `config` folder.
 | RGB-D | [TUM](http://vision.in.tum.de/data/datasets/rgbd-dataset/download)'s [`rgbd_dataset_freiburg1_xyz.bag`](https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.bag) | `roslaunch orb_slam3_ros tum_rgbd.launch` <br /> `rosbag play rgbd_dataset_freiburg1_xyz.bag --clock` | change `TUMX.yaml` to `TUM1.yaml`,`TUM2.yaml` or `TUM3.yaml` for freiburg1, freiburg2 and freiburg3 sequences respectively. |
 | RGB-D-Inertial | [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/) | `roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch` <br /> `rosbag play Normal.bag --clock` | decompress the downloaded bag using `rosbag decompress Normal.bag` and change the params in `RealSense_D435i.yaml` if necessary. |
 | RGB-D-Inertial | [UniLu](#)'s [`Seq01.bag`](#) | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `rosbag play Seq01.bag --clock` | data collected by RealSense D435i using Spot (no `aligned_depth_to_color` available) |
-| RGB-D-Inertial | Live | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true` | follow the hints (*) |
+| RGB-D-Inertial | Live | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true unite_imu_method:=linear_interpolation` | follow the hints (*) - use the modified file for RGB-D-Inertial device available [here](config/Calibration/rs_rgbd.launch) |
 
 (*) For live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
 
@@ -102,7 +127,7 @@ catkin build
 sourcerealsense
 
 # Do a quick test
-roslaunch realsense2_camera demo_pointcloud.launch
+roslaunch realsense2_camera rs_rgbd.launch
 ```
 
 Moreover, for using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error.
