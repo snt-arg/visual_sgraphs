@@ -60,9 +60,14 @@ int main(int argc, char **argv)
     bool enable_pangolin;
     node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
 
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
-    node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
+    node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
+    node_handler.param<double>(node_name + "/roll", roll, 0.0);
+    node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
     node_handler.param<std::string>(node_name + "/imu_frame_id", imu_frame_id, "imu");
+    node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
+    node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
+    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
+    node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     sensor_type = ORB_SLAM3::System::IMU_RGBD;

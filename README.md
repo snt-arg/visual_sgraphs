@@ -77,8 +77,8 @@ You can find the configuration files for the application in the `config` folder.
 | Stereo-Inertial | Live | `roslaunch realsense2_camera rs_t265.launch` <br /> `roslaunch orb_slam3_ros rs_t265_stereo_inertial.launch` | follow the hints (*) |
 | RGB-D | [TUM](http://vision.in.tum.de/data/datasets/rgbd-dataset/download)'s [`rgbd_dataset_freiburg1_xyz.bag`](https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.bag) | `roslaunch orb_slam3_ros tum_rgbd.launch` <br /> `rosbag play rgbd_dataset_freiburg1_xyz.bag --clock` | change `TUMX.yaml` to `TUM1.yaml`,`TUM2.yaml` or `TUM3.yaml` for freiburg1, freiburg2 and freiburg3 sequences respectively. |
 | RGB-D-Inertial | [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/) | `roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch` <br /> `rosbag play Normal.bag --clock` | decompress the downloaded bag using `rosbag decompress Normal.bag` and change the params in `RealSense_D435i.yaml` if necessary. |
-| RGB-D-Inertial | [UniLu](#)'s [`Seq01.bag`](#) | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `rosbag play Seq01.bag --clock` | data collected by RealSense D435i using Spot |
-| RGB-D-Inertial | Live | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch` | follow the hints (*) |
+| RGB-D-Inertial | [UniLu](#)'s [`Seq01.bag`](#) | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `rosbag play Seq01.bag --clock` | data collected by RealSense D435i using Spot (no `aligned_depth_to_color` available) |
+| RGB-D-Inertial | Live | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true` | follow the hints (*) |
 
 (*) For live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
 
@@ -106,6 +106,15 @@ roslaunch realsense2_camera demo_pointcloud.launch
 ```
 
 Moreover, for using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error.
+
+## 💾 Data Collection
+
+To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligned depth, and color, you can follow these steps:
+
+- Make sure you have the necessary drivers and packages installed for the RealSense camera to work with ROS, including `realsense2_camera` and `realsense2_description` packages using the following command:
+- Launch the `realsense2_camera` node using the command `roslaunch realsense2_camera rs_aligned_depth.launch`
+- Navigate to the directory where you want to save the rosbag file.
+- Record the topics of interest. For instance, `rosbag record /camera/aligned_depth_to_color/image_raw /camera/color/image_raw /camera/imu`
 
 ### Save and load map 
 
