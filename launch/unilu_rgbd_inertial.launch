@@ -10,7 +10,7 @@
 
         <!-- Parameters for original ORB-SLAM3 -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
-        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D-Inertial/RealSense_D435i_1280_Spot.yaml"/>
+        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D-Inertial/RealSense_D435i_640_Spot.yaml"/>
 
         <!-- Parameters for ROS -->
         <param name="map_frame_id"    type="string"   value="map" />
