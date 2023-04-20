@@ -76,7 +76,7 @@ After installing the prerequisites, you can install the repository using command
 
 ```
 cd ~/[workspace]/src
-git clone https://github.com/thien94/orb_slam3_ros.git
+git clone git@github.com:snt-arg/semantic_orb_slam3_ros.git
 cd ../
 catkin build
 ```
@@ -100,10 +100,10 @@ You can find the configuration files for the application in the `config` folder.
 | Mono-Inertial | [EuRoC](https://projects.asl.ethz.ch/datasets/doku.php?id=kmavvisualinertialdatasets)'s [`MH_01_easy.bag`](http://robotics.ethz.ch/~asl-datasets/ijrr_euroc_mav_dataset/machine_hall/MH_01_easy/MH_01_easy.bag) | `roslaunch orb_slam3_ros euroc_mono_inertial.launch` <br /> `rosbag play MH_01_easy.bag --clock` | - |
 | Mono-Inertial | [UniLu](#)'s [`Seq01.bag`](#) | `roslaunch orb_slam3_ros unilu_mono.launch` <br /> `rosbag play Seq01.bag --clock` | data collected by RealSense D435i using Spot (no `aligned_depth_to_color` and `IMU` available) |
 | Stereo-Inertial | [TUM-VI](https://vision.in.tum.de/data/datasets/visual-inertial-dataset)'s [`dataset-corridor1_512_16.bag`](https://vision.in.tum.de/tumvi/calibrated/512_16/dataset-corridor1_512_16.bag) | `roslaunch orb_slam3_ros tum_vi_stereo_inertial.launch` <br /> `rosbag play dataset-corridor1_512_16.bag --clock` | - |
-| Stereo-Inertial | Live | `roslaunch realsense2_camera rs_t265.launch` <br /> `roslaunch orb_slam3_ros rs_t265_stereo_inertial.launch` | follow the hints (*) |
+| Stereo-Inertial | Live (*) | `roslaunch realsense2_camera rs_t265.launch` <br /> `roslaunch orb_slam3_ros rs_t265_stereo_inertial.launch` | follow the hints (*) |
 | RGB-D | [TUM](http://vision.in.tum.de/data/datasets/rgbd-dataset/download)'s [`rgbd_dataset_freiburg1_xyz.bag`](https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.bag) | `roslaunch orb_slam3_ros tum_rgbd.launch` <br /> `rosbag play rgbd_dataset_freiburg1_xyz.bag --clock` | change `TUMX.yaml` to `TUM1.yaml`,`TUM2.yaml` or `TUM3.yaml` for freiburg1, freiburg2 and freiburg3 sequences respectively. |
 | RGB-D-Inertial | [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/) | `roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch` <br /> `rosbag play Normal.bag --clock` | decompress the downloaded bag using `rosbag decompress Normal.bag` and change the params in `RealSense_D435i.yaml` if necessary. |
-| RGB-D-Inertial | Live | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true unite_imu_method:=linear_interpolation` | follow the hints (*) - use the modified file for RGB-D-Inertial device available [here](config/Calibration/rs_rgbd.launch) |
+| RGB-D-Inertial | Live (*) | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true unite_imu_method:=linear_interpolation` | follow the hints (*) - use the modified file for RGB-D-Inertial device available [here](config/Calibration/rs_rgbd.launch) |
 
 (*) For live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
 
