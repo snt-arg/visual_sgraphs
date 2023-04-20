@@ -281,10 +281,10 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint 
 {
     const int num_channels = 3; // x y z
 
-    if (map_points.size() == 0)
-    {
-        std::cout << "Map point vector is empty!" << std::endl;
-    }
+    // if (map_points.size() == 0)
+    // {
+    //     std::cout << "Map point vector is empty!" << std::endl;
+    // }
 
     sensor_msgs::PointCloud2 cloud;
 
