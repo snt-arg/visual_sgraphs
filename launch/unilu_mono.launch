@@ -2,7 +2,7 @@
     <param name="use_sim_time" value="false" />
     <!-- Default values -->
     <!-- If true, run roslaunch aruco_ros double.launch and modify the double.launch content -->
-    <arg name="enableMarkerDetection" default="false" />
+    <arg name="enableMarkerDetection" default="true" />
 
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_mono" output="screen">
@@ -11,7 +11,7 @@
        <param if="$(arg enableMarkerDetection)" name="enable_marker_detection" type="bool" value="$(arg enableMarkerDetection)" />
 
         <!-- Check what to remap according to if MarkerDetection is enabled or not -->
-        <remap if="$(arg enableMarkerDetection)" from="/camera/image_raw" to="/aruco_simple/result"/>
+        <remap if="$(arg enableMarkerDetection)" from="/camera/image_raw" to="/aruco_marker_publisher/result"/>
         <remap unless="$(arg enableMarkerDetection)" from="/camera/image_raw" to="/device_0/sensor_1/Color_0/image/data"/>
 
         <!-- Parameters for original ORB-SLAM3 -->

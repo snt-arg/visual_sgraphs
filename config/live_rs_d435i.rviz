@@ -59,12 +59,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        camera:
-          Value: true
-        map:
-          Value: true
-        world:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -72,16 +66,12 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          camera:
-            {}
-          map:
-            {}
+        {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /aruco_simple/result
+      Image Topic: /aruco_marker_publisher/result
       Max Value: 1
       Median window: 5
       Min Value: 0
