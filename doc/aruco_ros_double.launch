@@ -1,20 +1,22 @@
 <!-- 
-  A modified version of `double.launch` for `aruco_ros` library, which works fine with UniLu dataset.
+  A modified version of `double.launch` for `aruco_ros` library.
  -->
 
 <launch>
 
     <arg name="marker1Id"         default="3"/>
     <arg name="marker2Id"         default="2"/>
-    <arg name="markerSize"        default="0.17"/>    <!-- in m -->
+    <arg name="markerSize"        default="0.17"/> <!-- in meters -->
     <arg name="eye"               default="left"/>
-    <arg name="dct_normalization" default="True" />
+    <arg name="dct_normalization" default="False" />
     <arg name="dct_filter_size"   default="2" />
     <arg name="marker1_frame"     default="marker_hand_frame" />
     <arg name="marker2_frame"     default="marker_object_frame" />
-    <!-- Newly added: -->
-    <arg name="imageRaw"   default="device_0/sensor_1/Color_0/image/data" /> <!--  -->
-    <arg name="cameraInfo"   default="/device_0/sensor_1/Color_0/info/camera_info" /> <!-- Changed from /stereo/$(arg eye)/camera_info -->
+    <!-- Newly added lines: -->
+    <!-- imageRaw variants: /camera/color/image_raw for live/recorded RealSense feed and /device_0/sensor_1/Color_0/image/data for UniLu dataset -->
+    <arg name="imageRaw"   default="/device_0/sensor_1/Color_0/image/data" />
+    <!-- cameraInfo variants: /camera/aligned_depth_to_color/camera_info for live/recorded RealSense feed and /device_0/sensor_1/Color_0/info/camera_info for UniLu dataset -->
+    <arg name="cameraInfo"   default="/device_0/sensor_1/Color_0/info/camera_info" />
 
     <node pkg="aruco_ros" type="double" name="aruco_simple">    
         <remap from="/image" to="$(arg imageRaw)" />

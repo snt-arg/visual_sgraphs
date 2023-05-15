@@ -68,7 +68,7 @@ catkin build
 sourcearuco
 ```
 
-As a quick test, run `roslaunch aruco_ros double.launch`. You can use the sample modified file `double.lauch` for this library available [here](doc/aruco_ros_double.launch), which works fine with the *UniLu* dataset. The final results (scene with detected markers) are published and accessible on `/aruco_simple/result` and the pose of the markers will be shown using `rostopic echo /aruco_simple/pose`.
+As a quick test, run `roslaunch aruco_ros double.launch` for detecting multiple markers in the scene. You can use the sample modified `double.launch` file for this library available [here](doc/aruco_ros_double.launch), which works fine with the *UniLu* dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should change). The final results (scene with detected markers) are published and accessible on `/aruco_simple/result` and the pose of the markers will be shown using `rostopic echo /aruco_simple/pose`.
 
 ## ⚙️ Installation
 
@@ -139,7 +139,7 @@ To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligne
 - Make sure you have the necessary drivers and packages installed for the RealSense camera to work with ROS, including `realsense2_camera` and `realsense2_description` packages using the following command:
 - Launch the `realsense2_camera` node using the command `roslaunch realsense2_camera rs_aligned_depth.launch`
 - Navigate to the directory where you want to save the rosbag file.
-- Record the topics of interest. For instance, `rosbag record /camera/aligned_depth_to_color/image_raw /camera/color/image_raw /camera/imu`
+- Record the topics of interest. For instance, `rosbag record /camera/aligned_depth_to_color/image_raw /camera/color/image_raw /camera/imu /camera/aligned_depth_to_color/camera_info`
 
 ### Save and load map 
 
