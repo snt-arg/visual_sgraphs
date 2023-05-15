@@ -68,7 +68,9 @@ catkin build
 sourcearuco
 ```
 
-As a quick test, run `roslaunch aruco_ros double.launch` for detecting multiple markers in the scene. You can use the sample modified `double.launch` file for this library available [here](doc/aruco_ros_double.launch), which works fine with the *UniLu* dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed). The final results (scene with detected markers) are published and accessible on `/aruco_simple/result` and the pose of the markers will be shown using `rostopic echo /aruco_simple/pose`.
+As a quick test, run `roslaunch aruco_ros marker_publisher.launch` for detecting multiple markers in the scene and publishing their poses. You can use the sample modified `marker_publisher.launch` file for this library available [here](doc/aruco_ros_marker_publisher.launch), which works fine with the *UniLu* dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed). The final results (scene with detected markers) are published and accessible on `/aruco_marker_publisher/result` and the pose of the markers will be shown using `rostopic echo /aruco_marker_publisher/markers`.
+
+[Hint:] Set proper `ref_frame`, `markerSize`, `imageRaw`, and `cameraInfo` values in the launch file.
 
 ## ⚙️ Installation
 
