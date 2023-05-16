@@ -5,7 +5,7 @@
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_mono" output="screen">
 
         <!-- Feed the image_raw topic -->
-        <remap from="/camera/image_raw"    to="/aruco_simple/result"/>
+        <remap from="/camera/image_raw"    to="/aruco_marker_publisher/result"/>
 
         <!-- Parameters for original ORB-SLAM3 -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
