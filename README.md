@@ -157,26 +157,40 @@ The map file will have `.osa` extension, and is located in the `ROS_HOME` folder
 rosservice call /orb_slam3/save_map [file_name]
 ```
 
-## 4. ROS topics, params and services
+## 🤖 ROS topics, params and services
+
 ### Subscribed topics
-- `/camera/image_raw` for Mono(-Inertial) node
-- `/camera/left/image_raw` for Stereo(-Inertial) node
-- `/camera/right/image_raw` for Stereo(-Inertial) node
-- `/imu` for Mono/Stereo/RGBD-Inertial node
-- `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw` for RGBD node
+
+| Topic | Description |
+| ------------ | ------------ |
+| `/imu` | for Mono/Stereo/RGBD-Inertial node |
+| `/camera/image_raw` | for Mono(-Inertial) node |
+| `/camera/left/image_raw` and `/camera/right/image_raw` | for Stereo(-Inertial) node |
+| `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw` | for RGBD node |
+
 ### Published topics
-- `/orb_slam3/camera_pose`, left camera pose in world frame, published at camera rate
-- `/orb_slam3/body_odom`, imu-body odometry in world frame, published at camera rate
-- `/orb_slam3/tracking_image`, processed image from the left camera with key points and status text
-- `/orb_slam3/tracked_points`, all key points contained in the sliding window
-- `/orb_slam3/all_points`, all key points in the map
-- `/orb_slam3/kf_markers`, markers for all keyframes' positions
-- `/tf`, with camera and imu-body poses in world frame
+
+| Topic | Description |
+| ------------ | ------------ |
+| `/tf` | with camera and imu-body poses in world frame |
+| `/orb_slam3/camera_pose` | left camera pose in world frame, published at camera rate |
+| `/orb_slam3/body_odom` | imu-body odometry in world frame, published at camera rate |
+| `/orb_slam3/tracking_image` | processed image from the left camera with key points and status text |
+| `/orb_slam3/tracked_points` | all key points contained in the sliding window |
+| `/orb_slam3/all_points` | all key points in the map |
+| `/orb_slam3/kf_markers` | markers for all keyframes' positions |
+
 ### Params
-- `voc_file`: path to vocabulary file required by ORB-SLAM3
-- `settings_file`: path to settings file required by ORB-SLAM3
-- `enable_pangolin`: enable/disable ORB-SLAM3's Pangolin viewer and interface. (`true` by default)
-- `enable_publish_static_tf_transform`: enable/disable static transform between two coordinate frames. (`false` by default, needs to be `true` for some datasets like `UniLu`)
+
+| Param | Description |
+| ------------ | ------------ |
+| `voc_file` | path to vocabulary file required by ORB-SLAM3 |
+| `settings_file` | path to settings file required by ORB-SLAM3 |
+| `enable_pangolin` | enable/disable ORB-SLAM3's Pangolin viewer and interface. (`true` by default) |
+| `publish_static_transform` | enable/disable static transform between two coordinate frames. (`false` by default, needs to be `true` for some datasets like `UniLu`) |
+| `enable_marker_detector` | enable/disable ArUco marker detection |
+| `roll`, `yaw`, and `pitch` | poses and dimensions of movement |
+| `map_frame_id`, `world_frame_id`, and `cam_frame_id` | different frame identifiers |
 
 ### Services
 - `rosservice call /orb_slam3/save_map [file_name]`: save the map as `[file_name].osa` in `ROS_HOME` folder.
