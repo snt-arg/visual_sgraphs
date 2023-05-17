@@ -11,12 +11,12 @@
        <param if="$(arg enableMarkerDetection)" name="enable_marker_detection" type="bool" value="$(arg enableMarkerDetection)" />
 
         <!-- Check what to remap according to if MarkerDetection is enabled or not -->
+        <remap unless="$(arg enableMarkerDetection)" from="/camera/image_raw" to="/camera/color/image_raw"/>
         <remap if="$(arg enableMarkerDetection)" from="/camera/image_raw" to="/aruco_marker_publisher/result"/>
-        <remap unless="$(arg enableMarkerDetection)" from="/camera/image_raw" to="/device_0/sensor_1/Color_0/image/data"/>
 
         <!-- Parameters for original ORB-SLAM3 -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
-        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/Monocular/RealSense_D435_1280.yaml"/>
+        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D-Inertial/RealSense_D435i_640_Spot.yaml"/>
 
         <!-- Parameters for ROS -->
         <param name="map_frame_id"    type="string"   value="map" />

@@ -54,6 +54,8 @@ Visualization Manager:
       Value: true
     - Class: rviz/TF
       Enabled: true
+      Filter (blacklist): ""
+      Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: false
@@ -79,7 +81,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: true
-      Image Topic: /device_0/sensor_1/Color_0/image/data
+      Image Topic: /aruco_marker_publisher/result
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -233,9 +235,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3702036142349243
+      Pitch: 0.6852034330368042
       Target Frame: <Fixed Frame>
-      Yaw: 2.8218281269073486
+      Yaw: 2.8918251991271973
     Saved: ~
 Window Geometry:
   Displays:
