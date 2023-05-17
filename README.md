@@ -142,7 +142,7 @@ To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligne
 - Make sure you have the necessary drivers and packages installed for the RealSense camera to work with ROS, including `realsense2_camera` and `realsense2_description` packages using the following command:
 - Launch the `realsense2_camera` node using the command `roslaunch realsense2_camera rs_aligned_depth.launch`
 - Navigate to the directory where you want to save the rosbag file.
-- Record the topics of interest. For instance, `rosbag record /camera/aligned_depth_to_color/image_raw /camera/color/image_raw /camera/imu /camera/aligned_depth_to_color/camera_info`
+- Record the topics of interest. For instance, `rosbag record /camera/aligned_depth_to_color/image_raw /camera/color/image_raw /camera/imu /camera/aligned_depth_to_color/camera_info /camera/color/camera_info`
 
 ### Save and load map 
 
