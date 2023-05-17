@@ -144,19 +144,6 @@ To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligne
 - Navigate to the directory where you want to save the rosbag file.
 - Record the topics of interest. For instance, `rosbag record /camera/aligned_depth_to_color/image_raw /camera/color/image_raw /camera/imu /camera/aligned_depth_to_color/camera_info /camera/color/camera_info`
 
-### Save and load map 
-
-The map file will have `.osa` extension, and is located in the `ROS_HOME` folder (`~/.ros/` by default).
-#### Load map:
-- Set the name of the map file to be loaded with `System.LoadAtlasFromFile` param in the settings file (`.yaml`).
-- If the map file is not available, `System.LoadAtlasFromFile` param should be commented out otherwise there will be error.
-#### Save map:
-- **Option 1**: If `System.SaveAtlasToFile` is set in the settings file, the map file will be automatically saved when you kill the ros node.
-- **Option 2**: You can also call the following ros service at the end of the session
-```
-rosservice call /orb_slam3/save_map [file_name]
-```
-
 ## 🤖 ROS topics, params and services
 
 ### Subscribed topics
@@ -191,6 +178,19 @@ rosservice call /orb_slam3/save_map [file_name]
 | `enable_marker_detector` | enable/disable ArUco marker detection |
 | `roll`, `yaw`, and `pitch` | poses and dimensions of movement |
 | `map_frame_id`, `world_frame_id`, and `cam_frame_id` | different frame identifiers |
+
+### Save and load map 
+
+The map file will have `.osa` extension, and is located in the `ROS_HOME` folder (`~/.ros/` by default).
+#### Load map:
+- Set the name of the map file to be loaded with `System.LoadAtlasFromFile` param in the settings file (`.yaml`).
+- If the map file is not available, `System.LoadAtlasFromFile` param should be commented out otherwise there will be error.
+#### Save map:
+- **Option 1**: If `System.SaveAtlasToFile` is set in the settings file, the map file will be automatically saved when you kill the ros node.
+- **Option 2**: You can also call the following ros service at the end of the session
+```
+rosservice call /orb_slam3/save_map [file_name]
+```
 
 ### Services
 - `rosservice call /orb_slam3/save_map [file_name]`: save the map as `[file_name].osa` in `ROS_HOME` folder.
