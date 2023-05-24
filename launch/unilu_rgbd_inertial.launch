@@ -8,7 +8,7 @@
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_rgbd_inertial" output="screen">
 
         <!-- Parameters for ArUco marker detection -->
-        <param if="$(arg enable_marker_detector)" name="enable_marker_detection" type="bool" value="$(arg enable_marker_detector)" />
+        <param name="enable_marker_detection" type="bool" value="$(arg enable_marker_detector)" />
 
         <!-- Check what to remap according to if MarkerDetection is enabled or not -->
         <remap unless="$(arg enable_marker_detector)" from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>

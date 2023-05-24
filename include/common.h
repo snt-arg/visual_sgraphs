@@ -27,6 +27,8 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
+#include <aruco_msgs/MarkerArray.h>
+
 // This file is created automatically, see here http://wiki.ros.org/ROS/Tutorials/CreatingMsgAndSrv#Creating_a_srv
 #include <orb_slam3_ros/SaveMap.h>
 
@@ -40,8 +42,9 @@
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
-extern double roll, pitch, yaw;
-extern bool publish_static_transform;
+extern double roll, pitch, yaw;       // Defining axes for transformation
+extern bool enable_marker_detection;  // If true, it should detect fiducial markers
+extern bool publish_static_transform; // If true, it should use transformed calculations
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
@@ -49,17 +52,17 @@ extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
 extern image_transport::Publisher tracking_img_pub;
 
 void setup_services(ros::NodeHandle &, std::string);
-void setup_publishers(ros::NodeHandle &, image_transport::ImageTransport &, std::string);
 void publish_topics(ros::Time, Eigen::Vector3f = Eigen::Vector3f::Zero());
+void setup_publishers(ros::NodeHandle &, image_transport::ImageTransport &, std::string);
 
-void publish_camera_pose(Sophus::SE3f, ros::Time);
 void publish_tracking_img(cv::Mat, ros::Time);
-void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
-void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
-void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
+void publish_camera_pose(Sophus::SE3f, ros::Time);
 void publish_static_tf_transform(string, string, ros::Time);
-void publish_body_odom(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 void publish_kf_markers(std::vector<Sophus::SE3f>, ros::Time);
+void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
+void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
+void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
+void publish_body_odom(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 
 bool save_map_srv(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool save_traj_srv(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);

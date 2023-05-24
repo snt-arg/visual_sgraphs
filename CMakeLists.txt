@@ -54,6 +54,8 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf2
   message_generation
+  aruco_ros
+  aruco_msgs
 )
 
 find_package(Eigen3 3.1.0 REQUIRED)

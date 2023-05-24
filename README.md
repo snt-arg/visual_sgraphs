@@ -45,49 +45,45 @@ Using this library you can visualize the real-time trajectory of `camera/IMU`.
 sudo apt install ros-[DISTRO]-hector-trajectory-server
 ```
 
-### `aruco_ros` (contribution)
-
-This package (available [here](https://github.com/pal-robotics/aruco_ros)) enables you to detect ArUco Markers in cameras' field of view. Accordingly, install it using `sudo apt-get install ros-[DISTRO]-aruco-ros
-` or the commands below:
-
-```
-# Catkin workspace folder
-mkdir -p ~/catkin_ws/src
-cd ~/catkin_ws/src/
-
-# Cloning the latest code
-git clone git@github.com:pal-robotics/aruco_ros.git
-cd aruco_ros/
-
-# Installing the library
-catkin init
-catkin build
-
-# Sourcing the new configurations
-# nano ~/.bashrc -> Add "alias sourcearuco='source ~/workspace/ros/aruco_ros_ws/devel/setup.bash'"
-sourcearuco
-```
-
-As a quick test, run `roslaunch aruco_ros marker_publisher.launch` for detecting multiple markers in the scene and publishing their poses. You can use the sample modified `marker_publisher.launch` file for this library available [here](doc/aruco_ros_marker_publisher.launch), which works fine with the *UniLu* dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed). The final results (scene with detected markers) are published and accessible on `/aruco_marker_publisher/result` and the pose of the markers will be shown using `rostopic echo /aruco_marker_publisher/markers`.
-
-[Hint:] Set proper `ref_frame`, `markerSize`, `imageRaw`, and `cameraInfo` values in the launch file.
-
 ## ⚙️ Installation
 
 After installing the prerequisites, you can install the repository using commands below:
 
+### I. Cloning the Repository
+
+You should first create a workspace and clone the Semantic ORB-SLAM 3.0 repository in it:
+
 ```
 cd ~/[workspace]/src
 git clone git@github.com:snt-arg/semantic_orb_slam3_ros.git
-cd ../
-catkin build
 ```
 
-Finally, you can add a new alias to the `bashrc` file to run the environment whenever needed:
+### II. Cloning the `aruco_ros` Repository
+
+This package (available [here](https://github.com/pal-robotics/aruco_ros)) enables you to detect ArUco Markers in cameras' field of view. Accordingly, install it using the commands below in **the same folder (i.e., [workspace]/src)**:
+
+```
+cd ~/catkin_ws/src/
+
+# Cloning the latest code
+git clone git@github.com:pal-robotics/aruco_ros.git
+```
+
+It is important to put the file in the same folder, as the Semantic ORB-SLAM 3.0 library depends on it. Instead of the original launch file, you can use the sample modified `marker_publisher.launch` file for this library available [here](doc/aruco_ros_marker_publisher.launch), which works fine with the *UniLu* dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed based on the use case). Do not forget to set proper `ref_frame`, `markerSize`, `imageRaw`, and `cameraInfo` values in the launch file.
+
+### III. Installing the Libraries
+
+Install both the libraries using `catkin build`. Finally, you can add a new alias to the `bashrc` file to run the environment whenever needed:
 
 ```
 alias sourceorb3ros='source ~/workspace/ros/orbslam3_ros_ws/devel/setup.bash'
 ```
+
+As a quick test, you can do as follows:
+- Run a `roscore`
+- Run the `aruco_ros` using `sourceorb3ros` and then `roslaunch aruco_ros marker_publisher.launch` for detecting multiple markers in the scene and publishing their poses.
+  - The final results (scene with detected markers) produced by `aruco_ros` are published and accessible on `/aruco_marker_publisher/result` and the pose of the markers will be shown using `rostopic echo /aruco_marker_publisher/markers`.
+- Run the Semantic ORB-SLAM using `sourceorb3ros` and then `roslaunch orb_slam3_ros unilu_mono.launch`
 
 ## 🔨 Configurations
 
