@@ -11,7 +11,6 @@ ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
-bool enable_marker_detection;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;

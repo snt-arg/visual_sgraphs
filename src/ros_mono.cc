@@ -14,12 +14,14 @@ public:
     ImageGrabber(){};
 
     void GrabImage(const sensor_msgs::ImageConstPtr &msg);
+    void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
 };
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "Mono");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+
     if (argc > 1)
     {
         ROS_WARN("Arguments supplied via command line are ignored.");
@@ -41,6 +43,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // Get parameters from launch file
     node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
     node_handler.param<double>(node_name + "/roll", roll, 0.0);
     node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
@@ -58,6 +61,8 @@ int main(int argc, char **argv)
     ImageGrabber igb;
 
     ros::Subscriber sub_img = node_handler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage, &igb);
+    // Subscribe to the markers detected by `aruco_ros` library
+    ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1, &ImageGrabber::GrabArUcoMarker, &igb);
 
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
@@ -91,8 +96,36 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
 
     // ORB-SLAM3 runs in TrackMonocular()
     Sophus::SE3f Tcw = pSLAM->TrackMonocular(cv_ptr->image, cv_ptr->header.stamp.toSec());
-
     ros::Time msg_time = msg->header.stamp;
-
     publish_topics(msg_time);
+}
+
+void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
+{
+    ROS_WARN("GrabArUcoMarker");
+
+    // Process the received marker array
+    // for (const auto &marker : marker_array->markers)
+    // {
+    //     // Access pose information of each ArUco marker
+    //     geometry_msgs::Pose pose = marker.pose;
+
+    //     //     // Process the pose data as needed
+    //     //     // ...
+
+    //     //     // Print the pose information for demonstration
+    //     ROS_INFO("ArUco Marker ID: %d", marker.id);
+    //     //     ROS_INFO("Position (x, y, z): %.2f, %.2f, %.2f", pose.position.x, pose.position.y, pose.position.z);
+    //     //     ROS_INFO("Orientation (qx, qy, qz, qw): %.2f, %.2f, %.2f, %.2f", pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+    // }
+
+    // // Additional processing or actions based on the received marker array
+    // // ...
+
+    // // Call other functions or publish topics based on the received marker data
+    // ros::Time current_time = ros::Time::now();
+    // publish_topics(current_time);
+
+    // ros::Time msg_time = marker_array->markers->header.stamp;
+    // ROS_ERROR("Time: %s", msg_time);
 }

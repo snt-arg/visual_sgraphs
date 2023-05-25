@@ -27,8 +27,6 @@
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
 
-#include <aruco_msgs/MarkerArray.h>
-
 // This file is created automatically, see here http://wiki.ros.org/ROS/Tutorials/CreatingMsgAndSrv#Creating_a_srv
 #include <orb_slam3_ros/SaveMap.h>
 
@@ -39,11 +37,13 @@
 #include "System.h"
 #include "ImuTypes.h"
 
+// ArUco-ROS library
+#include <aruco_msgs/MarkerArray.h>
+
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
 extern double roll, pitch, yaw;       // Defining axes for transformation
-extern bool enable_marker_detection;  // If true, it should detect fiducial markers
 extern bool publish_static_transform; // If true, it should use transformed calculations
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 
