@@ -5,6 +5,7 @@
  */
 
 #include "common.h"
+// #inlcude "Marker.h"
 
 using namespace std;
 
@@ -14,6 +15,8 @@ public:
     ImageGrabber(){};
 
     void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD);
+    // void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
+    // std::vector<Marker> aruco_marker_buff;
 };
 
 int main(int argc, char **argv)
@@ -62,6 +65,9 @@ int main(int argc, char **argv)
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
 
+    // add aruco subsriber
+    // ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1, &ImageGrabber::GrabArUcoMarker, &igb);
+
     ros::spin();
 
     // Stop all threads
@@ -100,10 +106,62 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
         return;
     }
 
+    // loop through the aruco marker buff
+    // double min_time_diff = 100;
+    // orbslam::Marker matched_marker;
+    // for(const auto& marker:  aruco_marker_buff) {
+    // double time_diff = marker.time - cv_ptrRGB->header.stamp.toSec();
+    // if(time_diff < min_time_diff) {
+    // min_time_diff = time_diff;
+    // matched_marker = marker;
+    //}
+    //}
+
+    // if (min_time_diff < 0.05)  {
+    // Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec(), matched_marker);
+    // aruco_marker_buff.clear()
+    //}
+    // else {
     // ORB-SLAM3 runs in TrackRGBD()
     Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec());
+    //}
 
     ros::Time msg_time = cv_ptrRGB->header.stamp;
 
     publish_topics(msg_time);
 }
+
+// gettting all the aruco pose data
+//  void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
+//  {
+//      // Process the received marker array
+//      for (const auto &marker : marker_array.markers)
+//      {
+//          // Access pose information of each ArUco marker
+//          int marker_id = marker.id;
+//          geometry_msgs::Pose marker_pose = marker.pose.pose;
+//          geometry_msgs::Point marker_position = marker.pose.pose.position;            // (x,y,z)
+//          geometry_msgs::Quaternion marker_orientation = marker.pose.pose.orientation; // (x,y,z,w)
+
+//         ROS_INFO("ArUco Marker ID: %d", marker_id);
+//         ROS_INFO("Position (x, y, z): %f", marker_position.x);
+//         ROS_INFO("Orientation (x, y, z): %f", marker_orientation.x);
+//         ROS_INFO("Orientation (qx, qy, qz, qw): %f, %f, %f, %f", marker_pose.orientation.x, marker_pose.orientation.y, marker_pose.orientation.z, marker_pose.orientation.w);
+//         orbslam3::Marker current_marker;
+//         current_marker.time = header.stamp.toSec();
+//         current_marker.id = marker.id;
+//         Eigen::Quaternionf quaternion(marker.pose.pose.orientation.x, marker.pose.pose.orientation.y, marker.pose.pose.orientation.z, marker.pose.pose.orientation.w);
+//         Eigen::Vector3f translation(marker.pose.pose.position.x, marker.pose.pose.position.y, marker.pose.pose.position.z);
+//         Sophus::SE3f marker_pose(quaternion, translation)
+//         aruco_marker_buff.push_back(marker_pose);
+//}
+
+//     // Additional processing or actions based on the received marker array
+
+//     // Call other functions or publish topics based on the received marker data
+//     // ros::Time current_time = ros::Time::now();
+//     // publish_topics(current_time);
+
+//     // ros::Time msg_time = marker_array->markers->header.stamp;
+//     // ROS_ERROR("Time: %s", msg_time);
+// }

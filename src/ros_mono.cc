@@ -102,27 +102,24 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
 
 void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
 {
-    ROS_WARN("GrabArUcoMarker");
-
     // Process the received marker array
-    // for (const auto &marker : marker_array->markers)
-    // {
-    //     // Access pose information of each ArUco marker
-    //     geometry_msgs::Pose pose = marker.pose;
+    for (const auto &marker : marker_array.markers)
+    {
+        // Access pose information of each ArUco marker
+        int marker_id = marker.id;
+        geometry_msgs::Pose marker_pose = marker.pose.pose;
+        geometry_msgs::Point marker_position = marker.pose.pose.position;            // (x,y,z)
+        geometry_msgs::Quaternion marker_orientation = marker.pose.pose.orientation; // (x,y,z,w)
 
-    //     //     // Process the pose data as needed
-    //     //     // ...
+        ROS_INFO("ArUco Marker ID: %d", marker_id);
+        ROS_INFO("Position (x, y, z): %f", marker_position.x);
+        ROS_INFO("Orientation (x, y, z): %f", marker_orientation.x);
+        ROS_INFO("Orientation (qx, qy, qz, qw): %f, %f, %f, %f", marker_pose.orientation.x, marker_pose.orientation.y, marker_pose.orientation.z, marker_pose.orientation.w);
+    }
 
-    //     //     // Print the pose information for demonstration
-    //     ROS_INFO("ArUco Marker ID: %d", marker.id);
-    //     //     ROS_INFO("Position (x, y, z): %.2f, %.2f, %.2f", pose.position.x, pose.position.y, pose.position.z);
-    //     //     ROS_INFO("Orientation (qx, qy, qz, qw): %.2f, %.2f, %.2f, %.2f", pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
-    // }
+    // Additional processing or actions based on the received marker array
 
-    // // Additional processing or actions based on the received marker array
-    // // ...
-
-    // // Call other functions or publish topics based on the received marker data
+    // Call other functions or publish topics based on the received marker data
     // ros::Time current_time = ros::Time::now();
     // publish_topics(current_time);
 
