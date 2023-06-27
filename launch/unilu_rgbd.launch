@@ -1,0 +1,50 @@
+<launch>
+    <param name="use_sim_time" value="false" />
+    <!-- Default values -->
+    <!-- If true, run roslaunch aruco_ros marker_publisher.launch and modify the marker_publisher.launch content -->
+    <arg name="enable_marker_detector" default="true" />
+
+    <!-- Main node -->
+    <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_rgbd" output="screen">
+
+        <!-- Parameters for ArUco marker detection -->
+        <param name="enable_marker_detection" type="bool" value="$(arg enable_marker_detector)" />
+
+        <!-- Remap to prepare /camera/rgb/image_raw -->
+        <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>
+        <!-- [Old] Below condition checks what to remap according to enable_marker_detector status -->
+        <!-- <remap unless="$(arg enable_marker_detector)" from="/camera/rgb/image_raw" to="/camera/color/image_raw"/> -->
+        <!-- <remap if="$(arg enable_marker_detector)" from="/camera/rgb/image_raw" to="/aruco_marker_publisher/result"/> -->
+
+        <!-- Change the topics according to the dataset -->
+        <remap from="/camera/depth_registered/image_raw"    to="/camera/aligned_depth_to_color/image_raw"/>
+
+        <!-- Parameters for original ORB-SLAM3 -->
+        <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
+        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D-Inertial/RealSense_D435i_640_Spot.yaml"/>
+
+        <!-- Parameters for ROS -->
+        <param name="roll" type="double" value="0" />
+        <param name="yaw" type="double" value="1.5697" />
+        <param name="pitch" type="double" value="-1.5697" />
+        <param name="map_frame_id"    type="string"   value="map" />
+        <param name="enable_pangolin"   type="bool"     value="false" />
+        <param name="world_frame_id"    type="string"   value="world" />        
+        <param name="cam_frame_id"      type="string"   value="camera" />
+        <param name="publish_static_transform" type="bool" value="true" />
+
+
+    </node>
+    
+    <!-- Visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/unilu_rgbd.rviz" output="screen" />
+    
+    <!-- Trajectory path -->
+    <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_server_orb_slam3" output="screen" ns="orb_slam3_ros" >
+        <param name="/target_frame_name"        value="/map" />
+        <param name="/source_frame_name"        value="/camera" />
+        <param name="/trajectory_update_rate"   value="20.0" />
+        <param name="/trajectory_publish_rate"  value="20.0" />
+    </node>
+
+</launch>

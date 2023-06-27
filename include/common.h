@@ -40,6 +40,9 @@
 // ArUco-ROS library
 #include <aruco_msgs/MarkerArray.h>
 
+// Semantics
+#include "Semantic/Marker.h"
+
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
