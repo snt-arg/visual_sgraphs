@@ -5,7 +5,6 @@
  */
 
 #include "common.h"
-// #inlcude "Marker.h"
 
 using namespace std;
 
@@ -14,9 +13,8 @@ class ImageGrabber
 public:
     ImageGrabber(){};
 
+    void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
     void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD);
-    // void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
-    // std::vector<Marker> aruco_marker_buff;
 };
 
 int main(int argc, char **argv)
@@ -44,11 +42,19 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
+    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
 
     bool enable_pangolin;
     node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
+
+    node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
+    node_handler.param<double>(node_name + "/roll", roll, 0.0);
+    node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
+    node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
+    node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
+    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
+    node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     sensor_type = ORB_SLAM3::System::RGBD;
@@ -58,15 +64,16 @@ int main(int argc, char **argv)
 
     message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
     message_filters::Subscriber<sensor_msgs::Image> sub_depth_img(node_handler, "/camera/depth_registered/image_raw", 100);
+
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2));
 
+    // Subscribe to the markers detected by `aruco_ros` library
+    ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1, &ImageGrabber::GrabArUcoMarker, &igb);
+
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
-
-    // add aruco subsriber
-    // ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1, &ImageGrabber::GrabArUcoMarker, &igb);
 
     ros::spin();
 
@@ -131,37 +138,27 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     publish_topics(msg_time);
 }
 
-// gettting all the aruco pose data
-//  void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
-//  {
-//      // Process the received marker array
-//      for (const auto &marker : marker_array.markers)
-//      {
-//          // Access pose information of each ArUco marker
-//          int marker_id = marker.id;
-//          geometry_msgs::Pose marker_pose = marker.pose.pose;
-//          geometry_msgs::Point marker_position = marker.pose.pose.position;            // (x,y,z)
-//          geometry_msgs::Quaternion marker_orientation = marker.pose.pose.orientation; // (x,y,z,w)
+void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
+{
+    // Process the received marker array
+    for (const auto &marker : marker_array.markers)
+    {
+        // Access pose information of each ArUco marker
+        int marker_id = marker.id;
+        geometry_msgs::Pose marker_pose = marker.pose.pose;
+        geometry_msgs::Point marker_position = marker.pose.pose.position;            // (x,y,z)
+        geometry_msgs::Quaternion marker_orientation = marker.pose.pose.orientation; // (x,y,z,w)
 
-//         ROS_INFO("ArUco Marker ID: %d", marker_id);
-//         ROS_INFO("Position (x, y, z): %f", marker_position.x);
-//         ROS_INFO("Orientation (x, y, z): %f", marker_orientation.x);
-//         ROS_INFO("Orientation (qx, qy, qz, qw): %f, %f, %f, %f", marker_pose.orientation.x, marker_pose.orientation.y, marker_pose.orientation.z, marker_pose.orientation.w);
-//         orbslam3::Marker current_marker;
-//         current_marker.time = header.stamp.toSec();
-//         current_marker.id = marker.id;
-//         Eigen::Quaternionf quaternion(marker.pose.pose.orientation.x, marker.pose.pose.orientation.y, marker.pose.pose.orientation.z, marker.pose.pose.orientation.w);
-//         Eigen::Vector3f translation(marker.pose.pose.position.x, marker.pose.pose.position.y, marker.pose.pose.position.z);
-//         Sophus::SE3f marker_pose(quaternion, translation)
-//         aruco_marker_buff.push_back(marker_pose);
-//}
+        ROS_INFO("ArUco Marker ID: %d", marker_id);
+        ROS_INFO("Position (x, y, z): %f", marker_position.x);
+        ROS_INFO("Orientation (qx, qy, qz, qw): %f, %f, %f, %f", marker_pose.orientation.x, marker_pose.orientation.y, marker_pose.orientation.z, marker_pose.orientation.w);
 
-//     // Additional processing or actions based on the received marker array
-
-//     // Call other functions or publish topics based on the received marker data
-//     // ros::Time current_time = ros::Time::now();
-//     // publish_topics(current_time);
-
-//     // ros::Time msg_time = marker_array->markers->header.stamp;
-//     // ROS_ERROR("Time: %s", msg_time);
-// }
+        // orbslam3::Marker current_marker;
+        // current_marker.time = header.stamp.toSec();
+        // current_marker.id = marker.id;
+        // Eigen::Quaternionf quaternion(marker.pose.pose.orientation.x, marker.pose.pose.orientation.y, marker.pose.pose.orientation.z, marker.pose.pose.orientation.w);
+        // Eigen::Vector3f translation(marker.pose.pose.position.x, marker.pose.pose.position.y, marker.pose.pose.position.z);
+        // Sophus::SE3f marker_pose(quaternion, translation)
+        //     aruco_marker_buff.push_back(marker_pose);
+    }
+}

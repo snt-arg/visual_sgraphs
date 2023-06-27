@@ -50,6 +50,8 @@ extern double roll, pitch, yaw;       // Defining axes for transformation
 extern bool publish_static_transform; // If true, it should use transformed calculations
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 
+extern std::vector<ORB_SLAM3::Marker> aruco_marker_buff; // List of visited ArUco Markers
+
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
 extern image_transport::Publisher tracking_img_pub;

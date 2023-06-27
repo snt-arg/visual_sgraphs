@@ -14,6 +14,7 @@ ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
+std::vector<ORB_SLAM3::Marker> aruco_marker_buff;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
