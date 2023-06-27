@@ -37,6 +37,7 @@
 #include "Viewer.h"
 #include "ImuTypes.h"
 #include "Settings.h"
+#include "Semantic/Marker.h"
 
 namespace ORB_SLAM3
 {
@@ -113,12 +114,12 @@ namespace ORB_SLAM3
         // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Input depthmap: Float (CV_32F).
         // Returns the camera pose (empty if tracking fails).
-        Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "");
+        Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "", const Marker &marker = {});
 
         // Proccess the given monocular frame and optionally imu data
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Returns the camera pose (empty if tracking fails).
-        Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "");
+        Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "", const Marker &marker = {});
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();
