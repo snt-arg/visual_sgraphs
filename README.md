@@ -150,6 +150,7 @@ To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligne
 | `/camera/image_raw` | for Mono(-Inertial) node |
 | `/camera/left/image_raw` and `/camera/right/image_raw` | for Stereo(-Inertial) node |
 | `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw` | for RGBD node |
+| `/aruco_marker_publisher/markers` | for ArUco marker library node |
 
 ### Published topics
 

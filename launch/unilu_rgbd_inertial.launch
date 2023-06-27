@@ -10,9 +10,11 @@
         <!-- Parameters for ArUco marker detection -->
         <param name="enable_marker_detection" type="bool" value="$(arg enable_marker_detector)" />
 
-        <!-- Check what to remap according to if MarkerDetection is enabled or not -->
-        <remap unless="$(arg enable_marker_detector)" from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>
-        <remap if="$(arg enable_marker_detector)" from="/camera/rgb/image_raw" to="/aruco_marker_publisher/result"/>
+        <!-- Remap to prepare /camera/rgb/image_raw -->
+        <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>
+        <!-- [Old] Below condition checks what to remap according to enable_marker_detector status -->
+        <!-- <remap unless="$(arg enable_marker_detector)" from="/camera/rgb/image_raw" to="/camera/color/image_raw"/> -->
+        <!-- <remap if="$(arg enable_marker_detector)" from="/camera/rgb/image_raw" to="/aruco_marker_publisher/result"/> -->
 
         <!-- Change the topics according to the dataset -->
         <remap from="/imu"                                  to="/camera/imu"/>
