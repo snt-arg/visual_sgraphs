@@ -359,3 +359,30 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
 
     return tf::Transform(R_tf, t_tf);
 }
+
+void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
+{
+    // Process the received marker array
+    for (const auto &marker : marker_array.markers)
+    {
+        // Access pose information of each ArUco marker
+        int marker_id = marker.id;
+        double visit_time = marker.header.stamp.toSec();
+        geometry_msgs::Pose marker_pose = marker.pose.pose;
+        geometry_msgs::Point marker_position = marker_pose.position;            // (x,y,z)
+        geometry_msgs::Quaternion marker_orientation = marker_pose.orientation; // (x,y,z,w)
+
+        Sophus::SE3f normalized_pose;
+        normalized_pose.translation() = Eigen::Vector3f(marker_position.x, marker_position.y, marker_position.z);
+        normalized_pose.setRotationMatrix(Eigen::Quaternionf(marker_orientation.w, marker_orientation.x, marker_orientation.y, marker_orientation.z).normalized().toRotationMatrix());
+
+        // Create a marker object from currently visited marker
+        ORB_SLAM3::Marker current_marker;
+        current_marker.id = marker_id;
+        current_marker.time = visit_time;
+        current_marker.pose = normalized_pose;
+
+        // Add the new marker to the list of markers in buffer
+        aruco_marker_buff.push_back(current_marker);
+    }
+}
