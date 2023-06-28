@@ -19,13 +19,13 @@ namespace ORB_SLAM3
         // The identifier devoted for each room
         int id;
         // The identifier devoted for each room in the graph
-        int optId;
+        int opt_id;
         // The name devoted for each room in the graph (optional, for better identification)
         string name;
         // The set of marker-pairs attached in a room, e.g. [[1, 2], [3, 4]]
         vector<vector<int>> markers;
         // bool to check if room is already detected
-        bool roomMarkersDetected;
+        bool room_markers_detected;
         // The vector of detected walls
         vector<Wall> walls;
         // room center

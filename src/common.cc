@@ -413,7 +413,5 @@ std::pair<double, ORB_SLAM3::Marker> find_nearest_marker(double frame_timestamp)
         }
     }
 
-    ROS_INFO("Buffer Size: %d", aruco_marker_buff.size());
-
     return std::make_pair(min_time_diff, matched_marker);
 }

@@ -21,9 +21,9 @@ namespace ORB_SLAM3
         // The identifier of each wall in the graph
         int graphId;
         // The plane equation of the wall
-        vector<double> planeEquation;
+        vector<double> plane_equation;
         // the markers lying on the wall
-        vector<int> markerIds;
+        vector<int> marker_ids;
         // set of map points lying on the wall
         // vector<MapPoint> mapPoints;
         // the node in the graph
