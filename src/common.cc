@@ -360,12 +360,19 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
     return tf::Transform(R_tf, t_tf);
 }
 
+//////////////////////////////////////////////////
+// Fiducial Marker-related functions
+//////////////////////////////////////////////////
+
+/**
+ * Adds one/list of markers into a common buffer
+ */
 void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
 {
     // Process the received marker array
     for (const auto &marker : marker_array.markers)
     {
-        // Access pose information of each ArUco marker
+        // Access information of each passed ArUco marker
         int marker_id = marker.id;
         double visit_time = marker.header.stamp.toSec();
         geometry_msgs::Pose marker_pose = marker.pose.pose;
@@ -376,7 +383,7 @@ void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         normalized_pose.translation() = Eigen::Vector3f(marker_position.x, marker_position.y, marker_position.z);
         normalized_pose.setRotationMatrix(Eigen::Quaternionf(marker_orientation.w, marker_orientation.x, marker_orientation.y, marker_orientation.z).normalized().toRotationMatrix());
 
-        // Create a marker object from currently visited marker
+        // Create a marker object from the currently visited marker
         ORB_SLAM3::Marker current_marker;
         current_marker.id = marker_id;
         current_marker.time = visit_time;
@@ -385,4 +392,28 @@ void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         // Add the new marker to the list of markers in buffer
         aruco_marker_buff.push_back(current_marker);
     }
+}
+
+/**
+ * Processes the common marker buffer to get the one closest to the current marker
+ */
+std::pair<double, ORB_SLAM3::Marker> find_nearest_marker(double frame_timestamp)
+{
+    double min_time_diff = 100;
+    ORB_SLAM3::Marker matched_marker;
+
+    // Loop through the aruco_marker_buff
+    for (const auto &marker : aruco_marker_buff)
+    {
+        double time_diff = marker.time - frame_timestamp;
+        if (time_diff < min_time_diff)
+        {
+            min_time_diff = time_diff;
+            matched_marker = marker;
+        }
+    }
+
+    ROS_INFO("Buffer Size: %d", aruco_marker_buff.size());
+
+    return std::make_pair(min_time_diff, matched_marker);
 }

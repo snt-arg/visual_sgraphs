@@ -70,7 +70,8 @@ int main(int argc, char **argv)
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2));
 
     // Subscribe to the markers detected by `aruco_ros` library
-    ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1, &ImageGrabber::GrabArUcoMarker, &igb);
+    ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
+                                                       &ImageGrabber::GrabArUcoMarker, &igb);
 
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
@@ -113,25 +114,22 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
         return;
     }
 
-    // loop through the aruco marker buff
-    // double min_time_diff = 100;
-    // orbslam::Marker matched_marker;
-    // for(const auto& marker:  aruco_marker_buff) {
-    // double time_diff = marker.time - cv_ptrRGB->header.stamp.toSec();
-    // if(time_diff < min_time_diff) {
-    // min_time_diff = time_diff;
-    // matched_marker = marker;
-    //}
-    //}
+    // Find the marker with the minimum time difference compared to the current frame
+    std::pair<double, ORB_SLAM3::Marker> result = find_nearest_marker(cv_ptrRGB->header.stamp.toSec());
+    double min_time_diff = result.first;
+    ORB_SLAM3::Marker matched_marker = result.second;
 
-    // if (min_time_diff < 0.05)  {
-    // Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec(), matched_marker);
-    // aruco_marker_buff.clear()
-    //}
-    // else {
-    // ORB-SLAM3 runs in TrackRGBD()
-    Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec());
-    //}
+    // Tracking process
+    if (min_time_diff < 0.05)
+    {
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec(),
+                                            {}, "", matched_marker);
+        aruco_marker_buff.clear();
+    }
+    else
+    {
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec());
+    }
 
     ros::Time msg_time = cv_ptrRGB->header.stamp;
 
@@ -140,6 +138,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
 
 void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
 {
-    // Pass the markers to be processed
+    // Pass the visited markers to a buffer to be processed later
     add_marker_to_buffer(marker_array);
 }

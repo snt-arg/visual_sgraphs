@@ -78,3 +78,4 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint 
 
 // Marker and Semantics
 void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array);
+std::pair<double, ORB_SLAM3::Marker> find_nearest_marker(double frame_timestamp);
