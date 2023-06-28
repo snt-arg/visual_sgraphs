@@ -145,20 +145,24 @@ void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
     {
         // Access pose information of each ArUco marker
         int marker_id = marker.id;
+        int visit_time = marker.header.stamp.toSec();
         geometry_msgs::Pose marker_pose = marker.pose.pose;
-        geometry_msgs::Point marker_position = marker.pose.pose.position;            // (x,y,z)
-        geometry_msgs::Quaternion marker_orientation = marker.pose.pose.orientation; // (x,y,z,w)
+        geometry_msgs::Point marker_position = marker_pose.position;            // (x,y,z)
+        geometry_msgs::Quaternion marker_orientation = marker_pose.orientation; // (x,y,z,w)
 
-        ROS_INFO("ArUco Marker ID: %d", marker_id);
-        ROS_INFO("Position (x, y, z): %f", marker_position.x);
-        ROS_INFO("Orientation (qx, qy, qz, qw): %f, %f, %f, %f", marker_pose.orientation.x, marker_pose.orientation.y, marker_pose.orientation.z, marker_pose.orientation.w);
+        Sophus::SE3f normalized_pose;
+        normalized_pose.translation() = Eigen::Vector3f(marker_position.x, marker_position.y, marker_position.z);
+        normalized_pose.setRotationMatrix(Eigen::Quaternionf(marker_orientation.w, marker_orientation.x, marker_orientation.y, marker_orientation.z).normalized().toRotationMatrix());
 
-        // orbslam3::Marker current_marker;
-        // current_marker.time = header.stamp.toSec();
-        // current_marker.id = marker.id;
-        // Eigen::Quaternionf quaternion(marker.pose.pose.orientation.x, marker.pose.pose.orientation.y, marker.pose.pose.orientation.z, marker.pose.pose.orientation.w);
-        // Eigen::Vector3f translation(marker.pose.pose.position.x, marker.pose.pose.position.y, marker.pose.pose.position.z);
-        // Sophus::SE3f marker_pose(quaternion, translation)
-        //     aruco_marker_buff.push_back(marker_pose);
+        // Create a marker object from currently visited marker
+        ORB_SLAM3::Marker current_marker;
+        current_marker.id = marker_id;
+        current_marker.time = visit_time;
+        current_marker.pose = normalized_pose;
+
+        cout << current_marker.id << current_marker.time;
+
+        // Add the new marker to the list of markers in buffer
+        aruco_marker_buff.push_back(current_marker);
     }
 }

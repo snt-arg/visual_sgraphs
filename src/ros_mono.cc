@@ -107,9 +107,10 @@ void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
     {
         // Access pose information of each ArUco marker
         int marker_id = marker.id;
+        int visit_time = marker.header.stamp.toSec();
         geometry_msgs::Pose marker_pose = marker.pose.pose;
-        geometry_msgs::Point marker_position = marker.pose.pose.position;            // (x,y,z)
-        geometry_msgs::Quaternion marker_orientation = marker.pose.pose.orientation; // (x,y,z,w)
+        geometry_msgs::Point marker_position = marker_pose.position;            // (x,y,z)
+        geometry_msgs::Quaternion marker_orientation = marker_pose.orientation; // (x,y,z,w)
 
         ROS_INFO("ArUco Marker ID: %d", marker_id);
         ROS_INFO("Position (x, y, z): %f", marker_position.x);
