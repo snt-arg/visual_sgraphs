@@ -369,6 +369,7 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
  */
 void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
 {
+    // TODO: std::vector<ORB_SLAM3::Marker> current_markers;
     // Process the received marker array
     for (const auto &marker : marker_array.markers)
     {
@@ -389,9 +390,10 @@ void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         current_marker.time = visit_time;
         current_marker.pose = normalized_pose;
 
-        // Add the new marker to the list of markers in buffer
-        aruco_marker_buff.push_back(current_marker);
+        // TODO: current_markers.push_back(current_marker);
     }
+    // Add the new marker to the list of markers in buffer
+    // TODO: aruco_marker_buff.push_back(current_markers);
 }
 
 /**

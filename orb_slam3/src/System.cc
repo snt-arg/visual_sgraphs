@@ -372,6 +372,8 @@ namespace ORB_SLAM3
 
         Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, timestamp, filename);
 
+        // TODO: Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, timestamp, filename, marker);
+
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
         mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
