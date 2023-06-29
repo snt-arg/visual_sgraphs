@@ -115,15 +115,15 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     }
 
     // Find the marker with the minimum time difference compared to the current frame
-    std::pair<double, ORB_SLAM3::Marker> result = find_nearest_marker(cv_ptrRGB->header.stamp.toSec());
+    std::pair<double, std::vector<ORB_SLAM3::Marker>> result = find_nearest_marker(cv_ptrRGB->header.stamp.toSec());
     double min_time_diff = result.first;
-    ORB_SLAM3::Marker matched_marker = result.second;
+    std::vector<ORB_SLAM3::Marker> matched_markers = result.second;
 
     // Tracking process
     if (min_time_diff < 0.05)
     {
         Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec(),
-                                            {}, "", matched_marker);
+                                            {}, "", matched_markers);
         aruco_marker_buff.clear();
     }
     else
@@ -139,5 +139,5 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
 void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
 {
     // Pass the visited markers to a buffer to be processed later
-    add_marker_to_buffer(marker_array);
+    add_markers_to_buffer(marker_array);
 }

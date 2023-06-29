@@ -14,9 +14,9 @@ ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
-std::vector<ORB_SLAM3::Marker> aruco_marker_buff;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
+std::vector<std::vector<ORB_SLAM3::Marker>> aruco_marker_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 
 //////////////////////////////////////////////////
@@ -367,9 +367,11 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
 /**
  * Adds one/list of markers into a common buffer
  */
-void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
+void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
 {
-    // TODO: std::vector<ORB_SLAM3::Marker> current_markers;
+    // The list of markers observed in the current frame
+    std::vector<ORB_SLAM3::Marker> current_markers;
+
     // Process the received marker array
     for (const auto &marker : marker_array.markers)
     {
@@ -390,30 +392,33 @@ void add_marker_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         current_marker.time = visit_time;
         current_marker.pose = normalized_pose;
 
-        // TODO: current_markers.push_back(current_marker);
+        // Add it to the list of observed markers
+        current_markers.push_back(current_marker);
     }
-    // Add the new marker to the list of markers in buffer
-    // TODO: aruco_marker_buff.push_back(current_markers);
+
+    // Add the new markers to the list of markers in buffer
+    aruco_marker_buff.push_back(current_markers);
 }
 
 /**
  * Processes the common marker buffer to get the one closest to the current marker
  */
-std::pair<double, ORB_SLAM3::Marker> find_nearest_marker(double frame_timestamp)
+std::pair<double, std::vector<ORB_SLAM3::Marker>> find_nearest_marker(double frame_timestamp)
 {
     double min_time_diff = 100;
-    ORB_SLAM3::Marker matched_marker;
+    std::vector<ORB_SLAM3::Marker> matched_markers;
 
     // Loop through the aruco_marker_buff
-    for (const auto &marker : aruco_marker_buff)
+    for (const auto &markers : aruco_marker_buff)
     {
-        double time_diff = marker.time - frame_timestamp;
+
+        double time_diff = markers[0].time - frame_timestamp;
         if (time_diff < min_time_diff)
         {
             min_time_diff = time_diff;
-            matched_marker = marker;
+            matched_markers = markers;
         }
     }
 
-    return std::make_pair(min_time_diff, matched_marker);
+    return std::make_pair(min_time_diff, matched_markers);
 }
