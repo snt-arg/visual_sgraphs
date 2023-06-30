@@ -50,7 +50,8 @@ extern double roll, pitch, yaw;       // Defining axes for transformation
 extern bool publish_static_transform; // If true, it should use transformed calculations
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 
-extern std::vector<std::vector<ORB_SLAM3::Marker>> aruco_marker_buff; // List of visited ArUco Markers
+// List of visited Fiducial Markers in different timestamps
+extern std::vector<std::vector<ORB_SLAM3::Marker>> markers_buff;
 
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
@@ -76,6 +77,6 @@ cv::Mat SE3f_to_cvMat(Sophus::SE3f);
 tf::Transform SE3f_to_tfTransform(Sophus::SE3f);
 sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 
-// Marker and Semantics
+// Markers
 void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array);
 std::pair<double, std::vector<ORB_SLAM3::Marker>> find_nearest_marker(double frame_timestamp);

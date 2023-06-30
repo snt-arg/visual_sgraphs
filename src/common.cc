@@ -16,7 +16,7 @@ double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
-std::vector<std::vector<ORB_SLAM3::Marker>> aruco_marker_buff;
+std::vector<std::vector<ORB_SLAM3::Marker>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 
 //////////////////////////////////////////////////
@@ -397,7 +397,8 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
     }
 
     // Add the new markers to the list of markers in buffer
-    aruco_marker_buff.push_back(current_markers);
+    if (current_markers.size() > 0)
+        markers_buff.push_back(current_markers);
 }
 
 /**
@@ -408,10 +409,9 @@ std::pair<double, std::vector<ORB_SLAM3::Marker>> find_nearest_marker(double fra
     double min_time_diff = 100;
     std::vector<ORB_SLAM3::Marker> matched_markers;
 
-    // Loop through the aruco_marker_buff
-    for (const auto &markers : aruco_marker_buff)
+    // Loop through the markers_buff
+    for (const auto &markers : markers_buff)
     {
-
         double time_diff = markers[0].time - frame_timestamp;
         if (time_diff < min_time_diff)
         {

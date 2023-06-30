@@ -307,7 +307,8 @@ namespace ORB_SLAM3
         return Tcw;
     }
 
-    Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp, const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker> &markers)
+    Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
+                                   const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker> &markers)
     {
         if (mSensor != RGBD && mSensor != IMU_RGBD)
         {
@@ -381,7 +382,8 @@ namespace ORB_SLAM3
         return Tcw;
     }
 
-    Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker> &markers)
+    Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas,
+                                        string filename, const std::vector<Marker> &markers)
     {
 
         {
