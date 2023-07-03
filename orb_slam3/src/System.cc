@@ -310,12 +310,14 @@ namespace ORB_SLAM3
     Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
                                    const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker> &markers)
     {
+        // Check if the sensor is RGB-D
         if (mSensor != RGBD && mSensor != IMU_RGBD)
         {
             cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
             exit(-1);
         }
 
+        // Obtain the images
         cv::Mat imToFeed = im.clone();
         cv::Mat imDepthToFeed = depthmap.clone();
         if (settings_ && settings_->needToResize())
@@ -367,6 +369,7 @@ namespace ORB_SLAM3
             }
         }
 
+        // Apply IMU measurements
         if (mSensor == System::IMU_RGBD)
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);

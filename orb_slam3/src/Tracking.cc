@@ -1576,7 +1576,8 @@ namespace ORB_SLAM3
         return mCurrentFrame.GetPose();
     }
 
-    Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const double &timestamp, string filename /* orbslam3::Marker marker */)
+    Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const double &timestamp,
+                                         string filename /* orbslam3::Marker marker */)
     {
         mImGray = imRGB;
         cv::Mat imDepth = imD;
@@ -1600,10 +1601,12 @@ namespace ORB_SLAM3
             imDepth.convertTo(imDepth, CV_32F, mDepthMapFactor);
 
         if (mSensor == System::RGBD)
-            mCurrentFrame = Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera);
+            mCurrentFrame = Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
+                                  mDistCoef, mbf, mThDepth, mpCamera);
         // mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera, matched_markers);
         else if (mSensor == System::IMU_RGBD)
-            mCurrentFrame = Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib);
+            mCurrentFrame = Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
+                                  mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib);
 
         mCurrentFrame.mNameFile = filename;
         mCurrentFrame.mnDataset = mnNumDataset;
