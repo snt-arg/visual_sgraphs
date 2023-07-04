@@ -1600,13 +1600,14 @@ namespace ORB_SLAM3
         if ((fabs(mDepthMapFactor - 1.0f) > 1e-5) || imDepth.type() != CV_32F)
             imDepth.convertTo(imDepth, CV_32F, mDepthMapFactor);
 
+        // RGB-D
         if (mSensor == System::RGBD)
             mCurrentFrame = Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
-                                  mDistCoef, mbf, mThDepth, mpCamera);
-        // mCurrentFrame = Frame(mImGray,imDepth,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth,mpCamera, matched_markers);
+                                  mDistCoef, mbf, mThDepth, mpCamera, NULL, IMU::Calib(), markers);
+        // RGB-D Intertial
         else if (mSensor == System::IMU_RGBD)
             mCurrentFrame = Frame(mImGray, imDepth, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
-                                  mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib);
+                                  mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib, markers);
 
         mCurrentFrame.mNameFile = filename;
         mCurrentFrame.mnDataset = mnNumDataset;
