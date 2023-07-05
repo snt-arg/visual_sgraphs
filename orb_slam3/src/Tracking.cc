@@ -2425,6 +2425,12 @@ namespace ORB_SLAM3
             // Insert KeyFrame in the map
             mpAtlas->AddKeyFrame(pKFini);
 
+            // [TODO] Markers
+            // for (int item = 0; item < mCurrentFrame.mvpMapMarkers.size(); item++)
+            // {
+            //     pKFini->AddMapMarker(mvpMapMarkers);
+            // }
+
             // Create MapPoints and asscoiate to KeyFrame
             if (!mpCamera2)
             {
@@ -2442,17 +2448,9 @@ namespace ORB_SLAM3
                         pNewMP->UpdateNormalAndDepth();
                         mpAtlas->AddMapPoint(pNewMP);
 
-                        // TODO: the above code needs to be added in everywhere where you see pKFini->AddMapPoint
-                        /* if(!mCurrentFrame.mvpMapMarkers.empty())
-                            pKFini->AddMapMarker(mvpMapMarkers, i);
-                         */
-
                         mCurrentFrame.mvpMapPoints[i] = pNewMP;
                     }
                 }
-
-                // if matched markers is not empty add it to the mCurrentFrame.mvpMapMarkers = matched_markers
-                // also add it to the pKFini->AddMapMarker(matched_markers, i);
             }
             else
             {
@@ -3383,6 +3381,12 @@ namespace ORB_SLAM3
                     {
                         nPoints++;
                     }
+
+                    // [TODO] Add Markers
+                    // for (int item = 0; item < mCurrentFrame.mvpMapMarkers.size(); item++)
+                    // {
+                    //     pKF->AddMapMarker(mvpMapMarkers);
+                    // }
 
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
                     {
