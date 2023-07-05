@@ -244,7 +244,8 @@ namespace ORB_SLAM3
         // Corresponding stereo coordinate and depth for each keypoint.
         std::vector<MapPoint *> mvpMapPoints;
 
-        // std::vector<Marker *> mvpMarkers;
+        // Corresponding pose values for each marker.
+        std::vector<Marker> mvpMapMarkers;
 
         // "Monocular" keypoints have a negative value.
         std::vector<float> mvuRight;

@@ -445,8 +445,8 @@ namespace ORB_SLAM3
         // MapPoints associated to keypoints
         std::vector<MapPoint *> mvpMapPoints;
 
-        // TODO: MapMarkers
-        // std::vector<Markers *> mvpMapMarkers;
+        // Markers available in each keyframe
+        std::vector<Marker> mvpMapMarkers;
 
         // For save relation without pointer, this is necessary for save/load function
         std::vector<long long int> mvBackupMapPointsId;

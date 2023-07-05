@@ -201,7 +201,8 @@ namespace ORB_SLAM3
                  GeometricCamera *pCamera, Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker> &markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
           mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
-          mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
+          mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL),
+          mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
           mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
     {
         // Frame ID
@@ -236,8 +237,11 @@ namespace ORB_SLAM3
 
         ComputeStereoFromRGBD(imDepth);
 
+        // Initialize MapPoints
         mvpMapPoints = vector<MapPoint *>(N, static_cast<MapPoint *>(NULL));
-        // mvpMapMarlers = markers; TODO: set mvpMapMarkers = matched_markers
+
+        // Initialize Markers
+        mvpMapMarkers = markers;
 
         mmProjectPoints.clear();
         mmMatchedInImage.clear();
