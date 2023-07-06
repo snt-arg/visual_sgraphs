@@ -393,7 +393,9 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         current_marker.pose = normalized_pose;
 
         // Add it to the list of observed markers
-        current_markers.push_back(current_marker);
+        // [Note]: if there is no markers in the field, aruco_ros returns ID:0 and Time: 0
+        if (marker_id != 0 && visit_time != 0)
+            current_markers.push_back(current_marker);
     }
 
     // Add the new markers to the list of markers in buffer
