@@ -255,6 +255,9 @@ namespace ORB_SLAM3
         int TrackedMapPoints(const int &minObs);
         MapPoint *GetMapPoint(const size_t &idx);
 
+        // MapMarker observation functions
+        void AddMapMarker(Marker *marker);
+
         // KeyPoint functions
         std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r, const bool bRight = false) const;
         bool UnprojectStereo(int i, Eigen::Vector3f &x3D);
@@ -446,7 +449,7 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> mvpMapPoints;
 
         // Markers available in each keyframe
-        std::vector<Marker> mvpMapMarkers;
+        std::vector<Marker *> mvpMapMarkers;
 
         // For save relation without pointer, this is necessary for save/load function
         std::vector<long long int> mvBackupMapPointsId;
