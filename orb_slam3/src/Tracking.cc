@@ -2474,7 +2474,7 @@ namespace ORB_SLAM3
                 }
             }
 
-            // Create MapPoints and asscoiate to KeyFrame
+            // Create MapMarkers and asscoiate to KeyFrame
             string mapMarkerStr = "";
             for (const Marker marker : mCurrentFrame.mvpMapMarkers)
             {
@@ -3388,17 +3388,18 @@ namespace ORB_SLAM3
                         nPoints++;
                     }
 
-                    // [TODO] Add Markers
-                    // for (int item = 0; item < mCurrentFrame.mvpMapMarkers.size(); item++)
-                    // {
-                    //     pKF->AddMapMarker(mvpMapMarkers);
-                    // }
+                    // Add Markers to the KeyFrame
+                    for (const Marker marker : mCurrentFrame.mvpMapMarkers)
+                    {
+                        pKF->AddMapMarker(marker);
+                    }
 
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
                     {
                         break;
                     }
                 }
+
                 // Verbose::PrintMess("new mps for stereo KF: " + to_string(nPoints), Verbose::VERBOSITY_NORMAL);
             }
         }

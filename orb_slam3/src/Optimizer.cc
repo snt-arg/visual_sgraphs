@@ -1128,9 +1128,11 @@ namespace ORB_SLAM3
 
         // Local MapPoints seen in Local KeyFrames
         num_fixedKF = 0;
-        list<MapPoint *> lLocalMapPoints;
         set<MapPoint *> sNumObsMP;
-        // [TODO] list<Marker*> lLocalMapMarkers;
+        list<MapPoint *> lLocalMapPoints;
+
+        // Local Markers seen in Local KeyFrames
+        list<Marker> lLocalMapMarkers;
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
