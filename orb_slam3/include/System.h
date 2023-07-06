@@ -116,14 +116,14 @@ namespace ORB_SLAM3
         // Returns the camera pose (empty if tracking fails).
         Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
                                const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                               const std::vector<Marker> &markers = {{}});
+                               const std::vector<Marker> &markers = std::vector<Marker>{});
 
         // Proccess the given monocular frame and optionally imu data
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Returns the camera pose (empty if tracking fails).
         Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp,
                                     const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                                    const std::vector<Marker> &markers = {{}});
+                                    const std::vector<Marker> &markers = std::vector<Marker>{});
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();

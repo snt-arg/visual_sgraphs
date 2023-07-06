@@ -208,6 +208,7 @@ namespace ORB_SLAM3
 
         // Map initialization for monocular
         void MonocularInitialization();
+
         // void CreateNewMapPoints();
         void CreateInitialMapMonocular();
 

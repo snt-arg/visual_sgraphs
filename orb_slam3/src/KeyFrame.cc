@@ -304,7 +304,7 @@ namespace ORB_SLAM3
         mvpMapPoints[idx] = pMP;
     }
 
-    void KeyFrame::AddMapMarker(Marker *marker)
+    void KeyFrame::AddMapMarker(Marker marker)
     {
         mvpMapMarkers.push_back(marker);
     }

@@ -2382,6 +2382,7 @@ namespace ORB_SLAM3
 #endif
     }
 
+    // Map initialization for stereo and RGB-D
     void Tracking::StereoInitialization()
     {
         if (mCurrentFrame.N > 500)
@@ -2424,12 +2425,6 @@ namespace ORB_SLAM3
 
             // Insert KeyFrame in the map
             mpAtlas->AddKeyFrame(pKFini);
-
-            // [TODO] Markers
-            // for (int item = 0; item < mCurrentFrame.mvpMapMarkers.size(); item++)
-            // {
-            //     pKFini->AddMapMarker(mvpMapMarkers);
-            // }
 
             // Create MapPoints and asscoiate to KeyFrame
             if (!mpCamera2)
@@ -2479,7 +2474,18 @@ namespace ORB_SLAM3
                 }
             }
 
-            Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points", Verbose::VERBOSITY_QUIET);
+            // Create MapPoints and asscoiate to KeyFrame
+            string mapMarkerStr = "";
+            for (const Marker marker : mCurrentFrame.mvpMapMarkers)
+            {
+                pKFini->AddMapMarker(marker);
+                mapMarkerStr += std::to_string(marker.id) + " ";
+            }
+
+            // [TODO] We should read from mpAtlas->MapMarkersInMap()
+            Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points and " +
+                                   to_string(mCurrentFrame.mvpMapMarkers.size()) + " markers [" + mapMarkerStr + "].",
+                               Verbose::VERBOSITY_QUIET);
 
             // cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
 

@@ -241,11 +241,7 @@ namespace ORB_SLAM3
         mvpMapPoints = vector<MapPoint *>(N, static_cast<MapPoint *>(NULL));
 
         // Initialize MapMarkers
-        mvpMapMarkers = vector<Marker *>(markers.size(), static_cast<Marker *>(NULL));
-        for (const Marker &marker : markers)
-        {
-            mvpMapMarkers.push_back(const_cast<Marker *>(&marker));
-        }
+        mvpMapMarkers = markers;
 
         mmProjectPoints.clear();
         mmMatchedInImage.clear();
