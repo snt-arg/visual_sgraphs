@@ -306,6 +306,7 @@ namespace ORB_SLAM3
 
     void KeyFrame::AddMapMarker(Marker marker)
     {
+        unique_lock<mutex> lock(mMutexFeatures);
         mvpMapMarkers.push_back(marker);
     }
 
@@ -386,6 +387,7 @@ namespace ORB_SLAM3
 
     vector<Marker> KeyFrame::GetMapMarkers()
     {
+        unique_lock<mutex> lock(mMutexFeatures);
         return mvpMapMarkers;
     }
 

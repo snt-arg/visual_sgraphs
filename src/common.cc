@@ -390,7 +390,8 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         ORB_SLAM3::Marker current_marker;
         current_marker.id = marker_id;
         current_marker.time = visit_time;
-        current_marker.pose = normalized_pose;
+        current_marker.markerInMap = false;
+        current_marker.local_pose = normalized_pose;
 
         // Add it to the list of observed markers
         current_markers.push_back(current_marker);
