@@ -1415,7 +1415,11 @@ namespace ORB_SLAM3
         }
         num_edges = nEdges;
 
-        // [TODO] Iterate over lLocalMapMarkers -> for now an empty loop
+        // Iterate over local MapMarkers
+        for (list<Marker>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
+        {
+            // [TODO] should be filled
+        }
 
         if (pbStopFlag)
             if (*pbStopFlag)
