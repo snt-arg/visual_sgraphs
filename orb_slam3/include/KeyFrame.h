@@ -257,6 +257,7 @@ namespace ORB_SLAM3
 
         // MapMarker observation functions
         void AddMapMarker(Marker marker);
+        std::vector<Marker> GetMapMarkers();
 
         // KeyPoint functions
         std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r, const bool bRight = false) const;

@@ -384,6 +384,11 @@ namespace ORB_SLAM3
         return mvpMapPoints[idx];
     }
 
+    vector<Marker> KeyFrame::GetMapMarkers()
+    {
+        return mvpMapMarkers;
+    }
+
     void KeyFrame::UpdateConnections(bool upParent)
     {
         map<KeyFrame *, int> KFcounter;

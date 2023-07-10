@@ -1136,11 +1136,14 @@ namespace ORB_SLAM3
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
+            // Get the reference to the KF
             KeyFrame *pKFi = *lit;
             if (pKFi->mnId == pMap->GetInitKFid())
             {
                 num_fixedKF = 1;
             }
+
+            // Get all the MapPoints of the KF
             vector<MapPoint *> vpMPs = pKFi->GetMapPointMatches();
 
             for (vector<MapPoint *>::iterator vit = vpMPs.begin(), vend = vpMPs.end(); vit != vend; vit++)
@@ -1157,13 +1160,14 @@ namespace ORB_SLAM3
                     }
             }
 
-            // vector<MapPoint *> vpMarkers = pKFi->GetMapMarkers();
+            // Get all the Markers of the KF
+            vector<Marker> vpMarkers = pKFi->GetMapMarkers();
 
-            // [TODO]
-            // for (vector<Marker *>::iterator vit = vpMPs.begin(), vend = vpMPs.end(); vit != vend; vit++)
-            // {
-            // lLocalMapMarkers.push_back(pMP);
-            // }
+            for (vector<Marker>::iterator idx = vpMarkers.begin(), vend = vpMarkers.end(); idx != vend; idx++)
+            {
+                Marker &marker = *idx;
+                lLocalMapMarkers.push_back(marker);
+            }
         }
 
         // Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
