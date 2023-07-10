@@ -1418,7 +1418,29 @@ namespace ORB_SLAM3
         // Iterate over local MapMarkers
         for (list<Marker>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
         {
-            // [TODO] should be filled
+            // [TODO] add as vertex se3, same as one of keyframe
+            // set optimization id for mapmarker vertex
+
+            // add an edge between the current mapmarker and its keyframe
+            // Marker pMarker = *idx;
+            // const map<KeyFrame *, Sophus::SE3f> markerObservations = pMarker->GetObservations();
+
+            // for (const auto &currentMarkerObs : markerObservations)
+            // {
+            //     KeyFrame *pKFi = currentMarkerObs->first;
+            //     Sophus::SE3f local_pose = currentMarkerObs->second;
+
+            // g2o::EdgeSE3 *e = new ORB_SLAM3::EdgeSE3();
+            // e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
+            // e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+            // e->setMeasurement(g2o::SE3Quat(local_pose.unit_quaternion().cast<double>(), local_pose.translation().cast<double>()))
+            // const float &invSigma2 = pKFi->mvInvLevelSigma2[kp.octave];
+            // e->setInformation(Eigen::Matrix2d::Identity() * invSigma2);
+
+            // g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+            // e->setRobustKernel(rk);
+            // rk->setDelta(thHuberMono);
+            // }
         }
 
         if (pbStopFlag)
@@ -1510,6 +1532,16 @@ namespace ORB_SLAM3
             pMP->SetWorldPos(vPoint->estimate().cast<float>());
             pMP->UpdateNormalAndDepth();
         }
+
+        // [TODO]: upate the global pose of the marker after optimization
+        // for (list<MapPoint *>::iterator lit = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); lit != lend; lit++)
+        // {
+        // Marker pMarker = *lit;
+        // g2o::VertexSE3 *vMarker = static_cast<g2o::VertexSE3 *>(optimizer.vertex(pMarker->id + maxKFid + 1));
+        // g2o::SE3Quat SE3quat = vMarker->estimate();
+        // Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
+        // pMarker.global_pose = Tiw;
+        // }
 
         pMap->IncreaseChangeIndex();
     }

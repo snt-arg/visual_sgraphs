@@ -2476,10 +2476,13 @@ namespace ORB_SLAM3
 
             // Create MapMarkers and asscoiate to KeyFrame
             string mapMarkerStr = "";
-            for (const Marker marker : mCurrentFrame.mvpMapMarkers)
+            for (auto &mCurrentMarker : mCurrentFrame.mvpMapMarkers)
             {
-                pKFini->AddMapMarker(marker);
-                mapMarkerStr += std::to_string(marker.id) + " ";
+                mCurrentMarker.global_pose = pKFini->GetPose() * mCurrentMarker.local_pose;
+                mCurrentMarker.AddObservation(pKFini);
+                mCurrentMarker.markerInMap = true;
+                pKFini->AddMapMarker(mCurrentMarker);
+                mapMarkerStr += std::to_string(mCurrentMarker.id) + " ";
             }
 
             // [TODO] We should read from mpAtlas->MapMarkersInMap()
@@ -3388,10 +3391,36 @@ namespace ORB_SLAM3
                         nPoints++;
                     }
 
-                    // Add Markers to the KeyFrame
-                    for (const Marker marker : mCurrentFrame.mvpMapMarkers)
+                    // Data Association of the markers
+                    for (const auto &keyframe : mpAtlas->GetAllKeyFrames())
                     {
-                        pKF->AddMapMarker(marker);
+                        // check if the marker ids fromt he current frame exist in all the previous keyframes
+                        // first get the mapped marker from the keyframes
+                        for (const auto &currentKeyframeMaker : keyframe->GetMapMarkers())
+                        {
+                            // second get the detected markers in the current frame
+                            for (auto &currentFrameMaker : mCurrentFrame.mvpMapMarkers)
+                            {
+                                if (currentFrameMaker.id == currentKeyframeMaker.id)
+                                    currentFrameMaker.markerInMap = true;
+                            }
+                        }
+                    }
+
+                    // Add Markers to the KeyFrame
+                    for (Marker &marker : mCurrentFrame.mvpMapMarkers)
+                    {
+                        if (!marker.markerInMap)
+                        {
+                            marker.global_pose = pKF->GetPose() * marker.local_pose;
+                            marker.AddObservation(pKF);
+                            marker.markerInMap = true;
+                            pKF->AddMapMarker(marker);
+                        }
+                        else
+                        {
+                            marker.AddObservation(pKF);
+                        }
                     }
 
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
