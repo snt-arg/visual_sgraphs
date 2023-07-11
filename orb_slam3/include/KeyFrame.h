@@ -27,6 +27,7 @@
 #include "Frame.h"
 #include "KeyFrameDatabase.h"
 #include "ImuTypes.h"
+#include "Semantic/Marker.h"
 
 #include "GeometricCamera.h"
 #include "SerializationUtils.h"
@@ -44,8 +45,9 @@ namespace ORB_SLAM3
     class MapPoint;
     class Frame;
     class KeyFrameDatabase;
-
     class GeometricCamera;
+
+    class Marker;
 
     class KeyFrame
     {

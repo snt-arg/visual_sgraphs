@@ -8,32 +8,42 @@
 #ifndef MARKER_H
 #define MARKER_H
 
+#include "KeyFrame.h"
+
 namespace ORB_SLAM3
 {
-    // [TODO]: make all the variables in the class private and access them using proper add and get functions
     class Marker
     {
-    public:
-        // The identifier devoted for each marker
-        int id;
-        // The identifier devoted for the optimizer
-        int mId;
-        // The timestamp (in seconds) when the marker observed
-        double time;
-        // The boolean to check if the marker is in the Global Map or not
-        bool markerInMap;
-        // The pose (position and orientation) of the marker in the Local Map
-        Sophus::SE3f local_pose;
-        // The pose (position and orientation) of the marker in the Global Map
-        Sophus::SE3f global_pose;
-        // The observations of the markers
-        std::map<KeyFrame *, Sophus::SE3f> mObservations;
+    private:
+        int id;                                           // The marker's identifier
+        int opId;                                         // The marker's identifier in the optimizer
+        double time;                                      // The timestamp (in seconds) of observing the marker
+        bool markerInGMap;                                // Check if the marker is in the Global Map or not
+        Sophus::SE3f local_pose;                          // Marker's pose (position and orientation) in the Local Map
+        Sophus::SE3f global_pose;                         // Marker's pose (position and orientation) in the Global Map
+        std::map<KeyFrame *, Sophus::SE3f> mObservations; // Marker's observations
 
     public:
-        void AddObservation(KeyFrame *pKF)
-        {
-            mObservations.insert({pKF, local_pose});
-        }
+        int getId() const;
+        void setId(int value);
+
+        int getOpId() const;
+        void setOpId(int value);
+
+        double getTime() const;
+        void setTime(double value);
+
+        bool isMarkerInGMap() const;
+        void setMarkerInGMap(bool value);
+
+        Sophus::SE3f getLocalPose() const;
+        void setLocalPose(const Sophus::SE3f &value);
+
+        Sophus::SE3f getGlobalPose() const;
+        void setGlobalPose(const Sophus::SE3f &value);
+
+        const std::map<KeyFrame *, Sophus::SE3f> &getObservations() const;
+        void addObservation(KeyFrame *pKF);
     };
 
 }

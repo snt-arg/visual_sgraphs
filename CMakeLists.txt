@@ -125,6 +125,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/TwoViewReconstruction.cc
   orb_slam3/src/Config.cc
   orb_slam3/src/Settings.cc
+  orb_slam3/src/Semantic/Marker.cc
   orb_slam3/include/System.h
   orb_slam3/include/Tracking.h
   orb_slam3/include/LocalMapping.h
@@ -155,6 +156,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/SerializationUtils.h
   orb_slam3/include/Config.h
   orb_slam3/include/Settings.h
+  orb_slam3/include/Semantic/Marker.h
 )
 
 target_link_libraries(${PROJECT_NAME}

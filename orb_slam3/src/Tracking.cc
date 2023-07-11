@@ -2478,11 +2478,12 @@ namespace ORB_SLAM3
             string mapMarkerStr = "";
             for (auto &mCurrentMarker : mCurrentFrame.mvpMapMarkers)
             {
-                mCurrentMarker.global_pose = pKFini->GetPose() * mCurrentMarker.local_pose;
-                mCurrentMarker.AddObservation(pKFini);
-                mCurrentMarker.markerInMap = true;
+                // Setting the Global Pose of the marker
+                mCurrentMarker.setGlobalPose(pKFini->GetPose() * mCurrentMarker.getLocalPose());
+                mCurrentMarker.addObservation(pKFini);
+                mCurrentMarker.setMarkerInGMap(true);
                 pKFini->AddMapMarker(mCurrentMarker);
-                mapMarkerStr += std::to_string(mCurrentMarker.id) + " ";
+                mapMarkerStr += std::to_string(mCurrentMarker.getId()) + " ";
             }
 
             // [TODO] We should read from mpAtlas->MapMarkersInMap()
@@ -3401,8 +3402,8 @@ namespace ORB_SLAM3
                             // second get the detected markers in the current frame
                             for (auto &currentFrameMaker : mCurrentFrame.mvpMapMarkers)
                             {
-                                if (currentFrameMaker.id == currentKeyframeMaker.id)
-                                    currentFrameMaker.markerInMap = true;
+                                if (currentFrameMaker.getId() == currentKeyframeMaker.getId())
+                                    currentFrameMaker.setMarkerInGMap(true);
                             }
                         }
                     }
@@ -3410,16 +3411,16 @@ namespace ORB_SLAM3
                     // Add Markers to the KeyFrame
                     for (Marker &marker : mCurrentFrame.mvpMapMarkers)
                     {
-                        if (!marker.markerInMap)
+                        if (!marker.isMarkerInGMap())
                         {
-                            marker.global_pose = pKF->GetPose() * marker.local_pose;
-                            marker.AddObservation(pKF);
-                            marker.markerInMap = true;
+                            marker.setGlobalPose(pKF->GetPose() * marker.getLocalPose());
+                            marker.addObservation(pKF);
+                            marker.setMarkerInGMap(true);
                             pKF->AddMapMarker(marker);
                         }
                         else
                         {
-                            marker.AddObservation(pKF);
+                            marker.addObservation(pKF);
                         }
                     }
 

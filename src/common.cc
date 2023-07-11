@@ -386,12 +386,13 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         normalized_pose.translation() = Eigen::Vector3f(marker_position.x, marker_position.y, marker_position.z);
         normalized_pose.setRotationMatrix(Eigen::Quaternionf(marker_orientation.w, marker_orientation.x, marker_orientation.y, marker_orientation.z).normalized().toRotationMatrix());
 
-        // Create a marker object from the currently visited marker
+        // Create a marker object of the currently visited marker
         ORB_SLAM3::Marker current_marker;
-        current_marker.id = marker_id;
-        current_marker.time = visit_time;
-        current_marker.markerInMap = false;
-        current_marker.local_pose = normalized_pose;
+        current_marker.setOpId(-1);
+        current_marker.setId(marker_id);
+        current_marker.setTime(visit_time);
+        current_marker.setMarkerInGMap(false);
+        current_marker.setLocalPose(normalized_pose);
 
         // Add it to the list of observed markers
         current_markers.push_back(current_marker);
@@ -413,7 +414,7 @@ std::pair<double, std::vector<ORB_SLAM3::Marker>> find_nearest_marker(double fra
     // Loop through the markers_buff
     for (const auto &markers : markers_buff)
     {
-        double time_diff = markers[0].time - frame_timestamp;
+        double time_diff = markers[0].getTime() - frame_timestamp;
         if (time_diff < min_time_diff)
         {
             min_time_diff = time_diff;

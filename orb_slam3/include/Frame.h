@@ -50,6 +50,7 @@ namespace ORB_SLAM3
     class ConstraintPoseImu;
     class GeometricCamera;
     class ORBextractor;
+    class Marker;
 
     class Frame
     {
@@ -69,7 +70,7 @@ namespace ORB_SLAM3
         Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor *extractor,
               ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth,
               GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
-              const std::vector<Marker> &markers = {{}});
+              const std::vector<Marker> &markers = std::vector<Marker>{});
 
         // Constructor for Monocular cameras (with or without IMU)
         Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
