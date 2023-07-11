@@ -1,20 +1,20 @@
 /**
-* This file is part of ORB-SLAM3
-*
-* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-* Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-*
-* ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
-* License as published by the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM3 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-* the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with ORB-SLAM3.
-* If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM3
+ *
+ * Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+ * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+ *
+ * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM3 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef ATLAS_H
 #define ATLAS_H
@@ -31,139 +31,136 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/export.hpp>
 
-
 namespace ORB_SLAM3
 {
-class Viewer;
-class Map;
-class MapPoint;
-class KeyFrame;
-class KeyFrameDatabase;
-class Frame;
-class KannalaBrandt8;
-class Pinhole;
+    class Viewer;
+    class Map;
+    class MapPoint;
+    class KeyFrame;
+    class KeyFrameDatabase;
+    class Frame;
+    class KannalaBrandt8;
+    class Pinhole;
 
-//BOOST_CLASS_EXPORT_GUID(Pinhole, "Pinhole")
-//BOOST_CLASS_EXPORT_GUID(KannalaBrandt8, "KannalaBrandt8")
+    // BOOST_CLASS_EXPORT_GUID(Pinhole, "Pinhole")
+    // BOOST_CLASS_EXPORT_GUID(KannalaBrandt8, "KannalaBrandt8")
 
-class Atlas
-{
-    friend class boost::serialization::access;
-
-    template<class Archive>
-    void serialize(Archive &ar, const unsigned int version)
+    class Atlas
     {
-        ar.template register_type<Pinhole>();
-        ar.template register_type<KannalaBrandt8>();
+        friend class boost::serialization::access;
 
-        // Save/load a set structure, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated
-        //ar & mspMaps;
-        ar & mvpBackupMaps;
-        ar & mvpCameras;
-        // Need to save/load the static Id from Frame, KeyFrame, MapPoint and Map
-        ar & Map::nNextId;
-        ar & Frame::nNextId;
-        ar & KeyFrame::nNextId;
-        ar & MapPoint::nNextId;
-        ar & GeometricCamera::nNextId;
-        ar & mnLastInitKFidMap;
-    }
+        template <class Archive>
+        void serialize(Archive &ar, const unsigned int version)
+        {
+            ar.template register_type<Pinhole>();
+            ar.template register_type<KannalaBrandt8>();
 
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+            // Save/load a set structure, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated
+            // ar & mspMaps;
+            ar &mvpBackupMaps;
+            ar &mvpCameras;
+            // Need to save/load the static Id from Frame, KeyFrame, MapPoint and Map
+            ar &Map::nNextId;
+            ar &Frame::nNextId;
+            ar &KeyFrame::nNextId;
+            ar &MapPoint::nNextId;
+            ar &GeometricCamera::nNextId;
+            ar &mnLastInitKFidMap;
+        }
 
-    Atlas();
-    Atlas(int initKFid); // When its initialization the first map is created
-    ~Atlas();
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-    void CreateNewMap();
-    void ChangeMap(Map* pMap);
+        Atlas();
+        Atlas(int initKFid); // When its initialization the first map is created
+        ~Atlas();
 
-    unsigned long int GetLastInitKFid();
+        void CreateNewMap();
+        void ChangeMap(Map *pMap);
 
-    void SetViewer(Viewer* pViewer);
+        unsigned long int GetLastInitKFid();
 
-    // Method for change components in the current map
-    void AddKeyFrame(KeyFrame* pKF);
-    void AddMapPoint(MapPoint* pMP);
-    //void EraseMapPoint(MapPoint* pMP);
-    //void EraseKeyFrame(KeyFrame* pKF);
+        void SetViewer(Viewer *pViewer);
 
-    GeometricCamera* AddCamera(GeometricCamera* pCam);
-    std::vector<GeometricCamera*> GetAllCameras();
+        // Method for change components in the current map
+        void AddKeyFrame(KeyFrame *pKF);
+        void AddMapPoint(MapPoint *pMP);
+        // void EraseMapPoint(MapPoint* pMP);
+        // void EraseKeyFrame(KeyFrame* pKF);
 
-    /* All methods without Map pointer work on current map */
-    void SetReferenceMapPoints(const std::vector<MapPoint*> &vpMPs);
-    void InformNewBigChange();
-    int GetLastBigChangeIdx();
+        GeometricCamera *AddCamera(GeometricCamera *pCam);
+        std::vector<GeometricCamera *> GetAllCameras();
 
-    long unsigned int MapPointsInMap();
-    long unsigned KeyFramesInMap();
+        /* All methods without Map pointer work on current map */
+        void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
+        void InformNewBigChange();
+        int GetLastBigChangeIdx();
 
-    // Method for get data in current map
-    std::vector<KeyFrame*> GetAllKeyFrames();
-    std::vector<MapPoint*> GetAllMapPoints();
-    std::vector<MapPoint*> GetReferenceMapPoints();
+        long unsigned int MapPointsInMap();
+        long unsigned KeyFramesInMap();
 
-    vector<Map*> GetAllMaps();
+        // Method for get data in current map
+        std::vector<KeyFrame *> GetAllKeyFrames();
+        std::vector<MapPoint *> GetAllMapPoints();
+        std::vector<MapPoint *> GetReferenceMapPoints();
 
-    int CountMaps();
+        vector<Map *> GetAllMaps();
 
-    void clearMap();
+        int CountMaps();
 
-    void clearAtlas();
+        void clearMap();
 
-    Map* GetCurrentMap();
+        void clearAtlas();
 
-    void SetMapBad(Map* pMap);
-    void RemoveBadMaps();
+        Map *GetCurrentMap();
 
-    bool isInertial();
-    void SetInertialSensor();
-    void SetImuInitialized();
-    bool isImuInitialized();
+        void SetMapBad(Map *pMap);
+        void RemoveBadMaps();
 
-    // Function for garantee the correction of serialization of this object
-    void PreSave();
-    void PostLoad();
+        bool isInertial();
+        void SetInertialSensor();
+        void SetImuInitialized();
+        bool isImuInitialized();
 
-    map<long unsigned int, KeyFrame*> GetAtlasKeyframes();
+        // Function for garantee the correction of serialization of this object
+        void PreSave();
+        void PostLoad();
 
-    void SetKeyFrameDababase(KeyFrameDatabase* pKFDB);
-    KeyFrameDatabase* GetKeyFrameDatabase();
+        map<long unsigned int, KeyFrame *> GetAtlasKeyframes();
 
-    void SetORBVocabulary(ORBVocabulary* pORBVoc);
-    ORBVocabulary* GetORBVocabulary();
+        void SetKeyFrameDababase(KeyFrameDatabase *pKFDB);
+        KeyFrameDatabase *GetKeyFrameDatabase();
 
-    long unsigned int GetNumLivedKF();
+        void SetORBVocabulary(ORBVocabulary *pORBVoc);
+        ORBVocabulary *GetORBVocabulary();
 
-    long unsigned int GetNumLivedMP();
+        long unsigned int GetNumLivedKF();
 
-protected:
+        long unsigned int GetNumLivedMP();
 
-    std::set<Map*> mspMaps;
-    std::set<Map*> mspBadMaps;
-    // Its necessary change the container from set to vector because libboost 1.58 and Ubuntu 16.04 have an error with this cointainer
-    std::vector<Map*> mvpBackupMaps;
+    protected:
+        std::set<Map *> mspMaps;
+        std::set<Map *> mspBadMaps;
+        // Its necessary change the container from set to vector because libboost 1.58 and Ubuntu 16.04 have an error with this cointainer
+        std::vector<Map *> mvpBackupMaps;
 
-    Map* mpCurrentMap;
+        Map *mpCurrentMap;
 
-    std::vector<GeometricCamera*> mvpCameras;
+        std::vector<GeometricCamera *> mvpCameras;
 
-    unsigned long int mnLastInitKFidMap;
+        unsigned long int mnLastInitKFidMap;
 
-    Viewer* mpViewer;
-    bool mHasViewer;
+        Viewer *mpViewer;
+        bool mHasViewer;
 
-    // Class references for the map reconstruction from the save file
-    KeyFrameDatabase* mpKeyFrameDB;
-    ORBVocabulary* mpORBVocabulary;
+        // Class references for the map reconstruction from the save file
+        KeyFrameDatabase *mpKeyFrameDB;
+        ORBVocabulary *mpORBVocabulary;
 
-    // Mutex
-    std::mutex mMutexAtlas;
+        // Mutex
+        std::mutex mMutexAtlas;
 
-
-}; // class Atlas
+    }; // class Atlas
 
 } // namespace ORB_SLAM3
 

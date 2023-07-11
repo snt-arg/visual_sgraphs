@@ -1533,14 +1533,14 @@ namespace ORB_SLAM3
             pMP->UpdateNormalAndDepth();
         }
 
-        // [TODO]: upate the global pose of the marker after optimization
-        // for (list<MapPoint *>::iterator lit = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); lit != lend; lit++)
+        // Global pose of the markers [TODO]
+        // for (list<Marker>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
         // {
-        // Marker pMarker = *lit;
-        // g2o::VertexSE3 *vMarker = static_cast<g2o::VertexSE3 *>(optimizer.vertex(pMarker->id + maxKFid + 1));
-        // g2o::SE3Quat SE3quat = vMarker->estimate();
-        // Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
-        // pMarker.global_pose = Tiw;
+        //     Marker pMarker = *idx;
+        //     g2o::VertexSE3 *vMarker = static_cast<g2o::VertexSE3 *>(optimizer.vertex(pMarker->getOpId() + maxKFid + 1));
+        //     g2o::SE3Quat SE3quat = vMarker->estimate();
+        //     Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
+        //     pMarker.setGlobalPose(Tiw);
         // }
 
         pMap->IncreaseChangeIndex();
