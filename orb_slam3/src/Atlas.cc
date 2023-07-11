@@ -114,6 +114,11 @@ namespace ORB_SLAM3
         pMapMP->AddMapPoint(pMP);
     }
 
+    void Atlas::AddMapMarker(Marker *marker)
+    {
+        // [TODO]
+    }
+
     GeometricCamera *Atlas::AddCamera(GeometricCamera *pCam)
     {
         // Check if the camera already exists
@@ -187,6 +192,11 @@ namespace ORB_SLAM3
         return mpCurrentMap->MapPointsInMap();
     }
 
+    long unsigned int Atlas::MarkersInMap()
+    {
+        // [TODO]
+    }
+
     long unsigned Atlas::KeyFramesInMap()
     {
         unique_lock<mutex> lock(mMutexAtlas);
@@ -203,6 +213,11 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexAtlas);
         return mpCurrentMap->GetAllMapPoints();
+    }
+
+    std::vector<Marker *> Atlas::GetAllMapMarkers()
+    {
+        // [TODO]
     }
 
     std::vector<MapPoint *> Atlas::GetReferenceMapPoints()

@@ -25,6 +25,7 @@
 #include "GeometricCamera.h"
 #include "Pinhole.h"
 #include "KannalaBrandt8.h"
+#include "Semantic/Marker.h"
 
 #include <set>
 #include <mutex>
@@ -41,6 +42,7 @@ namespace ORB_SLAM3
     class Frame;
     class KannalaBrandt8;
     class Pinhole;
+    class Marker;
 
     // BOOST_CLASS_EXPORT_GUID(Pinhole, "Pinhole")
     // BOOST_CLASS_EXPORT_GUID(KannalaBrandt8, "KannalaBrandt8")
@@ -85,8 +87,10 @@ namespace ORB_SLAM3
         // Method for change components in the current map
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
+        void AddMapMarker(Marker *marker);
         // void EraseMapPoint(MapPoint* pMP);
         // void EraseKeyFrame(KeyFrame* pKF);
+        // void EraseMapMarker(Marker* marker);
 
         GeometricCamera *AddCamera(GeometricCamera *pCam);
         std::vector<GeometricCamera *> GetAllCameras();
@@ -96,10 +100,12 @@ namespace ORB_SLAM3
         void InformNewBigChange();
         int GetLastBigChangeIdx();
 
-        long unsigned int MapPointsInMap();
+        long unsigned MarkersInMap();
         long unsigned KeyFramesInMap();
+        long unsigned int MapPointsInMap();
 
         // Method for get data in current map
+        std::vector<Marker *> GetAllMapMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetReferenceMapPoints();
