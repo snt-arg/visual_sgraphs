@@ -1607,6 +1607,12 @@ namespace ORB_SLAM3
         return vKFposes;
     }
 
+    vector<Marker *> System::GetAllMarkers()
+    {
+        Map *pActiveMap = mpAtlas->GetCurrentMap();
+        return pActiveMap->GetAllMarkers();
+    }
+
     bool System::SaveMap(const string &filename)
     {
         mStrSaveAtlasToFile = filename;

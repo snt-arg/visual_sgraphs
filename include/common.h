@@ -68,6 +68,7 @@ void publish_kf_markers(std::vector<Sophus::SE3f>, ros::Time);
 void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
 void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
+void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
 void publish_body_odom(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 
 bool save_map_srv(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);

@@ -178,11 +178,12 @@ namespace ORB_SLAM3
         // Information from most recent processed frame
         // You can call this right after TrackMonocular (or stereo or RGBD)
         int GetTrackingState();
-        std::vector<MapPoint *> GetTrackedMapPoints();
-        std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
-        std::vector<MapPoint *> GetAllMapPoints();
-        std::vector<Sophus::SE3f> GetAllKeyframePoses();
         cv::Mat GetCurrentFrame();
+        std::vector<Marker *> GetAllMarkers();
+        std::vector<MapPoint *> GetAllMapPoints();
+        std::vector<MapPoint *> GetTrackedMapPoints();
+        std::vector<Sophus::SE3f> GetAllKeyframePoses();
+        std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
         Sophus::SE3f GetCamTwc();
         Sophus::SE3f GetImuTwb();

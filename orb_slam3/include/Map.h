@@ -21,6 +21,7 @@
 
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#include "Semantic/Marker.h"
 
 #include <set>
 #include <pangolin/pangolin.h>
@@ -34,6 +35,7 @@ namespace ORB_SLAM3
     class MapPoint;
     class KeyFrame;
     class Atlas;
+    class Marker;
     class KeyFrameDatabase;
 
     class Map
@@ -73,24 +75,30 @@ namespace ORB_SLAM3
 
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
+        void AddMapMarker(Marker *pMarker);
+
         void EraseMapPoint(MapPoint *pMP);
         void EraseKeyFrame(KeyFrame *pKF);
+        void EraseMapMarker(Marker *pMarker);
+
         void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
         void InformNewBigChange();
         int GetLastBigChangeIdx();
 
+        std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetReferenceMapPoints();
 
-        long unsigned int MapPointsInMap();
         long unsigned KeyFramesInMap();
+        long unsigned int MarkersInMap();
+        long unsigned int MapPointsInMap();
 
         long unsigned int GetId();
 
         long unsigned int GetInitKFid();
-        void SetInitKFid(long unsigned int initKFif);
         long unsigned int GetMaxKFid();
+        void SetInitKFid(long unsigned int initKFif);
 
         KeyFrame *GetOriginKF();
 
@@ -156,6 +164,7 @@ namespace ORB_SLAM3
     protected:
         long unsigned int mnId;
 
+        std::set<Marker *> mspMarkers;
         std::set<MapPoint *> mspMapPoints;
         std::set<KeyFrame *> mspKeyFrames;
 

@@ -105,7 +105,7 @@ namespace ORB_SLAM3
         long unsigned int MapPointsInMap();
 
         // Method for get data in current map
-        std::vector<Marker *> GetAllMapMarkers();
+        std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetReferenceMapPoints();

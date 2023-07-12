@@ -48,6 +48,9 @@ namespace ORB_SLAM3
         // TODO: erase all keyframes from memory
         mspKeyFrames.clear();
 
+        // Erase all markers from memory
+        mspMarkers.clear();
+
         if (mThumbnail)
             delete mThumbnail;
         mThumbnail = static_cast<GLubyte *>(NULL);
@@ -83,6 +86,12 @@ namespace ORB_SLAM3
         mspMapPoints.insert(pMP);
     }
 
+    void Map::AddMapMarker(Marker *pMarker)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspMarkers.insert(pMarker);
+    }
+
     void Map::SetImuInitialized()
     {
         unique_lock<mutex> lock(mMutexMap);
@@ -102,6 +111,12 @@ namespace ORB_SLAM3
 
         // TODO: This only erase the pointer.
         // Delete the MapPoint
+    }
+
+    void Map::EraseMapMarker(Marker *pMarker)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspMarkers.erase(pMarker);
     }
 
     void Map::EraseKeyFrame(KeyFrame *pKF)
@@ -156,10 +171,22 @@ namespace ORB_SLAM3
         return vector<MapPoint *>(mspMapPoints.begin(), mspMapPoints.end());
     }
 
+    vector<Marker *> Map::GetAllMarkers()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<Marker *>(mspMarkers.begin(), mspMarkers.end());
+    }
+
     long unsigned int Map::MapPointsInMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mspMapPoints.size();
+    }
+
+    long unsigned int Map::MarkersInMap()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return mspMarkers.size();
     }
 
     long unsigned int Map::KeyFramesInMap()
@@ -223,6 +250,7 @@ namespace ORB_SLAM3
             //        delete *sit;
         }
 
+        mspMarkers.clear();
         mspMapPoints.clear();
         mspKeyFrames.clear();
         mnMaxKFid = mnInitKFid;
@@ -271,11 +299,19 @@ namespace ORB_SLAM3
             else
                 pKF->SetVelocity(Ryw * Vw * s);
         }
+
         for (set<MapPoint *>::iterator sit = mspMapPoints.begin(); sit != mspMapPoints.end(); sit++)
         {
             MapPoint *pMP = *sit;
             pMP->SetWorldPos(s * Ryw * pMP->GetWorldPos() + tyw);
             pMP->UpdateNormalAndDepth();
+        }
+
+        for (set<Marker *>::iterator sit = mspMarkers.begin(); sit != mspMarkers.end(); sit++)
+        {
+            // MapPoint *pMP = *sit; [TODO]
+            // pMP->SetWorldPos(s * Ryw * pMP->GetWorldPos() + tyw);
+            // pMP->UpdateNormalAndDepth();
         }
         mnMapChange++;
     }

@@ -15,9 +15,9 @@ bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
-ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
 std::vector<std::vector<ORB_SLAM3::Marker>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
+ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub;
 
 //////////////////////////////////////////////////
 // Main functions
@@ -81,6 +81,8 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
     kf_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/kf_markers", 1000);
 
+    fiducial_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/fiducial_markers", 1);
+
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
     {
         odom_pub = node_handler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
@@ -102,10 +104,11 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     if (publish_static_transform)
         publish_static_tf_transform(world_frame_id, map_frame_id, msg_time);
 
-    publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
-    publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
+    publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
+    publish_fiducial_markers(pSLAM->GetAllMarkers(), msg_time);
+    publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
 
     // IMU-specific topics
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
@@ -272,6 +275,12 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
     }
 
     kf_markers_pub.publish(kf_markers);
+}
+
+void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msg_time)
+{
+    // [TODO] sensor_msgs::PointCloud2 cloud = mappoint_to_pointcloud(markers, msg_time);
+    // fiducial_markers_pub.publish(cloud);
 }
 
 //////////////////////////////////////////////////

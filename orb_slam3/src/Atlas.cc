@@ -215,7 +215,7 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllMapPoints();
     }
 
-    std::vector<Marker *> Atlas::GetAllMapMarkers()
+    std::vector<Marker *> Atlas::GetAllMarkers()
     {
         // [TODO]
     }
