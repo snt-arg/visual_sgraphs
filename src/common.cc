@@ -81,7 +81,7 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
     kf_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/kf_markers", 1000);
 
-    fiducial_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/fiducial_markers", 1);
+    fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
     {
@@ -279,8 +279,45 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
 
 void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msg_time)
 {
-    // [TODO] sensor_msgs::PointCloud2 cloud = mappoint_to_pointcloud(markers, msg_time);
-    // fiducial_markers_pub.publish(cloud);
+    int numMarkers = markers.size();
+    if (numMarkers == 0)
+        return;
+
+    visualization_msgs::MarkerArray markerArray;
+    markerArray.markers.resize(numMarkers);
+
+    for (int idx = 0; idx < numMarkers; idx++)
+    {
+        visualization_msgs::Marker marker;
+        Sophus::SE3f markerPose = markers[idx]->getGlobalPose();
+
+        marker.color.a = 0;
+        marker.scale.x = 0.2;
+        marker.scale.y = 0.2;
+        marker.scale.z = 0.2;
+        marker.action = marker.ADD;
+        marker.ns = "fiducial_markers";
+        marker.lifetime = ros::Duration();
+        marker.id = markerArray.markers.size();
+        marker.header.stamp = ros::Time().now();
+        marker.header.frame_id = world_frame_id;
+        marker.mesh_use_embedded_materials = true;
+        marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+        marker.mesh_resource =
+            "package://orb_slam3_ros/config/Visualization/aruco_marker.dae";
+
+        marker.pose.position.x = markerPose.translation().x();
+        marker.pose.position.y = markerPose.translation().y();
+        marker.pose.position.z = markerPose.translation().z();
+        marker.pose.orientation.x = markerPose.unit_quaternion().x();
+        marker.pose.orientation.y = markerPose.unit_quaternion().y();
+        marker.pose.orientation.z = markerPose.unit_quaternion().z();
+        marker.pose.orientation.w = markerPose.unit_quaternion().w();
+
+        markerArray.markers.push_back(marker);
+    }
+
+    fiducial_markers_pub.publish(markerArray);
 }
 
 //////////////////////////////////////////////////

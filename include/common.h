@@ -22,6 +22,7 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>

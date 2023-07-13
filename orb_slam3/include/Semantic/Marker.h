@@ -24,7 +24,7 @@ namespace ORB_SLAM3
         bool markerInGMap;                                // Check if the marker is in the Global Map or not
         Sophus::SE3f local_pose;                          // Marker's pose (position and orientation) in the Local Map
         Sophus::SE3f global_pose;                         // Marker's pose (position and orientation) in the Global Map
-        std::map<KeyFrame *, Sophus::SE3f> mObservations; // Marker's observations
+        std::map<KeyFrame *, Sophus::SE3f> mObservations; // Marker's observations in keyFrames
 
     public:
         Marker();

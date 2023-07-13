@@ -8,6 +8,8 @@ Panels:
         - /raw left img1
         - /tracked points1
         - /all points1
+        - /fiducial markers1
+        - /fiducial markers1/Status1
       Splitter Ratio: 0.33636364340782166
     Tree Height: 379
   - Class: rviz/Selection
@@ -263,6 +265,14 @@ Visualization Manager:
       Shaft Length: 0.10000000149011612
       Topic: /orb_slam3_ros/trajectory
       Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /orb_slam3/fiducial_markers
+      Name: fiducial markers
+      Namespaces:
+        fiducial_markers: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
