@@ -308,7 +308,7 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
-                                   const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker> &markers)
+                                   const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker *> markers)
     {
         // Check if the sensor is RGB-D
         if (mSensor != RGBD && mSensor != IMU_RGBD)
@@ -384,7 +384,7 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas,
-                                        string filename, const std::vector<Marker> &markers)
+                                        string filename, const std::vector<Marker *> markers)
     {
 
         {

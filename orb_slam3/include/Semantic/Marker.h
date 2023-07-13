@@ -8,10 +8,13 @@
 #ifndef MARKER_H
 #define MARKER_H
 
+#include "Map.h"
 #include "KeyFrame.h"
 
 namespace ORB_SLAM3
 {
+    class Map;
+
     class Marker
     {
     private:
@@ -24,6 +27,9 @@ namespace ORB_SLAM3
         std::map<KeyFrame *, Sophus::SE3f> mObservations; // Marker's observations
 
     public:
+        Marker();
+        ~Marker();
+
         int getId() const;
         void setId(int value);
 
@@ -44,6 +50,13 @@ namespace ORB_SLAM3
 
         const std::map<KeyFrame *, Sophus::SE3f> &getObservations() const;
         void addObservation(KeyFrame *pKF);
+
+        Map *GetMap();
+        void SetMap(Map *pMap);
+
+    protected:
+        Map *mpMap;
+        std::mutex mMutexMap;
     };
 
 }

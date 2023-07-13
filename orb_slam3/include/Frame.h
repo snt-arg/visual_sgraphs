@@ -70,7 +70,7 @@ namespace ORB_SLAM3
         Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor *extractor,
               ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth,
               GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
-              const std::vector<Marker> &markers = std::vector<Marker>{});
+              const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Constructor for Monocular cameras (with or without IMU)
         Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
@@ -246,7 +246,7 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> mvpMapPoints;
 
         // Corresponding pose values for each marker.
-        std::vector<Marker> mvpMapMarkers;
+        std::vector<Marker *> mvpMapMarkers;
 
         // "Monocular" keypoints have a negative value.
         std::vector<float> mvuRight;

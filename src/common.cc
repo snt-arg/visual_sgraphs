@@ -15,7 +15,7 @@ bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
-std::vector<std::vector<ORB_SLAM3::Marker>> markers_buff;
+std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub;
 
@@ -379,7 +379,7 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
 void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
 {
     // The list of markers observed in the current frame
-    std::vector<ORB_SLAM3::Marker> current_markers;
+    std::vector<ORB_SLAM3::Marker *> current_markers;
 
     // Process the received marker array
     for (const auto &marker : marker_array.markers)
@@ -396,12 +396,12 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         normalized_pose.setRotationMatrix(Eigen::Quaternionf(marker_orientation.w, marker_orientation.x, marker_orientation.y, marker_orientation.z).normalized().toRotationMatrix());
 
         // Create a marker object of the currently visited marker
-        ORB_SLAM3::Marker current_marker;
-        current_marker.setOpId(-1);
-        current_marker.setId(marker_id);
-        current_marker.setTime(visit_time);
-        current_marker.setMarkerInGMap(false);
-        current_marker.setLocalPose(normalized_pose);
+        ORB_SLAM3::Marker *current_marker = new ORB_SLAM3::Marker();
+        current_marker->setOpId(-1);
+        current_marker->setId(marker_id);
+        current_marker->setTime(visit_time);
+        current_marker->setMarkerInGMap(false);
+        current_marker->setLocalPose(normalized_pose);
 
         // Add it to the list of observed markers
         current_markers.push_back(current_marker);
@@ -415,15 +415,15 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
 /**
  * Processes the common marker buffer to get the one closest to the current marker
  */
-std::pair<double, std::vector<ORB_SLAM3::Marker>> find_nearest_marker(double frame_timestamp)
+std::pair<double, std::vector<ORB_SLAM3::Marker *>> find_nearest_marker(double frame_timestamp)
 {
     double min_time_diff = 100;
-    std::vector<ORB_SLAM3::Marker> matched_markers;
+    std::vector<ORB_SLAM3::Marker *> matched_markers;
 
     // Loop through the markers_buff
     for (const auto &markers : markers_buff)
     {
-        double time_diff = markers[0].getTime() - frame_timestamp;
+        double time_diff = markers[0]->getTime() - frame_timestamp;
         if (time_diff < min_time_diff)
         {
             min_time_diff = time_diff;

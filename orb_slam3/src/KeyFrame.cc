@@ -304,7 +304,7 @@ namespace ORB_SLAM3
         mvpMapPoints[idx] = pMP;
     }
 
-    void KeyFrame::AddMapMarker(Marker marker)
+    void KeyFrame::AddMapMarker(Marker *marker)
     {
         unique_lock<mutex> lock(mMutexFeatures);
         mvpMapMarkers.push_back(marker);
@@ -385,7 +385,7 @@ namespace ORB_SLAM3
         return mvpMapPoints[idx];
     }
 
-    vector<Marker> KeyFrame::GetMapMarkers()
+    vector<Marker *> KeyFrame::GetMapMarkers()
     {
         unique_lock<mutex> lock(mMutexFeatures);
         return mvpMapMarkers;

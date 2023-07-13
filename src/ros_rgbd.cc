@@ -115,9 +115,9 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     }
 
     // Find the marker with the minimum time difference compared to the current frame
-    std::pair<double, std::vector<ORB_SLAM3::Marker>> result = find_nearest_marker(cv_ptrRGB->header.stamp.toSec());
+    std::pair<double, std::vector<ORB_SLAM3::Marker *>> result = find_nearest_marker(cv_ptrRGB->header.stamp.toSec());
     double min_time_diff = result.first;
-    std::vector<ORB_SLAM3::Marker> matched_markers = result.second;
+    std::vector<ORB_SLAM3::Marker *> matched_markers = result.second;
 
     // Tracking process sends markers found in this frame for tracking and clears the buffer
     if (min_time_diff < 0.05)

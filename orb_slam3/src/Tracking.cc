@@ -1577,7 +1577,7 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const double &timestamp,
-                                         string filename, const std::vector<Marker> &markers)
+                                         string filename, const std::vector<Marker *> markers)
     {
         mImGray = imRGB;
         cv::Mat imDepth = imD;
@@ -2476,19 +2476,20 @@ namespace ORB_SLAM3
 
             // Create MapMarkers and asscoiate to KeyFrame
             string mapMarkerStr = "";
-            for (auto &mCurrentMarker : mCurrentFrame.mvpMapMarkers)
+            for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
             {
+                mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
                 // Setting the Global Pose of the marker
-                mCurrentMarker.setGlobalPose(pKFini->GetPose() * mCurrentMarker.getLocalPose());
-                mCurrentMarker.addObservation(pKFini);
-                mCurrentMarker.setMarkerInGMap(true);
+                mCurrentMarker->setGlobalPose(pKFini->GetPose() * mCurrentMarker->getLocalPose());
+                mCurrentMarker->addObservation(pKFini);
+                mCurrentMarker->setMarkerInGMap(true);
                 pKFini->AddMapMarker(mCurrentMarker);
-                mapMarkerStr += std::to_string(mCurrentMarker.getId()) + " ";
+                mpAtlas->AddMapMarker(mCurrentMarker);
+                mapMarkerStr += std::to_string(mCurrentMarker->getId()) + " ";
             }
 
-            // [TODO] We should read from mpAtlas->MapMarkersInMap()
             Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points and " +
-                                   to_string(mCurrentFrame.mvpMapMarkers.size()) + " markers [" + mapMarkerStr + "].",
+                                   to_string(mpAtlas->MarkersInMap()) + " markers [" + mapMarkerStr + "].",
                                Verbose::VERBOSITY_QUIET);
 
             // cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
@@ -2802,8 +2803,6 @@ namespace ORB_SLAM3
 
         mCurrentFrame.mvpMapPoints = vpMapPointMatches;
         mCurrentFrame.SetPose(mLastFrame.GetPose());
-
-        // TODO: If matched markers is not empty we add to mCurrentFrame.mvpMapMarker
 
         // mCurrentFrame.PrintPointDistribution();
 
@@ -3392,35 +3391,33 @@ namespace ORB_SLAM3
                         nPoints++;
                     }
 
-                    // [TODO] Data Association of the markers
-                    for (const auto &keyframe : mpAtlas->GetAllKeyFrames())
+                    // check if the marker ids fromt he current frame exist in all the previous keyframes
+                    // first get the mapped marker from the keyframes
+                    for (const auto currentMapMarker : mpAtlas->GetAllMarkers())
                     {
-                        // check if the marker ids fromt he current frame exist in all the previous keyframes
-                        // first get the mapped marker from the keyframes
-                        for (const auto &currentKeyframeMaker : keyframe->GetMapMarkers())
+                        // Check if the marker is already in the Global map
+                        for (auto currentFrameMaker : mCurrentFrame.mvpMapMarkers)
                         {
-                            // second get the detected markers in the current frame
-                            for (auto &currentFrameMaker : mCurrentFrame.mvpMapMarkers)
-                            {
-                                if (currentFrameMaker.getId() == currentKeyframeMaker.getId())
-                                    currentFrameMaker.setMarkerInGMap(true);
-                            }
+                            if (currentFrameMaker->getId() == currentMapMarker->getId())
+                                currentFrameMaker->setMarkerInGMap(true);
                         }
                     }
 
                     // Add Markers to the KeyFrame
-                    for (Marker &marker : mCurrentFrame.mvpMapMarkers)
+                    for (Marker *marker : mCurrentFrame.mvpMapMarkers)
                     {
-                        if (!marker.isMarkerInGMap())
+                        if (!marker->isMarkerInGMap())
                         {
-                            marker.setGlobalPose(pKF->GetPose() * marker.getLocalPose());
-                            marker.addObservation(pKF);
-                            marker.setMarkerInGMap(true);
+                            marker->SetMap(mpAtlas->GetCurrentMap());
+                            marker->setGlobalPose(pKF->GetPose() * marker->getLocalPose());
+                            marker->addObservation(pKF);
+                            marker->setMarkerInGMap(true);
                             pKF->AddMapMarker(marker);
+                            mpAtlas->AddMapMarker(marker);
                         }
                         else
                         {
-                            marker.addObservation(pKF);
+                            marker->addObservation(pKF);
                         }
                     }
 

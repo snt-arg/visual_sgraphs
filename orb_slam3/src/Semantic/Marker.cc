@@ -9,6 +9,9 @@
 
 namespace ORB_SLAM3
 {
+    Marker::Marker() {}
+    Marker::~Marker() {}
+
     int Marker::getId() const
     {
         return id;
@@ -77,5 +80,17 @@ namespace ORB_SLAM3
     void Marker::addObservation(KeyFrame *pKF)
     {
         mObservations.insert({pKF, local_pose});
+    }
+
+    Map *Marker::GetMap()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return mpMap;
+    }
+
+    void Marker::SetMap(Map *pMap)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mpMap = pMap;
     }
 };

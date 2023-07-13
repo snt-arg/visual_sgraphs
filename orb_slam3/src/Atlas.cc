@@ -116,7 +116,8 @@ namespace ORB_SLAM3
 
     void Atlas::AddMapMarker(Marker *marker)
     {
-        // [TODO]
+        Map *pMapMP = marker->GetMap();
+        pMapMP->AddMapMarker(marker);
     }
 
     GeometricCamera *Atlas::AddCamera(GeometricCamera *pCam)
@@ -194,7 +195,8 @@ namespace ORB_SLAM3
 
     long unsigned int Atlas::MarkersInMap()
     {
-        // [TODO]
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->MarkersInMap();
     }
 
     long unsigned Atlas::KeyFramesInMap()
@@ -217,7 +219,8 @@ namespace ORB_SLAM3
 
     std::vector<Marker *> Atlas::GetAllMarkers()
     {
-        // [TODO]
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->GetAllMarkers();
     }
 
     std::vector<MapPoint *> Atlas::GetReferenceMapPoints()

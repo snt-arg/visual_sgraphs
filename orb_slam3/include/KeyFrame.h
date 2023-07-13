@@ -258,8 +258,8 @@ namespace ORB_SLAM3
         MapPoint *GetMapPoint(const size_t &idx);
 
         // MapMarker observation functions
-        void AddMapMarker(Marker marker);
-        std::vector<Marker> GetMapMarkers();
+        void AddMapMarker(Marker *marker);
+        std::vector<Marker *> GetMapMarkers();
 
         // KeyPoint functions
         std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r, const bool bRight = false) const;
@@ -452,7 +452,7 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> mvpMapPoints;
 
         // Markers available in each keyframe
-        std::vector<Marker> mvpMapMarkers;
+        std::vector<Marker *> mvpMapMarkers;
 
         // For save relation without pointer, this is necessary for save/load function
         std::vector<long long int> mvBackupMapPointsId;

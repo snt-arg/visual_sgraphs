@@ -46,15 +46,18 @@ namespace ORB_SLAM3
         return (a.second < b.second);
     }
 
-    void Optimizer::GlobalBundleAdjustemnt(Map *pMap, int nIterations, bool *pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
+    void Optimizer::GlobalBundleAdjustemnt(Map *pMap, int nIterations, bool *pbStopFlag,
+                                           const unsigned long nLoopKF, const bool bRobust)
     {
-        vector<KeyFrame *> vpKFs = pMap->GetAllKeyFrames();
         vector<MapPoint *> vpMP = pMap->GetAllMapPoints();
-        BundleAdjustment(vpKFs, vpMP, nIterations, pbStopFlag, nLoopKF, bRobust);
+        vector<KeyFrame *> vpKFs = pMap->GetAllKeyFrames();
+        vector<Marker *> vpMarkers = pMap->GetAllMarkers();
+        BundleAdjustment(vpKFs, vpMP, vpMarkers, nIterations, pbStopFlag, nLoopKF, bRobust);
     }
 
     void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
-                                     int nIterations, bool *pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
+                                     const vector<Marker *> &vpMarkers, int nIterations, bool *pbStopFlag,
+                                     const unsigned long nLoopKF, const bool bRobust)
     {
         vector<bool> vbNotIncludedMP;
         vbNotIncludedMP.resize(vpMP.size());
@@ -107,7 +110,6 @@ namespace ORB_SLAM3
         vpMapPointEdgeStereo.reserve(nExpectedSize);
 
         // Set KeyFrame vertices
-
         for (size_t i = 0; i < vpKFs.size(); i++)
         {
             KeyFrame *pKF = vpKFs[i];
@@ -268,6 +270,11 @@ namespace ORB_SLAM3
                 vbNotIncludedMP[i] = false;
             }
         }
+
+        // Set Marker vertices
+        // for ()
+        // {
+        // }
 
         // Optimize!
         optimizer.setVerbose(false);
@@ -1132,7 +1139,7 @@ namespace ORB_SLAM3
         list<MapPoint *> lLocalMapPoints;
 
         // Local Markers seen in Local KeyFrames
-        list<Marker> lLocalMapMarkers;
+        list<Marker *> lLocalMapMarkers;
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
@@ -1161,11 +1168,11 @@ namespace ORB_SLAM3
             }
 
             // Get all the Markers of the KF
-            vector<Marker> vpMarkers = pKFi->GetMapMarkers();
+            vector<Marker *> vpMarkers = pKFi->GetMapMarkers();
 
-            for (vector<Marker>::iterator idx = vpMarkers.begin(), vend = vpMarkers.end(); idx != vend; idx++)
+            for (vector<Marker *>::iterator idx = vpMarkers.begin(), vend = vpMarkers.end(); idx != vend; idx++)
             {
-                Marker &marker = *idx;
+                Marker *marker = *idx;
                 lLocalMapMarkers.push_back(marker);
             }
         }
@@ -1416,14 +1423,15 @@ namespace ORB_SLAM3
         num_edges = nEdges;
 
         // Iterate over local MapMarkers
-        for (list<Marker>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
+        for (list<Marker *>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
         {
+
             // [TODO] add as vertex se3, same as one of keyframe
             // set optimization id for mapmarker vertex
 
             // add an edge between the current mapmarker and its keyframe
-            // Marker pMarker = *idx;
-            // const map<KeyFrame *, Sophus::SE3f> markerObservations = pMarker->GetObservations();
+            Marker *pMarker = *idx;
+            const map<KeyFrame *, Sophus::SE3f> observations = pMarker->getObservations();
 
             // for (const auto &currentMarkerObs : markerObservations)
             // {
