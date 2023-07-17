@@ -1293,8 +1293,10 @@ namespace ORB_SLAM3
         const float thHuberStereo = sqrt(7.815);
 
         int nPoints = 0;
+        int nMarkers = 1;
 
         int nEdges = 0;
+        int maxOpId = 0;
 
         for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
         {
@@ -1306,6 +1308,10 @@ namespace ORB_SLAM3
             vPoint->setMarginalized(true);
             optimizer.addVertex(vPoint);
             nPoints++;
+
+            // Update the maxOpId to hold the biggest value
+            if (id > maxOpId)
+                maxOpId = id;
 
             const map<KeyFrame *, tuple<int, int>> observations = pMP->GetObservations();
 
@@ -1425,13 +1431,24 @@ namespace ORB_SLAM3
         // Iterate over local MapMarkers
         for (list<Marker *>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
         {
+            // Adding a vertex for each marker
+            Marker *pMapMarker = *idx;
+            g2o::VertexSE3Expmap *vMarker = new g2o::VertexSE3Expmap();
+            vMarker->setEstimate(g2o::SE3Quat(pMapMarker->getGlobalPose().unit_quaternion().cast<double>(),
+                                              pMapMarker->getGlobalPose().translation().cast<double>()));
+            int opId = maxOpId + nMarkers;
+            vMarker->setId(opId);
+            optimizer.addVertex(vMarker);
+            nMarkers++;
 
-            // [TODO] add as vertex se3, same as one of keyframe
-            // set optimization id for mapmarker vertex
+            // Setting the optimization ID for the marker
+            pMapMarker->setOpId(opId);
 
-            // add an edge between the current mapmarker and its keyframe
-            Marker *pMarker = *idx;
-            const map<KeyFrame *, Sophus::SE3f> observations = pMarker->getObservations();
+            // [TODO] add an edge between the current mapmarker and its keyframe
+            // const map<KeyFrame *, Sophus::SE3f> observations = pMapMarker->getObservations();
+            // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obInit = observations.begin(), obEnd = observations.end(); obInit != obEnd; obInit++)
+            // {
+            // }
 
             // for (const auto &currentMarkerObs : markerObservations)
             // {
