@@ -2480,7 +2480,7 @@ namespace ORB_SLAM3
             {
                 mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
                 // Setting the Global Pose of the marker
-                mCurrentMarker->setGlobalPose(pKFini->GetPose() * mCurrentMarker->getLocalPose());
+                mCurrentMarker->setGlobalPose(pKFini->GetPoseInverse() * mCurrentMarker->getLocalPose());
                 mCurrentMarker->addObservation(pKFini);
                 mCurrentMarker->setMarkerInGMap(true);
                 pKFini->AddMapMarker(mCurrentMarker);
@@ -3409,7 +3409,7 @@ namespace ORB_SLAM3
                         if (!marker->isMarkerInGMap())
                         {
                             marker->SetMap(mpAtlas->GetCurrentMap());
-                            marker->setGlobalPose(pKF->GetPose() * marker->getLocalPose());
+                            marker->setGlobalPose(pKF->GetPoseInverse() * marker->getLocalPose());
                             marker->addObservation(pKF);
                             marker->setMarkerInGMap(true);
                             pKF->AddMapMarker(marker);

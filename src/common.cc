@@ -428,9 +428,10 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
         geometry_msgs::Point marker_position = marker_pose.position;            // (x,y,z)
         geometry_msgs::Quaternion marker_orientation = marker_pose.orientation; // (x,y,z,w)
 
-        Sophus::SE3f normalized_pose;
-        normalized_pose.translation() = Eigen::Vector3f(marker_position.x, marker_position.y, marker_position.z);
-        normalized_pose.setRotationMatrix(Eigen::Quaternionf(marker_orientation.w, marker_orientation.x, marker_orientation.y, marker_orientation.z).normalized().toRotationMatrix());
+        Eigen::Vector3f marker_translation(marker_position.x, marker_position.y, marker_position.z);
+        Eigen::Quaternionf marker_quaternion(marker_orientation.w, marker_orientation.x,
+                                             marker_orientation.y, marker_orientation.z);
+        Sophus::SE3f normalized_pose(marker_quaternion, marker_translation);
 
         // Create a marker object of the currently visited marker
         ORB_SLAM3::Marker *current_marker = new ORB_SLAM3::Marker();
