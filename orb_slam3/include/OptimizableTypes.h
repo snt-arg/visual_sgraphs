@@ -20,11 +20,12 @@
 #define ORB_SLAM3_OPTIMIZABLETYPES_H
 
 #include "Thirdparty/g2o/g2o/core/base_unary_edge.h"
-#include <Thirdparty/g2o/g2o/types/types_six_dof_expmap.h>
-#include <Thirdparty/g2o/g2o/types/sim3.h>
+#include "Thirdparty/g2o/g2o/types/isometry3d_mappings.h"
 
 #include <Eigen/Geometry>
+#include <Thirdparty/g2o/g2o/types/sim3.h>
 #include <include/CameraModels/GeometricCamera.h>
+#include <Thirdparty/g2o/g2o/types/types_six_dof_expmap.h>
 
 namespace ORB_SLAM3
 {
@@ -232,13 +233,14 @@ namespace ORB_SLAM3
      * The edge used to connect a Marker vertex (SE3) to a KeyFrame vertex (SE3)
      * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
      */
-    class EdgeSE3ProjectSE3 : public g2o::BaseBinaryEdge<6, g2o::SE3Quat, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>
+    class EdgeSE3ProjectSE3 : public g2o::BaseBinaryEdge<6, g2o::Isometry3, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         EdgeSE3ProjectSE3();
         virtual bool read(std::istream &is);
         virtual bool write(std::ostream &os) const;
+        virtual void setMeasurement(const g2o::Isometry3 &m) override { _measurement = m; }
 
         void computeError()
         {
@@ -248,14 +250,15 @@ namespace ORB_SLAM3
             const g2o::VertexSE3Expmap *vKeyFrameGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[1]);
 
             // Calculate the local pose of the marker w.r.t. the keyframe
-            g2o::SE3Quat markerLP = vKeyFrameGP->estimate().inverse() * vMarkerGP->estimate();
+            g2o::SE3Quat markerLP = vKeyFrameGP->estimate() * vMarkerGP->estimate();
 
+            g2o::Isometry3 markerLPIso = g2o::Isometry3::Identity();
+            markerLPIso.matrix() = markerLP.to_homogeneous_matrix();
             // Calculating the transformation between the measuremenent and the marker's local pose
-            g2o::SE3Quat delta = _measurement.inverse() * markerLP;
+            g2o::Isometry3 delta = _measurement.inverse() * markerLPIso;
 
-            // [TODO] Calculating the final error
-            // _error = internal::toVectorMQT(delta);
-            // https://github.dev/RainerKuemmerle/g2o/blob/master/g2o/types/slam3d/isometry3d_mappings.cpp
+            // Calculating the final error
+            _error = g2o::internal::toVectorMQT(delta);
         }
     };
 }

@@ -372,27 +372,27 @@ namespace ORB_SLAM3
      *
      */
 
-    EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::SE3Quat, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>()
+    EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::Isometry3, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>()
     {
     }
 
     bool EdgeSE3ProjectSE3::read(std::istream &is)
     {
-        return true;
+        g2o::Vector7 meas;
+        g2o::internal::readVector(is, meas);
+        // normalize the quaternion to recover numerical precision lost by storing as
+        // human readable text
+        g2o::Vector4D::MapType(meas.data() + 3).normalize();
+        setMeasurement(g2o::internal::fromVectorQT(meas));
+        if (is.bad())
+            return false;
+        readInformationMatrix(is);
+        return is.good() || is.eof();
     }
 
     bool EdgeSE3ProjectSE3::write(std::ostream &os) const
     {
-        for (int i = 0; i < 6; i++)
-        {
-            os << _measurement[i] << " ";
-        }
-
-        for (int i = 0; i < 6; i++)
-            for (int j = i; j < 6; j++)
-            {
-                os << " " << information()(i, j);
-            }
-        return os.good();
+        g2o::internal::writeVector(os, g2o::internal::toVectorQT(measurement()));
+        return writeInformationMatrix(os);
     }
 }
