@@ -128,6 +128,8 @@ namespace ORB_SLAM3
         const float thHuber2D = sqrt(5.99);
         const float thHuber3D = sqrt(7.815);
 
+        int maxOpId = 0;
+
         // Set MapPoint vertices
         for (size_t i = 0; i < vpMP.size(); i++)
         {
@@ -140,6 +142,10 @@ namespace ORB_SLAM3
             vPoint->setId(id);
             vPoint->setMarginalized(true);
             optimizer.addVertex(vPoint);
+
+            // Update the maxOpId to hold the biggest value
+            if (id > maxOpId)
+                maxOpId = id;
 
             const map<KeyFrame *, tuple<int, int>> observations = pMP->GetObservations();
 
@@ -272,9 +278,44 @@ namespace ORB_SLAM3
         }
 
         // Set Marker vertices
-        // for ()
-        // {
-        // }
+        int nMarkers = 1;
+        for (const auto &vpMarker : vpMarkers)
+        {
+            // Adding a vertex for each marker
+            g2o::VertexSE3Expmap *vMarker = new g2o::VertexSE3Expmap();
+            vMarker->setEstimate(g2o::SE3Quat(vpMarker->getGlobalPose().unit_quaternion().cast<double>(),
+                                              vpMarker->getGlobalPose().translation().cast<double>()));
+            int opIdG = maxOpId + nMarkers;
+            vMarker->setId(opIdG);
+            optimizer.addVertex(vMarker);
+            nMarkers++;
+
+            // Setting the global optimization ID for the marker
+            vpMarker->setOpIdG(opIdG);
+
+            // Adding an edge between the Marker and the KeyFrame
+            const map<KeyFrame *, Sophus::SE3f> observations = vpMarker->getObservations();
+            std::cout << "Size of Observations inside global: " << observations.size() << std::endl;
+            for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            {
+                KeyFrame *pKFi = obsId->first;
+                Sophus::SE3f MarkerLocalObs = obsId->second;
+                ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+
+                Eigen::Isometry3d MarkerLocalObsIso = Eigen::Isometry3d::Identity();
+                MarkerLocalObsIso.matrix() = MarkerLocalObs.cast<double>().matrix();
+                e->setMeasurement(MarkerLocalObsIso);
+                double markerInfo = 0.1; // [TODO] Should read from marker score in aruco_ros
+                Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
+                e->setInformation(informationMat * markerInfo);
+                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                e->setRobustKernel(rk);
+                rk->setDelta(thHuber2D);
+                optimizer.addEdge(e);
+            }
+        }
 
         // Optimize!
         optimizer.setVerbose(false);
@@ -386,6 +427,15 @@ namespace ORB_SLAM3
                 pMP->mPosGBA = vPoint->estimate().cast<float>();
                 pMP->mnBAGlobalForKF = nLoopKF;
             }
+        }
+
+        // Markers
+        for (auto &vpMarker : vpMarkers)
+        {
+            g2o::VertexSE3Expmap *vMarker = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(vpMarker->getOpIdG()));
+            g2o::SE3Quat SE3quat = vMarker->estimate();
+            Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
+            vpMarker->setGlobalPose(Tiw);
         }
     }
 
@@ -1444,13 +1494,10 @@ namespace ORB_SLAM3
             // Setting the optimization ID for the marker
             pMapMarker->setOpId(opId);
 
-            // [TODO] Adding an edge between the Marker and the KeyFrame
+            // Adding an edge between the Marker and the KeyFrame
             const map<KeyFrame *, Sophus::SE3f> observations = pMapMarker->getObservations();
-            std::cout << "Size of Observations: " << observations.size() << std::endl;
             for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
             {
-                std::cout << "Inside the loop: " << std::endl;
-
                 KeyFrame *pKFi = obsId->first;
                 Sophus::SE3f MarkerLocalObs = obsId->second;
                 ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
@@ -1540,7 +1587,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Updating optimized global poses
+        // Recovering optimized data (local)
         // 1) Keyframes
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {

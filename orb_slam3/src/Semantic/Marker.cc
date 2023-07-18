@@ -32,6 +32,16 @@ namespace ORB_SLAM3
         opId = value;
     }
 
+    int Marker::getOpIdG() const
+    {
+        return opIdG;
+    }
+
+    void Marker::setOpIdG(int value)
+    {
+        opIdG = value;
+    }
+
     double Marker::getTime() const
     {
         return time;

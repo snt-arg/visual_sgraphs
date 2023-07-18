@@ -19,7 +19,8 @@ namespace ORB_SLAM3
     {
     private:
         int id;                                           // The marker's identifier
-        int opId;                                         // The marker's identifier in the optimizer
+        int opId;                                         // The marker's identifier in the local optimizer
+        int opIdG;                                        // The marker's identifier in the global optimizer
         double time;                                      // The timestamp (in seconds) of observing the marker
         bool markerInGMap;                                // Check if the marker is in the Global Map or not
         Sophus::SE3f local_pose;                          // Marker's pose (position and orientation) in the Local Map
@@ -30,11 +31,16 @@ namespace ORB_SLAM3
         Marker();
         ~Marker();
 
+        // [TODO]: Add mutex for getter-setter functions
+
         int getId() const;
         void setId(int value);
 
         int getOpId() const;
         void setOpId(int value);
+
+        int getOpIdG() const;
+        void setOpIdG(int value);
 
         double getTime() const;
         void setTime(double value);
