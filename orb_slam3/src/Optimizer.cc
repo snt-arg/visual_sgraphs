@@ -1444,27 +1444,21 @@ namespace ORB_SLAM3
             // Setting the optimization ID for the marker
             pMapMarker->setOpId(opId);
 
-            // [TODO] add an edge between the current mapmarker and its keyframe
+            // [TODO] Adding an edge between the Marker and the KeyFrame
             // const map<KeyFrame *, Sophus::SE3f> observations = pMapMarker->getObservations();
-            // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obInit = observations.begin(), obEnd = observations.end(); obInit != obEnd; obInit++)
+            // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
             // {
-            // }
-
-            // for (const auto &currentMarkerObs : markerObservations)
-            // {
-            //     KeyFrame *pKFi = currentMarkerObs->first;
-            //     Sophus::SE3f local_pose = currentMarkerObs->second;
-
-            // g2o::EdgeSE3 *e = new ORB_SLAM3::EdgeSE3();
-            // e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
-            // e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
-            // e->setMeasurement(g2o::SE3Quat(local_pose.unit_quaternion().cast<double>(), local_pose.translation().cast<double>()))
-            // const float &invSigma2 = pKFi->mvInvLevelSigma2[kp.octave];
-            // e->setInformation(Eigen::Matrix2d::Identity() * invSigma2);
-
-            // g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-            // e->setRobustKernel(rk);
-            // rk->setDelta(thHuberMono);
+            //     KeyFrame *pKFi = obsId->first;
+            //     Sophus::SE3f MarkerLocalObs = obsId->second;
+            //     ORB_SLAM3::EdgeMarker *e = new ORB_SLAM3::EdgeMarker();
+            //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+            //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+            //     e->setMeasurement(g2o::SE3Quat(MarkerLocalObs.unit_quaternion().cast<double>(), MarkerLocalObs.translation().cast<double>()))
+            //         const float &invSigma2 = pKFi->mvInvLevelSigma2[kp.octave];
+            //     e->setInformation(Eigen::Matrix2d::Identity() * invSigma2);
+            //     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+            //     e->setRobustKernel(rk);
+            //     rk->setDelta(thHuberMono);
             // }
         }
 

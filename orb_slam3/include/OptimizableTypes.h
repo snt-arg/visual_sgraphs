@@ -222,6 +222,42 @@ namespace ORB_SLAM3
         // virtual void linearizeOplus();
     };
 
+    /**
+     *
+     * Below classes have been added to ORB-SLAM 3.0 to augment fiducial markers and semantic data.
+     *
+     */
+
+    /**
+     * The edge used to connect a Marker vertex (SE3) to a KeyFrame vertex (SE3)
+     * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
+     */
+    class EdgeSE3ProjectSE3 : public g2o::BaseBinaryEdge<6, g2o::SE3Quat, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        EdgeSE3ProjectSE3();
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
+
+        void computeError()
+        {
+            // Marker's global pose
+            const g2o::VertexSE3Expmap *vMarkerGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            // KeyFrame's global pose
+            const g2o::VertexSE3Expmap *vKeyFrameGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[1]);
+
+            // Calculate the local pose of the marker w.r.t. the keyframe
+            g2o::SE3Quat markerLP = vKeyFrameGP->estimate().inverse() * vMarkerGP->estimate();
+
+            // Calculating the transformation between the measuremenent and the marker's local pose
+            g2o::SE3Quat delta = _measurement.inverse() * markerLP;
+
+            // [TODO] Calculating the final error
+            // _error = internal::toVectorMQT(delta);
+            // https://github.dev/RainerKuemmerle/g2o/blob/master/g2o/types/slam3d/isometry3d_mappings.cpp
+        }
+    };
 }
 
 #endif // ORB_SLAM3_OPTIMIZABLETYPES_H
