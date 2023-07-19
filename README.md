@@ -1,5 +1,7 @@
 # Semantic ORB-SLAM3-ROS
 
+![Marker-based ORB-SLAM 3.0](demo.gif "Marker-based ORB-SLAM 3.0")
+
 A modified version of [ORB-SLAM3](https://github.com/UZ-SLAMLab/ORB_SLAM3) ROS implementation version introduced [here](https://github.com/thien94/orb_slam3_ros) that supports adding semantic entities to the final map and hierarchical presentation.
 
 ## 📝 Prerequisites
