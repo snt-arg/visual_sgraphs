@@ -18,10 +18,10 @@
 
 #include "Optimizer.h"
 
+#include <mutex>
 #include <complex>
-
-#include <Eigen/StdVector>
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 #include <unsupported/Eigen/MatrixFunctions>
 
 #include "Thirdparty/g2o/g2o/core/sparse_block_matrix.h"
@@ -34,9 +34,6 @@
 #include "Thirdparty/g2o/g2o/solvers/linear_solver_dense.h"
 #include "G2oTypes.h"
 #include "Converter.h"
-
-#include <mutex>
-
 #include "OptimizableTypes.h"
 
 namespace ORB_SLAM3
@@ -109,7 +106,7 @@ namespace ORB_SLAM3
         vector<MapPoint *> vpMapPointEdgeStereo;
         vpMapPointEdgeStereo.reserve(nExpectedSize);
 
-        // Set KeyFrame vertices
+        // Set KeyFrame vertices (Global Optimization)
         for (size_t i = 0; i < vpKFs.size(); i++)
         {
             KeyFrame *pKF = vpKFs[i];
@@ -130,7 +127,7 @@ namespace ORB_SLAM3
 
         int maxOpId = 0;
 
-        // Set MapPoint vertices
+        // Set MapPoint vertices (Global Optimization)
         for (size_t i = 0; i < vpMP.size(); i++)
         {
             MapPoint *pMP = vpMP[i];
@@ -277,7 +274,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Set Marker vertices
+        // Set Marker vertices (Global Optimization)
         int nMarkers = 1;
         for (const auto &vpMarker : vpMarkers)
         {
@@ -290,10 +287,10 @@ namespace ORB_SLAM3
             optimizer.addVertex(vMarker);
             nMarkers++;
 
-            // Setting the global optimization ID for the marker
+            // Setting the Global Optimization ID for the marker
             vpMarker->setOpIdG(opIdG);
 
-            // Adding an edge between the Marker and the KeyFrame
+            // Adding an edge between the Marker and KeyFrames
             const map<KeyFrame *, Sophus::SE3f> observations = vpMarker->getObservations();
             std::cout << "Size of Observations inside global: " << observations.size() << std::endl;
             for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
@@ -323,8 +320,8 @@ namespace ORB_SLAM3
         optimizer.optimize(nIterations);
         Verbose::PrintMess("BA: End of the optimization", Verbose::VERBOSITY_NORMAL);
 
-        // Recover optimized data
-        // Keyframes
+        // Recover optimized data (Global Optimization)
+        // Globally Optimized Keyframes
         for (size_t i = 0; i < vpKFs.size(); i++)
         {
             KeyFrame *pKF = vpKFs[i];
@@ -405,7 +402,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Points
+        // Globally Optimized MapPoints
         for (size_t i = 0; i < vpMP.size(); i++)
         {
             if (vbNotIncludedMP[i])
@@ -429,7 +426,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Markers
+        // Globally Optimized Markers
         for (auto &vpMarker : vpMarkers)
         {
             g2o::VertexSE3Expmap *vMarker = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(vpMarker->getOpIdG()));
@@ -1193,14 +1190,14 @@ namespace ORB_SLAM3
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
-            // Get the reference to the KF
+            // Get the reference to the KF (Local Optimization)
             KeyFrame *pKFi = *lit;
             if (pKFi->mnId == pMap->GetInitKFid())
             {
                 num_fixedKF = 1;
             }
 
-            // Get all the MapPoints of the KF
+            // Get all the MapPoints of the KF (Local Optimization)
             vector<MapPoint *> vpMPs = pKFi->GetMapPointMatches();
 
             for (vector<MapPoint *>::iterator vit = vpMPs.begin(), vend = vpMPs.end(); vit != vend; vit++)
@@ -1217,7 +1214,7 @@ namespace ORB_SLAM3
                     }
             }
 
-            // Get all the Markers of the KF
+            // Get all the Markers of the KF (Local Optimization)
             vector<Marker *> vpMarkers = pKFi->GetMapMarkers();
 
             for (vector<Marker *>::iterator idx = vpMarkers.begin(), vend = vpMarkers.end(); idx != vend; idx++)
@@ -1227,7 +1224,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Fixed Keyframes. Keyframes that see Local MapPoints but that are not Local Keyframes
+        // Fixed Keyframes (Keyframes that see Local MapPoints but that are not Local Keyframes)
         list<KeyFrame *> lFixedCameras;
         for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
         {
@@ -1252,7 +1249,7 @@ namespace ORB_SLAM3
             return;
         }
 
-        // Setup optimizer
+        // Setup optimizer (Local Optimization)
         g2o::SparseOptimizer optimizer;
         g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
 
@@ -1276,7 +1273,7 @@ namespace ORB_SLAM3
         pCurrentMap->msOptKFs.clear();
         pCurrentMap->msFixedKFs.clear();
 
-        // Set Local KeyFrame vertices
+        // Local KeyFrame vertices (Local Optimization)
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
             KeyFrame *pKFi = *lit;
@@ -1293,7 +1290,7 @@ namespace ORB_SLAM3
         }
         num_OptKF = lLocalKeyFrames.size();
 
-        // Set Fixed KeyFrame vertices
+        // Fixed KeyFrame vertices (Local Optimization)
         for (list<KeyFrame *>::iterator lit = lFixedCameras.begin(), lend = lFixedCameras.end(); lit != lend; lit++)
         {
             KeyFrame *pKFi = *lit;
@@ -1309,7 +1306,7 @@ namespace ORB_SLAM3
             pCurrentMap->msFixedKFs.insert(pKFi->mnId);
         }
 
-        // Set MapPoint vertices
+        // MapPoint vertices (Local Optimization)
         const int nExpectedSize = (lLocalKeyFrames.size() + lFixedCameras.size()) * lLocalMapPoints.size();
 
         vector<ORB_SLAM3::EdgeSE3ProjectXYZ *> vpEdgesMono;
@@ -1478,7 +1475,7 @@ namespace ORB_SLAM3
         }
         num_edges = nEdges;
 
-        // Iterate over local MapMarkers
+        // Markers (Local Optimization)
         for (list<Marker *>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
         {
             // Adding a vertex for each marker
@@ -1491,10 +1488,10 @@ namespace ORB_SLAM3
             optimizer.addVertex(vMarker);
             nMarkers++;
 
-            // Setting the optimization ID for the marker
+            // Setting the local optimization ID for the marker
             pMapMarker->setOpId(opId);
 
-            // Adding an edge between the Marker and the KeyFrame
+            // Adding an edge between the Marker and KeyFrames
             const map<KeyFrame *, Sophus::SE3f> observations = pMapMarker->getObservations();
             for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
             {
@@ -1587,8 +1584,8 @@ namespace ORB_SLAM3
             }
         }
 
-        // Recovering optimized data (local)
-        // 1) Keyframes
+        // Recovering optimized data (Local Optimization)
+        // Locally Optimized Keyframes
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
             KeyFrame *pKFi = *lit;
@@ -1598,7 +1595,7 @@ namespace ORB_SLAM3
             pKFi->SetPose(Tiw);
         }
 
-        // 2) Points
+        // Locally Optimized Points
         for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
         {
             MapPoint *pMP = *lit;
@@ -1607,7 +1604,7 @@ namespace ORB_SLAM3
             pMP->UpdateNormalAndDepth();
         }
 
-        // 3) Markers [TODO]
+        // Locally Optimized Markers
         for (list<Marker *>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
         {
             Marker *pMapMarker = *idx;

@@ -224,9 +224,7 @@ namespace ORB_SLAM3
     };
 
     /**
-     *
-     * Below classes have been added to ORB-SLAM 3.0 to augment fiducial markers and semantic data.
-     *
+     * 🚀 Below classes have been added to ORB-SLAM 3.0 to augment fiducial markers and semantic data.
      */
 
     /**
