@@ -45,7 +45,6 @@
 
 namespace g2o
 {
-
   /**
    * return the square value
    */
