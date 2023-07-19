@@ -56,7 +56,7 @@ namespace g2o
         //     return Quaternion(w, x, y, z).toRotationMatrix();
         // }
 
-        Vector3 toCompactQuaternion(const Matrix3 &R)
+        Vector3D toCompactQuaternion(const Matrix3D &R)
         {
             Quaternion q(R);
             normalize(q);
@@ -73,15 +73,15 @@ namespace g2o
         //     return Quaternion(w, v[0], v[1], v[2]).toRotationMatrix();
         // }
 
-        Vector6 toVectorMQT(const Isometry3 &t)
+        Vector6D toVectorMQT(const Isometry3D &t)
         {
-            Vector6 vec;
+            Vector6D vec;
             vec.block<3, 1>(3, 0) = toCompactQuaternion(extractRotation(t));
             vec.block<3, 1>(0, 0) = t.translation();
             return vec;
         }
 
-        // Vector6 toVectorET(const Isometry3 &t)
+        // Vector6 toVectorET(const Isometry3D &t)
         // {
         //     Vector6 vec;
         //     vec.block<3, 1>(3, 0) = toEuler(extractRotation(t));
@@ -89,11 +89,11 @@ namespace g2o
         //     return vec;
         // }
 
-        Vector7 toVectorQT(const Isometry3 &t)
+        Vector7D toVectorQT(const Isometry3D &t)
         {
             Quaternion q(extractRotation(t));
             q.normalize();
-            Vector7 v;
+            Vector7D v;
             v[3] = q.x();
             v[4] = q.y();
             v[5] = q.z();
@@ -118,23 +118,23 @@ namespace g2o
         //     return t;
         // }
 
-        Isometry3 fromVectorQT(const Vector7 &v)
+        Isometry3D fromVectorQT(const Vector7D &v)
         {
-            Isometry3 t;
+            Isometry3D t;
             t = Quaternion(v[6], v[3], v[4], v[5]).toRotationMatrix();
             t.translation() = v.head<3>();
             return t;
         }
 
-        // SE3Quat toSE3Quat(const Isometry3 &t)
+        // SE3Quat toSE3Quat(const Isometry3D &t)
         // {
         //     SE3Quat result(t.matrix().topLeftCorner<3, 3>(), t.translation());
         //     return result;
         // }
 
-        // Isometry3 fromSE3Quat(const SE3Quat &t)
+        // Isometry3D fromSE3Quat(const SE3Quat &t)
         // {
-        //     Isometry3 result = (Isometry3)t.rotation();
+        //     Isometry3D result = (Isometry3D)t.rotation();
         //     result.translation() = t.translation();
         //     return result;
         // }

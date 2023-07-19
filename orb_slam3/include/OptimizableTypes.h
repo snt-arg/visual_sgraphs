@@ -233,14 +233,14 @@ namespace ORB_SLAM3
      * The edge used to connect a Marker vertex (SE3) to a KeyFrame vertex (SE3)
      * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
      */
-    class EdgeSE3ProjectSE3 : public g2o::BaseBinaryEdge<6, g2o::Isometry3, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>
+    class EdgeSE3ProjectSE3 : public g2o::BaseBinaryEdge<6, g2o::Isometry3D, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         EdgeSE3ProjectSE3();
         virtual bool read(std::istream &is);
         virtual bool write(std::ostream &os) const;
-        virtual void setMeasurement(const g2o::Isometry3 &m) override { _measurement = m; }
+        virtual void setMeasurement(const g2o::Isometry3D &m) override { _measurement = m; }
 
         void computeError()
         {
@@ -252,10 +252,10 @@ namespace ORB_SLAM3
             // Calculate the local pose of the marker w.r.t. the keyframe
             g2o::SE3Quat markerLP = vKeyFrameGP->estimate() * vMarkerGP->estimate();
 
-            g2o::Isometry3 markerLPIso = g2o::Isometry3::Identity();
+            g2o::Isometry3D markerLPIso = g2o::Isometry3D::Identity();
             markerLPIso.matrix() = markerLP.to_homogeneous_matrix();
             // Calculating the transformation between the measuremenent and the marker's local pose
-            g2o::Isometry3 delta = _measurement.inverse() * markerLPIso;
+            g2o::Isometry3D delta = _measurement.inverse() * markerLPIso;
 
             // Calculating the final error
             _error = g2o::internal::toVectorMQT(delta);

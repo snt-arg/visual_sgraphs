@@ -38,7 +38,7 @@ namespace g2o
          * Note, we could also call .linear() on the Isometry3. However, I dislike
          * the name of that function a bit.
          */
-        inline Isometry3::ConstLinearPart extractRotation(const Isometry3 &A)
+        inline Isometry3D::ConstLinearPart extractRotation(const Isometry3D &A)
         {
             return A.matrix().topLeftCorner<3, 3>();
         }
@@ -96,7 +96,7 @@ namespace g2o
         /**
          * Converts a Rotation Matrix to (qx qy, qz)
          */
-        G2O_TYPES_SLAM3D_API Vector3 toCompactQuaternion(const Matrix3 &R);
+        G2O_TYPES_SLAM3D_API Vector3D toCompactQuaternion(const Matrix3D &R);
 
         // /**
         //  * (qx qy, qz) -> Rotation matrix, whereas (qx, qy, qz) are assumed to be
@@ -107,7 +107,7 @@ namespace g2o
         /**
          * Converts an Isometry3 to (x, y, z, qx, qy, qz)
          */
-        G2O_TYPES_SLAM3D_API Vector6 toVectorMQT(const Isometry3 &t);
+        G2O_TYPES_SLAM3D_API Vector6D toVectorMQT(const Isometry3D &t);
 
         // /**
         //  * Converts an Isometry3 to (x, y, z, roll, pitch, yaw)
@@ -117,7 +117,7 @@ namespace g2o
         // /**
         //  * Converts an Isometry3 to (x, y, z, qx, qy, qz, qw)
         //  */
-        G2O_TYPES_SLAM3D_API Vector7 toVectorQT(const Isometry3 &t);
+        G2O_TYPES_SLAM3D_API Vector7D toVectorQT(const Isometry3D &t);
 
         // /**
         //  * (x, y, z, qx, qy, qz) -> Isometry3
@@ -130,7 +130,7 @@ namespace g2o
         // /**
         //  * (x, y, z, qx, qy, qz, qw) -> Isometry3
         //  */
-        G2O_TYPES_SLAM3D_API Isometry3 fromVectorQT(const Vector7 &v);
+        G2O_TYPES_SLAM3D_API Isometry3D fromVectorQT(const Vector7D &v);
 
         // /**
         //  * convert an Isometry3 to the old SE3Quat class

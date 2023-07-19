@@ -372,13 +372,13 @@ namespace ORB_SLAM3
      *
      */
 
-    EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::Isometry3, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>()
+    EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::Isometry3D, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>()
     {
     }
 
     bool EdgeSE3ProjectSE3::read(std::istream &is)
     {
-        g2o::Vector7 meas;
+        g2o::Vector7D meas;
         g2o::internal::readVector(is, meas);
         // normalize the quaternion to recover numerical precision lost by storing as
         // human readable text

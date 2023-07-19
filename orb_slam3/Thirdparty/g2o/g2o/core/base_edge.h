@@ -27,9 +27,8 @@
 #ifndef G2O_BASE_EDGE_H
 #define G2O_BASE_EDGE_H
 
-#include <iostream>
 #include <limits>
-
+#include <iostream>
 #include <Eigen/Core>
 
 #include "optimizable_graph.h"
