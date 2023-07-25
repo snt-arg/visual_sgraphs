@@ -55,7 +55,7 @@ namespace ORB_SLAM3
         void setGlobalPose(const Sophus::SE3f &value);
 
         const std::map<KeyFrame *, Sophus::SE3f> &getObservations() const;
-        void addObservation(KeyFrame *pKF);
+        void addObservation(KeyFrame *pKF, Sophus::SE3f local_pose);
 
         Map *GetMap();
         void SetMap(Map *pMap);

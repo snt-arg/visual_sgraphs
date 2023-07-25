@@ -2478,13 +2478,23 @@ namespace ORB_SLAM3
             string mapMarkerStr = "";
             for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
             {
-                mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
                 // Setting the Global Pose of the marker
                 mCurrentMarker->setGlobalPose(pKFini->GetPoseInverse() * mCurrentMarker->getLocalPose());
-                mCurrentMarker->addObservation(pKFini);
                 mCurrentMarker->setMarkerInGMap(true);
-                pKFini->AddMapMarker(mCurrentMarker);
-                mpAtlas->AddMapMarker(mCurrentMarker);
+                
+                ORB_SLAM3::Marker* currentMapMarker = new ORB_SLAM3::Marker();
+                currentMapMarker->setOpId(mCurrentMarker->getOpId());
+                currentMapMarker->setId(mCurrentMarker->getId());
+                currentMapMarker->setTime(mCurrentMarker->getTime());
+                currentMapMarker->setMarkerInGMap(mCurrentMarker->isMarkerInGMap());
+                currentMapMarker->setLocalPose(mCurrentMarker->getLocalPose());
+                currentMapMarker->SetMap(mpAtlas->GetCurrentMap());
+                currentMapMarker->setGlobalPose(mCurrentMarker->getGlobalPose());
+                currentMapMarker->addObservation(pKFini, mCurrentMarker->getLocalPose());
+
+                pKFini->AddMapMarker(currentMapMarker);
+                mpAtlas->AddMapMarker(currentMapMarker);
+                
                 mapMarkerStr += std::to_string(mCurrentMarker->getId()) + " ";
             }
 
@@ -3404,20 +3414,33 @@ namespace ORB_SLAM3
                     }
 
                     // Add Markers to the KeyFrame
-                    for (Marker *marker : mCurrentFrame.mvpMapMarkers)
+                    for (Marker *mCurrentMarker : mCurrentFrame.mvpMapMarkers)
                     {
-                        if (!marker->isMarkerInGMap())
+                        if (!mCurrentMarker->isMarkerInGMap())
                         {
-                            marker->SetMap(mpAtlas->GetCurrentMap());
-                            marker->setGlobalPose(pKF->GetPoseInverse() * marker->getLocalPose());
-                            marker->addObservation(pKF);
-                            marker->setMarkerInGMap(true);
-                            pKF->AddMapMarker(marker);
-                            mpAtlas->AddMapMarker(marker);
+                            mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
+                            mCurrentMarker->setGlobalPose(pKF->GetPoseInverse() * mCurrentMarker->getLocalPose());
+                            mCurrentMarker->setMarkerInGMap(true);
+                            
+                            ORB_SLAM3::Marker* currentMapMarker = new ORB_SLAM3::Marker();
+                            currentMapMarker->setOpId(mCurrentMarker->getOpId());
+                            currentMapMarker->setId(mCurrentMarker->getId());
+                            currentMapMarker->setTime(mCurrentMarker->getTime());
+                            currentMapMarker->setMarkerInGMap(mCurrentMarker->isMarkerInGMap());
+                            currentMapMarker->setLocalPose(mCurrentMarker->getLocalPose());
+                            currentMapMarker->SetMap(mpAtlas->GetCurrentMap());
+                            currentMapMarker->setGlobalPose(mCurrentMarker->getGlobalPose());  
+                            currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());                        
+                            
+                            pKF->AddMapMarker(currentMapMarker);
+                            mpAtlas->AddMapMarker(currentMapMarker);
                         }
                         else
-                        {
-                            marker->addObservation(pKF);
+                        {   
+                            for(auto currentMapMarker : mpAtlas->GetAllMarkers()) {
+                                if(currentMapMarker->getId() == mCurrentMarker->getId())
+                                    currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
+                            }
                         }
                     }
 

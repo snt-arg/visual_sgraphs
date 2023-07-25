@@ -87,7 +87,7 @@ namespace ORB_SLAM3
         return mObservations;
     }
 
-    void Marker::addObservation(KeyFrame *pKF)
+    void Marker::addObservation(KeyFrame *pKF, Sophus::SE3f local_pose)
     {
         mObservations.insert({pKF, local_pose});
     }

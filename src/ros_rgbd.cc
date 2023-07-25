@@ -120,7 +120,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     std::vector<ORB_SLAM3::Marker *> matched_markers = result.second;
 
     // Tracking process sends markers found in this frame for tracking and clears the buffer
-    if (min_time_diff < 0.05)
+    if (min_time_diff < 0.1)
     {
         Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec(),
                                             {}, "", matched_markers);
