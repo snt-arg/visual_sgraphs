@@ -52,10 +52,13 @@ namespace g2o
   typedef Eigen::Transform<double, 2, Eigen::Isometry, Eigen::ColMajor> Isometry2D;
   typedef Eigen::Transform<double, 3, Eigen::Isometry, Eigen::ColMajor> Isometry3D;
 
+  // Affine (double)
   typedef Eigen::Transform<double, 2, Eigen::Affine, Eigen::ColMajor> Affine2D;
   typedef Eigen::Transform<double, 3, Eigen::Affine, Eigen::ColMajor> Affine3D;
 
+  typedef Eigen::AngleAxis<double> AngleAxis;
   typedef Eigen::Quaternion<double> Quaternion;
+  typedef Eigen::Rotation2D<double> Rotation2D;
 
 } // end namespace g2o
 

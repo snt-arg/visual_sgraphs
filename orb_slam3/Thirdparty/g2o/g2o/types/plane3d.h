@@ -27,6 +27,51 @@ namespace g2o
             normalize(_coeffs);
         }
 
+        double distance() const { return -_coeffs(3); }
+
+        Vector3D normal() const { return _coeffs.head<3>(); }
+
+        static double azimuth(const Vector3D &v) { return std::atan2(v(1), v(0)); }
+
+        static double elevation(const Vector3D &v)
+        {
+            return std::atan2(v(2), v.head<2>().norm());
+        }
+
+        static Matrix3D rotation(const Vector3D &v)
+        {
+            double _azimuth = azimuth(v);
+            double _elevation = elevation(v);
+            return (AngleAxis(_azimuth, Vector3D::UnitZ()) *
+                    AngleAxis(-_elevation, Vector3D::UnitY()))
+                .toRotationMatrix();
+        }
+
+        inline void oplus(const Vector3D &v)
+        {
+            // Construct a normal from azimuth and elevation
+            double _azimuth = v[0];
+            double _elevation = v[1];
+            double s = std::sin(_elevation), c = std::cos(_elevation);
+            Vector3D n(c * std::cos(_azimuth), c * std::sin(_azimuth), s);
+
+            // Rotate the normal
+            Matrix3D R = rotation(normal());
+            double d = distance() + v[2];
+            _coeffs.head<3>() = R * n;
+            _coeffs(3) = -d;
+            normalize(_coeffs);
+        }
+
+        inline Vector3D ominus(const Plane3D &plane)
+        {
+            // Construct the rotation that would bring the plane normal in (1 0 0)
+            Matrix3D R = rotation(normal()).transpose();
+            Vector3D n = R * plane.normal();
+            double d = distance() - plane.distance();
+            return Vector3D(azimuth(n), elevation(n), d);
+        }
+
     protected:
         Vector4D _coeffs;
 
