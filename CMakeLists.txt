@@ -128,6 +128,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/Semantic/Marker.cc
   orb_slam3/src/Semantic/Wall.cc
   orb_slam3/src/Semantic/Door.cc
+  orb_slam3/src/Semantic/Room.cc
   orb_slam3/include/System.h
   orb_slam3/include/Tracking.h
   orb_slam3/include/LocalMapping.h
@@ -161,6 +162,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/Semantic/Marker.h
   orb_slam3/include/Semantic/Wall.h
   orb_slam3/include/Semantic/Door.h
+  orb_slam3/include/Semantic/Room.h
 )
 
 target_link_libraries(${PROJECT_NAME}

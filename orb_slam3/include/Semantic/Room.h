@@ -9,27 +9,48 @@
 #define ROOM_H
 
 #include "Wall.h"
-
-using namespace std;
+#include "Thirdparty/g2o/g2o/types/vertex_plane.h"
 
 namespace ORB_SLAM3
 {
-    struct Room
+    class Room
     {
-        // The identifier devoted for each room
-        int id;
-        // The identifier devoted for each room in the graph
-        int opt_id;
-        // The name devoted for each room in the graph (optional, for better identification)
-        string name;
-        // The set of marker-pairs attached in a room, e.g. [[1, 2], [3, 4]]
-        vector<vector<int>> markers;
-        // bool to check if room is already detected
-        bool room_markers_detected;
-        // The vector of detected walls
-        vector<Wall> walls;
-        // room center
-        vector<double> roomCenter;
+    private:
+        int id;                                   // The room's identifier
+        int opId;                                 // The room's identifier in the local optimizer
+        int opIdG;                                // The room's identifier in the global optimizer
+        std::string name;                         // The name devoted for each room (optional)
+        bool all_markers_seen;                    // Checks if the room markers are already detected
+        std::vector<Wall *> walls;                // The vector of detected walls of a room
+        Eigen::Vector3d room_center;              // The center of the room as a 3D vector
+        std::vector<std::vector<int>> marker_ids; // The set of marker-pairs attached to a room, e.g. [[1, 2], [3, 4]]
+    public:
+        Room();
+        ~Room();
+
+        int getId() const;
+        void setId(int value);
+
+        int getOpId() const;
+        void setOpId(int value);
+
+        int getOpIdG() const;
+        void setOpIdG(int value);
+
+        std::string getName() const;
+        void setName(std::string value);
+
+        bool getAllMarkersSeen() const;
+        void setAllMarkersSeen(bool value);
+
+        std::vector<Wall *> getWalls() const;
+        void setWalls(std::vector<Wall *> &value);
+
+        Eigen::Vector3d getRoomCenter() const;
+        void setRoomCenter(Eigen::Vector3d value);
+
+        std::vector<std::vector<int>> getMarkerIds() const;
+        void setMarkerIds(std::vector<std::vector<int>> value);
     };
 }
 
