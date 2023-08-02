@@ -1,0 +1,19 @@
+{
+    "rooms": [
+        {
+            "name": "Main Corridor",
+            "markers": [
+                [
+                    67,
+                    68
+                ]
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Main Corridor",
+            "marker": 10
+        }
+    ]
+}

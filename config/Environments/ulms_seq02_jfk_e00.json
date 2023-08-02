@@ -1,0 +1,35 @@
+{
+    "rooms": [
+        {
+            "name": "Main Corridor",
+            "markers": [
+                [
+                    67,
+                    68
+                ]
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Yellow Door",
+            "marker": 10
+        },
+        {
+            "name": "Lab Door",
+            "marker": 10
+        },
+        {
+            "name": "Yellow Door",
+            "marker": 10
+        },
+        {
+            "name": "Yellow Door",
+            "marker": 10
+        },
+        {
+            "name": "Yellow Door",
+            "marker": 10
+        }
+    ]
+}
