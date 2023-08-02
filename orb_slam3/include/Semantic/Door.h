@@ -12,8 +12,6 @@
 
 #include "Marker.h"
 
-using namespace std;
-
 namespace ORB_SLAM3
 {
     class Door

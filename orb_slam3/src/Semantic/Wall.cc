@@ -72,12 +72,12 @@ namespace ORB_SLAM3
         map_points = value;
     }
 
-    std::vector<double> Wall::getPlaneEquation() const
+    Eigen::Hyperplane<double, 3> Wall::getPlaneEquation() const
     {
         return plane_equation;
     }
 
-    void Wall::setPlaneEquation(const std::vector<double> &value)
+    void Wall::setPlaneEquation(const Eigen::Hyperplane<double, 3> &value)
     {
         plane_equation = value;
     }
