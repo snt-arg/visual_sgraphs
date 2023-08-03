@@ -21,6 +21,7 @@ namespace ORB_SLAM3
         int opId;                 // The door's identifier in the local optimizer
         int opIdG;                // The door's identifier in the global optimizer
         Marker *marker;           // The marker attached on the door
+        std::string name;         // The name devoted for each door (optional)
         Sophus::SE3f local_pose;  // Door's pose (position and orientation) in the Local Map
         Sophus::SE3f global_pose; // Door's pose (position and orientation) in the Global Map
 
@@ -36,6 +37,9 @@ namespace ORB_SLAM3
 
         int getOpIdG() const;
         void setOpIdG(int value);
+
+        std::string getName() const;
+        void setName(std::string value);
 
         Marker *getMarker() const;
         void setMarker(Marker *value);
