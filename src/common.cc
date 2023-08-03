@@ -19,6 +19,10 @@ std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub;
 
+// List of semantic entities available in the real environment
+std::vector<ORB_SLAM3::Room> env_rooms;
+std::vector<ORB_SLAM3::Door> env_doors;
+
 //////////////////////////////////////////////////
 // Main functions
 //////////////////////////////////////////////////
@@ -407,7 +411,7 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
 }
 
 //////////////////////////////////////////////////
-// Fiducial Marker-related functions
+// Fiducial Marker-related Modules
 //////////////////////////////////////////////////
 
 /**
@@ -470,4 +474,22 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> find_nearest_marker(double f
     }
 
     return std::make_pair(min_time_diff, matched_markers);
+}
+
+//////////////////////////////////////////////////
+// Semantic Analysis Modules
+//////////////////////////////////////////////////
+
+/**
+ * @brief Parses JSON values (database) and loads them into
+ */
+void load_json_values(string jsonFilePath)
+{
+    // Creating an object of the database loader
+    ORB_SLAM3::DBParser parser;
+    // Load JSON file
+    json envData = parser.jsonParser(jsonFilePath);
+    // Getting semantic entities
+    env_rooms = parser.getEnvRooms(envData);
+    env_doors = parser.getEnvDoors(envData);
 }

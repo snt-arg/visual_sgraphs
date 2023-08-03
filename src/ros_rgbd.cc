@@ -57,6 +57,9 @@ int main(int argc, char **argv)
     node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
+    // Read environment data containing markers attached to rooms and corridors
+    load_json_values(json_path);
+
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     sensor_type = ORB_SLAM3::System::RGBD;
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sensor_type, enable_pangolin);

@@ -16,6 +16,7 @@ namespace ORB_SLAM3
     {
         try
         {
+            std::cout << "\nLoading JSON data from '" << jsonFilePath << "'" << std::endl;
             // Reading the JSON file from the given path
             ifstream jsonFile(jsonFilePath);
             // Parsing the JSON file to get the envrionment data
@@ -32,7 +33,6 @@ namespace ORB_SLAM3
     std::vector<Room> DBParser::getEnvRooms(json envData)
     {
         envRooms.clear();
-        std::cout << "\nFetching rooms data ...";
 
         // Iterate over all rooms data in JSON
         for (const auto &envDatum : envData["rooms"].items())
@@ -74,7 +74,6 @@ namespace ORB_SLAM3
     std::vector<Door> DBParser::getEnvDoors(json envData)
     {
         envDoors.clear();
-        std::cout << "\nFetching doors data from JSON ...";
 
         // Iterate over all rooms data in JSON
         for (const auto &envDatum : envData["doors"].items())
