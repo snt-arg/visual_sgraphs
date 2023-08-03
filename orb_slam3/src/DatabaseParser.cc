@@ -102,8 +102,8 @@ namespace ORB_SLAM3
 
             // Fill the vector
             envDoors.push_back(envDoor);
-
-            return envDoors;
         }
+
+        return envDoors;
     }
 }
