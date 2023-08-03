@@ -8,6 +8,8 @@
 #ifndef DBPARSER_H
 #define DBPARSER_H
 
+#include <fstream>
+#include <iostream>
 #include "Thirdparty/nlohmann/json.hpp"
 
 #include "Semantic/Door.h"
@@ -31,20 +33,24 @@ namespace ORB_SLAM3
         ~DBParser();
 
         /**
-         * @brief Parses the JSON file containing rooms data in the real environment
-         * and returns a list of rooms.
-         * @param jsonFileName the path of the JSON file
-         * @param absolutePath is the absolute path given or not
+         * @brief Parses the JSON file and returns a dictionary of its values.
+         * @param jsonFilePath the path of the JSON file
          */
-        std::vector<Room> getEnvRooms(string jsonFileName, bool absolutePath = false);
+        json jsonParser(string jsonFilePath);
 
         /**
-         * @brief Parses the JSON file containing rooms data in the real environment
+         * @brief Parses the dictionary containing rooms data in the real environment
          * and returns a list of rooms.
-         * @param jsonFileName the path of the JSON file
-         * @param absolutePath is the absolute path given or not
+         * @param jsonFilePath the path of the dictionary
          */
-        std::vector<Door> getEnvDoors(string jsonFileName, bool absolutePath = false);
+        std::vector<Room> getEnvRooms(json envData);
+
+        /**
+         * @brief Parses the dictionary containing doors data in the real environment
+         * and returns a list of doors.
+         * @param jsonFilePath the path of the dictionary
+         */
+        std::vector<Door> getEnvDoors(json envData);
     };
 }
 

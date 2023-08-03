@@ -31,7 +31,8 @@ int main(int argc, char **argv)
     ros::NodeHandle node_handler;
     image_transport::ImageTransport image_transport(node_handler);
 
-    std::string voc_file, settings_file;
+    std::string voc_file, settings_file, json_path;
+    node_handler.param<std::string>(node_name + "/env_file", json_path, "");
     node_handler.param<std::string>(node_name + "/voc_file", voc_file, "file_not_set");
     node_handler.param<std::string>(node_name + "/settings_file", settings_file, "file_not_set");
 
