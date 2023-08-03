@@ -24,6 +24,7 @@ namespace ORB_SLAM3
         std::vector<Wall *> walls;                // The vector of detected walls of a room
         Eigen::Vector3d room_center;              // The center of the room as a 3D vector
         std::vector<std::vector<int>> marker_ids; // The set of marker-pairs attached to a room, e.g. [[1, 2], [3, 4]]
+
     public:
         Room();
         ~Room();
