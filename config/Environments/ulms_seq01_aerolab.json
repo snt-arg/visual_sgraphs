@@ -1,19 +1,46 @@
 {
     "rooms": [
         {
-            "name": "Main Corridor",
+            "name": "AeRoLab Corridor",
             "markers": [
                 [
-                    67,
-                    68
+                    8,
+                    9
+                ]
+            ]
+        },
+        {
+            "name": "Welding Lab.",
+            "markers": [
+                [
+                    0,
+                    2,
+                    4,
+                    5
                 ]
             ]
         }
     ],
     "doors": [
         {
-            "name": "Main Corridor",
+            "name": "Beton-Lab Door",
             "marker": 10
+        },
+        {
+            "name": "Solid Mechanics Lab Door",
+            "marker": 6
+        },
+        {
+            "name": "AeRoLab Door",
+            "marker": 7
+        },
+        {
+            "name": "Welding Lab. Entrance Door",
+            "marker": 1
+        },
+        {
+            "name": "Welding Lab. Exit Door",
+            "marker": 3
         }
     ]
 }

@@ -1,19 +1,147 @@
 {
     "rooms": [
         {
-            "name": "Main Corridor",
+            "name": "ARG Corridor",
             "markers": [
                 [
-                    67,
-                    68
+                    15,
+                    17
+                ],
+                [
+                    12,
+                    13
+                ],
+                [
+                    40,
+                    36
+                ]
+            ]
+        },
+        {
+            "name": "HR Corridor",
+            "markers": [
+                [
+                    3,
+                    10
+                ],
+                [
+                    4,
+                    5
+                ]
+            ]
+        },
+        {
+            "name": "Office 421",
+            "markers": [
+                [
+                    1,
+                    2,
+                    3,
+                    4
+                ]
+            ]
+        },
+        {
+            "name": "Office 422",
+            "markers": [
+                [
+                    6,
+                    7,
+                    8,
+                    10
+                ]
+            ]
+        },
+        {
+            "name": "Office 423",
+            "markers": [
+                [
+                    24,
+                    25,
+                    26,
+                    28
+                ]
+            ]
+        },
+        {
+            "name": "Office 424",
+            "markers": [
+                [
+                    19,
+                    20,
+                    21,
+                    22
+                ]
+            ]
+        },
+        {
+            "name": "Office 427",
+            "markers": [
+                [
+                    30,
+                    32,
+                    35,
+                    37
                 ]
             ]
         }
     ],
     "doors": [
         {
-            "name": "Main Corridor",
-            "marker": 10
+            "name": "Room 421 Door",
+            "marker": 0
+        },
+        {
+            "name": "Room 422 Door",
+            "marker": 11
+        },
+        {
+            "name": "Room 423 Door",
+            "marker": 41
+        },
+        {
+            "name": "Room 424 Door",
+            "marker": 14
+        },
+        {
+            "name": "Room 425 Door",
+            "marker": 23
+        },
+        {
+            "name": "Room 426 Door",
+            "marker": 5
+        },
+        {
+            "name": "Room 427 Door",
+            "marker": 29
+        },
+        {
+            "name": "Emergency Exit ARG Corridor",
+            "marker": 38
+        },
+        {
+            "name": "ARG Corridor Exit",
+            "marker": 39
+        },
+        {
+            "name": "HR Corridor Exit",
+            "marker": 26
+        },
+        {
+            "name": "Room 401 Door",
+            "marker": 7
+        },
+        {
+            "name": "Room 402 Door",
+            "marker": 6
+        },
+        {
+            "name": "Room 416 Door",
+            "marker": 13
+        },
+        {
+            "name": "Room 417 Door",
+            "marker": 22
         }
     ]
 }
