@@ -2,8 +2,8 @@
 #define G2O_VERTEX_PLANE_H_
 
 #include "plane3d.h"
-#include "io_helper.h"
 #include "../../config.h"
+#include "isometry3d_mappings.h"
 #include "../core/base_vertex.h"
 #include "../core/hyper_graph_action.h"
 #include "g2o_types_slam3d_addons_api.h"

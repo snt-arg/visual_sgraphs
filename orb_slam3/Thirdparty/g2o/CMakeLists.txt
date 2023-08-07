@@ -75,7 +75,6 @@ ${g2o_SOURCE_DIR}/g2o/types/g2o_types_slam3d_addons_api.h
 ${g2o_SOURCE_DIR}/g2o/types/isometry3d_mappings.h
 ${g2o_SOURCE_DIR}/g2o/types/isometry3d_mappings.cpp
 ${g2o_SOURCE_DIR}/g2o/types/plane3d.h
-${g2o_SOURCE_DIR}/g2o/types/io_helper.h
 ${g2o_SOURCE_DIR}/g2o/types/vertex_plane.h
 ${g2o_SOURCE_DIR}/g2o/types/vertex_plane.cpp
 #core
