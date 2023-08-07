@@ -35,6 +35,7 @@
 #include "System.h"
 #include "ImuTypes.h"
 #include "Settings.h"
+#include "Semantic/Wall.h"
 #include "Semantic/Marker.h"
 
 #include "GeometricCamera.h"
@@ -114,6 +115,41 @@ namespace ORB_SLAM3
         void SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, Map *pMap);
 
         float GetImageScale();
+
+        // Semantic Entities
+        /**
+         * @brief Corrects the given plane equations to apply calculations
+         * @param plane the input plane
+         */
+        Eigen::Vector4d correctPlaneDirection(const Eigen::Vector4d &plane);
+
+        /**
+         * @brief Gets the center points of a room with two walls
+         * @param markerPosition the position of the marker
+         * @param wall1 the first plane
+         * @param wall2 the second plane
+         */
+        Eigen::Vector3d getRoomCenter(const Eigen::Vector3d &markerPosition,
+                                      const Eigen::Vector4d &wall1,
+                                      const Eigen::Vector4d &wall2);
+
+        /**
+         * @brief Gets the center points of a room with four walls
+         * @param x_plane1 the first plane in X direction
+         * @param x_plane2 the second plane in X direction
+         * @param y_plane1 the first plane in Y direction
+         * @param y_plane2 the second plane in Y direction
+         */
+        Eigen::Vector3d getRoomCenter(const Eigen::Vector4d x_plane1, const Eigen::Vector4d x_plane2,
+                                      const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2);
+
+        /**
+         * @brief Associates a detected wall into the walls found in the map and returns
+         * if it needs to be added to the plane or not.
+         * @param mappedWalls an array of walls with their IDs and equations
+         * @param givenPlane the detected 3D plane
+         */
+        int associateWalls(const vector<Wall> &mappedWalls, g2o::Plane3D givenPlane);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

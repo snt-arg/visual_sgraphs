@@ -19,13 +19,13 @@ namespace ORB_SLAM3
     class Wall
     {
     private:
-        int id;                                      // The wall's identifier
-        int opId;                                    // The wall's identifier in the local optimizer
-        int opIdG;                                   // The wall's identifier in the global optimizer
-        g2o::VertexPlane *wall_plane;                // The wall's node in the final graph
-        std::vector<Marker *> markers;               // The list of markers lying on the wall
-        std::vector<MapPoint *> map_points;          // The set of map points lying on the wall
-        Eigen::Hyperplane<double, 3> plane_equation; // The plane equation of the wall
+        int id;                             // The wall's identifier
+        int opId;                           // The wall's identifier in the local optimizer
+        int opIdG;                          // The wall's identifier in the global optimizer
+        g2o::Plane3D plane_equation;        // The plane equation of the wall
+        g2o::VertexPlane *wall_plane;       // The wall's node in the final graph
+        std::vector<Marker *> markers;      // The list of markers lying on the wall
+        std::vector<MapPoint *> map_points; // The set of map points lying on the wall
 
     public:
         Wall();
@@ -49,8 +49,8 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> getMapPoints() const;
         void setMapPoints(const std::vector<MapPoint *> &value);
 
-        Eigen::Hyperplane<double, 3> getPlaneEquation() const;
-        void setPlaneEquation(const Eigen::Hyperplane<double, 3> &value);
+        g2o::Plane3D getPlaneEquation() const;
+        void setPlaneEquation(const g2o::Plane3D &value);
     };
 }
 

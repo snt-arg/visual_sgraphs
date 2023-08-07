@@ -1513,15 +1513,12 @@ namespace ORB_SLAM3
 
     Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename)
     {
-        // cout << "GrabImageStereo" << endl;
-
         mImGray = imRectLeft;
         cv::Mat imGrayRight = imRectRight;
         mImRight = imRectRight;
 
         if (mImGray.channels() == 3)
         {
-            // cout << "Image with 3 channels" << endl;
             if (mbRGB)
             {
                 cvtColor(mImGray, mImGray, cv::COLOR_RGB2GRAY);
@@ -1535,7 +1532,6 @@ namespace ORB_SLAM3
         }
         else if (mImGray.channels() == 4)
         {
-            // cout << "Image with 4 channels" << endl;
             if (mbRGB)
             {
                 cvtColor(mImGray, mImGray, cv::COLOR_RGBA2GRAY);
@@ -1548,8 +1544,6 @@ namespace ORB_SLAM3
             }
         }
 
-        // cout << "Incoming frame creation" << endl;
-
         if (mSensor == System::STEREO && !mpCamera2)
             mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera);
         else if (mSensor == System::STEREO && mpCamera2)
@@ -1559,8 +1553,6 @@ namespace ORB_SLAM3
         else if (mSensor == System::IMU_STEREO && mpCamera2)
             mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, mpCamera2, mTlr, &mLastFrame, *mpImuCalib);
 
-        // cout << "Incoming frame ended" << endl;
-
         mCurrentFrame.mNameFile = filename;
         mCurrentFrame.mnDataset = mnNumDataset;
 
@@ -1569,9 +1561,7 @@ namespace ORB_SLAM3
         vdStereoMatch_ms.push_back(mCurrentFrame.mTimeStereoMatch);
 #endif
 
-        // cout << "Tracking start" << endl;
         Track();
-        // cout << "Tracking end" << endl;
 
         return mCurrentFrame.GetPose();
     }
@@ -2481,8 +2471,8 @@ namespace ORB_SLAM3
                 // Setting the Global Pose of the marker
                 mCurrentMarker->setGlobalPose(pKFini->GetPoseInverse() * mCurrentMarker->getLocalPose());
                 mCurrentMarker->setMarkerInGMap(true);
-                
-                ORB_SLAM3::Marker* currentMapMarker = new ORB_SLAM3::Marker();
+
+                ORB_SLAM3::Marker *currentMapMarker = new ORB_SLAM3::Marker();
                 currentMapMarker->setOpId(mCurrentMarker->getOpId());
                 currentMapMarker->setId(mCurrentMarker->getId());
                 currentMapMarker->setTime(mCurrentMarker->getTime());
@@ -2494,7 +2484,7 @@ namespace ORB_SLAM3
 
                 pKFini->AddMapMarker(currentMapMarker);
                 mpAtlas->AddMapMarker(currentMapMarker);
-                
+
                 mapMarkerStr += std::to_string(mCurrentMarker->getId()) + " ";
             }
 
@@ -3421,24 +3411,25 @@ namespace ORB_SLAM3
                             mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
                             mCurrentMarker->setGlobalPose(pKF->GetPoseInverse() * mCurrentMarker->getLocalPose());
                             mCurrentMarker->setMarkerInGMap(true);
-                            
-                            ORB_SLAM3::Marker* currentMapMarker = new ORB_SLAM3::Marker();
+
+                            ORB_SLAM3::Marker *currentMapMarker = new ORB_SLAM3::Marker();
                             currentMapMarker->setOpId(mCurrentMarker->getOpId());
                             currentMapMarker->setId(mCurrentMarker->getId());
                             currentMapMarker->setTime(mCurrentMarker->getTime());
                             currentMapMarker->setMarkerInGMap(mCurrentMarker->isMarkerInGMap());
                             currentMapMarker->setLocalPose(mCurrentMarker->getLocalPose());
                             currentMapMarker->SetMap(mpAtlas->GetCurrentMap());
-                            currentMapMarker->setGlobalPose(mCurrentMarker->getGlobalPose());  
-                            currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());                        
-                            
+                            currentMapMarker->setGlobalPose(mCurrentMarker->getGlobalPose());
+                            currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
+
                             pKF->AddMapMarker(currentMapMarker);
                             mpAtlas->AddMapMarker(currentMapMarker);
                         }
                         else
-                        {   
-                            for(auto currentMapMarker : mpAtlas->GetAllMarkers()) {
-                                if(currentMapMarker->getId() == mCurrentMarker->getId())
+                        {
+                            for (auto currentMapMarker : mpAtlas->GetAllMarkers())
+                            {
+                                if (currentMapMarker->getId() == mCurrentMarker->getId())
                                     currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
                             }
                         }
@@ -4217,6 +4208,129 @@ namespace ORB_SLAM3
     bool Tracking::isImuPreintegrated()
     {
         return mCurrentFrame.mpImuPreintegrated;
+    }
+
+    // Semantic Entities
+    Eigen::Vector4d Tracking::correctPlaneDirection(const Eigen::Vector4d &plane)
+    {
+        // Check if the transformation is needed
+        if (plane(3) > 0)
+            return -plane;
+
+        else
+            return plane;
+    }
+
+    Eigen::Vector3d Tracking::getRoomCenter(const Eigen::Vector3d &markerPosition,
+                                            const Eigen::Vector4d &wall1,
+                                            const Eigen::Vector4d &wall2)
+    {
+        Eigen::Vector3d roomCenter;
+        Eigen::Vector3d vec, vectorNormal;
+
+        // Get the dominant wall by comparing the magnitudes of the last elements of the given walls
+        if (fabs(wall1(3)) > fabs(wall2(3)))
+        {
+            // Calculate the midpoint of the dominant wall
+            vec = (0.5 * (fabs(wall1(3)) * wall1.head(3) - fabs(wall2(3)) * wall2.head(3))) +
+                  fabs(wall2(3)) * wall2.head(3);
+        }
+        else
+        {
+            // Calculate the midpoint of the dominant wall
+            vec = (0.5 * (fabs(wall2(3)) * wall2.head(3) - fabs(wall1(3)) * wall1.head(3))) +
+                  fabs(wall1(3)) * wall1.head(3);
+        }
+
+        // Normalize the vector to obtain the normal direction of the room
+        vectorNormal = vec / vec.norm();
+
+        // Calculate the room center by projecting the marker position onto the room plane
+        roomCenter = vec + (markerPosition - (markerPosition.dot(vectorNormal)) * vectorNormal);
+
+        return roomCenter;
+    }
+
+    Eigen::Vector3d Tracking::getRoomCenter(const Eigen::Vector4d x_plane1, const Eigen::Vector4d x_plane2,
+                                            const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2)
+    {
+        Eigen::Vector3d roomCenter;
+        Eigen::Vector3d vectorX, vectorY;
+
+        // Calculate the midpoint vector along the x-axis of the room
+        if (fabs(x_plane1(3)) > fabs(x_plane2(3)))
+        {
+            vectorX = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) +
+                      fabs(x_plane2(3)) * x_plane2.head(3);
+        }
+        else
+        {
+            vectorX = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) +
+                      fabs(x_plane1(3)) * x_plane1.head(3);
+        }
+
+        // Calculate the midpoint vector along the y-axis of the room
+        if (fabs(y_plane1(3)) > fabs(y_plane2(3)))
+        {
+            vectorY = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) +
+                      fabs(y_plane2(3)) * y_plane2.head(3);
+        }
+        else
+        {
+            vectorY = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) +
+                      fabs(y_plane1(3)) * y_plane1.head(3);
+        }
+
+        // Calculate the room center by summing the midpoint vectors along the x and y axes
+        roomCenter = vectorX + vectorY;
+
+        return roomCenter;
+    }
+
+    int Tracking::associateWalls(const vector<Wall> &mappedWalls, g2o::Plane3D givenPlane)
+    {
+        int wallId = -1;
+
+        // Initialize difference value
+        double minDiff = 100.0;
+        // Fixed threshold for comparing two planes
+        double diffThreshold = 0.3;
+
+        // Check if mappedWalls is empty
+        if (mappedWalls.empty())
+        {
+            return wallId;
+        }
+
+        // Loop over all walls
+        for (const auto &wall : mappedWalls)
+        {
+            // Preparing a plane for feeding the detector
+            g2o::Plane3D mappedPlane = wall.getPlaneEquation();
+
+            // Calculate difference vector based on walls' equations
+            Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
+
+            // Create a single number determining the difference vector
+            // [before] double planeDiff = diffVector.transpose() * Eigen::Matrix3d::Identity() * diffVector;
+            double planeDiff = diffVector.norm();
+
+            // Comparing the with minimum acceptable value
+            if (planeDiff < minDiff)
+            {
+                minDiff = planeDiff;
+                wallId = wall.getId();
+            }
+        }
+
+        // If the difference is not large, no need to add the plane
+        if (minDiff < diffThreshold)
+        {
+            return wallId;
+        }
+
+        // Otherwise, return -1 so that the the plane gets added to the map
+        return -1;
     }
 
 #ifdef REGISTER_LOOP
