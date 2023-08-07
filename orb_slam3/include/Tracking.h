@@ -154,6 +154,14 @@ namespace ORB_SLAM3
          */
         int associateWalls(const vector<Wall> &mappedWalls, g2o::Plane3D givenPlane);
 
+        /**
+         * @brief Calculation of the equation of the plane from marker pose
+         * @param rotationMatrix the rotation matrix
+         * @param translation the translation matrix
+         */
+        Eigen::Vector4d getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
+                                                 const Eigen::Vector3f &translation);
+
 #ifdef REGISTER_LOOP
         void RequestStop();
         bool isStopped();

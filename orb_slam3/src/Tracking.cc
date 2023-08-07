@@ -2487,6 +2487,12 @@ namespace ORB_SLAM3
                 mpAtlas->AddMapMarker(currentMapMarker);
 
                 mapMarkerStr += std::to_string(mCurrentMarker->getId()) + " ";
+
+                // Wall detection and mapping process
+                Eigen::Vector4d planeEstimate =
+                    getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
+                                             mCurrentMarker->getGlobalPose().translation());
+                // g2o::Plane3D detectedPlane(planeEstimate);
             }
 
             Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points and " +
@@ -4332,6 +4338,22 @@ namespace ORB_SLAM3
 
         // Otherwise, return -1 so that the the plane gets added to the map
         return -1;
+    }
+
+    Eigen::Vector4d Tracking::getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
+                                                       const Eigen::Vector3f &translation)
+    {
+        // Get the normal of the plane from the rotation matrix
+        Eigen::Vector3f normal = rotationMatrix.col(2); // Assuming the Z-axis represents the normal direction
+
+        // Get a point on the plane from the translation
+        Eigen::Vector3f pointOnPlane = -translation;
+
+        // Calculate the D coefficient of the plane equation
+        double D = -normal.dot(pointOnPlane);
+
+        // Return the plane equation [A, B, C, D]
+        return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
     }
 
 #ifdef REGISTER_LOOP
