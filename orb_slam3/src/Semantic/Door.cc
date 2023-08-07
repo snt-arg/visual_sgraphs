@@ -42,6 +42,16 @@ namespace ORB_SLAM3
         opIdG = value;
     }
 
+    int Door::getMarkerId() const
+    {
+        return marker_id;
+    }
+
+    void Door::setMarkerId(int value)
+    {
+        marker_id = value;
+    }
+
     std::string Door::getName() const
     {
         return name;

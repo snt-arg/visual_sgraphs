@@ -38,6 +38,8 @@
 #include "ImuTypes.h"
 #include "Settings.h"
 #include "Semantic/Marker.h"
+#include "Semantic/Door.h"
+#include "Semantic/Room.h"
 
 namespace ORB_SLAM3
 {
@@ -103,7 +105,9 @@ namespace ORB_SLAM3
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-        System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor, const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
+        System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
+               const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string(),
+               const vector<Door *> envDoors = vector<Door *>{}, const vector<Room *> envRooms = vector<Room *>{});
 
         // Proccess the given stereo frame. Images must be synchronized and rectified.
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -274,6 +278,10 @@ namespace ORB_SLAM3
         string mStrVocabularyFilePath;
 
         Settings *settings_;
+
+        // Semantic map entities
+        std::vector<ORB_SLAM3::Room *> env_rooms;
+        std::vector<ORB_SLAM3::Door *> env_doors;
     };
 
 } // namespace ORB_SLAM

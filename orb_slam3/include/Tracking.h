@@ -36,6 +36,8 @@
 #include "ImuTypes.h"
 #include "Settings.h"
 #include "Semantic/Wall.h"
+#include "Semantic/Door.h"
+#include "Semantic/Room.h"
 #include "Semantic/Marker.h"
 
 #include "GeometricCamera.h"
@@ -73,7 +75,8 @@ namespace ORB_SLAM3
         Sophus::SE3f GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight,
                                      const double &timestamp, string filename);
         Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const double &timestamp,
-                                   string filename, const std::vector<Marker *> markers);
+                                   string filename, const std::vector<Marker *> markers,
+                                   const std::vector<Door *> doors, const std::vector<Room *> rooms);
         Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename);
 
         void GrabImuData(const IMU::Point &imuMeasurement);
@@ -218,6 +221,10 @@ namespace ORB_SLAM3
         vector<MapPoint *> GetLocalMapMPS();
 
         bool mbWriteStats;
+
+        // Semantic map entities
+        std::vector<ORB_SLAM3::Room *> env_rooms;
+        std::vector<ORB_SLAM3::Door *> env_doors;
 
 #ifdef REGISTER_TIMES
         void LocalMapStats2File();

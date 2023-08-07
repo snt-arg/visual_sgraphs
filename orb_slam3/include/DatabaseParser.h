@@ -25,8 +25,8 @@ namespace ORB_SLAM3
     class DBParser
     {
     private:
-        std::vector<Room> envRooms; // Rooms available in the real environment
-        std::vector<Door> envDoors; // Doors available in the real environment
+        std::vector<Room *> envRooms; // Rooms available in the real environment
+        std::vector<Door *> envDoors; // Doors available in the real environment
 
     public:
         DBParser();
@@ -43,14 +43,14 @@ namespace ORB_SLAM3
          * and returns a list of rooms.
          * @param jsonFilePath the path of the dictionary
          */
-        std::vector<Room> getEnvRooms(json envData);
+        std::vector<Room *> getEnvRooms(json envData);
 
         /**
          * @brief Parses the dictionary containing doors data in the real environment
          * and returns a list of doors.
          * @param jsonFilePath the path of the dictionary
          */
-        std::vector<Door> getEnvDoors(json envData);
+        std::vector<Door *> getEnvDoors(json envData);
     };
 }
 

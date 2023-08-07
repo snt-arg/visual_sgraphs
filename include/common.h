@@ -63,8 +63,8 @@ extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 
 // List of semantic entities available in the real environment
-extern std::vector<ORB_SLAM3::Room> env_rooms;
-extern std::vector<ORB_SLAM3::Door> env_doors;
+extern std::vector<ORB_SLAM3::Room *> env_rooms;
+extern std::vector<ORB_SLAM3::Door *> env_doors;
 
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;

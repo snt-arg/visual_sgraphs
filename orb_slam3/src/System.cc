@@ -37,8 +37,9 @@ namespace ORB_SLAM3
     Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
     System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-                   const bool bUseViewer, const int initFr, const string &strSequence) : mSensor(sensor), mpViewer(static_cast<Viewer *>(NULL)), mbReset(false), mbResetActiveMap(false),
-                                                                                         mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
+                   const bool bUseViewer, const int initFr, const string &strSequence,
+                   const vector<Door *> doors, const vector<Room *> rooms) : mSensor(sensor), mpViewer(static_cast<Viewer *>(NULL)), mbReset(false), mbResetActiveMap(false),
+                                                                             mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
     {
         // Output welcome message
         cout << endl
@@ -63,6 +64,10 @@ namespace ORB_SLAM3
             cout << "Stereo-Inertial" << endl;
         else if (mSensor == IMU_RGBD)
             cout << "RGB-D-Inertial" << endl;
+
+        // Load semantic variables read from JSON
+        env_rooms = rooms;
+        env_doors = doors;
 
         // Check settings file
         cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
@@ -374,7 +379,7 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, timestamp, filename, markers);
+        Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, timestamp, filename, markers, env_doors, env_rooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;

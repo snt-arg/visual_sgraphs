@@ -23,7 +23,7 @@ namespace ORB_SLAM3
         bool all_markers_seen;                    // Checks if the room markers are already detected
         std::vector<Wall *> walls;                // The vector of detected walls of a room
         Eigen::Vector3d room_center;              // The center of the room as a 3D vector
-        std::vector<std::vector<int>> marker_ids; // The set of marker-pairs attached to a room, e.g. [[1, 2], [3, 4]]
+        std::vector<std::vector<int>> marker_ids; // The set of marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
 
     public:
         Room();

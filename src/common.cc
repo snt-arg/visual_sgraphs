@@ -20,8 +20,8 @@ std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub;
 
 // List of semantic entities available in the real environment
-std::vector<ORB_SLAM3::Room> env_rooms;
-std::vector<ORB_SLAM3::Door> env_doors;
+std::vector<ORB_SLAM3::Room *> env_rooms;
+std::vector<ORB_SLAM3::Door *> env_doors;
 
 //////////////////////////////////////////////////
 // Main functions

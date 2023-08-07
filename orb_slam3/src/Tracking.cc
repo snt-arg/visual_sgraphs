@@ -1567,7 +1567,8 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const double &timestamp,
-                                         string filename, const std::vector<Marker *> markers)
+                                         string filename, const std::vector<Marker *> markers, const std::vector<Door *> doors,
+                                         const std::vector<Room *> rooms)
     {
         mImGray = imRGB;
         cv::Mat imDepth = imD;
