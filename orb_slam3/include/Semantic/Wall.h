@@ -10,6 +10,7 @@
 
 #include <Eigen/Eigen>
 
+#include "Map.h"
 #include "Marker.h"
 #include "../MapPoint.h"
 #include "Thirdparty/g2o/g2o/types/vertex_plane.h"
@@ -51,6 +52,13 @@ namespace ORB_SLAM3
 
         g2o::Plane3D getPlaneEquation() const;
         void setPlaneEquation(const g2o::Plane3D &value);
+
+        Map *GetMap();
+        void SetMap(Map *pMap);
+
+    protected:
+        Map *mpMap;
+        std::mutex mMutexMap;
     };
 }
 

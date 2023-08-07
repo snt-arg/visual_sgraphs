@@ -91,4 +91,16 @@ namespace ORB_SLAM3
     {
         marker_ids = value;
     }
+
+    Map *Room::GetMap()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return mpMap;
+    }
+
+    void Room::SetMap(Map *pMap)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mpMap = pMap;
+    }
 }

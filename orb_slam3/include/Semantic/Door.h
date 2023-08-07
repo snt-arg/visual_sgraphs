@@ -10,6 +10,7 @@
 
 #include <Eigen/Eigen>
 
+#include "Map.h"
 #include "Marker.h"
 
 namespace ORB_SLAM3
@@ -53,6 +54,13 @@ namespace ORB_SLAM3
 
         Sophus::SE3f getGlobalPose() const;
         void setGlobalPose(const Sophus::SE3f &value);
+
+        Map *GetMap();
+        void SetMap(Map *pMap);
+
+    protected:
+        Map *mpMap;
+        std::mutex mMutexMap;
     };
 
 }

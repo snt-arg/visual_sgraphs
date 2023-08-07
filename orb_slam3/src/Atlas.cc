@@ -120,6 +120,24 @@ namespace ORB_SLAM3
         pMapMP->AddMapMarker(marker);
     }
 
+    void Atlas::AddMapWall(Wall *wall)
+    {
+        Map *pMapMP = wall->GetMap();
+        pMapMP->AddMapWall(wall);
+    }
+
+    void Atlas::AddMapDoor(Door *door)
+    {
+        Map *pMapMP = door->GetMap();
+        pMapMP->AddMapDoor(door);
+    }
+
+    void Atlas::AddMapRoom(Room *room)
+    {
+        Map *pMapMP = room->GetMap();
+        pMapMP->AddMapRoom(room);
+    }
+
     GeometricCamera *Atlas::AddCamera(GeometricCamera *pCam)
     {
         // Check if the camera already exists
@@ -221,6 +239,24 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexAtlas);
         return mpCurrentMap->GetAllMarkers();
+    }
+
+    std::vector<Wall *> Atlas::GetAllWalls()
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->GetAllWalls();
+    }
+
+    std::vector<Door *> Atlas::GetAllDoors()
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->GetAllDoors();
+    }
+
+    std::vector<Room *> Atlas::GetAllRooms()
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->GetAllRooms();
     }
 
     std::vector<MapPoint *> Atlas::GetReferenceMapPoints()

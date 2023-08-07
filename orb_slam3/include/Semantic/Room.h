@@ -52,6 +52,13 @@ namespace ORB_SLAM3
 
         std::vector<std::vector<int>> getMarkerIds() const;
         void setMarkerIds(std::vector<std::vector<int>> value);
+
+        Map *GetMap();
+        void SetMap(Map *pMap);
+
+    protected:
+        Map *mpMap;
+        std::mutex mMutexMap;
     };
 }
 

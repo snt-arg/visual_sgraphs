@@ -26,6 +26,9 @@
 #include "Pinhole.h"
 #include "KannalaBrandt8.h"
 #include "Semantic/Marker.h"
+#include "Semantic/Door.h"
+#include "Semantic/Wall.h"
+#include "Semantic/Room.h"
 
 #include <set>
 #include <mutex>
@@ -43,6 +46,9 @@ namespace ORB_SLAM3
     class KannalaBrandt8;
     class Pinhole;
     class Marker;
+    class Wall;
+    class Door;
+    class Room;
 
     // BOOST_CLASS_EXPORT_GUID(Pinhole, "Pinhole")
     // BOOST_CLASS_EXPORT_GUID(KannalaBrandt8, "KannalaBrandt8")
@@ -85,6 +91,9 @@ namespace ORB_SLAM3
         void SetViewer(Viewer *pViewer);
 
         // Method for change components in the current map
+        void AddMapWall(Wall *wall);
+        void AddMapDoor(Door *door);
+        void AddMapRoom(Room *room);
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapMarker(Marker *marker);
@@ -105,6 +114,9 @@ namespace ORB_SLAM3
         long unsigned int MapPointsInMap();
 
         // Method for get data in current map
+        std::vector<Wall *> GetAllWalls();
+        std::vector<Door *> GetAllDoors();
+        std::vector<Room *> GetAllRooms();
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();

@@ -51,6 +51,11 @@ namespace ORB_SLAM3
         // Erase all markers from memory
         mspMarkers.clear();
 
+        // Erase all semantic entities from memory
+        mspWalls.clear();
+        mspDoors.clear();
+        mspRooms.clear();
+
         if (mThumbnail)
             delete mThumbnail;
         mThumbnail = static_cast<GLubyte *>(NULL);
@@ -92,6 +97,24 @@ namespace ORB_SLAM3
         mspMarkers.insert(pMarker);
     }
 
+    void Map::AddMapWall(Wall *pWall)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspWalls.insert(pWall);
+    }
+
+    void Map::AddMapDoor(Door *pDoor)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspDoors.insert(pDoor);
+    }
+
+    void Map::AddMapRoom(Room *pRoom)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspRooms.insert(pRoom);
+    }
+
     void Map::SetImuInitialized()
     {
         unique_lock<mutex> lock(mMutexMap);
@@ -117,6 +140,24 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexMap);
         mspMarkers.erase(pMarker);
+    }
+
+    void Map::EraseMapWall(Wall *pWall)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspWalls.erase(pWall);
+    }
+
+    void Map::EraseMapDoor(Door *pDoor)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspDoors.erase(pDoor);
+    }
+
+    void Map::EraseMapRoom(Room *pRoom)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspRooms.erase(pRoom);
     }
 
     void Map::EraseKeyFrame(KeyFrame *pKF)
@@ -175,6 +216,24 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexMap);
         return vector<Marker *>(mspMarkers.begin(), mspMarkers.end());
+    }
+
+    vector<Wall *> Map::GetAllWalls()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<Wall *>(mspWalls.begin(), mspWalls.end());
+    }
+
+    vector<Door *> Map::GetAllDoors()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<Door *>(mspDoors.begin(), mspDoors.end());
+    }
+
+    vector<Room *> Map::GetAllRooms()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<Room *>(mspRooms.begin(), mspRooms.end());
     }
 
     long unsigned int Map::MapPointsInMap()
@@ -250,6 +309,9 @@ namespace ORB_SLAM3
             //        delete *sit;
         }
 
+        mspWalls.clear();
+        mspDoors.clear();
+        mspRooms.clear();
         mspMarkers.clear();
         mspMapPoints.clear();
         mspKeyFrames.clear();

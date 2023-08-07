@@ -21,6 +21,9 @@
 
 #include "MapPoint.h"
 #include "KeyFrame.h"
+// #include "Semantic/Wall.h"
+// #include "Semantic/Door.h"
+// #include "Semantic/Room.h"
 #include "Semantic/Marker.h"
 
 #include <set>
@@ -36,6 +39,9 @@ namespace ORB_SLAM3
     class KeyFrame;
     class Atlas;
     class Marker;
+    class Wall;
+    class Door;
+    class Room;
     class KeyFrameDatabase;
 
     class Map
@@ -76,15 +82,24 @@ namespace ORB_SLAM3
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapMarker(Marker *pMarker);
+        void AddMapWall(Wall *pWall);
+        void AddMapDoor(Door *pDoor);
+        void AddMapRoom(Room *pRoom);
 
         void EraseMapPoint(MapPoint *pMP);
         void EraseKeyFrame(KeyFrame *pKF);
         void EraseMapMarker(Marker *pMarker);
+        void EraseMapWall(Wall *pWall);
+        void EraseMapDoor(Door *pDoor);
+        void EraseMapRoom(Room *pRoom);
 
         void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
         void InformNewBigChange();
         int GetLastBigChangeIdx();
 
+        std::vector<Wall *> GetAllWalls();
+        std::vector<Door *> GetAllDoors();
+        std::vector<Room *> GetAllRooms();
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
@@ -164,6 +179,9 @@ namespace ORB_SLAM3
     protected:
         long unsigned int mnId;
 
+        std::set<Wall *> mspWalls;
+        std::set<Door *> mspDoors;
+        std::set<Room *> mspRooms;
         std::set<Marker *> mspMarkers;
         std::set<MapPoint *> mspMapPoints;
         std::set<KeyFrame *> mspKeyFrames;

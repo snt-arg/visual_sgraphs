@@ -81,4 +81,16 @@ namespace ORB_SLAM3
     {
         plane_equation = value;
     }
+
+    Map *Wall::GetMap()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return mpMap;
+    }
+
+    void Wall::SetMap(Map *pMap)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mpMap = pMap;
+    }
 }
