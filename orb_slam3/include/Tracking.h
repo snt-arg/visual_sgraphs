@@ -152,7 +152,7 @@ namespace ORB_SLAM3
          * @param mappedWalls an array of walls with their IDs and equations
          * @param givenPlane the detected 3D plane
          */
-        int associateWalls(const vector<Wall> &mappedWalls, g2o::Plane3D givenPlane);
+        int associateWalls(const vector<Wall *> &mappedWalls, g2o::Plane3D givenPlane);
 
         /**
          * @brief Calculation of the equation of the plane from marker pose
@@ -161,6 +161,12 @@ namespace ORB_SLAM3
          */
         Eigen::Vector4d getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
                                                  const Eigen::Vector3f &translation);
+
+        /**
+         * @brief Checks to see if the marker is attached to a wall or not (e.g., a door)
+         * @param markerId the id of the marker
+         */
+        bool markerIsPlacedOnWall(const int &markerId);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

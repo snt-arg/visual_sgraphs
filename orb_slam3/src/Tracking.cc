@@ -2465,8 +2465,11 @@ namespace ORB_SLAM3
                 }
             }
 
-            // Create MapMarkers and asscoiate to KeyFrame
+            // Initialization of variables
+            string mapWallStr = "";
             string mapMarkerStr = "";
+
+            // Create MapMarkers and asscoiate to KeyFrame
             for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
             {
                 // Setting the Global Pose of the marker
@@ -2488,15 +2491,62 @@ namespace ORB_SLAM3
 
                 mapMarkerStr += std::to_string(mCurrentMarker->getId()) + " ";
 
-                // Wall detection and mapping process
-                Eigen::Vector4d planeEstimate =
-                    getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
-                                             mCurrentMarker->getGlobalPose().translation());
-                // g2o::Plane3D detectedPlane(planeEstimate);
+                // ----------- Wall and Door Detection and Mapping --------
+                // Check the currect marker if it is attached to a door or a wall
+                bool markerIsWall = markerIsPlacedOnWall(mCurrentMarker->getId());
+                if (markerIsWall)
+                {
+                    std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a wall";
+                    // The current marker is placed on a wall
+                    // Calculate the plane (wall) equation on which the marker is attached
+                    Eigen::Vector4d planeEstimate =
+                        getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
+                                                 mCurrentMarker->getGlobalPose().translation());
+                    // Get the plane based on the equation
+                    g2o::Plane3D detectedPlane(planeEstimate);
+                    // Check if we need to add the wall to the map or not
+                    int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
+                    if (matchedWallId == -1)
+                    {
+                        // A wall with the same equation was not found in the map, creating a new one
+                        // ORB_SLAM3::Wall *newWall = new ORB_SLAM3::Wall();
+                        // newWall->setId(mpAtlas->GetAllWalls().size());
+                        // newWall->setPlaneEquation(detectedPlane);
+                        // // newWall->setMarkers();
+                        // // newWall->setMapPoints();
+                        // // newWall->setWallPlane();
+                        // newWall->SetMap(mpAtlas->GetCurrentMap());
+
+                        //     pKFini->AddMapWall(newWall);
+                        //     mpAtlas->AddMapWall(newWall);
+
+                        //     mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
+                    }
+                    else
+                    {
+                        // Find the matched wall
+                        // auto matchedWall = find_if(map->map_walls.begin(), map->map_walls.end(),
+                        //                            boost::bind(&Wall::id, _1) == matchedWallId);
+                        // // check if the marker if already exists
+                        // auto foundMarkerId = find((*matchedWall).markerIds.begin(), (*matchedWall).markerIds.end(), m.first);
+                        // // if it doesnt exist push back in the list of markers
+                        // if (foundMarkerId == (*matchedWall).markerIds.end())
+                        //     (*matchedWall).markerIds.push_back(m.first);
+
+                        // m.second.wallId = matchedWallId;
+                    }
+                }
+                else
+                {
+                    // The current marker is placed on a door
+                    // [TODO] Add the door to the map
+                    std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a door";
+                }
             }
 
-            Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points and " +
-                                   to_string(mpAtlas->MarkersInMap()) + " markers [" + mapMarkerStr + "].",
+            Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
+                                   to_string(mpAtlas->MarkersInMap()) + " markers [" + mapMarkerStr +
+                                   "], and walls [" + mapWallStr + "].",
                                Verbose::VERBOSITY_QUIET);
 
             // cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
@@ -4294,7 +4344,7 @@ namespace ORB_SLAM3
         return roomCenter;
     }
 
-    int Tracking::associateWalls(const vector<Wall> &mappedWalls, g2o::Plane3D givenPlane)
+    int Tracking::associateWalls(const vector<Wall *> &mappedWalls, g2o::Plane3D givenPlane)
     {
         int wallId = -1;
 
@@ -4310,10 +4360,10 @@ namespace ORB_SLAM3
         }
 
         // Loop over all walls
-        for (const auto &wall : mappedWalls)
+        for (const auto &wallPtr : mappedWalls)
         {
             // Preparing a plane for feeding the detector
-            g2o::Plane3D mappedPlane = wall.getPlaneEquation();
+            g2o::Plane3D mappedPlane = wallPtr->getPlaneEquation();
 
             // Calculate difference vector based on walls' equations
             Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
@@ -4326,7 +4376,7 @@ namespace ORB_SLAM3
             if (planeDiff < minDiff)
             {
                 minDiff = planeDiff;
-                wallId = wall.getId();
+                wallId = wallPtr->getId();
             }
         }
 
@@ -4354,6 +4404,22 @@ namespace ORB_SLAM3
 
         // Return the plane equation [A, B, C, D]
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
+    }
+
+    bool Tracking::markerIsPlacedOnWall(const int &markerId)
+    {
+        bool isWall = true;
+        // Loop over all markers attached to doors
+        for (const auto &doorPtr : env_doors)
+        {
+            if (doorPtr->getMarkerId() == markerId)
+            {
+                isWall = false;
+                break; // No need to continue searching if found
+            }
+        }
+        // Returning
+        return isWall;
     }
 
 #ifdef REGISTER_LOOP
