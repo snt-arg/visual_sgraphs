@@ -2476,18 +2476,8 @@ namespace ORB_SLAM3
                 mCurrentMarker->setGlobalPose(pKFini->GetPoseInverse() * mCurrentMarker->getLocalPose());
                 mCurrentMarker->setMarkerInGMap(true);
 
-                ORB_SLAM3::Marker *currentMapMarker = new ORB_SLAM3::Marker();
-                currentMapMarker->setOpId(mCurrentMarker->getOpId());
-                currentMapMarker->setId(mCurrentMarker->getId());
-                currentMapMarker->setTime(mCurrentMarker->getTime());
-                currentMapMarker->setMarkerInGMap(mCurrentMarker->isMarkerInGMap());
-                currentMapMarker->setLocalPose(mCurrentMarker->getLocalPose());
-                currentMapMarker->SetMap(mpAtlas->GetCurrentMap());
-                currentMapMarker->setGlobalPose(mCurrentMarker->getGlobalPose());
-                currentMapMarker->addObservation(pKFini, mCurrentMarker->getLocalPose());
-
-                pKFini->AddMapMarker(currentMapMarker);
-                mpAtlas->AddMapMarker(currentMapMarker);
+                // Creating a new marker in the map
+                ORB_SLAM3::Marker *currentMapMarker = createMapMarker(mCurrentMarker, pKFini);
 
                 mapMarkerStr += std::to_string(mCurrentMarker->getId()) + " ";
 
@@ -2522,6 +2512,7 @@ namespace ORB_SLAM3
                     else
                     {
                         // The wall already exists in the map, fetching that one
+                        // int matchedWallId,
                         // Find the matched wall among all walls of the map
                         auto matchedWall = std::find_if(mpAtlas->GetAllWalls().begin(), mpAtlas->GetAllWalls().end(),
                                                         [matchedWallId](const ORB_SLAM3::Wall *wall)
@@ -3480,18 +3471,8 @@ namespace ORB_SLAM3
                             mCurrentMarker->setGlobalPose(pKF->GetPoseInverse() * mCurrentMarker->getLocalPose());
                             mCurrentMarker->setMarkerInGMap(true);
 
-                            ORB_SLAM3::Marker *currentMapMarker = new ORB_SLAM3::Marker();
-                            currentMapMarker->setOpId(mCurrentMarker->getOpId());
-                            currentMapMarker->setId(mCurrentMarker->getId());
-                            currentMapMarker->setTime(mCurrentMarker->getTime());
-                            currentMapMarker->setMarkerInGMap(mCurrentMarker->isMarkerInGMap());
-                            currentMapMarker->setLocalPose(mCurrentMarker->getLocalPose());
-                            currentMapMarker->SetMap(mpAtlas->GetCurrentMap());
-                            currentMapMarker->setGlobalPose(mCurrentMarker->getGlobalPose());
-                            currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
-
-                            pKF->AddMapMarker(currentMapMarker);
-                            mpAtlas->AddMapMarker(currentMapMarker);
+                            // Creating a new marker in the map
+                            ORB_SLAM3::Marker *currentMapMarker = createMapMarker(mCurrentMarker, pKF);
                         }
                         else
                         {
@@ -4431,6 +4412,25 @@ namespace ORB_SLAM3
         }
         // Returning
         return isWall;
+    }
+
+    ORB_SLAM3::Marker *Tracking::createMapMarker(ORB_SLAM3::Marker *visitedMarker,
+                                                 ORB_SLAM3::KeyFrame *pKFini)
+    {
+        ORB_SLAM3::Marker *newMapMarker = new ORB_SLAM3::Marker();
+        newMapMarker->setOpId(visitedMarker->getOpId());
+        newMapMarker->setId(visitedMarker->getId());
+        newMapMarker->setTime(visitedMarker->getTime());
+        newMapMarker->setMarkerInGMap(visitedMarker->isMarkerInGMap());
+        newMapMarker->setLocalPose(visitedMarker->getLocalPose());
+        newMapMarker->SetMap(mpAtlas->GetCurrentMap());
+        newMapMarker->setGlobalPose(visitedMarker->getGlobalPose());
+        newMapMarker->addObservation(pKFini, visitedMarker->getLocalPose());
+
+        pKFini->AddMapMarker(newMapMarker);
+        mpAtlas->AddMapMarker(newMapMarker);
+
+        return newMapMarker;
     }
 
 #ifdef REGISTER_LOOP

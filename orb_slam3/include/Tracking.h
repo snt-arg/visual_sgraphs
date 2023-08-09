@@ -168,6 +168,13 @@ namespace ORB_SLAM3
          */
         bool markerIsPlacedOnWall(const int &markerId);
 
+        /**
+         * @brief Creates a new marker object to be added to the map
+         * @param visitedMarker the address of the visited marker
+         * @param pKFini the address of the current keyframe
+         */
+        Marker *createMapMarker(Marker *visitedMarker, KeyFrame *pKFini);
+
 #ifdef REGISTER_LOOP
         void RequestStop();
         bool isStopped();
