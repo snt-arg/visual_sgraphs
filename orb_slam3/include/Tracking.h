@@ -173,7 +173,21 @@ namespace ORB_SLAM3
          * @param visitedMarker the address of the visited marker
          * @param pKFini the address of the current keyframe
          */
-        Marker *createMapMarker(Marker *visitedMarker, KeyFrame *pKFini);
+        Marker *createMapMarker(const Marker *visitedMarker, KeyFrame *pKFini);
+
+        /**
+         * @brief Creates a new wall object to be added to the map
+         * @param attachedMarker the address of the attached marker
+         * @param estimatedPlane the equation of the plane estimated from the marker
+         */
+        Wall *createMapWall(Marker *attachedMarker, const g2o::Plane3D estimatedPlane);
+
+        /**
+         * @brief Updates an existing wall object in the map
+         * @param wallId the identifier of the existing wall
+         * @param visitedMarker the address of the visited marker
+         */
+        Wall *updateMapWall(int wallId, Marker *visitedMarker);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

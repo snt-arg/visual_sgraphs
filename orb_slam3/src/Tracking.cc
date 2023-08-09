@@ -2499,43 +2499,14 @@ namespace ORB_SLAM3
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
-                        ORB_SLAM3::Wall *newWall = new ORB_SLAM3::Wall();
-                        newWall->setMarkers(currentMapMarker);
-                        newWall->setPlaneEquation(detectedPlane);
-                        newWall->SetMap(mpAtlas->GetCurrentMap());
-                        newWall->setId(mpAtlas->GetAllWalls().size());
-
-                        mpAtlas->AddMapWall(newWall);
+                        ORB_SLAM3::Wall *newMapWall = createMapWall(currentMapMarker, detectedPlane);
 
                         mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
                     }
                     else
                     {
                         // The wall already exists in the map, fetching that one
-                        // int matchedWallId,
-                        // Find the matched wall among all walls of the map
-                        auto matchedWall = std::find_if(mpAtlas->GetAllWalls().begin(), mpAtlas->GetAllWalls().end(),
-                                                        [matchedWallId](const ORB_SLAM3::Wall *wall)
-                                                        {
-                                                            return wall->getId() == matchedWallId;
-                                                        });
-                        // Iterate over all markers in the map to check if the marker already exists
-                        for (auto currentMarker : mpAtlas->GetAllMarkers())
-                        {
-                            // If the currently observing marker is already in the map
-                            if (currentMarker->getId() == mCurrentMarker->getId())
-                            {
-                                // Find that marker among all markers of the wall
-                                auto matchedMarker = std::find_if((*matchedWall)->getMarkers().begin(), (*matchedWall)->getMarkers().end(),
-                                                                  [currentMarker](const ORB_SLAM3::Marker *marker)
-                                                                  {
-                                                                      return marker->getId() == currentMarker->getId();
-                                                                  });
-                                // If that marker does not belong to the wall, add it there
-                                if (matchedMarker == (*matchedWall)->getMarkers().end())
-                                    (*matchedWall)->setMarkers(currentMarker);
-                            }
-                        }
+                        ORB_SLAM3::Wall *fetchedMapWall = updateMapWall(matchedWallId, mCurrentMarker);
                     }
                 }
                 else
@@ -3473,6 +3444,39 @@ namespace ORB_SLAM3
 
                             // Creating a new marker in the map
                             ORB_SLAM3::Marker *currentMapMarker = createMapMarker(mCurrentMarker, pKF);
+
+                            // ----------- Wall and Door Detection and Mapping --------
+                            // Check the currect marker if it is attached to a door or a wall
+                            bool markerIsWall = markerIsPlacedOnWall(mCurrentMarker->getId());
+                            if (markerIsWall)
+                            {
+                                std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a wall";
+                                // The current marker is placed on a wall
+                                // Calculate the plane (wall) equation on which the marker is attached
+                                Eigen::Vector4d planeEstimate =
+                                    getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
+                                                             mCurrentMarker->getGlobalPose().translation());
+                                // Get the plane based on the equation
+                                g2o::Plane3D detectedPlane(planeEstimate);
+                                // Check if we need to add the wall to the map or not
+                                int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
+                                if (matchedWallId == -1)
+                                {
+                                    // A wall with the same equation was not found in the map, creating a new one
+                                    ORB_SLAM3::Wall *newMapWall = createMapWall(currentMapMarker, detectedPlane);
+                                }
+                                else
+                                {
+                                    // The wall already exists in the map, fetching that one
+                                    ORB_SLAM3::Wall *fetchedMapWall = updateMapWall(matchedWallId, mCurrentMarker);
+                                }
+                            }
+                            else
+                            {
+                                // The current marker is placed on a door
+                                // [TODO] Add the door to the map
+                                std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a door";
+                            }
                         }
                         else
                         {
@@ -4414,7 +4418,7 @@ namespace ORB_SLAM3
         return isWall;
     }
 
-    ORB_SLAM3::Marker *Tracking::createMapMarker(ORB_SLAM3::Marker *visitedMarker,
+    ORB_SLAM3::Marker *Tracking::createMapMarker(const ORB_SLAM3::Marker *visitedMarker,
                                                  ORB_SLAM3::KeyFrame *pKFini)
     {
         ORB_SLAM3::Marker *newMapMarker = new ORB_SLAM3::Marker();
@@ -4431,6 +4435,47 @@ namespace ORB_SLAM3
         mpAtlas->AddMapMarker(newMapMarker);
 
         return newMapMarker;
+    }
+
+    ORB_SLAM3::Wall *Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker,
+                                             const g2o::Plane3D estimatedPlane)
+    {
+        ORB_SLAM3::Wall *newMapWall = new ORB_SLAM3::Wall();
+        newMapWall->setMarkers(attachedMarker);
+        newMapWall->setPlaneEquation(estimatedPlane);
+        newMapWall->SetMap(mpAtlas->GetCurrentMap());
+        newMapWall->setId(mpAtlas->GetAllWalls().size());
+
+        mpAtlas->AddMapWall(newMapWall);
+
+        return newMapWall;
+    }
+
+    ORB_SLAM3::Wall *Tracking::updateMapWall(int wallId, ORB_SLAM3::Marker *visitedMarker)
+    {
+        // Find the matched wall among all walls of the map
+        auto matchedWall = std::find_if(mpAtlas->GetAllWalls().begin(), mpAtlas->GetAllWalls().end(),
+                                        [wallId](const ORB_SLAM3::Wall *wall)
+                                        {
+                                            return wall->getId() == wallId;
+                                        });
+        // Iterate over all markers in the map to check if the marker already exists
+        for (auto currentMarker : mpAtlas->GetAllMarkers())
+        {
+            // If the currently observing marker is already in the map
+            if (currentMarker->getId() == visitedMarker->getId())
+            {
+                // Find that marker among all markers of the wall
+                auto matchedMarker = std::find_if((*matchedWall)->getMarkers().begin(), (*matchedWall)->getMarkers().end(),
+                                                  [currentMarker](const ORB_SLAM3::Marker *marker)
+                                                  {
+                                                      return marker->getId() == currentMarker->getId();
+                                                  });
+                // If that marker does not belong to the wall, add it there
+                if (matchedMarker == (*matchedWall)->getMarkers().end())
+                    (*matchedWall)->setMarkers(currentMarker);
+            }
+        }
     }
 
 #ifdef REGISTER_LOOP
