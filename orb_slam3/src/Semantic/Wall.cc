@@ -42,24 +42,14 @@ namespace ORB_SLAM3
         opIdG = value;
     }
 
-    g2o::VertexPlane *Wall::getWallPlane() const
-    {
-        return wall_plane;
-    }
-
-    void Wall::setWallPlane(g2o::VertexPlane *value)
-    {
-        wall_plane = value;
-    }
-
     std::vector<Marker *> Wall::getMarkers() const
     {
         return markers;
     }
 
-    void Wall::setMarkers(const std::vector<Marker *> &value)
+    void Wall::setMarkers(Marker *value)
     {
-        markers = value;
+        markers.push_back(value);
     }
 
     std::vector<MapPoint *> Wall::getMapPoints() const
@@ -67,9 +57,9 @@ namespace ORB_SLAM3
         return map_points;
     }
 
-    void Wall::setMapPoints(const std::vector<MapPoint *> &value)
+    void Wall::setMapPoints(MapPoint *value)
     {
-        map_points = value;
+        map_points.push_back(value);
     }
 
     g2o::Plane3D Wall::getPlaneEquation() const
