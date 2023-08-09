@@ -2509,31 +2509,42 @@ namespace ORB_SLAM3
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
-                        // ORB_SLAM3::Wall *newWall = new ORB_SLAM3::Wall();
-                        // newWall->setId(mpAtlas->GetAllWalls().size());
-                        // newWall->setPlaneEquation(detectedPlane);
-                        // // newWall->setMarkers();
-                        // // newWall->setMapPoints();
-                        // // newWall->setWallPlane();
-                        // newWall->SetMap(mpAtlas->GetCurrentMap());
+                        ORB_SLAM3::Wall *newWall = new ORB_SLAM3::Wall();
+                        newWall->setMarkers(currentMapMarker);
+                        newWall->setPlaneEquation(detectedPlane);
+                        newWall->SetMap(mpAtlas->GetCurrentMap());
+                        newWall->setId(mpAtlas->GetAllWalls().size());
 
-                        //     pKFini->AddMapWall(newWall);
-                        //     mpAtlas->AddMapWall(newWall);
+                        mpAtlas->AddMapWall(newWall);
 
-                        //     mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
+                        mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
                     }
                     else
                     {
-                        // Find the matched wall
-                        // auto matchedWall = find_if(map->map_walls.begin(), map->map_walls.end(),
-                        //                            boost::bind(&Wall::id, _1) == matchedWallId);
-                        // // check if the marker if already exists
-                        // auto foundMarkerId = find((*matchedWall).markerIds.begin(), (*matchedWall).markerIds.end(), m.first);
-                        // // if it doesnt exist push back in the list of markers
-                        // if (foundMarkerId == (*matchedWall).markerIds.end())
-                        //     (*matchedWall).markerIds.push_back(m.first);
-
-                        // m.second.wallId = matchedWallId;
+                        // The wall already exists in the map, fetching that one
+                        // Find the matched wall among all walls of the map
+                        auto matchedWall = std::find_if(mpAtlas->GetAllWalls().begin(), mpAtlas->GetAllWalls().end(),
+                                                        [matchedWallId](const ORB_SLAM3::Wall *wall)
+                                                        {
+                                                            return wall->getId() == matchedWallId;
+                                                        });
+                        // Iterate over all markers in the map to check if the marker already exists
+                        for (auto currentMarker : mpAtlas->GetAllMarkers())
+                        {
+                            // If the currently observing marker is already in the map
+                            if (currentMarker->getId() == mCurrentMarker->getId())
+                            {
+                                // Find that marker among all markers of the wall
+                                auto matchedMarker = std::find_if((*matchedWall)->getMarkers().begin(), (*matchedWall)->getMarkers().end(),
+                                                                  [currentMarker](const ORB_SLAM3::Marker *marker)
+                                                                  {
+                                                                      return marker->getId() == currentMarker->getId();
+                                                                  });
+                                // If that marker does not belong to the wall, add it there
+                                if (matchedMarker == (*matchedWall)->getMarkers().end())
+                                    (*matchedWall)->setMarkers(currentMarker);
+                            }
+                        }
                     }
                 }
                 else
@@ -2546,7 +2557,7 @@ namespace ORB_SLAM3
 
             Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
                                    to_string(mpAtlas->MarkersInMap()) + " markers [" + mapMarkerStr +
-                                   "], and walls [" + mapWallStr + "].",
+                                   "], and " + mapWallStr + " walls.",
                                Verbose::VERBOSITY_QUIET);
 
             // cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
