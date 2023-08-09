@@ -180,14 +180,14 @@ namespace ORB_SLAM3
          * @param attachedMarker the address of the attached marker
          * @param estimatedPlane the equation of the plane estimated from the marker
          */
-        Wall *createMapWall(Marker *attachedMarker, const g2o::Plane3D estimatedPlane);
+        void createMapWall(Marker *attachedMarker, const g2o::Plane3D estimatedPlane);
 
         /**
          * @brief Updates an existing wall object in the map
          * @param wallId the identifier of the existing wall
          * @param visitedMarker the address of the visited marker
          */
-        Wall *updateMapWall(int wallId, Marker *visitedMarker);
+        void updateMapWall(int wallId, Marker *visitedMarker);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

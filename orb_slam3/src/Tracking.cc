@@ -2499,14 +2499,14 @@ namespace ORB_SLAM3
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
-                        ORB_SLAM3::Wall *newMapWall = createMapWall(currentMapMarker, detectedPlane);
+                        createMapWall(currentMapMarker, detectedPlane);
 
                         mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
                     }
                     else
                     {
                         // The wall already exists in the map, fetching that one
-                        ORB_SLAM3::Wall *fetchedMapWall = updateMapWall(matchedWallId, mCurrentMarker);
+                        updateMapWall(matchedWallId, mCurrentMarker);
                     }
                 }
                 else
@@ -3463,12 +3463,12 @@ namespace ORB_SLAM3
                                 if (matchedWallId == -1)
                                 {
                                     // A wall with the same equation was not found in the map, creating a new one
-                                    ORB_SLAM3::Wall *newMapWall = createMapWall(currentMapMarker, detectedPlane);
+                                    createMapWall(currentMapMarker, detectedPlane);
                                 }
                                 else
                                 {
                                     // The wall already exists in the map, fetching that one
-                                    ORB_SLAM3::Wall *fetchedMapWall = updateMapWall(matchedWallId, mCurrentMarker);
+                                    updateMapWall(matchedWallId, mCurrentMarker);
                                 }
                             }
                             else
@@ -4438,10 +4438,9 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    //[TODO:] return void
-    // add newMapWall to the Pki keyframe
-    ORB_SLAM3::Wall *Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker,
-                                             const g2o::Plane3D estimatedPlane)
+    //[TODO:] add newMapWall to the Pki keyframe
+    void Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker,
+                                 const g2o::Plane3D estimatedPlane)
     {
         ORB_SLAM3::Wall *newMapWall = new ORB_SLAM3::Wall();
         newMapWall->setMarkers(attachedMarker);
@@ -4450,12 +4449,10 @@ namespace ORB_SLAM3
         newMapWall->setId(mpAtlas->GetAllWalls().size());
 
         mpAtlas->AddMapWall(newMapWall);
-
-        return newMapWall;
     }
 
     //[TODO:] return void
-    ORB_SLAM3::Wall *Tracking::updateMapWall(int wallId, ORB_SLAM3::Marker *visitedMarker)
+    void Tracking::updateMapWall(int wallId, ORB_SLAM3::Marker *visitedMarker)
     {
         // Find the matched wall among all walls of the map
         auto matchedWall = std::find_if(mpAtlas->GetAllWalls().begin(), mpAtlas->GetAllWalls().end(),
