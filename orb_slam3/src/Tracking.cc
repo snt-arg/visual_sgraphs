@@ -4402,6 +4402,7 @@ namespace ORB_SLAM3
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
     }
 
+    //[TODO:] check the bug
     bool Tracking::markerIsPlacedOnWall(const int &markerId)
     {
         bool isWall = true;
@@ -4437,6 +4438,8 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
+    //[TODO:] return void
+    // add newMapWall to the Pki keyframe
     ORB_SLAM3::Wall *Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker,
                                              const g2o::Plane3D estimatedPlane)
     {
@@ -4451,6 +4454,7 @@ namespace ORB_SLAM3
         return newMapWall;
     }
 
+    //[TODO:] return void
     ORB_SLAM3::Wall *Tracking::updateMapWall(int wallId, ORB_SLAM3::Marker *visitedMarker)
     {
         // Find the matched wall among all walls of the map

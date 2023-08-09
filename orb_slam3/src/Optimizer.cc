@@ -1187,6 +1187,7 @@ namespace ORB_SLAM3
 
         // Local Markers seen in Local KeyFrames
         list<Marker *> lLocalMapMarkers;
+        //[TODO:] list of walls
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
@@ -1223,6 +1224,9 @@ namespace ORB_SLAM3
                 lLocalMapMarkers.push_back(marker);
             }
         }
+
+        // Get all the walls of the KF ()
+        // vector<Wall *> vpWall = pKFi->GetMapWalls()
 
         // Fixed Keyframes (Keyframes that see Local MapPoints but that are not Local Keyframes)
         list<KeyFrame *> lFixedCameras;
@@ -1514,6 +1518,12 @@ namespace ORB_SLAM3
             }
         }
 
+        //[TODO:] Add vertex wall by looping over lLocalWall that was created above
+        // for (list<Wall *>::iterator idx = lLocalMapWalls.begin(), lend = lLocalMapWalls.end(); idx != lend; idx++) {
+
+        // [TODO:] Adding an edge between the Wall and its respective markers (NOTE: edge is the same as in ucoslam marker->wall edge)
+        // }
+
         if (pbStopFlag)
             if (*pbStopFlag)
                 return;
@@ -1613,6 +1623,8 @@ namespace ORB_SLAM3
             Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
             pMapMarker->setGlobalPose(Tiw);
         }
+
+        //[TODO:] update the optimized walls
 
         pMap->IncreaseChangeIndex();
     }
