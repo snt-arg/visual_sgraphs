@@ -1567,9 +1567,13 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const double &timestamp,
-                                         string filename, const std::vector<Marker *> markers, const std::vector<Door *> doors,
-                                         const std::vector<Room *> rooms)
+                                         string filename, const std::vector<Marker *> markers,
+                                         const std::vector<Door *> doors, const std::vector<Room *> rooms)
     {
+        // Set arguments to local variables
+        env_doors = doors;
+        env_rooms = rooms;
+
         mImGray = imRGB;
         cv::Mat imDepth = imD;
 
@@ -2499,14 +2503,14 @@ namespace ORB_SLAM3
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
-                        createMapWall(currentMapMarker, detectedPlane);
+                        // createMapWall(currentMapMarker, detectedPlane);
 
                         mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
                     }
                     else
                     {
                         // The wall already exists in the map, fetching that one
-                        updateMapWall(matchedWallId, mCurrentMarker);
+                        // updateMapWall(matchedWallId, mCurrentMarker);
                     }
                 }
                 else
@@ -3463,12 +3467,12 @@ namespace ORB_SLAM3
                                 if (matchedWallId == -1)
                                 {
                                     // A wall with the same equation was not found in the map, creating a new one
-                                    createMapWall(currentMapMarker, detectedPlane);
+                                    // createMapWall(currentMapMarker, detectedPlane);
                                 }
                                 else
                                 {
                                     // The wall already exists in the map, fetching that one
-                                    updateMapWall(matchedWallId, mCurrentMarker);
+                                    // updateMapWall(matchedWallId, mCurrentMarker);
                                 }
                             }
                             else
@@ -4402,7 +4406,6 @@ namespace ORB_SLAM3
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
     }
 
-    //[TODO:] check the bug
     bool Tracking::markerIsPlacedOnWall(const int &markerId)
     {
         bool isWall = true;
@@ -4451,7 +4454,6 @@ namespace ORB_SLAM3
         mpAtlas->AddMapWall(newMapWall);
     }
 
-    //[TODO:] return void
     void Tracking::updateMapWall(int wallId, ORB_SLAM3::Marker *visitedMarker)
     {
         // Find the matched wall among all walls of the map

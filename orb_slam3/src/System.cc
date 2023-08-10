@@ -37,12 +37,12 @@ namespace ORB_SLAM3
     Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
     System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-                   const bool bUseViewer, const int initFr, const string &strSequence,
-                   const vector<Door *> doors, const vector<Room *> rooms) : mSensor(sensor), mpViewer(static_cast<Viewer *>(NULL)), mbReset(false), mbResetActiveMap(false),
-                                                                             mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
+                   const bool bUseViewer, const int initFr, const string &strSequence) : mSensor(sensor), mpViewer(static_cast<Viewer *>(NULL)), mbReset(false), mbResetActiveMap(false),
+                                                                                         mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
     {
         // Output welcome message
         cout << endl
+             << "Marker-based Semantic ORB-SLAM3 Copyright (C) 2023 Ali Tourani, Hriday Bavle, Jose Luis Sanchez-Lopez, Rafel Munoz-Salinas, and Holger Voos, SnT - University of Luxembourg." << endl
              << "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl
              << "ORB-SLAM2 Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl
              << "This program comes with ABSOLUTELY NO WARRANTY;" << endl
@@ -64,10 +64,6 @@ namespace ORB_SLAM3
             cout << "Stereo-Inertial" << endl;
         else if (mSensor == IMU_RGBD)
             cout << "RGB-D-Inertial" << endl;
-
-        // Load semantic variables read from JSON
-        env_rooms = rooms;
-        env_doors = doors;
 
         // Check settings file
         cv::FileStorage fsSettings(strSettingsFile.c_str(), cv::FileStorage::READ);
@@ -313,7 +309,8 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
-                                   const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker *> markers)
+                                   const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker *> markers,
+                                   const vector<Door *> doors, const vector<Room *> rooms)
     {
         // Check if the sensor is RGB-D
         if (mSensor != RGBD && mSensor != IMU_RGBD)
@@ -379,7 +376,8 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, timestamp, filename, markers, env_doors, env_rooms);
+        Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, timestamp,
+                                                    filename, markers, doors, rooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;

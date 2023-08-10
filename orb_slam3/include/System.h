@@ -106,8 +106,7 @@ namespace ORB_SLAM3
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
         System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
-               const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string(),
-               const vector<Door *> envDoors = vector<Door *>{}, const vector<Room *> envRooms = vector<Room *>{});
+               const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
 
         // Proccess the given stereo frame. Images must be synchronized and rectified.
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -119,8 +118,8 @@ namespace ORB_SLAM3
         // Input depthmap: Float (CV_32F).
         // Returns the camera pose (empty if tracking fails).
         Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
-                               const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                               const vector<Marker *> markers = vector<Marker *>{});
+                               const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "", const vector<Marker *> markers = vector<Marker *>{},
+                               const vector<Door *> envDoors = vector<Door *>{}, const vector<Room *> envRooms = vector<Room *>{});
 
         // Proccess the given monocular frame and optionally imu data
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
@@ -278,10 +277,6 @@ namespace ORB_SLAM3
         string mStrVocabularyFilePath;
 
         Settings *settings_;
-
-        // Semantic map entities
-        std::vector<ORB_SLAM3::Room *> env_rooms;
-        std::vector<ORB_SLAM3::Door *> env_doors;
     };
 
 } // namespace ORB_SLAM

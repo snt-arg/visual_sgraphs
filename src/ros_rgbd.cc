@@ -127,7 +127,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     if (min_time_diff < 0.05)
     {
         Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec(),
-                                            {}, "", matched_markers);
+                                            {}, "", matched_markers, env_doors, env_rooms);
         markers_buff.clear();
     }
     else
