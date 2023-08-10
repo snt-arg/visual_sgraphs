@@ -2483,27 +2483,29 @@ namespace ORB_SLAM3
                 // Creating a new marker in the map
                 ORB_SLAM3::Marker *currentMapMarker = createMapMarker(mCurrentMarker, pKFini);
 
-                mapMarkerStr += std::to_string(mCurrentMarker->getId()) + " ";
+                mapMarkerStr += std::to_string(currentMapMarker->getId()) + " ";
 
                 // ----------- Wall and Door Detection and Mapping --------
                 // Check the currect marker if it is attached to a door or a wall
-                bool markerIsWall = markerIsPlacedOnWall(mCurrentMarker->getId());
+                bool markerIsWall = markerIsPlacedOnWall(currentMapMarker->getId());
                 if (markerIsWall)
                 {
-                    std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a wall";
+                    std::cout << "\n [StereoInitialization] Marker " << mCurrentMarker->getId() << " is placed on a wall." << std::endl;
                     // The current marker is placed on a wall
                     // Calculate the plane (wall) equation on which the marker is attached
                     Eigen::Vector4d planeEstimate =
                         getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
                                                  mCurrentMarker->getGlobalPose().translation());
+                    std::cout << "[StereoInitialization] planeEstimate " << planeEstimate << std::endl;
                     // Get the plane based on the equation
                     g2o::Plane3D detectedPlane(planeEstimate);
                     // Check if we need to add the wall to the map or not
                     int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
+                    std::cout << "[StereoInitialization] matchedWallId " << matchedWallId << std::endl;
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
-                        // createMapWall(currentMapMarker, detectedPlane);
+                        // createMapWall(currentMapMarker, detectedPlane, pKFini);
 
                         mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
                     }
@@ -2517,7 +2519,7 @@ namespace ORB_SLAM3
                 {
                     // The current marker is placed on a door
                     // [TODO] Add the door to the map
-                    std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a door";
+                    std::cout << "Marker " << mCurrentMarker->getId() << " is placed on a door." << std::endl;
                 }
             }
 
@@ -3451,23 +3453,26 @@ namespace ORB_SLAM3
 
                             // ----------- Wall and Door Detection and Mapping --------
                             // Check the currect marker if it is attached to a door or a wall
-                            bool markerIsWall = markerIsPlacedOnWall(mCurrentMarker->getId());
+                            bool markerIsWall = markerIsPlacedOnWall(currentMapMarker->getId());
                             if (markerIsWall)
                             {
-                                std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a wall";
+                                std::cout << "\n [KeyFrameCreate] Marker " << mCurrentMarker->getId() << " is placed on a wall." << std::endl;
                                 // The current marker is placed on a wall
                                 // Calculate the plane (wall) equation on which the marker is attached
                                 Eigen::Vector4d planeEstimate =
                                     getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
                                                              mCurrentMarker->getGlobalPose().translation());
+                                std::cout << "[KeyFrameCreate] planeEstimate " << planeEstimate << std::endl;
                                 // Get the plane based on the equation
                                 g2o::Plane3D detectedPlane(planeEstimate);
                                 // Check if we need to add the wall to the map or not
                                 int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
+                                std::cout << "[KeyFrameCreate] matchedWallId " << matchedWallId << std::endl;
                                 if (matchedWallId == -1)
                                 {
                                     // A wall with the same equation was not found in the map, creating a new one
-                                    // createMapWall(currentMapMarker, detectedPlane);
+                                    std::cout << "[KeyFrameCreate] createMapWall ... " << std::endl;
+                                    createMapWall(currentMapMarker, detectedPlane, pKF);
                                 }
                                 else
                                 {
@@ -3479,7 +3484,7 @@ namespace ORB_SLAM3
                             {
                                 // The current marker is placed on a door
                                 // [TODO] Add the door to the map
-                                std::cout << "\nMarker " << mCurrentMarker->getId() << " is placed on a door";
+                                std::cout << "Marker " << mCurrentMarker->getId() << " is placed on a door." << std::endl;
                             }
                         }
                         else
@@ -4423,7 +4428,7 @@ namespace ORB_SLAM3
     }
 
     ORB_SLAM3::Marker *Tracking::createMapMarker(const ORB_SLAM3::Marker *visitedMarker,
-                                                 ORB_SLAM3::KeyFrame *pKFini)
+                                                 ORB_SLAM3::KeyFrame *pKF)
     {
         ORB_SLAM3::Marker *newMapMarker = new ORB_SLAM3::Marker();
         newMapMarker->setOpId(visitedMarker->getOpId());
@@ -4433,17 +4438,16 @@ namespace ORB_SLAM3
         newMapMarker->setLocalPose(visitedMarker->getLocalPose());
         newMapMarker->SetMap(mpAtlas->GetCurrentMap());
         newMapMarker->setGlobalPose(visitedMarker->getGlobalPose());
-        newMapMarker->addObservation(pKFini, visitedMarker->getLocalPose());
+        newMapMarker->addObservation(pKF, visitedMarker->getLocalPose());
 
-        pKFini->AddMapMarker(newMapMarker);
+        pKF->AddMapMarker(newMapMarker);
         mpAtlas->AddMapMarker(newMapMarker);
 
         return newMapMarker;
     }
 
-    //[TODO:] add newMapWall to the Pki keyframe
-    void Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker,
-                                 const g2o::Plane3D estimatedPlane)
+    void Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker, const g2o::Plane3D estimatedPlane,
+                                 ORB_SLAM3::KeyFrame *pKF)
     {
         ORB_SLAM3::Wall *newMapWall = new ORB_SLAM3::Wall();
         newMapWall->setMarkers(attachedMarker);
@@ -4451,6 +4455,7 @@ namespace ORB_SLAM3
         newMapWall->SetMap(mpAtlas->GetCurrentMap());
         newMapWall->setId(mpAtlas->GetAllWalls().size());
 
+        // pKF->AddMapWall(newMapWall);
         mpAtlas->AddMapWall(newMapWall);
     }
 

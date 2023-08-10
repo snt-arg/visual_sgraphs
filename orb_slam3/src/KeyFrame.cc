@@ -310,6 +310,12 @@ namespace ORB_SLAM3
         mvpMapMarkers.push_back(marker);
     }
 
+    // void KeyFrame::AddMapWall(Wall *wall)
+    // {
+    //     unique_lock<mutex> lock(mMutexFeatures);
+    //     mvpMapWalls.push_back(wall);
+    // }
+
     void KeyFrame::EraseMapPointMatch(const int &idx)
     {
         unique_lock<mutex> lock(mMutexFeatures);
@@ -390,6 +396,12 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexFeatures);
         return mvpMapMarkers;
     }
+
+    // vector<Wall *> KeyFrame::GetMapWalls()
+    // {
+    //     unique_lock<mutex> lock(mMutexFeatures);
+    //     return mvpMapWalls;
+    // }
 
     void KeyFrame::UpdateConnections(bool upParent)
     {
