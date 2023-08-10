@@ -2490,18 +2490,15 @@ namespace ORB_SLAM3
                 bool markerIsWall = markerIsPlacedOnWall(currentMapMarker->getId());
                 if (markerIsWall)
                 {
-                    std::cout << "\n [StereoInitialization] Marker " << mCurrentMarker->getId() << " is placed on a wall." << std::endl;
                     // The current marker is placed on a wall
                     // Calculate the plane (wall) equation on which the marker is attached
                     Eigen::Vector4d planeEstimate =
                         getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
                                                  mCurrentMarker->getGlobalPose().translation());
-                    std::cout << "[StereoInitialization] planeEstimate " << planeEstimate << std::endl;
                     // Get the plane based on the equation
                     g2o::Plane3D detectedPlane(planeEstimate);
                     // Check if we need to add the wall to the map or not
                     int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
-                    std::cout << "[StereoInitialization] matchedWallId " << matchedWallId << std::endl;
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
@@ -3456,23 +3453,19 @@ namespace ORB_SLAM3
                             bool markerIsWall = markerIsPlacedOnWall(currentMapMarker->getId());
                             if (markerIsWall)
                             {
-                                std::cout << "\n [KeyFrameCreate] Marker " << mCurrentMarker->getId() << " is placed on a wall." << std::endl;
                                 // The current marker is placed on a wall
                                 // Calculate the plane (wall) equation on which the marker is attached
                                 Eigen::Vector4d planeEstimate =
                                     getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
                                                              mCurrentMarker->getGlobalPose().translation());
-                                std::cout << "[KeyFrameCreate] planeEstimate " << planeEstimate << std::endl;
                                 // Get the plane based on the equation
                                 g2o::Plane3D detectedPlane(planeEstimate);
                                 // Check if we need to add the wall to the map or not
                                 int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
-                                std::cout << "[KeyFrameCreate] matchedWallId " << matchedWallId << std::endl;
                                 if (matchedWallId == -1)
                                 {
                                     // A wall with the same equation was not found in the map, creating a new one
-                                    std::cout << "[KeyFrameCreate] createMapWall ... " << std::endl;
-                                    createMapWall(currentMapMarker, detectedPlane, pKF);
+                                    // createMapWall(currentMapMarker, detectedPlane, pKF);
                                 }
                                 else
                                 {
