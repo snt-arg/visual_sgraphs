@@ -2502,7 +2502,7 @@ namespace ORB_SLAM3
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
-                        // createMapWall(currentMapMarker, detectedPlane, pKFini);
+                        createMapWall(currentMapMarker, detectedPlane, pKFini);
 
                         mapWallStr += std::to_string(mpAtlas->GetAllWalls().size()) + " ";
                     }
@@ -3465,7 +3465,7 @@ namespace ORB_SLAM3
                                 if (matchedWallId == -1)
                                 {
                                     // A wall with the same equation was not found in the map, creating a new one
-                                    // createMapWall(currentMapMarker, detectedPlane, pKF);
+                                    createMapWall(currentMapMarker, detectedPlane, pKF);
                                 }
                                 else
                                 {
@@ -4447,6 +4447,9 @@ namespace ORB_SLAM3
         newMapWall->setPlaneEquation(estimatedPlane);
         newMapWall->SetMap(mpAtlas->GetCurrentMap());
         newMapWall->setId(mpAtlas->GetAllWalls().size());
+
+        std::cout << "Adding new wall to the map: Wall#" << newMapWall->getId() << ", Marker#"
+                  << attachedMarker->getId() << " ... \n";
 
         // pKF->AddMapWall(newMapWall);
         mpAtlas->AddMapWall(newMapWall);
