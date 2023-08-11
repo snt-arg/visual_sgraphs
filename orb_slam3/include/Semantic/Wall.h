@@ -13,7 +13,7 @@
 #include "Map.h"
 #include "Marker.h"
 #include "../MapPoint.h"
-#include "Thirdparty/g2o/g2o/types/vertex_plane.h"
+#include "Thirdparty/g2o/g2o/types/plane3d.h"
 
 namespace ORB_SLAM3
 {

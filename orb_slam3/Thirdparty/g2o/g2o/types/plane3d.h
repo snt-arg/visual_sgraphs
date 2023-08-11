@@ -15,11 +15,15 @@ namespace g2o
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
+        friend Plane3D operator*(const Isometry3D &t, const Plane3D &plane);
+
         Plane3D() { fromVector(Vector4D(1., 0., 0., -1.)); }
 
         Plane3D(const Vector4D &v) { fromVector(v); }
 
         inline Vector4D toVector() const { return _coeffs; }
+
+        inline const Vector4D &coeffs() const { return _coeffs; }
 
         inline void fromVector(const Vector4D &coeffs_)
         {
@@ -80,6 +84,16 @@ namespace g2o
             double n = coeffs.head<3>().norm();
             coeffs = coeffs * (1. / n);
         }
+    };
+
+    inline Plane3D operator*(const Isometry3D &t, const Plane3D &plane)
+    {
+        Vector4D v = plane._coeffs;
+        Vector4D v2;
+        Matrix3D R = t.rotation();
+        v2.head<3>() = R * v.head<3>();
+        v2(3) = v(3) - t.translation().dot(v2.head<3>());
+        return Plane3D(v2);
     };
 
 } // namespace g2o
