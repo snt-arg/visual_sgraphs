@@ -49,7 +49,11 @@ namespace ORB_SLAM3
 
     void Wall::setMarkers(Marker *value)
     {
-        markers.push_back(value);
+        // Check if the marker is not already added in the list of wall markers
+        if (std::find(markers.begin(), markers.end(), value) == markers.end())
+        {
+            markers.push_back(value);
+        }
     }
 
     std::vector<MapPoint *> Wall::getMapPoints() const
