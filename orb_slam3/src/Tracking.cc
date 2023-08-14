@@ -2509,7 +2509,7 @@ namespace ORB_SLAM3
                     else
                     {
                         // The wall already exists in the map, fetching that one
-                        // updateMapWall(matchedWallId, mCurrentMarker);
+                        updateMapWall(matchedWallId, mCurrentMarker);
                     }
                 }
                 else
@@ -3470,7 +3470,7 @@ namespace ORB_SLAM3
                                 else
                                 {
                                     // The wall already exists in the map, fetching that one
-                                    // updateMapWall(matchedWallId, mCurrentMarker);
+                                    updateMapWall(matchedWallId, mCurrentMarker);
                                 }
                             }
                             else
@@ -4463,6 +4463,9 @@ namespace ORB_SLAM3
                                         {
                                             return wall->getId() == wallId;
                                         });
+
+        std::cout << "Updating wall existed in the map: Wall#" << (*matchedWall)->getId() << " ... \n";
+
         // Iterate over all markers in the map to check if the marker already exists
         for (auto currentMarker : mpAtlas->GetAllMarkers())
         {
