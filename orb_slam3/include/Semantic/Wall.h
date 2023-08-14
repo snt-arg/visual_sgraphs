@@ -11,12 +11,16 @@
 #include <Eigen/Eigen>
 
 #include "Map.h"
-#include "Marker.h"
-#include "../MapPoint.h"
+#include "MapPoint.h"
+#include "Semantic/Marker.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
 
 namespace ORB_SLAM3
 {
+    class Map;
+    class Marker;
+    class MapPoint;
+
     class Wall
     {
     private:

@@ -14,6 +14,7 @@
 namespace ORB_SLAM3
 {
     class Map;
+    class KeyFrame;
 
     class Marker
     {

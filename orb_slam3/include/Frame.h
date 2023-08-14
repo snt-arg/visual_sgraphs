@@ -39,6 +39,7 @@
 #include "sophus/se3.hpp"
 
 #include "Semantic/Marker.h"
+#include "Semantic/Wall.h"
 
 namespace ORB_SLAM3
 {
@@ -51,6 +52,7 @@ namespace ORB_SLAM3
     class GeometricCamera;
     class ORBextractor;
     class Marker;
+    class Wall;
 
     class Frame
     {

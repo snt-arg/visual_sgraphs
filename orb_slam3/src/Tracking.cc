@@ -4451,7 +4451,7 @@ namespace ORB_SLAM3
         std::cout << "Adding new wall to the map: Wall#" << newMapWall->getId() << ", Marker#"
                   << attachedMarker->getId() << " ... \n";
 
-        // pKF->AddMapWall(newMapWall);
+        pKF->AddMapWall(newMapWall);
         mpAtlas->AddMapWall(newMapWall);
     }
 
