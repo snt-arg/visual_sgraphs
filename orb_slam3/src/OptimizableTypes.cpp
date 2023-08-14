@@ -395,4 +395,40 @@ namespace ORB_SLAM3
         g2o::internal::writeVector(os, g2o::internal::toVectorQT(measurement()));
         return writeInformationMatrix(os);
     }
+
+    EdgeVertexPlaneProjectSE3::EdgeVertexPlaneProjectSE3() : g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>()
+    {
+    }
+
+    bool EdgeVertexPlaneProjectSE3::read(std::istream &is)
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            is >> _measurement[i];
+        }
+
+        for (int i = 0; i < 4; i++)
+            for (int j = i; j < 4; j++)
+            {
+                is >> information()(i, j);
+                if (i != j)
+                    information()(j, i) = information()(i, j);
+            }
+        return true;
+    }
+
+    bool EdgeVertexPlaneProjectSE3::write(std::ostream &os) const
+    {
+        for (int i = 0; i < 4; i++)
+        {
+            os << _measurement[i] << " ";
+        }
+
+        for (int i = 0; i < 4; i++)
+            for (int j = i; j < 4; j++)
+            {
+                os << " " << information()(i, j);
+            }
+        return os.good();
+    }
 }

@@ -25,6 +25,7 @@
 #include <Eigen/Geometry>
 #include <Thirdparty/g2o/g2o/types/sim3.h>
 #include <include/CameraModels/GeometricCamera.h>
+#include <Thirdparty/g2o/g2o/types/vertex_plane.h>
 #include <Thirdparty/g2o/g2o/types/types_six_dof_expmap.h>
 
 namespace ORB_SLAM3
@@ -257,6 +258,57 @@ namespace ORB_SLAM3
 
             // Calculating the final error
             _error = g2o::internal::toVectorMQT(delta);
+        }
+    };
+
+    /**
+     * The edge used to connect a Wall vertex (VertexPlane) to a Marker vertex (SE3)
+     * [Note]: it creates constraint for four measurements, i.e., (x, y, z, d)
+     */
+    class EdgeVertexPlaneProjectSE3 : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        EdgeVertexPlaneProjectSE3();
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
+
+        void computeError()
+        {
+            // Marker's global pose
+            const g2o::VertexSE3Expmap *vMarkerGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            // Wall's global pose
+            const g2o::VertexPlane *vWallGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+
+            // Calculating marker's pose
+            g2o::Isometry3D markerPose = vMarkerGP->estimate();
+
+            // Calculate the wall's coefficients (in global frame)
+            g2o::Vector4D wallCoeffs = vWallGP->estimate().coeffs();
+
+            // Normalize the wall vector if necessary
+            if (wallCoeffs(3) < 0)
+            {
+                wallCoeffs *= -1;
+            }
+
+            // Create the wall plane in global frame
+            g2o::Plane3D wall_g(wallCoeffs);
+
+            // Calculate the wall in marker's frame
+            g2o::Plane3D wall_m = markerPose.inverse() * wall_g;
+
+            // Calculate the normal of the marker in marker's frame
+            g2o::Plane3D markerNormal_m = markerPose.inverse() * markerPose.matrix().col(2);
+
+            // Calculate the difference of the planes
+            Eigen::Vector3d planeDiff = wall_m.coeffs().head(3) - markerNormal_m.coeffs().head(3);
+
+            _error[0] = planeDiff(0);
+            _error[1] = planeDiff(1);
+            _error[2] = planeDiff(2);
+            _error[3] = wall_m.coeffs()(3); // Distance (d) of the cacmera
         }
     };
 }

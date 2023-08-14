@@ -49,12 +49,13 @@ namespace ORB_SLAM3
         vector<MapPoint *> vpMP = pMap->GetAllMapPoints();
         vector<KeyFrame *> vpKFs = pMap->GetAllKeyFrames();
         vector<Marker *> vpMarkers = pMap->GetAllMarkers();
-        BundleAdjustment(vpKFs, vpMP, vpMarkers, nIterations, pbStopFlag, nLoopKF, bRobust);
+        vector<Wall *> vpWalls = pMap->GetAllWalls();
+        BundleAdjustment(vpKFs, vpMP, vpMarkers, vpWalls, nIterations, pbStopFlag, nLoopKF, bRobust);
     }
 
     void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
-                                     const vector<Marker *> &vpMarkers, int nIterations, bool *pbStopFlag,
-                                     const unsigned long nLoopKF, const bool bRobust)
+                                     const vector<Marker *> &vpMarkers, const vector<Wall *> &vpWalls,
+                                     int nIterations, bool *pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
     {
         vector<bool> vbNotIncludedMP;
         vbNotIncludedMP.resize(vpMP.size());
@@ -1162,7 +1163,8 @@ namespace ORB_SLAM3
         return nInitialCorrespondences - nBad;
     }
 
-    void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF, int &num_MPs, int &num_edges)
+    void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF,
+                                          int &num_OptKF, int &num_MPs, int &num_edges)
     {
         // Local KeyFrames: First Breath Search from Current Keyframe
         list<KeyFrame *> lLocalKeyFrames;
@@ -1185,9 +1187,9 @@ namespace ORB_SLAM3
         set<MapPoint *> sNumObsMP;
         list<MapPoint *> lLocalMapPoints;
 
-        // Local Markers seen in Local KeyFrames
+        // Local semantic objects seen in Local KeyFrames
+        list<Wall *> lLocalMapWalls;
         list<Marker *> lLocalMapMarkers;
-        //[TODO] list of walls
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
@@ -1223,10 +1225,16 @@ namespace ORB_SLAM3
                 Marker *marker = *idx;
                 lLocalMapMarkers.push_back(marker);
             }
-        }
 
-        // Get all the walls of the KF ()
-        // vector<Wall *> vpWall = pKFi->GetMapWalls()
+            // Get all the Walls of the KF (Local Optimization)
+            vector<Wall *> vpWalls = pKFi->GetMapWalls();
+
+            for (vector<Wall *>::iterator idx = vpWalls.begin(), vend = vpWalls.end(); idx != vend; idx++)
+            {
+                Wall *wall = *idx;
+                lLocalMapWalls.push_back(wall);
+            }
+        }
 
         // Fixed Keyframes (Keyframes that see Local MapPoints but that are not Local Keyframes)
         list<KeyFrame *> lFixedCameras;
@@ -1343,6 +1351,7 @@ namespace ORB_SLAM3
         const float thHuberMono = sqrt(5.991);
         const float thHuberStereo = sqrt(7.815);
 
+        int nWalls = 1;
         int nPoints = 0;
         int nMarkers = 1;
 
@@ -1518,11 +1527,44 @@ namespace ORB_SLAM3
             }
         }
 
-        //[TODO] Add vertex wall by looping over lLocalWall that was created above
-        // for (list<Wall *>::iterator idx = lLocalMapWalls.begin(), lend = lLocalMapWalls.end(); idx != lend; idx++) {
+        // Walls (Local Optimization)
+        for (list<Wall *>::iterator idx = lLocalMapWalls.begin(), lend = lLocalMapWalls.end(); idx != lend; idx++)
+        {
+            // Adding a vertex for each wall
+            Wall *pMapWall = *idx;
+            g2o::VertexPlane *vWall = new g2o::VertexPlane();
+            // int opId = maxOpId + nWalls;
+            // vWall->setId(opId);
+            // vWall->setEstimate(g2o::SE3Quat(pMapWall->getGlobalPose().unit_quaternion().cast<double>(),
+            //                                 pMapWall->getGlobalPose().translation().cast<double>()));
+            // optimizer.addVertex(vWall);
+            // nWalls++;
 
-        // [TODO] Adding an edge between the Wall and its respective markers (NOTE: edge is the same as in ucoslam marker->wall edge)
-        // }
+            // Setting the local optimization ID for the wall
+            // pMapWall->setOpId(opId);
+
+            // Adding an edge between the Wall and KeyFrames
+            // const map<KeyFrame *, Sophus::SE3f> observations = pMapWall->getObservations();
+            // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            // {
+            //     KeyFrame *pKFi = obsId->first;
+            //     Sophus::SE3f WallLocalObs = obsId->second;
+            //     ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
+            //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+            //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+
+            //     Eigen::Isometry3d WallLocalObsIso = Eigen::Isometry3d::Identity();
+            //     WallLocalObsIso.matrix() = WallLocalObs.cast<double>().matrix();
+            //     e->setMeasurement(WallLocalObsIso);
+            //     double wallInfo = 0.1; // [TODO] Should read from wall score in aruco_ros
+            //     Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
+            //     e->setInformation(informationMat * wallInfo);
+            //     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+            //     e->setRobustKernel(rk);
+            //     rk->setDelta(thHuberMono);
+            //     optimizer.addEdge(e);
+            // }
+        }
 
         if (pbStopFlag)
             if (*pbStopFlag)
