@@ -403,11 +403,6 @@ namespace ORB_SLAM3
     bool EdgeVertexPlaneProjectSE3::read(std::istream &is)
     {
         for (int i = 0; i < 4; i++)
-        {
-            is >> _measurement[i];
-        }
-
-        for (int i = 0; i < 4; i++)
             for (int j = i; j < 4; j++)
             {
                 is >> information()(i, j);
@@ -419,11 +414,6 @@ namespace ORB_SLAM3
 
     bool EdgeVertexPlaneProjectSE3::write(std::ostream &os) const
     {
-        for (int i = 0; i < 4; i++)
-        {
-            os << _measurement[i] << " ";
-        }
-
         for (int i = 0; i < 4; i++)
             for (int j = i; j < 4; j++)
             {

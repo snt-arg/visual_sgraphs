@@ -13,7 +13,8 @@ namespace g2o
     class G2O_TYPES_SLAM3D_ADDONS_API VertexPlane : public BaseVertex<3, Plane3D>
     {
     public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         VertexPlane();
 
         Vector3D color;
@@ -21,7 +22,10 @@ namespace g2o
         virtual bool read(std::istream &is);
         virtual bool write(std::ostream &os) const;
 
-        virtual void setToOriginImpl() { _estimate = Plane3D(); }
+        virtual void setToOriginImpl()
+        {
+            _estimate = Plane3D();
+        }
 
         virtual void oplusImpl(const double *update_)
         {

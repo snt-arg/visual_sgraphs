@@ -315,6 +315,46 @@ namespace ORB_SLAM3
             }
         }
 
+        // Set Wall vertices (Global Optimization) [TODO]
+        // int nWalls = 1;
+        // for (const auto &vpWall : vpWalls)
+        // {
+        // Adding a vertex for each marker
+        // g2o::VertexSE3Expmap *vMarker = new g2o::VertexSE3Expmap();
+        // vMarker->setEstimate(g2o::SE3Quat(vpMarker->getGlobalPose().unit_quaternion().cast<double>(),
+        //                                   vpMarker->getGlobalPose().translation().cast<double>()));
+        // int opIdG = maxOpId + nWalls;
+        // vMarker->setId(opIdG);
+        // optimizer.addVertex(vMarker);
+        // nWalls++;
+
+        // Setting the Global Optimization ID for the marker
+        // vpMarker->setOpIdG(opIdG);
+
+        // Adding an edge between the Marker and KeyFrames
+        // const map<KeyFrame *, Sophus::SE3f> observations = vpMarker->getObservations();
+        // std::cout << "Size of Observations inside global: " << observations.size() << std::endl;
+        // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+        // {
+        //     KeyFrame *pKFi = obsId->first;
+        //     Sophus::SE3f MarkerLocalObs = obsId->second;
+        //     ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
+        //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+        //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+
+        //     Eigen::Isometry3d MarkerLocalObsIso = Eigen::Isometry3d::Identity();
+        //     MarkerLocalObsIso.matrix() = MarkerLocalObs.cast<double>().matrix();
+        //     e->setMeasurement(MarkerLocalObsIso);
+        //     double markerInfo = 0.1; // [TODO] Should read from marker score in aruco_ros
+        //     Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
+        //     e->setInformation(informationMat * markerInfo);
+        //     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+        //     e->setRobustKernel(rk);
+        //     rk->setDelta(thHuber2D);
+        //     optimizer.addEdge(e);
+        // }
+        // }
+
         // Optimize!
         optimizer.setVerbose(false);
         optimizer.initializeOptimization();
@@ -1527,43 +1567,38 @@ namespace ORB_SLAM3
             }
         }
 
+        maxOpId += nMarkers;
+
         // Walls (Local Optimization)
         for (list<Wall *>::iterator idx = lLocalMapWalls.begin(), lend = lLocalMapWalls.end(); idx != lend; idx++)
         {
             // Adding a vertex for each wall
             Wall *pMapWall = *idx;
             g2o::VertexPlane *vWall = new g2o::VertexPlane();
-            // int opId = maxOpId + nWalls;
-            // vWall->setId(opId);
-            // vWall->setEstimate(g2o::SE3Quat(pMapWall->getGlobalPose().unit_quaternion().cast<double>(),
-            //                                 pMapWall->getGlobalPose().translation().cast<double>()));
-            // optimizer.addVertex(vWall);
-            // nWalls++;
+            int opId = maxOpId + nWalls;
+            vWall->setId(opId);
+            vWall->setEstimate(pMapWall->getPlaneEquation());
+            optimizer.addVertex(vWall);
+            nWalls++;
 
             // Setting the local optimization ID for the wall
-            // pMapWall->setOpId(opId);
+            pMapWall->setOpId(opId);
 
-            // Adding an edge between the Wall and KeyFrames
-            // const map<KeyFrame *, Sophus::SE3f> observations = pMapWall->getObservations();
-            // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
-            // {
-            //     KeyFrame *pKFi = obsId->first;
-            //     Sophus::SE3f WallLocalObs = obsId->second;
-            //     ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
-            //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-            //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+            // Get list of Markers attached to the wall
+            vector<Marker *> attachedMarkers = pMapWall->getMarkers();
+            for (const auto &wallMarker : attachedMarkers)
+            {
+                // Adding an edge between the Wall and the Marker
+                ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(wallMarker->getOpId())));
+                e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
 
-            //     Eigen::Isometry3d WallLocalObsIso = Eigen::Isometry3d::Identity();
-            //     WallLocalObsIso.matrix() = WallLocalObs.cast<double>().matrix();
-            //     e->setMeasurement(WallLocalObsIso);
-            //     double wallInfo = 0.1; // [TODO] Should read from wall score in aruco_ros
-            //     Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
-            //     e->setInformation(informationMat * wallInfo);
-            //     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-            //     e->setRobustKernel(rk);
-            //     rk->setDelta(thHuberMono);
-            //     optimizer.addEdge(e);
-            // }
+                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                e->setRobustKernel(rk);
+                rk->setDelta(thHuberMono);
+                // optimizer.addEdge(e); [TODO]
+            }
         }
 
         if (pbStopFlag)
@@ -1666,7 +1701,14 @@ namespace ORB_SLAM3
             pMapMarker->setGlobalPose(Tiw);
         }
 
-        //[TODO] update the optimized walls
+        // Locally Optimized Walls [TODO]
+        // for (list<Wall *>::iterator idx = lLocalMapWalls.begin(), lend = lLocalMapWalls.end(); idx != lend; idx++)
+        // {
+        //     Wall *pMapWall = *idx;
+        //     g2o::VertexPlane *vWall = static_cast<g2o::VertexPlane *>(optimizer.vertex(pMapWall->getOpId()));
+        //     g2o::SE3Quat SE3quat = vWall->estimate();
+        //     Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
+        // }
 
         pMap->IncreaseChangeIndex();
     }
