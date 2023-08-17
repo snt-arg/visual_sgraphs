@@ -78,6 +78,7 @@ void publish_tracking_img(cv::Mat, ros::Time);
 void publish_camera_pose(Sophus::SE3f, ros::Time);
 void publish_static_tf_transform(string, string, ros::Time);
 void publish_kf_markers(std::vector<Sophus::SE3f>, ros::Time);
+void publish_doors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
 void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);

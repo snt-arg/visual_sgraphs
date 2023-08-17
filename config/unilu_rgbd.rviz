@@ -8,8 +8,7 @@ Panels:
         - /raw left img1
         - /tracked points1
         - /all points1
-        - /fiducial markers1
-        - /fiducial markers1/Status1
+        - /door1
       Splitter Ratio: 0.33636364340782166
     Tree Height: 379
   - Class: rviz/Selection
@@ -272,6 +271,14 @@ Visualization Manager:
       Name: fiducial markers
       Namespaces:
         fiducial_markers: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /orb_slam3/doors
+      Name: door
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true

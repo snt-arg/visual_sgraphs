@@ -1616,6 +1616,12 @@ namespace ORB_SLAM3
         return pActiveMap->GetAllMarkers();
     }
 
+    vector<Door *> System::GetAllDoors()
+    {
+        Map *pActiveMap = mpAtlas->GetCurrentMap();
+        return pActiveMap->GetAllDoors();
+    }
+
     bool System::SaveMap(const string &filename)
     {
         mStrSaveAtlasToFile = filename;

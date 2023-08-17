@@ -182,6 +182,7 @@ namespace ORB_SLAM3
         // You can call this right after TrackMonocular (or stereo or RGBD)
         int GetTrackingState();
         cv::Mat GetCurrentFrame();
+        std::vector<Door *> GetAllDoors();
         std::vector<Marker *> GetAllMarkers();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetTrackedMapPoints();

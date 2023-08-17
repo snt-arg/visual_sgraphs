@@ -17,7 +17,7 @@ image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id;
-ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub;
+ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub;
 
 // List of semantic entities available in the real environment
 std::vector<ORB_SLAM3::Room *> env_rooms;
@@ -87,6 +87,8 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
     fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
+    doors_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
+
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
     {
         odom_pub = node_handler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
@@ -108,6 +110,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     if (publish_static_transform)
         publish_static_tf_transform(world_frame_id, map_frame_id, msg_time);
 
+    publish_doors(pSLAM->GetAllDoors(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
@@ -324,6 +327,54 @@ void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Tim
     fiducial_markers_pub.publish(markerArray);
 }
 
+void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
+{
+    int numDoors = doors.size();
+    if (numDoors == 0)
+        return;
+
+    visualization_msgs::MarkerArray doorArray;
+    doorArray.markers.resize(numDoors);
+
+    for (int idx = 0; idx < numDoors; idx++)
+    {
+        visualization_msgs::Marker door;
+        Sophus::SE3f doorPose = doors[idx]->getGlobalPose();
+
+        door.color.a = 0;
+        door.ns = "doors";
+        door.scale.x = 0.5;
+        door.scale.y = 0.5;
+        door.scale.z = 0.5;
+        door.action = door.ADD;
+        door.lifetime = ros::Duration();
+        door.id = doorArray.markers.size();
+        door.header.stamp = ros::Time().now();
+        door.header.frame_id = world_frame_id;
+        door.mesh_use_embedded_materials = true;
+        door.type = visualization_msgs::Marker::MESH_RESOURCE;
+        door.mesh_resource =
+            "package://orb_slam3_ros/config/Visualization/door.dae";
+
+        // Rotation and displacement for better visualization
+        Sophus::SE3f rotatedDoorPose = doorPose * Sophus::SE3f::rotX(-M_PI_2);
+        rotatedDoorPose.translation().x() -= 0.07;
+        rotatedDoorPose.translation().y() += 0.05;
+
+        door.pose.position.x = rotatedDoorPose.translation().x();
+        door.pose.position.y = rotatedDoorPose.translation().y();
+        door.pose.position.z = rotatedDoorPose.translation().z();
+        door.pose.orientation.x = rotatedDoorPose.unit_quaternion().x();
+        door.pose.orientation.y = rotatedDoorPose.unit_quaternion().y();
+        door.pose.orientation.z = rotatedDoorPose.unit_quaternion().z();
+        door.pose.orientation.w = rotatedDoorPose.unit_quaternion().w();
+
+        doorArray.markers.push_back(door);
+    }
+
+    doors_pub.publish(doorArray);
+}
+
 //////////////////////////////////////////////////
 // Miscellaneous functions
 //////////////////////////////////////////////////
@@ -331,11 +382,6 @@ void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Tim
 sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
 {
     const int num_channels = 3; // x y z
-
-    // if (map_points.size() == 0)
-    // {
-    //     std::cout << "Map point vector is empty!" << std::endl;
-    // }
 
     sensor_msgs::PointCloud2 cloud;
 
