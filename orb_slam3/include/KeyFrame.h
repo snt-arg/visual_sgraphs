@@ -29,6 +29,7 @@
 #include "ImuTypes.h"
 #include "Semantic/Marker.h"
 #include "Semantic/Wall.h"
+#include "Semantic/Door.h"
 
 #include "GeometricCamera.h"
 #include "SerializationUtils.h"
@@ -50,6 +51,7 @@ namespace ORB_SLAM3
 
     class Marker;
     class Wall;
+    class Door;
 
     class KeyFrame
     {
@@ -267,6 +269,10 @@ namespace ORB_SLAM3
         void AddMapWall(Wall *wall);
         std::vector<Wall *> GetMapWalls();
 
+        // MapDoor observation functions
+        void AddMapDoor(Door *door);
+        std::vector<Door *> GetMapDoors();
+
         // KeyPoint functions
         std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r, const bool bRight = false) const;
         bool UnprojectStereo(int i, Eigen::Vector3f &x3D);
@@ -462,6 +468,9 @@ namespace ORB_SLAM3
 
         // Walls available in each keyframe
         std::vector<Wall *> mvpMapWalls;
+
+        // Doors available in each keyframe
+        std::vector<Door *> mvpMapDoors;
 
         // For save relation without pointer, this is necessary for save/load function
         std::vector<long long int> mvBackupMapPointsId;

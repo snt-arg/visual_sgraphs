@@ -316,6 +316,12 @@ namespace ORB_SLAM3
         mvpMapWalls.push_back(wall);
     }
 
+    void KeyFrame::AddMapDoor(Door *door)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        mvpMapDoors.push_back(door);
+    }
+
     void KeyFrame::EraseMapPointMatch(const int &idx)
     {
         unique_lock<mutex> lock(mMutexFeatures);
@@ -401,6 +407,12 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexFeatures);
         return mvpMapWalls;
+    }
+
+    vector<Door *> KeyFrame::GetMapDoors()
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        return mvpMapDoors;
     }
 
     void KeyFrame::UpdateConnections(bool upParent)

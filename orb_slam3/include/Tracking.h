@@ -190,6 +190,13 @@ namespace ORB_SLAM3
          */
         void updateMapWall(int wallId, Marker *visitedMarker);
 
+        /**
+         * @brief Creates a new door object to be added to the map
+         * @param attachedMarker the address of the attached marker
+         * @param pKF the address of the current keyframe
+         */
+        void createMapDoor(Marker *attachedMarker, KeyFrame *pKF);
+
 #ifdef REGISTER_LOOP
         void RequestStop();
         bool isStopped();
