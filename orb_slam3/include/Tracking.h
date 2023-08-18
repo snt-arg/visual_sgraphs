@@ -164,9 +164,10 @@ namespace ORB_SLAM3
 
         /**
          * @brief Checks to see if the marker is attached to a wall or not (e.g., a door)
+         * and returns the name of it if exists (only valid for doors)
          * @param markerId the id of the marker
          */
-        bool markerIsPlacedOnWall(const int &markerId);
+        std::pair<bool, std::string> markerIsPlacedOnWall(const int &markerId);
 
         /**
          * @brief Creates a new marker object to be added to the map
@@ -194,8 +195,9 @@ namespace ORB_SLAM3
          * @brief Creates a new door object to be added to the map
          * @param attachedMarker the address of the attached marker
          * @param pKF the address of the current keyframe
+         * @param name the name of the door
          */
-        void createMapDoor(Marker *attachedMarker, KeyFrame *pKF);
+        void createMapDoor(Marker *attachedMarker, KeyFrame *pKF, std::string name);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

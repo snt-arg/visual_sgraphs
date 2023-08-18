@@ -13,6 +13,8 @@
 
 namespace ORB_SLAM3
 {
+    class Wall;
+
     class Room
     {
     private:
@@ -20,12 +22,14 @@ namespace ORB_SLAM3
         int opId;                                 // The room's identifier in the local optimizer
         int opIdG;                                // The room's identifier in the global optimizer
         std::string name;                         // The name devoted for each room (optional)
-        bool all_markers_seen;                    // Checks if the room markers are already detected
+        bool all_seen_markers;                    // Checks if the room markers are already detected
         std::vector<Wall *> walls;                // The vector of detected walls of a room
         Eigen::Vector3d room_center;              // The center of the room as a 3D vector
         std::vector<std::vector<int>> marker_ids; // The set of marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
 
     public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         Room();
         ~Room();
 
@@ -41,8 +45,8 @@ namespace ORB_SLAM3
         std::string getName() const;
         void setName(std::string value);
 
-        bool getAllMarkersSeen() const;
-        void setAllMarkersSeen(bool value);
+        bool getAllSeenMarkers() const;
+        void setAllSeenMarkers(bool value);
 
         std::vector<Wall *> getWalls() const;
         void setWalls(std::vector<Wall *> &value);

@@ -2492,7 +2492,8 @@ namespace ORB_SLAM3
                 // Get the plane based on the equation
                 g2o::Plane3D detectedPlane(planeEstimate);
                 // Check the currect marker if it is attached to a door or a wall
-                bool markerIsWall = markerIsPlacedOnWall(currentMapMarker->getId());
+                std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
+                bool markerIsWall = result.first;
                 if (markerIsWall)
                 {
                     // The current marker is placed on a wall
@@ -2512,9 +2513,12 @@ namespace ORB_SLAM3
                 else
                 {
                     // The current marker is placed on a door
-                    createMapDoor(mCurrentMarker, pKFini);
+                    std::string doorName = result.second;
+                    createMapDoor(mCurrentMarker, pKFini, doorName);
                 }
             }
+
+            // ----------- Room Detection and Mapping --------
 
             Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
                                    to_string(mpAtlas->MarkersInMap()) + " markers [" + mapMarkerStr +
@@ -3466,7 +3470,8 @@ namespace ORB_SLAM3
                         // Get the plane based on the equation
                         g2o::Plane3D detectedPlane(planeEstimate);
                         // Check the current marker if it is attached to a door or a wall
-                        bool markerIsWall = markerIsPlacedOnWall(currentMapMarker->getId());
+                        std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
+                        bool markerIsWall = result.first;
                         if (markerIsWall)
                         {
                             // The current marker is placed on a wall
@@ -3486,7 +3491,8 @@ namespace ORB_SLAM3
                         else
                         {
                             // The current marker is placed on a door
-                            createMapDoor(mCurrentMarker, pKF);
+                            std::string doorName = result.second;
+                            createMapDoor(mCurrentMarker, pKF, doorName);
                         }
                     }
 
@@ -4404,20 +4410,22 @@ namespace ORB_SLAM3
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
     }
 
-    bool Tracking::markerIsPlacedOnWall(const int &markerId)
+    std::pair<bool, std::string> Tracking::markerIsPlacedOnWall(const int &markerId)
     {
         bool isWall = true;
+        std::string name = "";
         // Loop over all markers attached to doors
         for (const auto &doorPtr : env_doors)
         {
             if (doorPtr->getMarkerId() == markerId)
             {
                 isWall = false;
+                name = doorPtr->getName();
                 break; // No need to continue searching if found
             }
         }
         // Returning
-        return isWall;
+        return std::make_pair(isWall, name);
     }
 
     ORB_SLAM3::Marker *Tracking::createMapMarker(const ORB_SLAM3::Marker *visitedMarker,
@@ -4468,7 +4476,7 @@ namespace ORB_SLAM3
         }
     }
 
-    void Tracking::createMapDoor(ORB_SLAM3::Marker *attachedMarker, ORB_SLAM3::KeyFrame *pKF)
+    void Tracking::createMapDoor(ORB_SLAM3::Marker *attachedMarker, ORB_SLAM3::KeyFrame *pKF, std::string name)
     {
         // Check if the door has not been created before
         bool doorAlreadyInMap = false;
@@ -4484,14 +4492,15 @@ namespace ORB_SLAM3
             return;
 
         ORB_SLAM3::Door *newMapDoor = new ORB_SLAM3::Door();
+        newMapDoor->setName(name);
         newMapDoor->setMarker(attachedMarker);
         newMapDoor->SetMap(mpAtlas->GetCurrentMap());
         newMapDoor->setId(mpAtlas->GetAllDoors().size());
         newMapDoor->setLocalPose(attachedMarker->getLocalPose());
         newMapDoor->setGlobalPose(attachedMarker->getGlobalPose());
 
-        std::cout << "Adding new door: Door#" << newMapDoor->getId() << ", with Marker#"
-                  << attachedMarker->getId() << " attached on it!" << std::endl;
+        std::cout << "Adding new door: Door#" << newMapDoor->getId() << " [" << newMapDoor->getName()
+                  << "], with Marker#" << attachedMarker->getId() << " attached on it!" << std::endl;
 
         pKF->AddMapDoor(newMapDoor);
         mpAtlas->AddMapDoor(newMapDoor);

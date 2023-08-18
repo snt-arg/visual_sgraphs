@@ -59,7 +59,7 @@ namespace ORB_SLAM3
             // Fill the room entity
             envRoom->setOpId(-1);
             envRoom->setOpIdG(-1);
-            envRoom->setAllMarkersSeen(false);
+            envRoom->setAllSeenMarkers(false);
             envRoom->setId(stoi(envDatum.key()));
             envRoom->setMarkerIds(roomMarkerIds);
             envRoom->setName(envDatum.value()["name"]);

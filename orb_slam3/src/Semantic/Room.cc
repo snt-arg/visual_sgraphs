@@ -52,14 +52,14 @@ namespace ORB_SLAM3
         name = value;
     }
 
-    bool Room::getAllMarkersSeen() const
+    bool Room::getAllSeenMarkers() const
     {
-        return all_markers_seen;
+        return all_seen_markers;
     }
 
-    void Room::setAllMarkersSeen(bool value)
+    void Room::setAllSeenMarkers(bool value)
     {
-        all_markers_seen = value;
+        all_seen_markers = value;
     }
 
     std::vector<Wall *> Room::getWalls() const
