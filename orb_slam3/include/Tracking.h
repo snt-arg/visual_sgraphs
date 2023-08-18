@@ -199,6 +199,13 @@ namespace ORB_SLAM3
          */
         void createMapDoor(Marker *attachedMarker, KeyFrame *pKF, std::string name);
 
+        /**
+         * @brief Creates a new room object (corridor or room) to be added to the map
+         * @param detectedRoom the address of the detected room
+         * @param detectedMarkers the string of the markers list
+         */
+        void createMapRoom(Room *detectedRoom, std::string detectedMarkers);
+
 #ifdef REGISTER_LOOP
         void RequestStop();
         bool isStopped();

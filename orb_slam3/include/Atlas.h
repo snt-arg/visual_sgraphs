@@ -113,6 +113,9 @@ namespace ORB_SLAM3
         long unsigned KeyFramesInMap();
         long unsigned int MapPointsInMap();
 
+        // List of marker-ids placed on walls detected so far
+        std::vector<int> visitedWallsMarkerIds;
+
         // Method for get data in current map
         std::vector<Wall *> GetAllWalls();
         std::vector<Door *> GetAllDoors();

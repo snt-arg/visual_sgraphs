@@ -2518,8 +2518,6 @@ namespace ORB_SLAM3
                 }
             }
 
-            // ----------- Room Detection and Mapping --------
-
             Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
                                    to_string(mpAtlas->MarkersInMap()) + " markers [" + mapMarkerStr +
                                    "], and " + to_string(mpAtlas->GetAllWalls().size()) + " walls, and " +
@@ -3493,6 +3491,37 @@ namespace ORB_SLAM3
                             // The current marker is placed on a door
                             std::string doorName = result.second;
                             createMapDoor(mCurrentMarker, pKF, doorName);
+                        }
+                    }
+
+                    // ----------- Room Detection and Mapping --------
+                    // Loop over all rooms that should be detected
+                    for (Room *envRoom : env_rooms)
+                    {
+                        // Check if a room has not been created for it before
+                        if (!envRoom->getAllSeenMarkers())
+                        {
+                            // Get all detected walls' marker IDs
+                            std::vector<int> detectedMarkerIds = mpAtlas->visitedWallsMarkerIds;
+                            // Get all marker IDs of an actual room
+                            std::vector<std::vector<int>> realMarkerIds = envRoom->getMarkerIds();
+                            // Loop over all the markers of the room, i.e., [[],[],...]
+                            for (int idx = 0; idx < realMarkerIds.size(); idx++)
+                            {
+                                string detectedMarkers("");
+                                // Check to see if all of the markers have been seen
+                                bool allFound = std::all_of(begin(realMarkerIds[idx]), end(realMarkerIds[idx]), [&](int x)
+                                                            {
+                                    bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
+                                    if (found) {
+                                        detectedMarkers += to_string(x) + " ";
+                                    }
+                                    return found; });
+
+                                // Create a new room
+                                if (allFound)
+                                    createMapRoom(envRoom, detectedMarkers);
+                            }
                         }
                     }
 
@@ -4504,6 +4533,19 @@ namespace ORB_SLAM3
 
         pKF->AddMapDoor(newMapDoor);
         mpAtlas->AddMapDoor(newMapDoor);
+    }
+
+    void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, std::string detectedMarkers)
+    {
+        // Update the room values
+        detectedRoom->setAllSeenMarkers(true);
+        detectedRoom->SetMap(mpAtlas->GetCurrentMap());
+        detectedRoom->setId(mpAtlas->GetAllRooms().size());
+
+        std::cout << "Adding new room: Room#" << detectedRoom->getId() << " [" << detectedRoom->getName()
+                  << "], with markers [ " << detectedMarkers << "] attached on it!" << std::endl;
+
+        mpAtlas->AddMapRoom(detectedRoom);
     }
 
 #ifdef REGISTER_LOOP

@@ -122,6 +122,11 @@ namespace ORB_SLAM3
 
     void Atlas::AddMapWall(Wall *wall)
     {
+        // Add it to the list of visited marker-ids of walls
+        for (Marker *wallMarker : wall->getMarkers())
+            visitedWallsMarkerIds.push_back(wallMarker->getId());
+
+        // Add it to the map
         Map *pMapMP = wall->GetMap();
         pMapMP->AddMapWall(wall);
     }
