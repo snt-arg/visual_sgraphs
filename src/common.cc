@@ -358,7 +358,6 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
 
         // Rotation and displacement for better visualization
         Sophus::SE3f rotatedDoorPose = doorPose * Sophus::SE3f::rotX(-M_PI_2);
-        rotatedDoorPose.translation().x() -= 0.07;
         rotatedDoorPose.translation().y() += 0.05;
 
         door.pose.position.x = rotatedDoorPose.translation().x();

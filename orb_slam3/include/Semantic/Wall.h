@@ -8,8 +8,6 @@
 #ifndef WALL_H
 #define WALL_H
 
-#include <Eigen/Eigen>
-
 #include "Map.h"
 #include "MapPoint.h"
 #include "Semantic/Marker.h"

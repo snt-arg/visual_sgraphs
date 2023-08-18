@@ -8,8 +8,6 @@
 #ifndef DOOR_H
 #define DOOR_H
 
-#include <Eigen/Eigen>
-
 #include "Map.h"
 #include "Marker.h"
 
