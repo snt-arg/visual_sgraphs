@@ -24,6 +24,8 @@
   <build_depend>message_generation</build_depend>
   <build_depend>aruco_ros</build_depend>
   <build_depend>aruco_msgs</build_depend>
+  <build_depend>backward_ros</build_depend>
+
 
   <run_depend>roscpp</run_depend>
   <run_depend>rospy</run_depend>
@@ -39,6 +41,7 @@
   <run_depend>message_runtime</run_depend>
   <run_depend>aruco_ros</run_depend>
   <run_depend>aruco_msgs</run_depend>
+  <run_depend>backward_ros</run_depend>
   <export>
 
   </export>
