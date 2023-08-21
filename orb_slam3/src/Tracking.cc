@@ -4433,7 +4433,7 @@ namespace ORB_SLAM3
         Eigen::Vector3f pointOnPlane = -translation;
 
         // Calculate the D coefficient of the plane equation
-        double D = -normal.dot(pointOnPlane);
+        double D = normal.dot(pointOnPlane);
 
         // Return the plane equation [A, B, C, D]
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
