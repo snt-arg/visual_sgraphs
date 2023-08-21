@@ -1303,11 +1303,11 @@ namespace ORB_SLAM3
 
         // Setup optimizer (Local Optimization)
         g2o::SparseOptimizer optimizer;
-        g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
+        g2o::BlockSolverX::LinearSolverType *linearSolver;
 
-        linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
+        linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
 
-        g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
+        g2o::BlockSolverX *solver_ptr = new g2o::BlockSolverX(linearSolver);
 
         g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
         if (pMap->IsInertial())
@@ -1597,7 +1597,7 @@ namespace ORB_SLAM3
                 g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                 e->setRobustKernel(rk);
                 rk->setDelta(thHuberMono);
-                // optimizer.addEdge(e); [TODO]
+                optimizer.addEdge(e); 
             }
         }
 
