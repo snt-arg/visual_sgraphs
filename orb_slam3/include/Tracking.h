@@ -180,10 +180,10 @@ namespace ORB_SLAM3
          * @brief Creates a new wall object to be added to the map
          * @param attachedMarker the address of the attached marker
          * @param estimatedPlane the equation of the plane estimated from the marker
-         * @param mapPoints all the map points to check the ones lying on the wall 
+         * @param mapPoints all the map points to check the ones lying on the wall
          * @param pKF the address of the current keyframe
          */
-        void createMapWall(Marker *attachedMarker, const g2o::Plane3D estimatedPlane, const std::vector<MapPoint* > mapPoints, KeyFrame *pKF);
+        void createMapWall(Marker *attachedMarker, const g2o::Plane3D estimatedPlane, KeyFrame *pKF);
 
         /**
          * @brief Updates an existing wall object in the map
@@ -193,12 +193,12 @@ namespace ORB_SLAM3
          */
         void updateMapWall(int wallId, Marker *visitedMarker, ORB_SLAM3::KeyFrame *pKF);
 
-         /**
+        /**
          * @brief Finds the point lying on wall
          * @param planeEquation equation of a given plane
-         * @param mapPoint current map point 
-         */    
-        bool pointOnPlane(Eigen::Vector4d planeEquation, MapPoint* mapPoint);
+         * @param mapPoint current map point
+         */
+        bool pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint);
 
         /**
          * @brief Creates a new door object to be added to the map

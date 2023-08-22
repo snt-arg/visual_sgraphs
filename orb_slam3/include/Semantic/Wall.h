@@ -8,11 +8,11 @@
 #ifndef WALL_H
 #define WALL_H
 
+#include <set>
 #include "Map.h"
 #include "MapPoint.h"
 #include "Semantic/Marker.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
-#include <set>
 
 namespace ORB_SLAM3
 {
@@ -23,12 +23,12 @@ namespace ORB_SLAM3
     class Wall
     {
     private:
-        int id;                             // The wall's identifier
-        int opId;                           // The wall's identifier in the local optimizer
-        int opIdG;                          // The wall's identifier in the global optimizer
-        g2o::Plane3D plane_equation;        // The plane equation of the wall
-        std::vector<Marker *> markers;      // The list of markers lying on the wall
-        std::set<MapPoint *> map_points;    // The unique set of map points lying on the wall
+        int id;                          // The wall's identifier
+        int opId;                        // The wall's identifier in the local optimizer
+        int opIdG;                       // The wall's identifier in the global optimizer
+        g2o::Plane3D plane_equation;     // The plane equation of the wall
+        std::vector<Marker *> markers;   // The list of markers lying on the wall
+        std::set<MapPoint *> map_points; // The unique set of map points lying on the wall
 
     public:
         Wall();
