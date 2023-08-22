@@ -2502,12 +2502,12 @@ namespace ORB_SLAM3
                     if (matchedWallId == -1)
                     {
                         // A wall with the same equation was not found in the map, creating a new one
-                        createMapWall(currentMapMarker, detectedPlane, pKFini);
+                        createMapWall(currentMapMarker, detectedPlane, mpAtlas->GetAllMapPoints(), pKFini);
                     }
                     else
                     {
                         // The wall already exists in the map, fetching that one
-                        updateMapWall(matchedWallId, mCurrentMarker);
+                        updateMapWall(matchedWallId, mCurrentMarker, pKFini);
                     }
                 }
                 else
@@ -3478,12 +3478,12 @@ namespace ORB_SLAM3
                             if (matchedWallId == -1)
                             {
                                 // A wall with the same equation was not found in the map, creating a new one
-                                createMapWall(currentMapMarker, detectedPlane, pKF);
+                                createMapWall(currentMapMarker, detectedPlane, mpAtlas->GetAllMapPoints(), pKF);
                             }
                             else
                             {
                                 // The wall already exists in the map, fetching that one
-                                updateMapWall(matchedWallId, currentMapMarker);
+                                updateMapWall(matchedWallId, currentMapMarker, pKF);
                             }
                         }
                         else
@@ -4476,7 +4476,7 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    void Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker, const g2o::Plane3D estimatedPlane,
+    void Tracking::createMapWall(ORB_SLAM3::Marker *attachedMarker, const g2o::Plane3D estimatedPlane, const std::vector<MapPoint* > mapPoints,
                                  ORB_SLAM3::KeyFrame *pKF)
     {
         ORB_SLAM3::Wall *newMapWall = new ORB_SLAM3::Wall();
@@ -4488,11 +4488,17 @@ namespace ORB_SLAM3
         std::cout << "Adding new wall: Wall#" << newMapWall->getId() << ", with Marker#"
                   << attachedMarker->getId() << " attached on it!" << std::endl;
 
+        for(const auto& mapPoint : mapPoints) {
+            if(pointOnPlane(estimatedPlane.coeffs(), mapPoint)){
+                newMapWall->setMapPoints(mapPoint);
+            }
+        }
+
         pKF->AddMapWall(newMapWall);
         mpAtlas->AddMapWall(newMapWall);
     }
-
-    void Tracking::updateMapWall(int wallId, ORB_SLAM3::Marker *visitedMarker)
+        
+    void Tracking::updateMapWall(int wallId, ORB_SLAM3::Marker *visitedMarker, ORB_SLAM3::KeyFrame *pKF)
     {
         // Find the matched wall among all walls of the map
         for (auto currentWall : mpAtlas->GetAllWalls())
@@ -4501,8 +4507,30 @@ namespace ORB_SLAM3
             {
                 // If that marker does not belong to the wall, add it there
                 currentWall->setMarkers(visitedMarker);
+                for(const auto& mapPoint : pKF->GetMapPoints()) {
+                    if(pointOnPlane(currentWall->getPlaneEquation().coeffs(), mapPoint)){
+                        currentWall->setMapPoints(mapPoint);
+                    }
+                }
             }
         }
+    }
+
+    bool Tracking::pointOnPlane(Eigen::Vector4d planeEquation, MapPoint* mapPoint) {
+        if(mapPoint->isBad()) 
+            return false;
+
+        double pointPlaneDist =
+                planeEquation(0) * mapPoint->GetWorldPos()(0) +
+                planeEquation(1) * mapPoint->GetWorldPos()(1) +
+                planeEquation(2) * mapPoint->GetWorldPos()(2) +
+                planeEquation(3);    
+
+        if(pointPlaneDist < 0.01) {
+            return true;
+        }
+
+        return false;
     }
 
     void Tracking::createMapDoor(ORB_SLAM3::Marker *attachedMarker, ORB_SLAM3::KeyFrame *pKF, std::string name)

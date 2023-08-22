@@ -56,14 +56,16 @@ namespace ORB_SLAM3
         }
     }
 
-    std::vector<MapPoint *> Wall::getMapPoints() const
+    std::set<MapPoint *> Wall::getMapPoints() 
     {
+        unique_lock<mutex> lock(mMutexPoint);  
         return map_points;
     }
 
     void Wall::setMapPoints(MapPoint *value)
     {
-        map_points.push_back(value);
+        unique_lock<mutex> lock(mMutexPoint);  
+        map_points.insert(value);
     }
 
     g2o::Plane3D Wall::getPlaneEquation() const
