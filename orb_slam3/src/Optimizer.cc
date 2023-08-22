@@ -1597,7 +1597,7 @@ namespace ORB_SLAM3
                 g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                 e->setRobustKernel(rk);
                 rk->setDelta(thHuberMono);
-                optimizer.addEdge(e); 
+                optimizer.addEdge(e);
             }
         }
 
@@ -1701,14 +1701,14 @@ namespace ORB_SLAM3
             pMapMarker->setGlobalPose(Tiw);
         }
 
-        // Locally Optimized Walls [TODO]
-        // for (list<Wall *>::iterator idx = lLocalMapWalls.begin(), lend = lLocalMapWalls.end(); idx != lend; idx++)
-        // {
-        //     Wall *pMapWall = *idx;
-        //     g2o::VertexPlane *vWall = static_cast<g2o::VertexPlane *>(optimizer.vertex(pMapWall->getOpId()));
-        //     g2o::SE3Quat SE3quat = vWall->estimate();
-        //     Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
-        // }
+        // Locally Optimized Walls
+        for (list<Wall *>::iterator idx = lLocalMapWalls.begin(), lend = lLocalMapWalls.end(); idx != lend; idx++)
+        {
+            Wall *pMapWall = *idx;
+            g2o::VertexPlane *vWall = static_cast<g2o::VertexPlane *>(optimizer.vertex(pMapWall->getOpId()));
+            g2o::Plane3D wallPlane = vWall->estimate();
+            pMapWall->setPlaneEquation(wallPlane);
+        }
 
         pMap->IncreaseChangeIndex();
     }

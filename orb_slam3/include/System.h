@@ -40,6 +40,7 @@
 #include "Semantic/Marker.h"
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
+#include "Semantic/Wall.h"
 
 namespace ORB_SLAM3
 {
