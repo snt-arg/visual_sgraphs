@@ -1577,6 +1577,8 @@ namespace ORB_SLAM3
         mImGray = imRGB;
         cv::Mat imDepth = imD;
 
+        // [TODO] Use Depth information for better guess
+
         if (mImGray.channels() == 3)
         {
             if (mbRGB)
@@ -4453,6 +4455,7 @@ namespace ORB_SLAM3
                                  ORB_SLAM3::KeyFrame *pKF)
     {
         ORB_SLAM3::Wall *newMapWall = new ORB_SLAM3::Wall();
+        newMapWall->setColor();
         newMapWall->setMarkers(attachedMarker);
         newMapWall->setPlaneEquation(estimatedPlane);
         newMapWall->SetMap(mpAtlas->GetCurrentMap());
@@ -4560,11 +4563,40 @@ namespace ORB_SLAM3
             }
         }
 
+        // Set room center
+        Eigen::Vector3d roomCenter;
+        if (detectedRoom->getWalls().size() == 2)
+        {
+            // Calculate the marker position placed on a wall
+            // Eigen::Vector3d markerPosition = detectedRoom->getWalls()[0]->getMarkers()[0]->getGlobalPose().translation();
+            // // If it is a corridor
+            // Eigen::Vector4d wall1 = correctPlaneDirection(
+            //     detectedRoom->getWalls()[0]->getPlaneEquation().coeffs().data());
+            // Eigen::Vector4d wall2 = correctPlaneDirection(
+            //     detectedRoom->getWalls()[1]->getPlaneEquation().coeffs().data());
+            // // Find the room center and add its vertex
+            // roomCenter = getRoomCenter(markerPosition, wall1, wall2);
+        }
+        else if (detectedRoom->getWalls().size() == 4)
+        {
+            // If it is a four-wall room
+            // Eigen::Vector4d wall1 = correctPlaneDirection(
+            //     detectedRoom->getWalls()[0]->getPlaneEquation().coeffs().data());
+            // Eigen::Vector4d wall2 = correctPlaneDirection(
+            //     detectedRoom->getWalls()[1]->getPlaneEquation().coeffs().data());
+            // Eigen::Vector4d wall3 = correctPlaneDirection(
+            //     detectedRoom->getWalls()[2]->getPlaneEquation().coeffs().data());
+            // Eigen::Vector4d wall4 = correctPlaneDirection(
+            //     detectedRoom->getWalls()[3]->getPlaneEquation().coeffs().data());
+            // // Find the room center and add its vertex
+            // roomCenter = getRoomCenter(wall1, wall2, wall3, wall4);
+        }
+
         // Update the room values
         detectedRoom->setAllSeenMarkers(true);
+        // detectedRoom->setRoomCenter(roomCenter);
         detectedRoom->SetMap(mpAtlas->GetCurrentMap());
         detectedRoom->setId(mpAtlas->GetAllRooms().size());
-        // Set room center
 
         std::cout << "Adding new room: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
                   << "), with walls [ " << detectedWalls << "] and markers [" << detectedMarkers

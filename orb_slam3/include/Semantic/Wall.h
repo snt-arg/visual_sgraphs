@@ -26,6 +26,7 @@ namespace ORB_SLAM3
         int id;                          // The wall's identifier
         int opId;                        // The wall's identifier in the local optimizer
         int opIdG;                       // The wall's identifier in the global optimizer
+        std::vector<double> color;       // A color devoted for visualization
         g2o::Plane3D plane_equation;     // The plane equation of the wall
         std::vector<Marker *> markers;   // The list of markers lying on the wall
         std::set<MapPoint *> map_points; // The unique set of map points lying on the wall
@@ -42,6 +43,9 @@ namespace ORB_SLAM3
 
         int getOpIdG() const;
         void setOpIdG(int value);
+
+        void setColor();
+        std::vector<double> getColor() const;
 
         void setMarkers(Marker *value);
         std::vector<Marker *> getMarkers() const;

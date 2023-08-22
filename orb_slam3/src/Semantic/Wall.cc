@@ -42,6 +42,21 @@ namespace ORB_SLAM3
         opIdG = value;
     }
 
+    std::vector<double> Wall::getColor() const
+    {
+        return color;
+    }
+
+    void Wall::setColor()
+    {
+        if (color.size() == 0)
+        {
+            color.push_back(rand() % 256);
+            color.push_back(rand() % 256);
+            color.push_back(rand() % 256);
+        }
+    }
+
     std::vector<Marker *> Wall::getMarkers() const
     {
         return markers;
@@ -56,15 +71,15 @@ namespace ORB_SLAM3
         }
     }
 
-    std::set<MapPoint *> Wall::getMapPoints() 
+    std::set<MapPoint *> Wall::getMapPoints()
     {
-        unique_lock<mutex> lock(mMutexPoint);  
+        unique_lock<mutex> lock(mMutexPoint);
         return map_points;
     }
 
     void Wall::setMapPoints(MapPoint *value)
     {
-        unique_lock<mutex> lock(mMutexPoint);  
+        unique_lock<mutex> lock(mMutexPoint);
         map_points.insert(value);
     }
 

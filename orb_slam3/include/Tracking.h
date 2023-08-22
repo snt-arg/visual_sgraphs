@@ -170,6 +170,13 @@ namespace ORB_SLAM3
         std::pair<bool, std::string> markerIsPlacedOnWall(const int &markerId);
 
         /**
+         * @brief Finds the point lying on wall
+         * @param planeEquation equation of a given plane
+         * @param mapPoint current map point
+         */
+        bool pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint);
+
+        /**
          * @brief Creates a new marker object to be added to the map
          * @param visitedMarker the address of the visited marker
          * @param pKF the address of the current keyframe
@@ -192,13 +199,6 @@ namespace ORB_SLAM3
          * @param pKF the address of the current keyframe
          */
         void updateMapWall(int wallId, Marker *visitedMarker, ORB_SLAM3::KeyFrame *pKF);
-
-        /**
-         * @brief Finds the point lying on wall
-         * @param planeEquation equation of a given plane
-         * @param mapPoint current map point
-         */
-        bool pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint);
 
         /**
          * @brief Creates a new door object to be added to the map
