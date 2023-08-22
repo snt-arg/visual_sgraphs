@@ -215,6 +215,12 @@ namespace ORB_SLAM3
          */
         void createMapRoom(Room *detectedRoom, std::string detectedMarkers);
 
+        /**
+         * @brief Early creation of a room as soon as all elements of at least one of its pairs has been seen
+         * (e.g., if all elements of [[1,2,3,4]] or both 1 & 2 in [[1,2][3,4]] visited)
+         */
+        void earlyRoomDetection();
+
 #ifdef REGISTER_LOOP
         void RequestStop();
         bool isStopped();

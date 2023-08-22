@@ -3495,35 +3495,8 @@ namespace ORB_SLAM3
                     }
 
                     // ----------- Room Detection and Mapping --------
-                    // Loop over all rooms that should be detected
-                    for (Room *envRoom : env_rooms)
-                    {
-                        // Check if a room has not been created for it before
-                        if (!envRoom->getAllSeenMarkers())
-                        {
-                            // Get all detected walls' marker IDs
-                            std::vector<int> detectedMarkerIds = mpAtlas->visitedWallsMarkerIds;
-                            // Get all marker IDs of an actual room
-                            std::vector<std::vector<int>> realMarkerIds = envRoom->getMarkerIds();
-                            // Loop over all the markers of the room, i.e., [[],[],...]
-                            for (int idx = 0; idx < realMarkerIds.size(); idx++)
-                            {
-                                string detectedMarkers("");
-                                // Check to see if all of the markers have been seen
-                                bool allFound = std::all_of(begin(realMarkerIds[idx]), end(realMarkerIds[idx]), [&](int x)
-                                                            {
-                                    bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
-                                    if (found) {
-                                        detectedMarkers += to_string(x) + " ";
-                                    }
-                                    return found; });
-
-                                // Create a new room
-                                if (allFound)
-                                    createMapRoom(envRoom, detectedMarkers);
-                            }
-                        }
-                    }
+                    // Early creation of a room as soon as all elements of at least one of its pairs has been seen
+                    earlyRoomDetection();
 
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
                     {
@@ -4581,8 +4554,42 @@ namespace ORB_SLAM3
         mpAtlas->AddMapRoom(detectedRoom);
     }
 
+    void Tracking::earlyRoomDetection()
+    {
+        // Loop over all real rooms in the map
+        for (Room *envRoom : env_rooms)
+        {
+            // Check if a room has not been created for it before
+            if (!envRoom->getAllSeenMarkers())
+            {
+                // Get all detected walls' marker IDs
+                std::vector<int> detectedMarkerIds = mpAtlas->visitedWallsMarkerIds;
+                // Get all marker IDs of an actual room
+                std::vector<std::vector<int>> realMarkerIds = envRoom->getMarkerIds();
+                // Loop over all the markers of the room, i.e., [[],[],...]
+                for (int idx = 0; idx < realMarkerIds.size(); idx++)
+                {
+                    string detectedMarkers("");
+                    // Check to see if all of the markers have been seen
+                    bool allFound = std::all_of(begin(realMarkerIds[idx]), end(realMarkerIds[idx]), [&](int x)
+                                                {
+                                    bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
+                                    if (found) {
+                                        detectedMarkers += to_string(x) + " ";
+                                    }
+                                    return found; });
+
+                    // Create a new room
+                    if (allFound)
+                        createMapRoom(envRoom, detectedMarkers);
+                }
+            }
+        }
+    }
+
 #ifdef REGISTER_LOOP
-    void Tracking::RequestStop()
+    void
+    Tracking::RequestStop()
     {
         unique_lock<mutex> lock(mMutexStop);
         mbStopRequested = true;
