@@ -211,9 +211,9 @@ namespace ORB_SLAM3
         /**
          * @brief Creates a new room object (corridor or room) to be added to the map
          * @param detectedRoom the address of the detected room
-         * @param detectedMarkers the string of the markers list
+         * @param markerIds the list of the detected marker-ids belong to the wall
          */
-        void createMapRoom(Room *detectedRoom, std::string detectedMarkers);
+        void createMapRoom(Room *detectedRoom, std::vector<int> markerIds);
 
         /**
          * @brief Early creation of a room as soon as all elements of at least one of its pairs has been seen

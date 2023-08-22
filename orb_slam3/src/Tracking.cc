@@ -4541,15 +4541,34 @@ namespace ORB_SLAM3
         mpAtlas->AddMapDoor(newMapDoor);
     }
 
-    void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, std::string detectedMarkers)
+    void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, std::vector<int> markerIds)
     {
+        // Find attached walls and add them to the room
+        std::string detectedWalls("");
+        std::string detectedMarkers("");
+        for (auto wall : mpAtlas->GetAllWalls())
+        {
+            std::vector<ORB_SLAM3::Marker *> markers = wall->getMarkers();
+            for (auto marker : markers)
+            {
+                if (std::find(markerIds.begin(), markerIds.end(), marker->getId()) != markerIds.end())
+                {
+                    detectedRoom->setWalls(wall);
+                    detectedWalls += to_string(wall->getId()) + " ";
+                    detectedMarkers += to_string(marker->getId()) + " ";
+                }
+            }
+        }
+
         // Update the room values
         detectedRoom->setAllSeenMarkers(true);
         detectedRoom->SetMap(mpAtlas->GetCurrentMap());
         detectedRoom->setId(mpAtlas->GetAllRooms().size());
+        // Set room center
 
-        std::cout << "Adding new room: Room#" << detectedRoom->getId() << " [" << detectedRoom->getName()
-                  << "], with markers [ " << detectedMarkers << "] attached on it!" << std::endl;
+        std::cout << "Adding new room: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
+                  << "), with walls [ " << detectedWalls << "] and markers [" << detectedMarkers
+                  << "] attached on them!" << std::endl;
 
         mpAtlas->AddMapRoom(detectedRoom);
     }
@@ -4569,19 +4588,15 @@ namespace ORB_SLAM3
                 // Loop over all the markers of the room, i.e., [[],[],...]
                 for (int idx = 0; idx < realMarkerIds.size(); idx++)
                 {
-                    string detectedMarkers("");
                     // Check to see if all of the markers have been seen
                     bool allFound = std::all_of(begin(realMarkerIds[idx]), end(realMarkerIds[idx]), [&](int x)
                                                 {
                                     bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
-                                    if (found) {
-                                        detectedMarkers += to_string(x) + " ";
-                                    }
                                     return found; });
 
                     // Create a new room
                     if (allFound)
-                        createMapRoom(envRoom, detectedMarkers);
+                        createMapRoom(envRoom, realMarkerIds[idx]);
                 }
             }
         }
