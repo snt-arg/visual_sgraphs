@@ -58,6 +58,7 @@ find_package(catkin REQUIRED COMPONENTS
   aruco_ros
   aruco_msgs
   backward_ros
+  rviz_visual_tools
 )
 
 find_package(Eigen3 3.1.0 REQUIRED)
@@ -74,7 +75,7 @@ generate_messages(
 )
 
 catkin_package (
-  CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge image_transport tf sensor_msgs dynamic_reconfigure message_runtime  backward_ros
+  CATKIN_DEPENDS roscpp rospy std_msgs cv_bridge image_transport tf sensor_msgs dynamic_reconfigure message_runtime backward_ros rviz_visual_tools
   LIBRARIES {PROJECT_NAME} libDBoW2
 )
 
