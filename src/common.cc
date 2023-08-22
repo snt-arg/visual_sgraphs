@@ -18,12 +18,11 @@ rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id;
-ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub;
+ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, walls_pub;
 
 // List of semantic entities available in the real environment
 std::vector<ORB_SLAM3::Room *> env_rooms;
 std::vector<ORB_SLAM3::Door *> env_doors;
-
 
 //////////////////////////////////////////////////
 // Main functions
@@ -90,6 +89,8 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     doors_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
+
+    walls_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/walls", 1);
 
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
     {
@@ -384,139 +385,177 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
     doors_pub.publish(doorArray);
 }
 
-void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time) {
+void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
+{
     int numWalls = walls.size();
     if (numWalls == 0)
         return;
 
-    wall_visual_tools->deleteAllMarkers();
-    for(const auto& wall : walls) {
-        
-        std::vector<MapPointStruct> mapPointsVec;
-        for(const auto& mapPoint : wall->getMapPoints()) {
-            MapPointStruct currentMapPoint(mapPoint->GetWorldPos());
-            mapPointsVec.push_back(currentMapPoint);
-        }
+    visualization_msgs::MarkerArray wallArray;
+    wallArray.markers.resize(numWalls);
 
-        std::vector<MapPointStruct> mapPointsVecRef = euclideanClustering(mapPointsVec);
-        Eigen::Vector3f p_min, p_max;       
-        float length = getMaxSegment(mapPointsVecRef, p_min, p_max);
-
-        Eigen::Isometry3d plane_pose = compute_plane_pose(wall->getPlaneEquation(), p_min, p_max);
-        double depth, width, height;
-
-        if(fabs(wall->getPlaneEquation().coeffs()(0)) > fabs(wall->getPlaneEquation().coeffs()(1)) && 
-            fabs(wall->getPlaneEquation().coeffs()(0)) > fabs(wall->getPlaneEquation().coeffs()(2))) {
-            depth = rviz_visual_tools::SMALL_SCALE;
-            width = fabs(p_min(2) - p_max(2));
-            height = fabs(p_min(1) - p_max(1));
-            wall_visual_tools->publishCuboid(plane_pose, depth, height, width, rviz_visual_tools::TRANSLUCENT);
-        } else if(fabs(wall->getPlaneEquation().coeffs()(2)) > fabs(wall->getPlaneEquation().coeffs()(0)) && 
-            fabs(wall->getPlaneEquation().coeffs()(2)) > fabs(wall->getPlaneEquation().coeffs()(1))) {
-            depth = rviz_visual_tools::SMALL_SCALE;
-            height = fabs(p_min(0) - p_max(0));
-            width = fabs(p_min(1) - p_max(1));
-            wall_visual_tools->publishCuboid(plane_pose, depth, height, width, rviz_visual_tools::TRANSLUCENT);
-        }
-        
-    }
-
-    wall_visual_tools->trigger();
-}
-
-std::vector<MapPointStruct> euclideanClustering(std::vector<MapPointStruct> points) 
-{
-
-    int cluster_id = 1;
-    for (MapPointStruct& p1 : points) {
-        if (p1.cluster_id != -1) {
-            continue; // Skip points that are already assigned to a cluster
-        }
-
-        p1.cluster_id = cluster_id;
-
-        for (MapPointStruct& p2 : points) {
-            if (p2.cluster_id != -1) {
-                continue;
-            }
-
-            double distance = (p1.coordinates - p2.coordinates).norm();
-
-            if (distance <= 1.5) {
-                p2.cluster_id = cluster_id;
-            }
-        }
-
-        cluster_id++;
-    }
-        
-    //group point with the same cluster id
-    std::vector<std::vector<MapPointStruct>> cluster_points; 
-    cluster_points.resize(cluster_id);
-    for(MapPointStruct& p1 : points) {
-        cluster_points[p1.cluster_id].push_back(p1);
-    }
-    
-    int cluster_size =0;
-    int seletected_cluster_id;
-    for(int i =0; i< cluster_points.size(); ++i) {
-        int current_cluster_size = cluster_points[i].size();
-        if(current_cluster_size > cluster_size){
-            cluster_size = current_cluster_size;
-            seletected_cluster_id = i;
-        } 
-    }
-    
-    return cluster_points[seletected_cluster_id];
-}
-
-Eigen::Isometry3d compute_plane_pose(const g2o::Plane3D& planeEquation,
-                                     Eigen::Vector3f& p_min,
-                                     Eigen::Vector3f& p_max) {
-
-    Eigen::Isometry3d pose;
-    pose.setIdentity();
-    pose.translation() = Eigen::Vector3d((p_min(0) - p_max(0)) / 2.0 + p_max(0),
-                                        (p_min(1) - p_max(1)) / 2.0 + p_max(1),
-                                        (p_min(2) - p_max(2)) / 2.0 + p_max(2));
-
-    pose.linear() = planeEquation.rotation(planeEquation.coeffs().head<3>());
-    return pose;
-}
-
-float getMaxSegment(const std::vector<MapPointStruct> mapPoints, 
-                 Eigen::Vector3f &pmin, Eigen::Vector3f &pmax)
-{
-    float max_dist = std::numeric_limits<float>::min();
-    int i_min = -1, i_max = -1; 
-
-    for (size_t i = 0; i < mapPoints.size(); ++i)
+    for (int idx = 0; idx < numWalls; idx++)
     {
-      for (size_t j = i; j < mapPoints.size(); ++j)
-      {
-        // Compute the distance 
-        float dist = sqrt(pow(mapPoints[i].coordinates(0) - mapPoints[j].coordinates(0),2) + 
-                        pow(mapPoints[i].coordinates(1) - mapPoints[j].coordinates(1),2) + 
-                        pow(mapPoints[i].coordinates(2) - mapPoints[j].coordinates(2),2));
+        visualization_msgs::Marker wall;
+        g2o::Plane3D wallPlane = walls[idx]->getPlaneEquation();
 
-        if (dist <= max_dist)
-          continue;
+        wall.ns = "walls";
+        wall.scale.x = 0.5;
+        wall.scale.y = 0.5;
+        wall.scale.z = 0.5;
+        wall.action = wall.ADD;
+        wall.lifetime = ros::Duration();
+        wall.id = wallArray.markers.size();
+        wall.header.stamp = ros::Time().now();
+        wall.header.frame_id = world_frame_id;
+        wall.mesh_use_embedded_materials = true;
+        wall.type = visualization_msgs::Marker::MESH_RESOURCE;
+        wall.mesh_resource =
+            "package://orb_slam3_ros/config/Visualization/wall.dae";
 
-        max_dist = dist;
-        i_min = i;
-        i_max = j;
-      }
+        // Set the wall position based on plane equation
+        Eigen::Vector4d wallCoeffs = wallPlane.coeffs();
+        wall.pose.position.x = wallCoeffs(0) * (-wallCoeffs(3));
+        wall.pose.position.y = wallCoeffs(1) * (-wallCoeffs(3));
+        wall.pose.position.z = wallCoeffs(2) * (-wallCoeffs(3));
+
+        wallArray.markers.push_back(wall);
     }
 
-    if (i_min == -1 || i_max == -1)
-      return (max_dist = std::numeric_limits<float>::min());
-
-    pmin = mapPoints[i_min].coordinates;
-    pmax = mapPoints[i_max].coordinates;
-    return (std::sqrt (max_dist));
+    walls_pub.publish(wallArray);
 }
 
+// void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time) {
+//     int numWalls = walls.size();
+//     if (numWalls == 0)
+//         return;
 
+//     wall_visual_tools->deleteAllMarkers();
+//     for(const auto& wall : walls) {
+
+//         std::vector<MapPointStruct> mapPointsVec;
+//         for(const auto& mapPoint : wall->getMapPoints()) {
+//             MapPointStruct currentMapPoint(mapPoint->GetWorldPos());
+//             mapPointsVec.push_back(currentMapPoint);
+//         }
+
+//         std::vector<MapPointStruct> mapPointsVecRef = euclideanClustering(mapPointsVec);
+//         Eigen::Vector3f p_min, p_max;
+//         float length = getMaxSegment(mapPointsVecRef, p_min, p_max);
+
+//         Eigen::Isometry3d plane_pose = compute_plane_pose(wall->getPlaneEquation(), p_min, p_max);
+//         double depth, width, height;
+
+//         if(fabs(wall->getPlaneEquation().coeffs()(0)) > fabs(wall->getPlaneEquation().coeffs()(1)) &&
+//             fabs(wall->getPlaneEquation().coeffs()(0)) > fabs(wall->getPlaneEquation().coeffs()(2))) {
+//             depth = rviz_visual_tools::SMALL_SCALE;
+//             width = fabs(p_min(2) - p_max(2));
+//             height = fabs(p_min(1) - p_max(1));
+//             wall_visual_tools->publishCuboid(plane_pose, depth, height, width, rviz_visual_tools::TRANSLUCENT);
+//         } else if(fabs(wall->getPlaneEquation().coeffs()(2)) > fabs(wall->getPlaneEquation().coeffs()(0)) &&
+//             fabs(wall->getPlaneEquation().coeffs()(2)) > fabs(wall->getPlaneEquation().coeffs()(1))) {
+//             depth = rviz_visual_tools::SMALL_SCALE;
+//             height = fabs(p_min(0) - p_max(0));
+//             width = fabs(p_min(1) - p_max(1));
+//             wall_visual_tools->publishCuboid(plane_pose, depth, height, width, rviz_visual_tools::TRANSLUCENT);
+//         }
+
+//     }
+
+//     wall_visual_tools->trigger();
+// }
+
+// std::vector<MapPointStruct> euclideanClustering(std::vector<MapPointStruct> points)
+// {
+
+//     int cluster_id = 1;
+//     for (MapPointStruct& p1 : points) {
+//         if (p1.cluster_id != -1) {
+//             continue; // Skip points that are already assigned to a cluster
+//         }
+
+//         p1.cluster_id = cluster_id;
+
+//         for (MapPointStruct& p2 : points) {
+//             if (p2.cluster_id != -1) {
+//                 continue;
+//             }
+
+//             double distance = (p1.coordinates - p2.coordinates).norm();
+
+//             if (distance <= 1.5) {
+//                 p2.cluster_id = cluster_id;
+//             }
+//         }
+
+//         cluster_id++;
+//     }
+
+//     //group point with the same cluster id
+//     std::vector<std::vector<MapPointStruct>> cluster_points;
+//     cluster_points.resize(cluster_id);
+//     for(MapPointStruct& p1 : points) {
+//         cluster_points[p1.cluster_id].push_back(p1);
+//     }
+
+//     int cluster_size =0;
+//     int seletected_cluster_id;
+//     for(int i =0; i< cluster_points.size(); ++i) {
+//         int current_cluster_size = cluster_points[i].size();
+//         if(current_cluster_size > cluster_size){
+//             cluster_size = current_cluster_size;
+//             seletected_cluster_id = i;
+//         }
+//     }
+
+//     return cluster_points[seletected_cluster_id];
+// }
+
+// Eigen::Isometry3d compute_plane_pose(const g2o::Plane3D& planeEquation,
+//                                      Eigen::Vector3f& p_min,
+//                                      Eigen::Vector3f& p_max) {
+
+//     Eigen::Isometry3d pose;
+//     pose.setIdentity();
+//     pose.translation() = Eigen::Vector3d((p_min(0) - p_max(0)) / 2.0 + p_max(0),
+//                                         (p_min(1) - p_max(1)) / 2.0 + p_max(1),
+//                                         (p_min(2) - p_max(2)) / 2.0 + p_max(2));
+
+//     pose.linear() = planeEquation.rotation(planeEquation.coeffs().head<3>());
+//     return pose;
+// }
+
+// float getMaxSegment(const std::vector<MapPointStruct> mapPoints,
+//                  Eigen::Vector3f &pmin, Eigen::Vector3f &pmax)
+// {
+//     float max_dist = std::numeric_limits<float>::min();
+//     int i_min = -1, i_max = -1;
+
+//     for (size_t i = 0; i < mapPoints.size(); ++i)
+//     {
+//       for (size_t j = i; j < mapPoints.size(); ++j)
+//       {
+//         // Compute the distance
+//         float dist = sqrt(pow(mapPoints[i].coordinates(0) - mapPoints[j].coordinates(0),2) +
+//                         pow(mapPoints[i].coordinates(1) - mapPoints[j].coordinates(1),2) +
+//                         pow(mapPoints[i].coordinates(2) - mapPoints[j].coordinates(2),2));
+
+//         if (dist <= max_dist)
+//           continue;
+
+//         max_dist = dist;
+//         i_min = i;
+//         i_max = j;
+//       }
+//     }
+
+//     if (i_min == -1 || i_max == -1)
+//       return (max_dist = std::numeric_limits<float>::min());
+
+//     pmin = mapPoints[i_min].coordinates;
+//     pmax = mapPoints[i_max].coordinates;
+//     return (std::sqrt (max_dist));
+// }
 
 //////////////////////////////////////////////////
 // Miscellaneous functions
