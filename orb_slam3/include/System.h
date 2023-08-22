@@ -183,6 +183,7 @@ namespace ORB_SLAM3
         int GetTrackingState();
         cv::Mat GetCurrentFrame();
         std::vector<Door *> GetAllDoors();
+        std::vector<Wall *> GetAllWalls();
         std::vector<Marker *> GetAllMarkers();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetTrackedMapPoints();
