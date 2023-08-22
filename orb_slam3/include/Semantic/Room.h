@@ -48,8 +48,8 @@ namespace ORB_SLAM3
         bool getAllSeenMarkers() const;
         void setAllSeenMarkers(bool value);
 
+        void setWalls(Wall *value);
         std::vector<Wall *> getWalls() const;
-        void setWalls(std::vector<Wall *> &value);
 
         Eigen::Vector3d getRoomCenter() const;
         void setRoomCenter(Eigen::Vector3d value);
