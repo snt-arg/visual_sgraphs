@@ -539,18 +539,20 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
         wallLines.header.frame_id = wall_frame_id;
         wallLines.type = visualization_msgs::Marker::LINE_LIST;
 
-        geometry_msgs::Point point1;
-        point1.x = walls[idx]->getMarkers().back()->getGlobalPose().translation().x();
-        point1.y = walls[idx]->getMarkers().back()->getGlobalPose().translation().y();
-        point1.z = walls[idx]->getMarkers().back()->getGlobalPose().translation().z();
-        wallLines.points.push_back(point1);
+        for(const auto& wallMarker : walls[idx]->getMarkers())  {
+            geometry_msgs::Point point1;
+            point1.x = wallMarker->getGlobalPose().translation().x();
+            point1.y = wallMarker->getGlobalPose().translation().y();
+            point1.z = wallMarker->getGlobalPose().translation().z();
+            wallLines.points.push_back(point1);
 
-        geometry_msgs::Point point2;
-        point2.x = centroid.x();            
-        point2.y = centroid.y();            
-        point2.z = centroid.z();
-        wallLines.points.push_back(point2);
-        wallArray.markers.push_back(wallLines);
+            geometry_msgs::Point point2;
+            point2.x = centroid.x();            
+            point2.y = centroid.y();            
+            point2.z = centroid.z();
+            wallLines.points.push_back(point2);
+        }   
+          wallArray.markers.push_back(wallLines);
     }
 
     walls_pub.publish(wallArray);
