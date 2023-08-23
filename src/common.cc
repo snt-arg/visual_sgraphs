@@ -19,6 +19,7 @@ ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, walls_pub;
+std::shared_ptr<tf::TransformListener> transform_listener;
 
 // List of semantic entities available in the real environment
 std::vector<ORB_SLAM3::Room *> env_rooms;
@@ -103,6 +104,8 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     wall_visual_tools->deleteAllMarkers();
     wall_visual_tools->enableBatchPublishing();
     wall_visual_tools->setAlpha(0.5);
+
+    transform_listener = std::make_shared<tf::TransformListener>();
 }
 
 void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
@@ -306,33 +309,83 @@ void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Tim
 
     for (int idx = 0; idx < numMarkers; idx++)
     {
-        visualization_msgs::Marker marker;
+        visualization_msgs::Marker fiducial_marker;
         Sophus::SE3f markerPose = markers[idx]->getGlobalPose();
 
-        marker.color.a = 0;
-        marker.scale.x = 0.2;
-        marker.scale.y = 0.2;
-        marker.scale.z = 0.2;
-        marker.action = marker.ADD;
-        marker.ns = "fiducial_markers";
-        marker.lifetime = ros::Duration();
-        marker.id = markerArray.markers.size();
-        marker.header.stamp = ros::Time().now();
-        marker.header.frame_id = wall_frame_id;
-        marker.mesh_use_embedded_materials = true;
-        marker.type = visualization_msgs::Marker::MESH_RESOURCE;
-        marker.mesh_resource =
+        fiducial_marker.color.a = 0;
+        fiducial_marker.scale.x = 0.2;
+        fiducial_marker.scale.y = 0.2;
+        fiducial_marker.scale.z = 0.2;
+        fiducial_marker.action = fiducial_marker.ADD;
+        fiducial_marker.ns = "fiducial_markers";
+        fiducial_marker.lifetime = ros::Duration();
+        fiducial_marker.id = markerArray.markers.size();
+        fiducial_marker.header.stamp = ros::Time().now();
+        fiducial_marker.header.frame_id = wall_frame_id;
+        fiducial_marker.mesh_use_embedded_materials = true;
+        fiducial_marker.type = visualization_msgs::Marker::MESH_RESOURCE;
+        fiducial_marker.mesh_resource =
             "package://orb_slam3_ros/config/Visualization/aruco_marker.dae";
 
-        marker.pose.position.x = markerPose.translation().x();
-        marker.pose.position.y = markerPose.translation().y();
-        marker.pose.position.z = markerPose.translation().z();
-        marker.pose.orientation.x = markerPose.unit_quaternion().x();
-        marker.pose.orientation.y = markerPose.unit_quaternion().y();
-        marker.pose.orientation.z = markerPose.unit_quaternion().z();
-        marker.pose.orientation.w = markerPose.unit_quaternion().w();
+        fiducial_marker.pose.position.x = markerPose.translation().x();
+        fiducial_marker.pose.position.y = markerPose.translation().y();
+        fiducial_marker.pose.position.z = markerPose.translation().z();
+        fiducial_marker.pose.orientation.x = markerPose.unit_quaternion().x();
+        fiducial_marker.pose.orientation.y = markerPose.unit_quaternion().y();
+        fiducial_marker.pose.orientation.z = markerPose.unit_quaternion().z();
+        fiducial_marker.pose.orientation.w = markerPose.unit_quaternion().w();
 
-        markerArray.markers.push_back(marker);
+        markerArray.markers.push_back(fiducial_marker);
+
+        visualization_msgs::Marker fiducial_marker_lines;
+        fiducial_marker_lines.color.a = 0.2;
+        fiducial_marker_lines.color.r = 0.0;
+        fiducial_marker_lines.color.g = 0.0;
+        fiducial_marker_lines.color.b = 0.0;
+        fiducial_marker_lines.scale.x = 0.005;
+        fiducial_marker_lines.scale.y = 0.005;
+        fiducial_marker_lines.scale.z = 0.005;
+        fiducial_marker_lines.action = fiducial_marker.ADD;
+        fiducial_marker_lines.ns = "fiducial_marker_lines";
+        fiducial_marker_lines.lifetime = ros::Duration();
+        fiducial_marker_lines.id = markerArray.markers.size();
+        fiducial_marker_lines.header.stamp = ros::Time().now();
+        fiducial_marker_lines.header.frame_id = world_frame_id;
+        fiducial_marker_lines.type = visualization_msgs::Marker::LINE_LIST;
+
+
+        const map<ORB_SLAM3::KeyFrame *, Sophus::SE3f> observations = markers[idx]->getObservations();
+        for (map<ORB_SLAM3::KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+        {   
+            tf::Stamped<tf::Point> marker_point;
+            marker_point.frame_id_ = wall_frame_id;
+            marker_point.setX(markerPose.translation().x());
+            marker_point.setY(markerPose.translation().y());
+            marker_point.setZ(markerPose.translation().z());
+
+            tf::Stamped<tf::Point> marker_point_transformed;
+            transform_listener->transformPoint(world_frame_id, ros::Time(0), marker_point, wall_frame_id, marker_point_transformed);
+
+            geometry_msgs::Point point1;
+            point1.x = marker_point_transformed.x();
+            point1.y = marker_point_transformed.y();
+            point1.z = marker_point_transformed.z();
+            fiducial_marker_lines.points.push_back(point1);
+
+            ORB_SLAM3::KeyFrame *pKFi = obsId->first;
+            tf::Stamped<tf::Point> keyframe_point;
+            keyframe_point.setX(pKFi->GetPoseInverse().translation().x());
+            keyframe_point.setY(pKFi->GetPoseInverse().translation().y());
+            keyframe_point.setZ(pKFi->GetPoseInverse().translation().z());
+            
+            tf::Stamped<tf::Point> keyframe_point_transformed;
+            geometry_msgs::Point point2;
+            point2.x = pKFi->GetPoseInverse().translation().x();
+            point2.y = pKFi->GetPoseInverse().translation().y();
+            point2.z = pKFi->GetPoseInverse().translation().z();
+            fiducial_marker_lines.points.push_back(point2);
+        }
+        markerArray.markers.push_back(fiducial_marker_lines);
     }
 
     fiducial_markers_pub.publish(markerArray);
