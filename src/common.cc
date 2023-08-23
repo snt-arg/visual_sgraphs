@@ -455,7 +455,7 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
         std::vector<double> color = walls[idx]->getColor();
 
         // Get the orientation of the wall from markers
-        Sophus::SE3f wallOrientation = walls[idx]->getMarkers()[0]->getGlobalPose();
+        Sophus::SE3f wallOrientation = walls[idx]->getMarkers().front()->getGlobalPose();
 
         // Get the position of the walls from map-points to put it in the middle of the cluster
         Eigen::Vector3f centroid(0.0, 0.0, 0.0);
@@ -540,16 +540,24 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
 
     for (int idx = 0; idx < numRooms; idx++)
     {
+        // Create color for room (magenta or violet based on room type)
+        std::vector<double> color = {0.5, 0.0, 1.0};
+        if (rooms[idx]->getWalls().size() == 2)
+            color = {0.5, 0.0, 1.0};
+
         visualization_msgs::Marker room;
         Eigen::Vector3d roomCenter = rooms[idx]->getRoomCenter();
-        Sophus::SE3f roomPose(Eigen::Matrix3f::Identity(), roomCenter.cast<float>());
 
         room.color.a = 0;
         room.ns = "rooms";
-        room.scale.x = 0.3;
-        room.scale.y = 0.3;
-        room.scale.z = 0.3;
+        room.scale.x = 0.6;
+        room.scale.y = 0.6;
+        room.scale.z = 0.6;
+        room.color.a = 0.5;
         room.action = room.ADD;
+        room.color.r = color[0];
+        room.color.g = color[1];
+        room.color.b = color[2];
         room.lifetime = ros::Duration();
         room.id = roomArray.markers.size();
         room.header.stamp = ros::Time().now();
@@ -560,16 +568,15 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
             "package://orb_slam3_ros/config/Visualization/room.dae";
 
         // Rotation and displacement for better visualization
-        Sophus::SE3f rotatedRoomPose = roomPose * Sophus::SE3f::rotX(-M_PI_2);
-        rotatedRoomPose.translation().y() -= 2.0;
+        roomCenter.y() -= 6.0;
 
-        room.pose.position.x = rotatedRoomPose.translation().x();
-        room.pose.position.y = rotatedRoomPose.translation().y();
-        room.pose.position.z = rotatedRoomPose.translation().z();
-        room.pose.orientation.x = rotatedRoomPose.unit_quaternion().x();
-        room.pose.orientation.y = rotatedRoomPose.unit_quaternion().y();
-        room.pose.orientation.z = rotatedRoomPose.unit_quaternion().z();
-        room.pose.orientation.w = rotatedRoomPose.unit_quaternion().w();
+        room.pose.orientation.x = 0.0;
+        room.pose.orientation.y = 0.0;
+        room.pose.orientation.z = 0.0;
+        room.pose.orientation.w = 1.0;
+        room.pose.position.x = roomCenter.x();
+        room.pose.position.y = roomCenter.y();
+        room.pose.position.z = roomCenter.z();
 
         roomArray.markers.push_back(room);
     }
