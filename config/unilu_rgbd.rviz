@@ -8,8 +8,7 @@ Panels:
         - /raw left img1
         - /tracked points1
         - /all points1
-        - /door1
-        - /wall1
+        - /room1
       Splitter Ratio: 0.33636364340782166
     Tree Height: 379
   - Class: rviz/Selection
@@ -291,6 +290,14 @@ Visualization Manager:
       Marker Topic: /orb_slam3/walls
       Name: wall
       Namespaces:
+        walls: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /orb_slam3/rooms
+      Name: room
+      Namespaces:
         {}
       Queue Size: 100
       Value: true
@@ -322,7 +329,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.374567031860352
+      Distance: 10.009618759155273
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

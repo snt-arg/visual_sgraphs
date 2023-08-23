@@ -5,141 +5,71 @@
       <author>Blender User</author>
       <authoring_tool>Blender 3.6.1 commit date:2023-07-17, commit time:12:50, hash:8bda729ef4dc</authoring_tool>
     </contributor>
-    <created>2023-08-22T19:16:56</created>
-    <modified>2023-08-22T19:16:56</modified>
+    <created>2023-08-23T13:57:13</created>
+    <modified>2023-08-23T13:57:13</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
-  <library_lights>
-    <light id="Light-light" name="Light">
-      <technique_common>
-        <point>
-          <color sid="color">1000 1000 1000</color>
-          <constant_attenuation>1</constant_attenuation>
-          <linear_attenuation>0</linear_attenuation>
-          <quadratic_attenuation>0.00111109</quadratic_attenuation>
-        </point>
-      </technique_common>
-      <extra>
-        <technique profile="blender">
-          <type sid="type" type="int">0</type>
-          <flag sid="flag" type="int">0</flag>
-          <mode sid="mode" type="int">1</mode>
-          <gamma sid="blender_gamma" type="float">1</gamma>
-          <red sid="red" type="float">1</red>
-          <green sid="green" type="float">1</green>
-          <blue sid="blue" type="float">1</blue>
-          <shadow_r sid="blender_shadow_r" type="float">0</shadow_r>
-          <shadow_g sid="blender_shadow_g" type="float">0</shadow_g>
-          <shadow_b sid="blender_shadow_b" type="float">0</shadow_b>
-          <energy sid="blender_energy" type="float">1000</energy>
-          <dist sid="blender_dist" type="float">29.99998</dist>
-          <spotsize sid="spotsize" type="float">75</spotsize>
-          <spotblend sid="spotblend" type="float">0.15</spotblend>
-          <att1 sid="att1" type="float">0</att1>
-          <att2 sid="att2" type="float">1</att2>
-          <falloff_type sid="falloff_type" type="int">2</falloff_type>
-          <clipsta sid="clipsta" type="float">0.04999995</clipsta>
-          <clipend sid="clipend" type="float">30.002</clipend>
-          <bias sid="bias" type="float">1</bias>
-          <bufsize sid="bufsize" type="int">2880</bufsize>
-          <samp sid="samp" type="int">3</samp>
-          <buffers sid="buffers" type="int">1</buffers>
-          <radius sid="radius" type="float">0.1</radius>
-          <area_shape sid="area_shape" type="int">1</area_shape>
-          <area_size sid="area_size" type="float">0.1</area_size>
-          <area_sizey sid="area_sizey" type="float">0.1</area_sizey>
-          <area_sizez sid="area_sizez" type="float">1</area_sizez>
-        </technique>
-      </extra>
-    </light>
-  </library_lights>
-  <library_effects>
-    <effect id="Material-effect">
-      <profile_COMMON>
-        <technique sid="common">
-          <lambert>
-            <emission>
-              <color sid="emission">0 0 0 1</color>
-            </emission>
-            <diffuse>
-              <color sid="diffuse">0.8000001 0.7195875 0.2568437 1</color>
-            </diffuse>
-            <index_of_refraction>
-              <float sid="ior">1.45</float>
-            </index_of_refraction>
-          </lambert>
-        </technique>
-      </profile_COMMON>
-    </effect>
-  </library_effects>
   <library_images/>
-  <library_materials>
-    <material id="Material-material" name="Material">
-      <instance_effect url="#Material-effect"/>
-    </material>
-  </library_materials>
   <library_geometries>
-    <geometry id="Cube-mesh" name="Cube">
+    <geometry id="Group_050Mesh-mesh" name="Group_050Mesh">
       <mesh>
-        <source id="Cube-mesh-positions">
-          <float_array id="Cube-mesh-positions-array" count="24">1 1 1 1 1 -1 1 -1 1 1 -1 -1 -1 1 1 -1 1 -1 -1 -1 1 -1 -1 -1</float_array>
+        <source id="Group_050Mesh-mesh-positions">
+          <float_array id="Group_050Mesh-mesh-positions-array" count="24">-63.77953 1.574808 39.37007 63.77953 1.574808 -39.37008 -63.77953 1.574808 -39.37008 63.77953 1.574808 39.37007 -63.77953 -1.574798 -39.37008 63.77953 -1.574798 -39.37008 63.77953 -1.574798 39.37007 -63.77953 -1.574798 39.37007</float_array>
           <technique_common>
-            <accessor source="#Cube-mesh-positions-array" count="8" stride="3">
+            <accessor source="#Group_050Mesh-mesh-positions-array" count="8" stride="3">
               <param name="X" type="float"/>
               <param name="Y" type="float"/>
               <param name="Z" type="float"/>
             </accessor>
           </technique_common>
         </source>
-        <source id="Cube-mesh-normals">
-          <float_array id="Cube-mesh-normals-array" count="18">0 0 1 0 -1 0 -1 0 0 0 0 -1 1 0 0 0 1 0</float_array>
+        <source id="Group_050Mesh-mesh-normals">
+          <float_array id="Group_050Mesh-mesh-normals-array" count="18">0 1 0 0 0 -1 1 0 0 0 -1 0 0 0 1 -1 0 0</float_array>
           <technique_common>
-            <accessor source="#Cube-mesh-normals-array" count="6" stride="3">
+            <accessor source="#Group_050Mesh-mesh-normals-array" count="6" stride="3">
               <param name="X" type="float"/>
               <param name="Y" type="float"/>
               <param name="Z" type="float"/>
             </accessor>
           </technique_common>
         </source>
-        <source id="Cube-mesh-map-0">
-          <float_array id="Cube-mesh-map-0-array" count="72">0.875 0.5 0.625 0.75 0.625 0.5 0.625 0.75 0.375 1 0.375 0.75 0.625 0 0.375 0.25 0.375 0 0.375 0.5 0.125 0.75 0.125 0.5 0.625 0.5 0.375 0.75 0.375 0.5 0.625 0.25 0.375 0.5 0.375 0.25 0.875 0.5 0.875 0.75 0.625 0.75 0.625 0.75 0.625 1 0.375 1 0.625 0 0.625 0.25 0.375 0.25 0.375 0.5 0.375 0.75 0.125 0.75 0.625 0.5 0.625 0.75 0.375 0.75 0.625 0.25 0.625 0.5 0.375 0.5</float_array>
+        <source id="Group_050Mesh-mesh-map-0">
+          <float_array id="Group_050Mesh-mesh-map-0-array" count="72">-48.48602 23.25 -64.68602 13.25 -48.48602 13.25 -64.68602 13.25 -48.48602 23.25 -64.68602 23.25 -64.68602 21.18202 -48.48602 20.78202 -48.48602 21.18202 -48.48602 20.78202 -64.68602 21.18202 -64.68602 20.78202 21.18202 13.25 20.78202 23.25 20.78202 13.25 20.78202 23.25 21.18202 13.25 21.18202 23.25 64.68602 23.25 48.48602 13.25 64.68602 13.25 48.48602 13.25 64.68602 23.25 48.48602 23.25 64.68602 20.78202 48.48602 21.18202 48.48602 20.78202 48.48602 21.18202 64.68602 20.78202 64.68602 21.18202 -21.18202 23.25 -20.78202 13.25 -20.78202 23.25 -20.78202 13.25 -21.18202 23.25 -21.18202 13.25</float_array>
           <technique_common>
-            <accessor source="#Cube-mesh-map-0-array" count="36" stride="2">
+            <accessor source="#Group_050Mesh-mesh-map-0-array" count="36" stride="2">
               <param name="S" type="float"/>
               <param name="T" type="float"/>
             </accessor>
           </technique_common>
         </source>
-        <vertices id="Cube-mesh-vertices">
-          <input semantic="POSITION" source="#Cube-mesh-positions"/>
+        <source id="Group_050Mesh-mesh-map-1">
+          <float_array id="Group_050Mesh-mesh-map-1-array" count="72">-48.48602 23.25 -64.68602 13.25 -48.48602 13.25 -64.68602 13.25 -48.48602 23.25 -64.68602 23.25 -64.68602 21.18202 -48.48602 20.78202 -48.48602 21.18202 -48.48602 20.78202 -64.68602 21.18202 -64.68602 20.78202 21.18202 13.25 20.78202 23.25 20.78202 13.25 20.78202 23.25 21.18202 13.25 21.18202 23.25 64.68602 23.25 48.48602 13.25 64.68602 13.25 48.48602 13.25 64.68602 23.25 48.48602 23.25 64.68602 20.78202 48.48602 21.18202 48.48602 20.78202 48.48602 21.18202 64.68602 20.78202 64.68602 21.18202 -21.18202 23.25 -20.78202 13.25 -20.78202 23.25 -20.78202 13.25 -21.18202 23.25 -21.18202 13.25</float_array>
+          <technique_common>
+            <accessor source="#Group_050Mesh-mesh-map-1-array" count="36" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="Group_050Mesh-mesh-vertices">
+          <input semantic="POSITION" source="#Group_050Mesh-mesh-positions"/>
         </vertices>
-        <triangles material="Material-material" count="12">
-          <input semantic="VERTEX" source="#Cube-mesh-vertices" offset="0"/>
-          <input semantic="NORMAL" source="#Cube-mesh-normals" offset="1"/>
-          <input semantic="TEXCOORD" source="#Cube-mesh-map-0" offset="2" set="0"/>
-          <p>4 0 0 2 0 1 0 0 2 2 1 3 7 1 4 3 1 5 6 2 6 5 2 7 7 2 8 1 3 9 7 3 10 5 3 11 0 4 12 3 4 13 1 4 14 4 5 15 1 5 16 5 5 17 4 0 18 6 0 19 2 0 20 2 1 21 6 1 22 7 1 23 6 2 24 4 2 25 5 2 26 1 3 27 3 3 28 7 3 29 0 4 30 2 4 31 3 4 32 4 5 33 0 5 34 1 5 35</p>
+        <triangles count="12">
+          <input semantic="VERTEX" source="#Group_050Mesh-mesh-vertices" offset="0"/>
+          <input semantic="NORMAL" source="#Group_050Mesh-mesh-normals" offset="1"/>
+          <input semantic="TEXCOORD" source="#Group_050Mesh-mesh-map-0" offset="2" set="0"/>
+          <input semantic="TEXCOORD" source="#Group_050Mesh-mesh-map-1" offset="2" set="1"/>
+          <p>0 0 0 1 0 1 2 0 2 1 0 3 0 0 4 3 0 5 1 1 6 4 1 7 2 1 8 4 1 9 1 1 10 5 1 11 1 2 12 6 2 13 5 2 14 6 2 15 1 2 16 3 2 17 6 3 18 4 3 19 5 3 20 4 3 21 6 3 22 7 3 23 6 4 24 0 4 25 7 4 26 0 4 27 6 4 28 3 4 29 0 5 30 4 5 31 7 5 32 4 5 33 0 5 34 2 5 35</p>
         </triangles>
       </mesh>
     </geometry>
   </library_geometries>
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
-      <node id="Light" name="Light" type="NODE">
-        <matrix sid="transform">-0.2908646 -0.7711008 0.5663932 4.076245 0.9551712 -0.1998834 0.2183912 1.005454 -0.05518906 0.6045247 0.7946723 5.903862 0 0 0 1</matrix>
-        <instance_light url="#Light-light"/>
-      </node>
-      <node id="Cube" name="Cube" type="NODE">
-        <matrix sid="transform">0.1 0 0 0 0 3.46 0 0 0 0 1 1 0 0 0 1</matrix>
-        <instance_geometry url="#Cube-mesh" name="Cube">
-          <bind_material>
-            <technique_common>
-              <instance_material symbol="Material-material" target="#Material-material">
-                <bind_vertex_input semantic="UVMap" input_semantic="TEXCOORD" input_set="0"/>
-              </instance_material>
-            </technique_common>
-          </bind_material>
-        </instance_geometry>
+      <node id="Group_050" name="Group_050" type="NODE">
+        <matrix sid="transform">0.01552222 0 0 0 0 0.038227 -7.54983e-10 0 0 1.67096e-9 0.017272 0.6900001 0 0 0 1</matrix>
+        <instance_geometry url="#Group_050Mesh-mesh" name="Group_050"/>
       </node>
     </visual_scene>
   </library_visual_scenes>

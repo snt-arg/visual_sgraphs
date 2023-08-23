@@ -1628,6 +1628,12 @@ namespace ORB_SLAM3
         return pActiveMap->GetAllWalls();
     }
 
+    vector<Room *> System::GetAllRooms()
+    {
+        Map *pActiveMap = mpAtlas->GetCurrentMap();
+        return pActiveMap->GetAllRooms();
+    }
+
     bool System::SaveMap(const string &filename)
     {
         mStrSaveAtlasToFile = filename;

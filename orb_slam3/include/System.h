@@ -185,6 +185,7 @@ namespace ORB_SLAM3
         cv::Mat GetCurrentFrame();
         std::vector<Door *> GetAllDoors();
         std::vector<Wall *> GetAllWalls();
+        std::vector<Room *> GetAllRooms();
         std::vector<Marker *> GetAllMarkers();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetTrackedMapPoints();
