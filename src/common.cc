@@ -404,7 +404,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
 
     for (int idx = 0; idx < numDoors; idx++)
     {
-        visualization_msgs::Marker door;
+        visualization_msgs::Marker door, doorLines;
         Sophus::SE3f doorPose = doors[idx]->getGlobalPose();
 
         door.color.a = 0;
@@ -433,8 +433,36 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         door.pose.orientation.y = rotatedDoorPose.unit_quaternion().y();
         door.pose.orientation.z = rotatedDoorPose.unit_quaternion().z();
         door.pose.orientation.w = rotatedDoorPose.unit_quaternion().w();
-
         doorArray.markers.push_back(door);
+
+        doorLines.color.a = 0.5;
+        doorLines.color.r = 0.0;
+        doorLines.color.g = 0.0;
+        doorLines.color.b = 0.0;
+        doorLines.scale.x = 0.005;
+        doorLines.scale.y = 0.005;
+        doorLines.scale.z = 0.005;
+        doorLines.action = doorLines.ADD;
+        doorLines.ns = "doorLines";
+        doorLines.lifetime = ros::Duration();
+        doorLines.id = doorArray.markers.size();
+        doorLines.header.stamp = ros::Time().now();
+        doorLines.header.frame_id = wall_frame_id;
+        doorLines.type = visualization_msgs::Marker::LINE_LIST;
+
+        geometry_msgs::Point point1;
+        point1.x = doors[idx]->getMarker()->getGlobalPose().translation().x();
+        point1.y = doors[idx]->getMarker()->getGlobalPose().translation().y();
+        point1.z = doors[idx]->getMarker()->getGlobalPose().translation().z();
+        doorLines.points.push_back(point1);
+
+        geometry_msgs::Point point2;
+        point2.x = rotatedDoorPose.translation().x();            
+        point2.y = rotatedDoorPose.translation().y();            
+        point2.z = rotatedDoorPose.translation().z();
+        doorLines.points.push_back(point2);
+        doorArray.markers.push_back(doorLines);
+          
     }
 
     doors_pub.publish(doorArray);
@@ -451,7 +479,7 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
 
     for (int idx = 0; idx < numWalls; idx++)
     {
-        visualization_msgs::Marker wall, wallPoints;
+        visualization_msgs::Marker wall, wallPoints, wallLines;
         std::vector<double> color = walls[idx]->getColor();
 
         // Get the orientation of the wall from markers
@@ -506,6 +534,7 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
         wall.pose.orientation.y = wallOrientation.unit_quaternion().y();
         wall.pose.orientation.z = wallOrientation.unit_quaternion().z();
         wall.pose.orientation.w = wallOrientation.unit_quaternion().w();
+        wallArray.markers.push_back(wall);
 
         wallPoints.color.a = 1;
         wallPoints.scale.x = 0.03;
@@ -521,9 +550,37 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
         wallPoints.header.stamp = ros::Time::now();
         wallPoints.header.frame_id = wall_frame_id;
         wallPoints.type = visualization_msgs::Marker::CUBE_LIST;
-
-        wallArray.markers.push_back(wall);
         wallArray.markers.push_back(wallPoints);
+
+        wallLines.color.a = 0.5;
+        wallLines.color.r = 0.0;
+        wallLines.color.g = 0.0;
+        wallLines.color.b = 0.0;
+        wallLines.scale.x = 0.005;
+        wallLines.scale.y = 0.005;
+        wallLines.scale.z = 0.005;
+        wallLines.action = wallLines.ADD;
+        wallLines.ns = "wallLines";
+        wallLines.lifetime = ros::Duration();
+        wallLines.id = wallArray.markers.size();
+        wallLines.header.stamp = ros::Time().now();
+        wallLines.header.frame_id = wall_frame_id;
+        wallLines.type = visualization_msgs::Marker::LINE_LIST;
+
+        for(const auto& wallMarker : walls[idx]->getMarkers())  {
+            geometry_msgs::Point point1;
+            point1.x = wallMarker->getGlobalPose().translation().x();
+            point1.y = wallMarker->getGlobalPose().translation().y();
+            point1.z = wallMarker->getGlobalPose().translation().z();
+            wallLines.points.push_back(point1);
+
+            geometry_msgs::Point point2;
+            point2.x = centroid.x();            
+            point2.y = centroid.y();            
+            point2.z = centroid.z();
+            wallLines.points.push_back(point2);
+        }   
+        wallArray.markers.push_back(wallLines);
     }
 
     walls_pub.publish(wallArray);
