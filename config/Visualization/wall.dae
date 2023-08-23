@@ -5,12 +5,39 @@
       <author>Blender User</author>
       <authoring_tool>Blender 3.6.1 commit date:2023-07-17, commit time:12:50, hash:8bda729ef4dc</authoring_tool>
     </contributor>
-    <created>2023-08-23T13:57:13</created>
-    <modified>2023-08-23T13:57:13</modified>
+    <created>2023-08-23T15:08:47</created>
+    <modified>2023-08-23T15:08:47</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
+  <library_effects>
+    <effect id="Material_001-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <lambert>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <diffuse>
+              <color sid="diffuse">0.8 0.8 0.8 1</color>
+            </diffuse>
+            <transparent opaque="A_ONE">
+              <color sid="alpha">0 0 0 0.3385827</color>
+            </transparent>
+            <index_of_refraction>
+              <float sid="ior">1.45</float>
+            </index_of_refraction>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
   <library_images/>
+  <library_materials>
+    <material id="Material_001-material" name="Material.001">
+      <instance_effect url="#Material_001-effect"/>
+    </material>
+  </library_materials>
   <library_geometries>
     <geometry id="Group_050Mesh-mesh" name="Group_050Mesh">
       <mesh>
@@ -55,7 +82,7 @@
         <vertices id="Group_050Mesh-mesh-vertices">
           <input semantic="POSITION" source="#Group_050Mesh-mesh-positions"/>
         </vertices>
-        <triangles count="12">
+        <triangles material="Material_001-material" count="12">
           <input semantic="VERTEX" source="#Group_050Mesh-mesh-vertices" offset="0"/>
           <input semantic="NORMAL" source="#Group_050Mesh-mesh-normals" offset="1"/>
           <input semantic="TEXCOORD" source="#Group_050Mesh-mesh-map-0" offset="2" set="0"/>
@@ -68,8 +95,17 @@
   <library_visual_scenes>
     <visual_scene id="Scene" name="Scene">
       <node id="Group_050" name="Group_050" type="NODE">
-        <matrix sid="transform">0.01552222 0 0 0 0 0.038227 -7.54983e-10 0 0 1.67096e-9 0.017272 0.6900001 0 0 0 1</matrix>
-        <instance_geometry url="#Group_050Mesh-mesh" name="Group_050"/>
+        <matrix sid="transform">0.01552222 0 0 0 0 0.018227 -7.54984e-10 0 0 7.96728e-10 0.017272 0.6900001 0 0 0 1</matrix>
+        <instance_geometry url="#Group_050Mesh-mesh" name="Group_050">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="Material_001-material" target="#Material_001-material">
+                <bind_vertex_input semantic="Group_050Mesh-mesh-map-0" input_semantic="TEXCOORD" input_set="0"/>
+                <bind_vertex_input semantic="Group_050Mesh-mesh-map-1" input_semantic="TEXCOORD" input_set="1"/>
+              </instance_material>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
       </node>
     </visual_scene>
   </library_visual_scenes>

@@ -32,7 +32,7 @@
 
     </node>
 
-    <node pkg="tf" type="static_transform_publisher" name="world_to_wall" args="0 -5 0 0 0 0 world wall 10" />
+    <node pkg="tf" type="static_transform_publisher" name="world_to_wall" args="0 -3 0 0 0 0 world wall 10" />
     <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera camera_color_optical_frame 10" />
 
 
