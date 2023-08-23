@@ -406,7 +406,7 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
         wall.action = wall.ADD;
         wall.lifetime = ros::Duration();
         wall.id = wallArray.markers.size();
-        wall.header.stamp = ros::Time().now();
+        wall.header.stamp = ros::Time::now();
         wall.header.frame_id = world_frame_id;
         wall.mesh_use_embedded_materials = true;
         wall.type = visualization_msgs::Marker::MESH_RESOURCE;
@@ -420,8 +420,34 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
         wall.pose.position.z = wallCoeffs(2) * (-wallCoeffs(3));
 
         wallArray.markers.push_back(wall);
-    }
 
+        visualization_msgs::Marker wallPoints;
+        wallPoints.ns = "walls_points";
+        wallPoints.scale.x = 0.03;
+        wallPoints.scale.y = 0.03;
+        wallPoints.scale.z = 0.03;
+        wallPoints.action = wallPoints.ADD;
+        wallPoints.lifetime = ros::Duration();
+        wallPoints.id = wallArray.markers.size();
+        wallPoints.header.stamp = ros::Time::now();
+        wallPoints.header.frame_id = wall_frame_id;
+        wallPoints.type = visualization_msgs::Marker::CUBE_LIST;
+        wallPoints.color.a =1;
+        wallPoints.color.r = walls[idx]->getColor()[0] / 255;
+        wallPoints.color.g = walls[idx]->getColor()[1] / 255;
+        wallPoints.color.b = walls[idx]->getColor()[2] / 255;
+
+        for(const auto& wallPoint : walls[idx]->getMapPoints()) {
+            geometry_msgs::Point point;
+            point.x = wallPoint->GetWorldPos().x();
+            point.y = wallPoint->GetWorldPos().y();
+            point.z = wallPoint->GetWorldPos().z();    
+            wallPoints.points.push_back(point);
+        }   
+
+        wallArray.markers.push_back(wallPoints);
+    }   
+    
     walls_pub.publish(wallArray);
 }
 
