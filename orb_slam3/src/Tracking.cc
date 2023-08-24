@@ -4618,7 +4618,7 @@ namespace ORB_SLAM3
                 // Get all detected walls' marker IDs
                 std::vector<int> detectedMarkerIds = mpAtlas->visitedWallsMarkerIds;
                 // Get all marker IDs of an actual room
-                std::vector<std::vector<int>> realMarkerIds = envRoom->getMarkerIds();
+                std::vector<std::vector<int>> realMarkerIds = envRoom->getWallMarkerIds();
                 // Loop over all the markers of the room, i.e., [[],[],...]
                 for (int idx = 0; idx < realMarkerIds.size(); idx++)
                 {

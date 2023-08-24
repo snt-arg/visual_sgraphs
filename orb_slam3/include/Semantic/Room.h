@@ -18,14 +18,15 @@ namespace ORB_SLAM3
     class Room
     {
     private:
-        int id;                                   // The room's identifier
-        int opId;                                 // The room's identifier in the local optimizer
-        int opIdG;                                // The room's identifier in the global optimizer
-        std::string name;                         // The name devoted for each room (optional)
-        bool all_seen_markers;                    // Checks if the room markers are already detected
-        std::vector<Wall *> walls;                // The vector of detected walls of a room
-        Eigen::Vector3d room_center;              // The center of the room as a 3D vector
-        std::vector<std::vector<int>> marker_ids; // The set of marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
+        int id;                                        // The room's identifier
+        int opId;                                      // The room's identifier in the local optimizer
+        int opIdG;                                     // The room's identifier in the global optimizer
+        std::string name;                              // The name devoted for each room (optional)
+        bool all_seen_markers;                         // Checks if the room markers are already detected
+        std::vector<Wall *> walls;                     // The vector of detected walls of a room
+        Eigen::Vector3d room_center;                   // The center of the room as a 3D vector
+        std::vector<int> door_marker_ids;              // Markers attached to the doors of a room [in real map], e.g. [3, 4]
+        std::vector<std::vector<int>> wall_marker_ids; // Marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -51,11 +52,14 @@ namespace ORB_SLAM3
         void setWalls(Wall *value);
         std::vector<Wall *> getWalls() const;
 
+        void setDoorMarkerIds(int value);
+        std::vector<int> getDoorMarkerIds() const;
+
         Eigen::Vector3d getRoomCenter() const;
         void setRoomCenter(Eigen::Vector3d value);
 
-        std::vector<std::vector<int>> getMarkerIds() const;
-        void setMarkerIds(std::vector<std::vector<int>> value);
+        void setWallMarkerIds(std::vector<int> value);
+        std::vector<std::vector<int>> getWallMarkerIds() const;
 
         Map *GetMap();
         void SetMap(Map *pMap);

@@ -39,30 +39,38 @@ namespace ORB_SLAM3
         {
             // Initialization
             Room *envRoom = new Room();
-            std::string roomMarkersToShow("");
-            std::vector<std::vector<int>> roomMarkerIds;
-
-            // Fetch each marker from the vector as set of marker-pairs attached to a room
-            for (int idx = 0; idx < envDatum.value()["markers"].size(); idx++)
-            {
-                std::vector<int> readMarkerIds;
-                for (const auto &marker : envDatum.value()["markers"][idx].items())
-                {
-                    readMarkerIds.push_back(marker.value());
-                    roomMarkersToShow.append(to_string(marker.value()) + " ");
-                }
-                roomMarkerIds.push_back(readMarkerIds);
-            }
-            std::cout << "- Room#" << envDatum.key() << " (" << envDatum.value()["name"]
-                      << ") fetched with markers [ " << roomMarkersToShow << "]." << std::endl;
+            std::string wallMarkersStr("");
+            std::string doorMarkersStr("");
 
             // Fill the room entity
             envRoom->setOpId(-1);
             envRoom->setOpIdG(-1);
             envRoom->setAllSeenMarkers(false);
             envRoom->setId(stoi(envDatum.key()));
-            envRoom->setMarkerIds(roomMarkerIds);
             envRoom->setName(envDatum.value()["name"]);
+
+            // Fill the set of walls (marker-pairs attached to walls) of a room
+            for (int idx = 0; idx < envDatum.value()["markers"].size(); idx++)
+            {
+                std::vector<int> markerIds;
+                for (const auto &marker : envDatum.value()["markers"][idx].items())
+                {
+                    markerIds.push_back(marker.value());
+                    wallMarkersStr.append(to_string(marker.value()) + " ");
+                }
+                envRoom->setWallMarkerIds(markerIds);
+            }
+
+            // Fill the set of doors (markers attached to doors) of a room
+            for (const auto &marker : envDatum.value()["doorMarkers"].items())
+            {
+                doorMarkersStr.append(to_string(marker.value()) + " ");
+                envRoom->setDoorMarkerIds(marker.value());
+            }
+
+            std::cout << "- Room#" << envDatum.key() << " (" << envDatum.value()["name"]
+                      << ") fetched with wall markers [ " << wallMarkersStr << "] and door markers [ "
+                      << doorMarkersStr << "]." << std::endl;
 
             // Fill the vector
             envRooms.push_back(envRoom);

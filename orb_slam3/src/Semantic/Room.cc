@@ -86,14 +86,24 @@ namespace ORB_SLAM3
         room_center = value;
     }
 
-    std::vector<std::vector<int>> Room::getMarkerIds() const
+    std::vector<int> Room::getDoorMarkerIds() const
     {
-        return marker_ids;
+        return door_marker_ids;
     }
 
-    void Room::setMarkerIds(std::vector<std::vector<int>> value)
+    void Room::setDoorMarkerIds(int value)
     {
-        marker_ids = value;
+        door_marker_ids.push_back(value);
+    }
+
+    std::vector<std::vector<int>> Room::getWallMarkerIds() const
+    {
+        return wall_marker_ids;
+    }
+
+    void Room::setWallMarkerIds(std::vector<int> value)
+    {
+        wall_marker_ids.push_back(value);
     }
 
     Map *Room::GetMap()
