@@ -1229,6 +1229,7 @@ namespace ORB_SLAM3
 
         // Local semantic objects seen in Local KeyFrames
         list<Wall *> lLocalMapWalls;
+        list<Door *> lLocalMapDoors;
         list<Marker *> lLocalMapMarkers;
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
@@ -1259,7 +1260,6 @@ namespace ORB_SLAM3
 
             // Get all the Markers of the KF (Local Optimization)
             vector<Marker *> vpMarkers = pKFi->GetMapMarkers();
-
             for (vector<Marker *>::iterator idx = vpMarkers.begin(), vend = vpMarkers.end(); idx != vend; idx++)
             {
                 Marker *marker = *idx;
@@ -1268,11 +1268,18 @@ namespace ORB_SLAM3
 
             // Get all the Walls of the KF (Local Optimization)
             vector<Wall *> vpWalls = pKFi->GetMapWalls();
-
             for (vector<Wall *>::iterator idx = vpWalls.begin(), vend = vpWalls.end(); idx != vend; idx++)
             {
                 Wall *wall = *idx;
                 lLocalMapWalls.push_back(wall);
+            }
+
+            // Get all the Doors of the KF (Local Optimization)
+            vector<Door *> vpDoors = pKFi->GetMapDoors();
+            for (vector<Door *>::iterator idx = vpDoors.begin(), vend = vpDoors.end(); idx != vend; idx++)
+            {
+                Door *door = *idx;
+                lLocalMapDoors.push_back(door);
             }
         }
 
@@ -1392,6 +1399,7 @@ namespace ORB_SLAM3
         const float thHuberStereo = sqrt(7.815);
 
         int nWalls = 1;
+        int nDoors = 1;
         int nPoints = 0;
         int nMarkers = 1;
 
@@ -1600,6 +1608,37 @@ namespace ORB_SLAM3
                 optimizer.addEdge(e);
             }
         }
+
+        // [TODO] To be done after connecting doors to room
+        // maxOpId += nWalls;
+
+        // // Doors (Local Optimization)
+        // for (list<Door *>::iterator idx = lLocalMapDoors.begin(), lend = lLocalMapDoors.end(); idx != lend; idx++)
+        // {
+        //     // Adding a vertex for each door
+        //     Door *pMapDoor = *idx;
+        //     g2o::VertexPlane *vDoor = new g2o::VertexPlane();
+        //     int opId = maxOpId + nDoors;
+        //     vDoor->setId(opId);
+        //     vDoor->setEstimate(g2o::SE3Quat(pMapDoor->getGlobalPose().unit_quaternion().cast<double>(),
+        //                                     pMapDoor->getGlobalPose().translation().cast<double>()));
+        //     optimizer.addVertex(vDoor);
+        //     nDoors++;
+
+        //     // Setting the local optimization ID for the door
+        //     pMapDoor->setOpId(opId);
+
+        //     // Adding an edge between the Door and the Marker
+        //     ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
+        //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+        //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pMapDoor->getMarker()->getOpId())));
+        //     e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
+
+        //     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+        //     e->setRobustKernel(rk);
+        //     rk->setDelta(thHuberMono);
+        //     optimizer.addEdge(e);
+        // }
 
         if (pbStopFlag)
             if (*pbStopFlag)
