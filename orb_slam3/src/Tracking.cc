@@ -4563,6 +4563,23 @@ namespace ORB_SLAM3
             }
         }
 
+        // Find attached doors and add them to the room
+        std::string detectedDoors("");
+        for (auto door : mpAtlas->GetAllDoors())
+        {
+            ORB_SLAM3::Marker *marker = door->getMarker();
+            std::vector<int> roomDoorMarkerIds = detectedRoom->getDoorMarkerIds();
+            for (auto doorMarkerId : roomDoorMarkerIds)
+            {
+                if (doorMarkerId == marker->getId())
+                {
+                    detectedRoom->setDoors(door);
+                    detectedDoors += to_string(door->getId()) + " ";
+                    detectedMarkers += to_string(marker->getId()) + " ";
+                }
+            }
+        }
+
         // Set room center
         Eigen::Vector3d roomCenter;
         std::vector<Wall *> roomWalls = detectedRoom->getWalls();
@@ -4601,8 +4618,8 @@ namespace ORB_SLAM3
         detectedRoom->setId(mpAtlas->GetAllRooms().size());
 
         std::cout << "Adding new room: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
-                  << "), with walls [ " << detectedWalls << "] and markers [" << detectedMarkers
-                  << "] attached on them!" << std::endl;
+                  << "), with walls [ " << detectedWalls << "], connected doors [ " << detectedDoors
+                  << "], and attached markers [ " << detectedMarkers << "]!" << std::endl;
 
         mpAtlas->AddMapRoom(detectedRoom);
     }

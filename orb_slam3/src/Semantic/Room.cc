@@ -76,6 +76,20 @@ namespace ORB_SLAM3
         }
     }
 
+    std::vector<Door *> Room::getDoors() const
+    {
+        return doors;
+    }
+
+    void Room::setDoors(Door *value)
+    {
+        // Check if the marker is not already added in the list of wall markers
+        if (std::find(doors.begin(), doors.end(), value) == doors.end())
+        {
+            doors.push_back(value);
+        }
+    }
+
     Eigen::Vector3d Room::getRoomCenter() const
     {
         return room_center;
