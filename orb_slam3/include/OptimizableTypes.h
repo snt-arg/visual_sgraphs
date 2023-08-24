@@ -262,6 +262,36 @@ namespace ORB_SLAM3
     };
 
     /**
+     * The edge used to connect a Room vertex (SE3) to a Door vertex (SE3)
+     * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
+     */
+    class EdgeSE3DoorProjectSE3Room : public EdgeSE3ProjectSE3
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        EdgeSE3DoorProjectSE3Room();
+
+        void computeError()
+        {
+            // Room's global pose
+            const g2o::VertexSE3Expmap *vRoomGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            // Door's global pose
+            const g2o::VertexSE3Expmap *vDoorGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[1]);
+
+            // Calculate the local pose of the door w.r.t. the keyframe
+            g2o::SE3Quat doorLP = vRoomGP->estimate().inverse() * vDoorGP->estimate();
+
+            g2o::Isometry3D doorLPIso = g2o::Isometry3D::Identity();
+            doorLPIso.matrix() = doorLP.to_homogeneous_matrix();
+            // Calculating the transformation between the measuremenent and the door's local pose
+            g2o::Isometry3D delta = _measurement.inverse() * doorLPIso;
+
+            // Calculating the final error
+            _error = g2o::internal::toVectorMQT(delta);
+        }
+    };
+
+    /**
      * The edge used to connect a Wall vertex (VertexPlane) to a Marker vertex (SE3)
      * [Note]: it creates constraint for four measurements, i.e., (x, y, z, d)
      */
