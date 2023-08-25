@@ -129,7 +129,11 @@ namespace ORB_SLAM3
         const float thHuber2D = sqrt(5.99);
         const float thHuber3D = sqrt(7.815);
 
+        int nWalls = 1;
+        int nDoors = 1;
+        int nRooms = 1;
         int maxOpId = 0;
+        int nMarkers = 1;
 
         // Set MapPoint vertices (Global Optimization)
         for (size_t i = 0; i < vpMP.size(); i++)
@@ -279,7 +283,6 @@ namespace ORB_SLAM3
         }
 
         // Set Marker vertices (Global Optimization)
-        int nMarkers = 1;
         for (const auto &vpMarker : vpMarkers)
         {
             // Adding a vertex for each marker
@@ -317,7 +320,56 @@ namespace ORB_SLAM3
             }
         }
 
-        // Set Wall vertices (Global Optimization) [TODO]
+        maxOpId += nMarkers;
+
+        // Set Wall vertices (Global Optimization)
+        for (const auto &vpWall : vpWalls)
+        {
+            // Adding a vertex for each wall
+            g2o::VertexPlane *vWall = new g2o::VertexPlane();
+            int opIdG = maxOpId + nWalls;
+            vWall->setId(opIdG);
+            vWall->setEstimate(vpWall->getPlaneEquation());
+            optimizer.addVertex(vWall);
+            nWalls++;
+
+            // Setting the global optimization ID for the wall
+            vpWall->setOpIdG(opIdG);
+
+            // Get list of Markers attached to the wall
+            vector<Marker *> attachedMarkers = vpWall->getMarkers();
+            for (const auto &wallMarker : attachedMarkers)
+            {
+                // Adding an edge between the Wall and the Marker
+                ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(wallMarker->getOpId())));
+                e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
+
+                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                e->setRobustKernel(rk);
+                rk->setDelta(thHuber2D);
+                optimizer.addEdge(e);
+            }
+        }
+
+        maxOpId += nWalls;
+
+        // Set Door vertices (Global Optimization) -> Only adding Door vertices to be connected later to rooms
+        for (const auto &vpDoor : vpDoors)
+        {
+            g2o::VertexSE3Expmap *vDoor = new g2o::VertexSE3Expmap();
+            int opIdG = maxOpId + nDoors;
+            vDoor->setId(opIdG);
+            vDoor->setEstimate(g2o::SE3Quat(vpDoor->getGlobalPose().unit_quaternion().cast<double>(),
+                                            vpDoor->getGlobalPose().translation().cast<double>()));
+            optimizer.addVertex(vDoor);
+            nDoors++;
+
+            vpDoor->setOpIdG(opIdG);
+        }
+
+        maxOpId += nDoors;
 
         // Optimize!
         optimizer.setVerbose(false);
