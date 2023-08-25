@@ -20,6 +20,7 @@
 #define ORB_SLAM3_OPTIMIZABLETYPES_H
 
 #include "Thirdparty/g2o/g2o/core/base_unary_edge.h"
+#include "Thirdparty/g2o/g2o/core/base_multi_edge.h"
 #include "Thirdparty/g2o/g2o/types/isometry3d_mappings.h"
 
 #include <Eigen/Geometry>
@@ -229,6 +230,40 @@ namespace ORB_SLAM3
      */
 
     /**
+     * The vertex used for connecting the center of a Room (SE3)
+     */
+    class VertexVec3Expmap : public g2o::BaseVertex<3, g2o::Vector3D>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        VertexVec3Expmap();
+        virtual bool read(std::istream &is){};
+        virtual bool write(std::ostream &os) const {};
+
+        virtual void setToOriginImpl() { _estimate.fill(0.); }
+
+        virtual bool getEstimateData(double *est) const;
+        virtual bool setEstimateDataImpl(const double *est);
+        virtual bool getMinimalEstimateData(double *est) const;
+
+        virtual int estimateDimension() const { return 3; }
+        virtual int minimalEstimateDimension() const { return 3; }
+
+        virtual bool setMinimalEstimateDataImpl(const double *est)
+        {
+            _estimate = Eigen::Map<const g2o::Vector3D>(est);
+            return true;
+        }
+
+        virtual void oplusImpl(const double *update)
+        {
+            for (int i = 0; i < 3; ++i)
+                _estimate[i] += update[i];
+        }
+    };
+
+    /**
      * The edge used to connect a Marker vertex (SE3) to a KeyFrame vertex (SE3)
      * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
      */
@@ -339,6 +374,117 @@ namespace ORB_SLAM3
             _error[1] = planeDiff(1);
             _error[2] = planeDiff(2);
             _error[3] = wall_m.coeffs()(3); // Distance (d) of the cacmera
+        }
+    };
+
+    /**
+     * The edge used to connect a two-wall Room vertex (VertexPlane) to a Marker vertex (SE3)
+     * [Note]: it creates constraint for three measurements, i.e., (x, y, z)
+     */
+    class EdgeVertex2PlaneProjectSE3Room : public g2o::BaseMultiEdge<3, Eigen::Vector3d>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        Eigen::Vector3d markerPosition;
+
+        EdgeVertex2PlaneProjectSE3Room();
+        EdgeVertex2PlaneProjectSE3Room(Eigen::Vector3d position);
+
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
+
+        void computeError() override
+        {
+            // const VertexRoom *v1 = static_cast<const VertexRoom *>(_vertices[0]);
+            // const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+            // const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
+
+            // Eigen::Vector3d roomPose = v1->estimate(); // we need the translation
+            // Eigen::Vector4d wall1 = v2->estimate().coeffs();
+            // Eigen::Vector4d wall2 = v3->estimate().coeffs();
+
+            // correctPlaneDirection(wall1);
+            // correctPlaneDirection(wall2);
+
+            // Eigen::Vector3d vec;
+            // if (fabs(wall1(3)) > fabs(wall2(3)))
+            // {
+            //     vec = (0.5 * (fabs(wall1(3)) * wall1.head(3) - fabs(wall2(3)) * wall2.head(3))) +
+            //           fabs(wall2(3)) * wall2.head(3);
+            // }
+            // else
+            // {
+            //     vec = (0.5 * (fabs(wall2(3)) * wall2.head(3) - fabs(wall1(3)) * wall1.head(3))) +
+            //           fabs(wall1(3)) * wall1.head(3);
+            // }
+
+            // Eigen::Vector3d vecNormal = vec / vec.norm();
+            // Eigen::Vector3d finalPoseVec = vec + (_markerPosition -
+            //                                       (_markerPosition.dot(vecNormal)) * vecNormal);
+
+            // _error = roomPose - finalPoseVec;
+        }
+
+    private:
+        virtual void correctPlaneDirection(Eigen::Vector4d &plane)
+        {
+            if (plane(3) > 0)
+                plane *= -1;
+        }
+    };
+
+    /**
+     * The edge used to connect a four-wall Room vertex (VertexPlane) to a Marker vertex (SE3)
+     * [Note]: it creates constraint for three measurements, i.e., (x, y, z)
+     */
+    class EdgeVertex4PlaneProjectSE3Room : public EdgeVertex2PlaneProjectSE3Room
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        EdgeVertex4PlaneProjectSE3Room();
+
+        void computeError() override
+        {
+            // const VertexRoom *v1 = static_cast<const VertexRoom *>(_vertices[0]);
+            // const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+            // const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
+            // const g2o::VertexPlane *v4 = static_cast<const g2o::VertexPlane *>(_vertices[3]);
+            // const g2o::VertexPlane *v5 = static_cast<const g2o::VertexPlane *>(_vertices[4]);
+
+            // Eigen::Vector3d room_pose = v1->estimate();
+            // Eigen::Vector4d x_plane1 = v2->estimate().coeffs();
+            // Eigen::Vector4d x_plane2 = v3->estimate().coeffs();
+            // Eigen::Vector4d y_plane1 = v4->estimate().coeffs();
+            // Eigen::Vector4d y_plane2 = v5->estimate().coeffs();
+
+            // correctPlaneDirection(x_plane1);
+            // correctPlaneDirection(x_plane2);
+            // correctPlaneDirection(y_plane1);
+            // correctPlaneDirection(y_plane2);
+
+            // Eigen::Vector3d vec_x, vec_y;
+            // if (fabs(x_plane1(3)) > fabs(x_plane2(3)))
+            // {
+            //     vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
+            // }
+            // else
+            // {
+            //     vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
+            // }
+
+            // if (fabs(y_plane1(3)) > fabs(y_plane2(3)))
+            // {
+            //     vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
+            // }
+            // else
+            // {
+            //     vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
+            // }
+
+            // Eigen::Vector3d finalPoseVec = vec_x + vec_y;
+            // _error = room_pose - finalPoseVec;
         }
     };
 }

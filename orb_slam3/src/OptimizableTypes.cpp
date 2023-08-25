@@ -372,9 +372,30 @@ namespace ORB_SLAM3
      *
      */
 
-    EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::Isometry3D, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>()
+    VertexVec3Expmap::VertexVec3Expmap() : g2o::BaseVertex<3, g2o::Vector3D>() {}
+
+    bool VertexVec3Expmap::setEstimateDataImpl(const double *est)
     {
+        Eigen::Map<const g2o::Vector3D> _est(est);
+        _estimate = _est;
+        return true;
     }
+
+    bool VertexVec3Expmap::getEstimateData(double *est) const
+    {
+        Eigen::Map<g2o::Vector3D> _est(est);
+        _est = _estimate;
+        return true;
+    }
+
+    bool VertexVec3Expmap::getMinimalEstimateData(double *est) const
+    {
+        Eigen::Map<g2o::Vector3D> v(est);
+        v = _estimate;
+        return true;
+    }
+
+    EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::Isometry3D, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>() {}
 
     bool EdgeSE3ProjectSE3::read(std::istream &is)
     {
@@ -396,13 +417,9 @@ namespace ORB_SLAM3
         return writeInformationMatrix(os);
     }
 
-    EdgeSE3DoorProjectSE3Room::EdgeSE3DoorProjectSE3Room() : EdgeSE3ProjectSE3()
-    {
-    }
+    EdgeSE3DoorProjectSE3Room::EdgeSE3DoorProjectSE3Room() : EdgeSE3ProjectSE3() {}
 
-    EdgeVertexPlaneProjectSE3::EdgeVertexPlaneProjectSE3() : g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>()
-    {
-    }
+    EdgeVertexPlaneProjectSE3::EdgeVertexPlaneProjectSE3() : g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>() {}
 
     bool EdgeVertexPlaneProjectSE3::read(std::istream &is)
     {
@@ -424,5 +441,47 @@ namespace ORB_SLAM3
                 os << " " << information()(i, j);
             }
         return os.good();
+    }
+
+    EdgeVertex2PlaneProjectSE3Room::EdgeVertex2PlaneProjectSE3Room() : g2o::BaseMultiEdge<3, Eigen::Vector3d>() {}
+
+    EdgeVertex2PlaneProjectSE3Room::EdgeVertex2PlaneProjectSE3Room(Eigen::Vector3d position) : g2o::BaseMultiEdge<3, Eigen::Vector3d>()
+    {
+        markerPosition = position;
+        resize(3);
+    }
+
+    bool EdgeVertex2PlaneProjectSE3Room::read(std::istream &is)
+    {
+        Eigen::Vector3d vector;
+        is >> vector(0) >> vector(1) >> vector(2);
+        setMeasurement(vector);
+
+        for (int i = 0; i < information().rows(); i++)
+            for (int j = i; j < information().cols(); ++j)
+            {
+                is >> information()(i, j);
+                if (i != j)
+                    information()(j, i) = information()(i, j);
+            }
+
+        return true;
+    }
+
+    bool EdgeVertex2PlaneProjectSE3Room::write(std::ostream &os) const
+    {
+        Eigen::Vector3d vector = _measurement;
+        os << vector(0) << " " << vector(1) << " " << vector(2) << " ";
+
+        for (int i = 0; i < information().rows(); i++)
+            for (int j = i; j < information().cols(); j++)
+                os << " " << information()(i, j);
+
+        return os.good();
+    }
+
+    EdgeVertex4PlaneProjectSE3Room::EdgeVertex4PlaneProjectSE3Room() : EdgeVertex2PlaneProjectSE3Room()
+    {
+        resize(5);
     }
 }
