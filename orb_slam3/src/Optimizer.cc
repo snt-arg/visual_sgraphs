@@ -371,6 +371,76 @@ namespace ORB_SLAM3
 
         maxOpId += nDoors;
 
+        for (const auto &vpRoom : vpRooms)
+        {
+            g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
+
+            int opIdG = maxOpId + nRooms;
+            vRoom->setId(opIdG);
+            vRoom->setEstimate(g2o::SE3Quat(Eigen::Quaterniond::Identity(),
+                                            vpRoom->getRoomCenter().cast<double>()));
+            optimizer.addVertex(vRoom);
+            nRooms++;
+
+            // Setting the local optimization ID for the door
+            vpRoom->setOpIdG(opIdG);
+
+            // Get list of walls of the room
+            vector<Wall *> walls = vpRoom->getWalls();
+            if (walls.size() == 2)
+            {
+                // Adding an edge between the room and the two walls
+                ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
+                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
+                e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+
+                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                e->setRobustKernel(rk);
+                rk->setDelta(thHuber2D);
+                optimizer.addEdge(e);
+            }
+            else if (walls.size() == 4)
+            {
+                // Adding an edge between the room and the two walls
+                ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
+                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
+                e->setVertex(3, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[2]->getOpId())));
+                e->setVertex(4, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[3]->getOpId())));
+                e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+
+                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                e->setRobustKernel(rk);
+                rk->setDelta(thHuber2D);
+                optimizer.addEdge(e);
+            }
+
+            // Get list of doors of the room
+            vector<Door *> doors = vpRoom->getDoors();
+            for (const auto &door : doors)
+            {
+                // Adding an edge between the room and the door
+                ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpId())));
+                e->setInformation(Eigen::MatrixXd::Identity(6, 6));
+
+                Eigen::Isometry3d relativePose = Eigen::Isometry3d::Identity();
+                relativePose.matrix() = (vRoom->estimate().inverse() *
+                                         dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
+                                            .to_homogeneous_matrix();
+                e->setMeasurement(relativePose);
+
+                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                e->setRobustKernel(rk);
+                rk->setDelta(thHuber2D);
+                optimizer.addEdge(e);
+            }
+        }
+
         // Optimize!
         optimizer.setVerbose(false);
         optimizer.initializeOptimization();
@@ -1656,78 +1726,7 @@ namespace ORB_SLAM3
 
         maxOpId += nDoors;
 
-        // [TODO] Room vertices should not be created here, there is no access to previously seen walls/doors
-        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
-        {
-            // Adding a vertex for each door
-            Room *pMapRoom = *idx;
-            g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
-
-            int opId = maxOpId + nRooms;
-            vRoom->setId(opId);
-            vRoom->setEstimate(g2o::SE3Quat(Eigen::Quaterniond::Identity(),
-                                            pMapRoom->getRoomCenter().cast<double>()));
-            optimizer.addVertex(vRoom);
-            nRooms++;
-
-            // Setting the local optimization ID for the door
-            pMapRoom->setOpId(opId);
-
-            // Get list of walls of the room
-            vector<Wall *> walls = pMapRoom->getWalls();
-            if (walls.size() == 2)
-            {
-                // Adding an edge between the room and the two walls
-                ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
-                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
-                e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
-
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
-            }
-            else if (walls.size() == 4)
-            {
-                // Adding an edge between the room and the two walls
-                ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
-                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
-                e->setVertex(3, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[2]->getOpId())));
-                e->setVertex(4, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[3]->getOpId())));
-                e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
-
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
-            }
-
-            // Get list of doors of the room
-            vector<Door *> doors = pMapRoom->getDoors();
-            for (const auto &door : doors)
-            {
-                // Adding an edge between the room and the door
-                ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpId())));
-                e->setInformation(Eigen::MatrixXd::Identity(6, 6));
-
-                Eigen::Isometry3d relativePose = Eigen::Isometry3d::Identity();
-                relativePose.matrix() = (vRoom->estimate().inverse() *
-                                         dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
-                                            .to_homogeneous_matrix();
-                e->setMeasurement(relativePose);
-
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
-            }
-        }
+        // [Hint] Room vertices are not created here, due to no access to previously seen walls/doors
 
         if (pbStopFlag)
             if (*pbStopFlag)
