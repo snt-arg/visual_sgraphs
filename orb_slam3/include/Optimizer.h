@@ -47,6 +47,7 @@ namespace ORB_SLAM3
     public:
         void static BundleAdjustment(const std::vector<KeyFrame *> &vpKF, const std::vector<MapPoint *> &vpMP,
                                      const std::vector<Marker *> &vpMarkers, const std::vector<Wall *> &vpWalls,
+                                     const std::vector<Door *> &vpDoors, const std::vector<Room *> &vpRooms,
                                      int nIterations = 5, bool *pbStopFlag = NULL,
                                      const unsigned long nLoopKF = 0, const bool bRobust = true);
 

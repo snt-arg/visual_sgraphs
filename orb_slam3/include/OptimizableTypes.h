@@ -230,40 +230,6 @@ namespace ORB_SLAM3
      */
 
     /**
-     * The vertex used for connecting the center of a Room (SE3)
-     */
-    class VertexVec3Expmap : public g2o::BaseVertex<3, g2o::Vector3D>
-    {
-    public:
-        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-        VertexVec3Expmap();
-        virtual bool read(std::istream &is){};
-        virtual bool write(std::ostream &os) const {};
-
-        virtual void setToOriginImpl() { _estimate.fill(0.); }
-
-        virtual bool getEstimateData(double *est) const;
-        virtual bool setEstimateDataImpl(const double *est);
-        virtual bool getMinimalEstimateData(double *est) const;
-
-        virtual int estimateDimension() const { return 3; }
-        virtual int minimalEstimateDimension() const { return 3; }
-
-        virtual bool setMinimalEstimateDataImpl(const double *est)
-        {
-            _estimate = Eigen::Map<const g2o::Vector3D>(est);
-            return true;
-        }
-
-        virtual void oplusImpl(const double *update)
-        {
-            for (int i = 0; i < 3; ++i)
-                _estimate[i] += update[i];
-        }
-    };
-
-    /**
      * The edge used to connect a Marker vertex (SE3) to a KeyFrame vertex (SE3)
      * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
      */
@@ -378,7 +344,7 @@ namespace ORB_SLAM3
     };
 
     /**
-     * The edge used to connect a two-wall Room vertex (VertexPlane) to a Marker vertex (SE3)
+     * The edge used to connect a two-wall Room's center (SE3) to wall vertices (VertexPlane)
      * [Note]: it creates constraint for three measurements, i.e., (x, y, z)
      */
     class EdgeVertex2PlaneProjectSE3Room : public g2o::BaseMultiEdge<3, Eigen::Vector3d>
@@ -396,11 +362,11 @@ namespace ORB_SLAM3
 
         void computeError() override
         {
-            const VertexVec3Expmap *v1 = static_cast<const VertexVec3Expmap *>(_vertices[0]);
+            const g2o::VertexSE3Expmap *v1 = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
             const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
             const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
 
-            Eigen::Vector3d roomPose = v1->estimate();
+            Eigen::Vector3d roomPose = v1->estimate().translation();
             Eigen::Vector4d wall1 = v2->estimate().coeffs();
             Eigen::Vector4d wall2 = v3->estimate().coeffs();
 
@@ -434,25 +400,27 @@ namespace ORB_SLAM3
     };
 
     /**
-     * The edge used to connect a four-wall Room vertex (VertexPlane) to a Marker vertex (SE3)
+     * The edge used to connect a four-wall Room's center (SE3) to wall vertices (VertexPlane)
      * [Note]: it creates constraint for three measurements, i.e., (x, y, z)
      */
-    class EdgeVertex4PlaneProjectSE3Room : public EdgeVertex2PlaneProjectSE3Room
+    class EdgeVertex4PlaneProjectSE3Room : public g2o::BaseMultiEdge<3, Eigen::Vector3d>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         EdgeVertex4PlaneProjectSE3Room();
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
 
         void computeError() override
         {
-            const VertexVec3Expmap *v1 = static_cast<const VertexVec3Expmap *>(_vertices[0]);
+            const g2o::VertexSE3Expmap *v1 = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
             const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
             const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
             const g2o::VertexPlane *v4 = static_cast<const g2o::VertexPlane *>(_vertices[3]);
             const g2o::VertexPlane *v5 = static_cast<const g2o::VertexPlane *>(_vertices[4]);
 
-            Eigen::Vector3d roomPose = v1->estimate();
+            Eigen::Vector3d roomPose = v1->estimate().translation();
             Eigen::Vector4d xPlane1 = v2->estimate().coeffs();
             Eigen::Vector4d xPlane2 = v3->estimate().coeffs();
             Eigen::Vector4d yPlane1 = v4->estimate().coeffs();
@@ -476,6 +444,13 @@ namespace ORB_SLAM3
 
             Eigen::Vector3d finalPose = vecX + vecY;
             _error = roomPose - finalPose;
+        }
+
+    protected:
+        virtual void correctPlaneDirection(Eigen::Vector4d &plane)
+        {
+            if (plane(3) > 0)
+                plane *= -1;
         }
     };
 }

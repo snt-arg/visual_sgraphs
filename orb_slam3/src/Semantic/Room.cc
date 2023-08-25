@@ -69,11 +69,7 @@ namespace ORB_SLAM3
 
     void Room::setWalls(Wall *value)
     {
-        // Check if the marker is not already added in the list of wall markers
-        if (std::find(walls.begin(), walls.end(), value) == walls.end())
-        {
-            walls.push_back(value);
-        }
+        walls.push_back(value);
     }
 
     std::vector<Door *> Room::getDoors() const
@@ -83,11 +79,7 @@ namespace ORB_SLAM3
 
     void Room::setDoors(Door *value)
     {
-        // Check if the marker is not already added in the list of wall markers
-        if (std::find(doors.begin(), doors.end(), value) == doors.end())
-        {
-            doors.push_back(value);
-        }
+        doors.push_back(value);
     }
 
     Eigen::Vector3d Room::getRoomCenter() const
