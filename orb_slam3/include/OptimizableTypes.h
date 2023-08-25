@@ -396,37 +396,36 @@ namespace ORB_SLAM3
 
         void computeError() override
         {
-            // const VertexRoom *v1 = static_cast<const VertexRoom *>(_vertices[0]);
-            // const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
-            // const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
+            const VertexVec3Expmap *v1 = static_cast<const VertexVec3Expmap *>(_vertices[0]);
+            const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+            const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
 
-            // Eigen::Vector3d roomPose = v1->estimate(); // we need the translation
-            // Eigen::Vector4d wall1 = v2->estimate().coeffs();
-            // Eigen::Vector4d wall2 = v3->estimate().coeffs();
+            Eigen::Vector3d roomPose = v1->estimate();
+            Eigen::Vector4d wall1 = v2->estimate().coeffs();
+            Eigen::Vector4d wall2 = v3->estimate().coeffs();
 
-            // correctPlaneDirection(wall1);
-            // correctPlaneDirection(wall2);
+            correctPlaneDirection(wall1);
+            correctPlaneDirection(wall2);
 
-            // Eigen::Vector3d vec;
-            // if (fabs(wall1(3)) > fabs(wall2(3)))
-            // {
-            //     vec = (0.5 * (fabs(wall1(3)) * wall1.head(3) - fabs(wall2(3)) * wall2.head(3))) +
-            //           fabs(wall2(3)) * wall2.head(3);
-            // }
-            // else
-            // {
-            //     vec = (0.5 * (fabs(wall2(3)) * wall2.head(3) - fabs(wall1(3)) * wall1.head(3))) +
-            //           fabs(wall1(3)) * wall1.head(3);
-            // }
+            Eigen::Vector3d vec;
+            if (fabs(wall1(3)) > fabs(wall2(3)))
+            {
+                vec = (0.5 * (fabs(wall1(3)) * wall1.head(3) - fabs(wall2(3)) * wall2.head(3))) +
+                      fabs(wall2(3)) * wall2.head(3);
+            }
+            else
+            {
+                vec = (0.5 * (fabs(wall2(3)) * wall2.head(3) - fabs(wall1(3)) * wall1.head(3))) +
+                      fabs(wall1(3)) * wall1.head(3);
+            }
 
-            // Eigen::Vector3d vecNormal = vec / vec.norm();
-            // Eigen::Vector3d finalPoseVec = vec + (_markerPosition -
-            //                                       (_markerPosition.dot(vecNormal)) * vecNormal);
+            Eigen::Vector3d normal = vec / vec.norm();
+            Eigen::Vector3d finalPose = vec + (markerPosition - (markerPosition.dot(normal)) * normal);
 
-            // _error = roomPose - finalPoseVec;
+            _error = roomPose - finalPose;
         }
 
-    private:
+    protected:
         virtual void correctPlaneDirection(Eigen::Vector4d &plane)
         {
             if (plane(3) > 0)
@@ -447,44 +446,36 @@ namespace ORB_SLAM3
 
         void computeError() override
         {
-            // const VertexRoom *v1 = static_cast<const VertexRoom *>(_vertices[0]);
-            // const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
-            // const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
-            // const g2o::VertexPlane *v4 = static_cast<const g2o::VertexPlane *>(_vertices[3]);
-            // const g2o::VertexPlane *v5 = static_cast<const g2o::VertexPlane *>(_vertices[4]);
+            const VertexVec3Expmap *v1 = static_cast<const VertexVec3Expmap *>(_vertices[0]);
+            const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+            const g2o::VertexPlane *v3 = static_cast<const g2o::VertexPlane *>(_vertices[2]);
+            const g2o::VertexPlane *v4 = static_cast<const g2o::VertexPlane *>(_vertices[3]);
+            const g2o::VertexPlane *v5 = static_cast<const g2o::VertexPlane *>(_vertices[4]);
 
-            // Eigen::Vector3d room_pose = v1->estimate();
-            // Eigen::Vector4d x_plane1 = v2->estimate().coeffs();
-            // Eigen::Vector4d x_plane2 = v3->estimate().coeffs();
-            // Eigen::Vector4d y_plane1 = v4->estimate().coeffs();
-            // Eigen::Vector4d y_plane2 = v5->estimate().coeffs();
+            Eigen::Vector3d roomPose = v1->estimate();
+            Eigen::Vector4d xPlane1 = v2->estimate().coeffs();
+            Eigen::Vector4d xPlane2 = v3->estimate().coeffs();
+            Eigen::Vector4d yPlane1 = v4->estimate().coeffs();
+            Eigen::Vector4d yPlane2 = v5->estimate().coeffs();
 
-            // correctPlaneDirection(x_plane1);
-            // correctPlaneDirection(x_plane2);
-            // correctPlaneDirection(y_plane1);
-            // correctPlaneDirection(y_plane2);
+            correctPlaneDirection(xPlane1);
+            correctPlaneDirection(xPlane2);
+            correctPlaneDirection(yPlane1);
+            correctPlaneDirection(yPlane2);
 
-            // Eigen::Vector3d vec_x, vec_y;
-            // if (fabs(x_plane1(3)) > fabs(x_plane2(3)))
-            // {
-            //     vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
-            // }
-            // else
-            // {
-            //     vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
-            // }
+            Eigen::Vector3d vecX, vecY;
+            if (fabs(xPlane1(3)) > fabs(xPlane2(3)))
+                vecX = (0.5 * (fabs(xPlane1(3)) * xPlane1.head(3) - fabs(xPlane2(3)) * xPlane2.head(3))) + fabs(xPlane2(3)) * xPlane2.head(3);
+            else
+                vecX = (0.5 * (fabs(xPlane2(3)) * xPlane2.head(3) - fabs(xPlane1(3)) * xPlane1.head(3))) + fabs(xPlane1(3)) * xPlane1.head(3);
 
-            // if (fabs(y_plane1(3)) > fabs(y_plane2(3)))
-            // {
-            //     vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
-            // }
-            // else
-            // {
-            //     vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
-            // }
+            if (fabs(yPlane1(3)) > fabs(yPlane2(3)))
+                vecY = (0.5 * (fabs(yPlane1(3)) * yPlane1.head(3) - fabs(yPlane2(3)) * yPlane2.head(3))) + fabs(yPlane2(3)) * yPlane2.head(3);
+            else
+                vecY = (0.5 * (fabs(yPlane2(3)) * yPlane2.head(3) - fabs(yPlane1(3)) * yPlane1.head(3))) + fabs(yPlane1(3)) * yPlane1.head(3);
 
-            // Eigen::Vector3d finalPoseVec = vec_x + vec_y;
-            // _error = room_pose - finalPoseVec;
+            Eigen::Vector3d finalPose = vecX + vecY;
+            _error = roomPose - finalPose;
         }
     };
 }

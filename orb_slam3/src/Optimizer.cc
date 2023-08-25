@@ -1619,24 +1619,24 @@ namespace ORB_SLAM3
             }
         }
 
-        // maxOpId += nWalls;
+        maxOpId += nWalls;
 
         // Doors (Local Optimization) -> Only adding Door vertices to be connected later to rooms
-        // for (list<Door *>::iterator idx = lLocalMapDoors.begin(), lend = lLocalMapDoors.end(); idx != lend; idx++)
-        // {
-        //     // Adding a vertex for each door
-        //     Door *pMapDoor = *idx;
-        //     g2o::VertexSE3Expmap *vDoor = new g2o::VertexSE3Expmap();
-        //     int opId = maxOpId + nDoors;
-        //     vDoor->setId(opId);
-        //     vDoor->setEstimate(g2o::SE3Quat(pMapDoor->getGlobalPose().unit_quaternion().cast<double>(),
-        //                                     pMapDoor->getGlobalPose().translation().cast<double>()));
-        //     optimizer.addVertex(vDoor);
-        //     nDoors++;
+        for (list<Door *>::iterator idx = lLocalMapDoors.begin(), lend = lLocalMapDoors.end(); idx != lend; idx++)
+        {
+            // Adding a vertex for each door
+            Door *pMapDoor = *idx;
+            g2o::VertexSE3Expmap *vDoor = new g2o::VertexSE3Expmap();
+            int opId = maxOpId + nDoors;
+            vDoor->setId(opId);
+            vDoor->setEstimate(g2o::SE3Quat(pMapDoor->getGlobalPose().unit_quaternion().cast<double>(),
+                                            pMapDoor->getGlobalPose().translation().cast<double>()));
+            optimizer.addVertex(vDoor);
+            nDoors++;
 
-        //     // Setting the local optimization ID for the door
-        //     pMapDoor->setOpId(opId);
-        // }
+            // Setting the local optimization ID for the door
+            pMapDoor->setOpId(opId);
+        }
 
         // maxOpId += nDoors;
 
@@ -1805,14 +1805,14 @@ namespace ORB_SLAM3
         }
 
         // Locally Optimized Doors
-        // for (list<Door *>::iterator idx = lLocalMapDoors.begin(), lend = lLocalMapDoors.end(); idx != lend; idx++)
-        // {
-        //     Door *pMapDoor = *idx;
-        //     g2o::VertexSE3Expmap *vDoor = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapDoor->getOpId()));
-        //     g2o::SE3Quat SE3quat = vDoor->estimate();
-        //     Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
-        //     pMapDoor->setGlobalPose(Tiw);
-        // }
+        for (list<Door *>::iterator idx = lLocalMapDoors.begin(), lend = lLocalMapDoors.end(); idx != lend; idx++)
+        {
+            Door *pMapDoor = *idx;
+            g2o::VertexSE3Expmap *vDoor = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapDoor->getOpId()));
+            g2o::SE3Quat SE3quat = vDoor->estimate();
+            Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
+            pMapDoor->setGlobalPose(Tiw);
+        }
 
         pMap->IncreaseChangeIndex();
     }
