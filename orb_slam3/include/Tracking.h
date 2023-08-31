@@ -39,8 +39,12 @@
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Semantic/Marker.h"
-
 #include "GeometricCamera.h"
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/extract_indices.h>
 
 #include <mutex>
 #include <unordered_set>
@@ -161,6 +165,39 @@ namespace ORB_SLAM3
          */
         Eigen::Vector4d getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
                                                  const Eigen::Vector3f &translation);
+
+        /**
+         * @brief Calculation of plane equation from map points
+         * 
+        */
+        bool getPlaneEquationFromPoints(const Marker* currentMarker, Eigen::Vector4d& planeEstimate);
+
+        /**
+         * @brief Get the points close to a given location
+         * 
+         * @param points 
+         * @param location 
+         * @param distanceThreshold  
+         */
+        std::vector<MapPoint*> findPointsCloseToLocation(const std::vector<MapPoint*>& points,
+                                                               const Eigen::Vector3f& location,
+                                                               double distanceThreshold);
+
+        /**
+         * @brief Calculate L2 norm between points
+         * 
+         * @param point1 
+         * @param point2 
+         *
+         */
+        double calculateDistance(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2);    
+
+        /**
+         * @brief Perform PCL ransac to get the plane equation from the points
+         * 
+         * @param points 
+         */
+        Eigen::Vector4d ransacPlaneFitting(const std::vector<MapPoint*>& points);    
 
         /**
          * @brief Checks to see if the marker is attached to a wall or not (e.g., a door)

@@ -2487,17 +2487,24 @@ namespace ORB_SLAM3
                 mapMarkerStr += std::to_string(currentMapMarker->getId()) + " ";
 
                 // ----------- Wall and Door Detection and Mapping --------
-                // Calculate the plane (wall) equation on which the marker is attached
-                Eigen::Vector4d planeEstimate =
-                    getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
-                                             mCurrentMarker->getGlobalPose().translation());
-                // Get the plane based on the equation
-                g2o::Plane3D detectedPlane(planeEstimate);
                 // Check the currect marker if it is attached to a door or a wall
                 std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
                 bool markerIsWall = result.first;
                 if (markerIsWall)
                 {
+                    // Calculate the plane (wall) equation on which the marker is attached
+                    Eigen::Vector4d planeEstimate =
+                    getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
+                                             mCurrentMarker->getGlobalPose().translation());
+
+                    // Calculate the wall equation from points lying close to the marker
+                    //Eigen::Vector4d planeEstimateFromPoint;
+                    //bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimateFromPoint);   
+
+                
+                    // Get the plane based on the equation
+                    g2o::Plane3D detectedPlane(planeEstimate);
+
                     // The current marker is placed on a wall
                     // Check if we need to add the wall to the map or not
                     int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
@@ -2511,6 +2518,7 @@ namespace ORB_SLAM3
                         // The wall already exists in the map, fetching that one
                         updateMapWall(matchedWallId, mCurrentMarker, pKFini);
                     }
+                    
                 }
                 else
                 {
@@ -3462,18 +3470,23 @@ namespace ORB_SLAM3
                             }
                         }
 
-                        // ----------- Wall and Door Detection and Mapping --------
-                        // Calculate the plane (wall) equation on which the marker is attached
-                        Eigen::Vector4d planeEstimate =
-                            getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
-                                                     currentMapMarker->getGlobalPose().translation());
-                        // Get the plane based on the equation
-                        g2o::Plane3D detectedPlane(planeEstimate);
+                        // ----------- Wall and Door Detection and Mapping --------                      
                         // Check the current marker if it is attached to a door or a wall
                         std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
                         bool markerIsWall = result.first;
                         if (markerIsWall)
-                        {
+                        {    
+                            // Calculate the plane (wall) equation on which the marker is attached
+                            Eigen::Vector4d planeEstimate =
+                            getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
+                                                     currentMapMarker->getGlobalPose().translation());
+
+                            // Calculate the wall equation from points lying close to the marker
+                            // Eigen::Vector4d planeEstimatefromPoint;
+                            // bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimatefromPoint);                                            
+
+                            // Get the plane based on the equation
+                            g2o::Plane3D detectedPlane(planeEstimate);
                             // The current marker is placed on a wall
                             // Check if we need to add the wall to the map or not
                             int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
@@ -4411,7 +4424,89 @@ namespace ORB_SLAM3
         double D = normal.dot(pointOnPlane);
 
         // Return the plane equation [A, B, C, D]
+        std::cout << "plane equation from pose: " << Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D) << std::endl;
+
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
+    }
+
+    bool Tracking::getPlaneEquationFromPoints(const Marker* currentMarker, Eigen::Vector4d& planeEstimate) 
+    {
+        std::vector<MapPoint*> allmapPoints = mpAtlas->GetAllMapPoints();
+        std::vector<MapPoint*> closePoints = findPointsCloseToLocation(allmapPoints, currentMarker->getGlobalPose().translation(), 0.1);
+
+        if(closePoints.size() > 5) {
+
+            Eigen::Vector4d initplaneEstimate = ransacPlaneFitting(closePoints);
+            //convert the plane to closest plane formulation
+            Eigen::Vector3d closestPoint = initplaneEstimate.head(3) * initplaneEstimate(3);
+            Eigen::Vector4d closestPlaneform;
+            closestPlaneform.head(3) = closestPoint / closestPoint.norm();
+            closestPlaneform(3) = closestPoint.norm();
+            planeEstimate = closestPlaneform;
+            return true;    
+        } 
+
+        return false;
+    }
+
+    Eigen::Vector4d Tracking::ransacPlaneFitting(const std::vector<MapPoint*>& points) {
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+
+        for(const auto mapPoint : points) {
+            pcl::PointXYZ pcl_point;
+            pcl_point.x = mapPoint->GetWorldPos()(0);
+            pcl_point.y = mapPoint->GetWorldPos()(1);
+            pcl_point.z = mapPoint->GetWorldPos()(2);
+            cloud->points.push_back(pcl_point);
+        }
+
+        pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+        pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+        pcl::ExtractIndices<pcl::PointXYZ> extract;
+        // Optional
+        pcl::SACSegmentation<pcl::PointXYZ> seg;
+        seg.setOptimizeCoefficients(true);
+        // Mandatory
+        seg.setModelType(pcl::SACMODEL_PLANE);
+        seg.setMethodType(pcl::SAC_RANSAC);
+        seg.setDistanceThreshold(0.01);
+        seg.setInputCloud(cloud);
+        seg.setNumberOfThreads(8);
+        seg.setMaxIterations(500);
+        seg.segment(*inliers, *coefficients);
+
+        Eigen::Vector4d plane_equation(coefficients->values[0],
+                                coefficients->values[1],
+                                coefficients->values[2],
+                                coefficients->values[3]);
+
+        return plane_equation;
+    }
+
+
+    std::vector<MapPoint*> Tracking::findPointsCloseToLocation(const std::vector<MapPoint*>& points,
+                                                               const Eigen::Vector3f& location,
+                                                               double distanceThreshold) {
+        std::vector<MapPoint*> closePoints;
+        for (MapPoint* point : points) 
+        {
+            double distance = calculateDistance(point->GetWorldPos(), location);
+            if (distance <= distanceThreshold) 
+            {   
+                closePoints.push_back(point);
+            }
+        }
+        
+
+        return closePoints;
+    }
+
+    // Function to calculate Euclidean distance between two points
+    double Tracking::calculateDistance(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2) {
+        double dx = p1.x() - p2.x();
+        double dy = p1.y() - p2.y();
+        double dz = p1.z() - p2.z();
+        return std::sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     std::pair<bool, std::string> Tracking::markerIsPlacedOnWall(const int &markerId)
