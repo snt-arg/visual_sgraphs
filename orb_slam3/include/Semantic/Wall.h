@@ -30,6 +30,7 @@ namespace ORB_SLAM3
         g2o::Plane3D plane_equation;     // The plane equation of the wall
         std::vector<Marker *> markers;   // The list of markers lying on the wall
         std::set<MapPoint *> map_points; // The unique set of map points lying on the wall
+        Eigen::Vector3f centroid;         //centroid of the wall 
 
     public:
         Wall();
@@ -55,6 +56,9 @@ namespace ORB_SLAM3
 
         g2o::Plane3D getPlaneEquation() const;
         void setPlaneEquation(const g2o::Plane3D &value);
+
+        Eigen::Vector3f getCentroid() const;
+        void setCentroid(const Eigen::Vector3f &value);
 
         Map *GetMap();
         void SetMap(Map *pMap);

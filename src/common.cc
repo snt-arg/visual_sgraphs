@@ -18,7 +18,7 @@ rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
-std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id;
+std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, walls_pub, rooms_pub;
 
 // List of semantic entities available in the real environment
@@ -505,6 +505,8 @@ void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
         // Calculate the centroid
         if (mapPoints.size() > 0)
             centroid /= static_cast<float>(mapPoints.size());
+        walls[idx]->setCentroid(centroid);
+
 
         wall.ns = "walls";
         wall.scale.x = 0.5;
@@ -592,8 +594,9 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
     if (numRooms == 0)
         return;
 
-    visualization_msgs::MarkerArray roomArray;
+    visualization_msgs::MarkerArray roomArray, roomLinesArray;
     roomArray.markers.resize(numRooms);
+    roomLinesArray.markers.resize(numRooms);
 
     for (int idx = 0; idx < numRooms; idx++)
     {
@@ -602,7 +605,7 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         if (rooms[idx]->getWalls().size() == 2)
             color = {0.5, 0.0, 1.0};
 
-        visualization_msgs::Marker room;
+        visualization_msgs::Marker room, roomLine;
         Eigen::Vector3d roomCenter = rooms[idx]->getRoomCenter();
 
         room.color.a = 0;
@@ -618,15 +621,13 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         room.lifetime = ros::Duration();
         room.id = roomArray.markers.size();
         room.header.stamp = ros::Time().now();
-        room.header.frame_id = world_frame_id;
+        room.header.frame_id = room_frame_id;
         room.mesh_use_embedded_materials = true;
         room.type = visualization_msgs::Marker::MESH_RESOURCE;
         room.mesh_resource =
             "package://orb_slam3_ros/config/Visualization/room.dae";
 
         // Rotation and displacement for better visualization
-        roomCenter.y() -= 6.0;
-
         room.pose.orientation.x = 0.0;
         room.pose.orientation.y = 0.0;
         room.pose.orientation.z = 0.0;
@@ -634,8 +635,55 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         room.pose.position.x = roomCenter.x();
         room.pose.position.y = roomCenter.y();
         room.pose.position.z = roomCenter.z();
-
         roomArray.markers.push_back(room);
+
+        roomLine.scale.x = 0.01;
+        roomLine.scale.y = 0.01;
+        roomLine.scale.z = 0.01;
+        roomLine.ns = "room_lines";
+        roomLine.action = roomLine.ADD;
+        roomLine.color.r = color[0];
+        roomLine.color.g = color[1];
+        roomLine.color.b = color[2];
+        roomLine.color.a = 0.8;
+        roomLine.lifetime = ros::Duration();
+        roomLine.id = roomArray.markers.size();
+        roomLine.header.stamp = ros::Time().now();
+        roomLine.header.frame_id = world_frame_id;
+        roomLine.type = visualization_msgs::Marker::LINE_LIST;
+
+        tf::Stamped<tf::Point> room_point;
+        room_point.frame_id_ = room_frame_id;
+        room_point.setX(roomCenter.x());
+        room_point.setY(roomCenter.y());
+        room_point.setZ(roomCenter.z());
+
+        tf::Stamped<tf::Point> room_point_transformed;
+        transform_listener->transformPoint(world_frame_id, ros::Time(0), room_point, room_frame_id, room_point_transformed);
+        for(const auto wall : rooms[idx]->getWalls())
+        {
+            geometry_msgs::Point point1;
+            point1.x = room_point_transformed.x();
+            point1.y = room_point_transformed.y();
+            point1.z = room_point_transformed.z();
+            roomLine.points.push_back(point1);
+            
+            tf::Stamped<tf::Point> wall_point;
+            wall_point.frame_id_ = wall_frame_id;
+            wall_point.setX(wall->getCentroid().x());
+            wall_point.setY(wall->getCentroid().y());
+            wall_point.setZ(wall->getCentroid().z());
+            tf::Stamped<tf::Point> wall_point_transformed;
+            transform_listener->transformPoint(world_frame_id, ros::Time(0), wall_point, wall_frame_id, wall_point_transformed);
+
+            geometry_msgs::Point point2;
+            point2.x = wall_point_transformed.x();
+            point2.y = wall_point_transformed.y();
+            point2.z = wall_point_transformed.z();
+
+            roomLine.points.push_back(point2);
+        }
+        roomArray.markers.push_back(roomLine);
     }
 
     rooms_pub.publish(roomArray);

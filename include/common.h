@@ -60,7 +60,7 @@ extern ORB_SLAM3::System::eSensor sensor_type;
 
 extern double roll, pitch, yaw;       // Defining axes for transformation
 extern bool publish_static_transform; // If true, it should use transformed calculations
-extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id;
+extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id, room_frame_id;
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;

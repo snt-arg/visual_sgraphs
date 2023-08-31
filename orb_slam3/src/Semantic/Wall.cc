@@ -93,6 +93,17 @@ namespace ORB_SLAM3
         plane_equation = value;
     }
 
+
+    Eigen::Vector3f Wall::getCentroid() const 
+    {
+        return centroid;
+    }
+    
+    void Wall::setCentroid(const Eigen::Vector3f &value)
+    {
+        centroid = value;
+    }
+
     Map *Wall::GetMap()
     {
         unique_lock<mutex> lock(mMutexMap);
