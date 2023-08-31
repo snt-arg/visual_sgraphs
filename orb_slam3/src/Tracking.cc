@@ -4424,8 +4424,6 @@ namespace ORB_SLAM3
         double D = normal.dot(pointOnPlane);
 
         // Return the plane equation [A, B, C, D]
-        std::cout << "plane equation from pose: " << Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D) << std::endl;
-
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
     }
 
@@ -4650,7 +4648,7 @@ namespace ORB_SLAM3
             for (auto marker : markers)
             {
                 if (std::find(markerIds.begin(), markerIds.end(), marker->getId()) != markerIds.end())
-                {
+                {   
                     detectedRoom->setWalls(wall);
                     detectedWalls += to_string(wall->getId()) + " ";
                     detectedMarkers += to_string(marker->getId()) + " ";
@@ -4692,16 +4690,17 @@ namespace ORB_SLAM3
             roomCenter = getRoomCenter(markerPosition, wall1, wall2);
         }
         else if (roomWalls.size() == 4)
-        {
+        {   
+            reorganizeRoomWalls(detectedRoom);
             // If it is a four-wall room
             Eigen::Vector4d wall1 = correctPlaneDirection(
-                roomWalls.front()->getPlaneEquation().coeffs());
+                detectedRoom->getWalls()[0]->getPlaneEquation().coeffs());
             Eigen::Vector4d wall2 = correctPlaneDirection(
-                roomWalls.front()->getPlaneEquation().coeffs());
+                detectedRoom->getWalls()[1]->getPlaneEquation().coeffs());
             Eigen::Vector4d wall3 = correctPlaneDirection(
-                roomWalls.front()->getPlaneEquation().coeffs());
+                detectedRoom->getWalls()[2]->getPlaneEquation().coeffs());
             Eigen::Vector4d wall4 = correctPlaneDirection(
-                roomWalls.front()->getPlaneEquation().coeffs());
+                detectedRoom->getWalls()[3]->getPlaneEquation().coeffs());
             // Find the room center and add its vertex
             roomCenter = getRoomCenter(wall1, wall2, wall3, wall4);
         }
@@ -4718,6 +4717,72 @@ namespace ORB_SLAM3
 
         mpAtlas->AddMapRoom(detectedRoom);
     }
+
+    void Tracking::reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom)
+    {
+        Wall* wall1 = nullptr;
+        for(const auto wall : detectedRoom->getWalls()) 
+        {       
+            if(wall1 == nullptr) 
+                wall1 = wall;
+            else 
+            {
+                if(wall->getPlaneEquation().coeffs()(0) < wall1->getPlaneEquation().coeffs()(0)) 
+                    wall1 = wall;
+                else 
+                    continue;        
+            }                 
+        } 
+
+        Wall* wall2 = nullptr;
+        for(const auto wall : detectedRoom->getWalls()) 
+        {   
+            if(wall2 == nullptr) 
+                wall2 = wall;
+            else 
+            {
+                if(wall->getPlaneEquation().coeffs()(0) > wall2->getPlaneEquation().coeffs()(0)) 
+                    wall2 = wall;
+                else 
+                    continue;        
+            }                 
+        } 
+
+        Wall* wall3 = nullptr;
+        for(const auto wall : detectedRoom->getWalls()) 
+        {   
+            if(wall3 == nullptr) 
+                wall3 = wall;
+            else 
+            {
+                if(wall->getPlaneEquation().coeffs()(2) < wall3->getPlaneEquation().coeffs()(2)) 
+                    wall3 = wall;
+                else 
+                    continue;        
+            }                 
+        } 
+
+        Wall* wall4 = nullptr;
+        for(const auto wall : detectedRoom->getWalls()) 
+        {   
+            if(wall4 == nullptr) 
+                wall4 = wall;
+            else 
+            {
+                if(wall->getPlaneEquation().coeffs()(2) > wall4->getPlaneEquation().coeffs()(2)) 
+                    wall4 = wall;
+                else 
+                    continue;        
+            }             
+
+        } 
+
+        detectedRoom->clearWalls();
+        detectedRoom->setWalls(wall1);
+        detectedRoom->setWalls(wall2);
+        detectedRoom->setWalls(wall3);
+        detectedRoom->setWalls(wall4);
+    }    
 
     void Tracking::earlyRoomDetection()
     {

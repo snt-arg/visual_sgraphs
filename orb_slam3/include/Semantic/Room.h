@@ -58,6 +58,8 @@ namespace ORB_SLAM3
         void setWalls(Wall *value);
         std::vector<Wall *> getWalls() const;
 
+        void clearWalls();  
+
         void setDoorMarkerIds(int value);
         std::vector<int> getDoorMarkerIds() const;
 

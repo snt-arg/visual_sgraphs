@@ -252,6 +252,8 @@ namespace ORB_SLAM3
          */
         void createMapRoom(Room *detectedRoom, std::vector<int> markerIds);
 
+        void reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom);
+
         /**
          * @brief Early creation of a room as soon as all elements of at least one of its pairs has been seen
          * (e.g., if all elements of [[1,2,3,4]] or both 1 & 2 in [[1,2][3,4]] visited)

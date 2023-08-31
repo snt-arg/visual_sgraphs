@@ -72,6 +72,11 @@ namespace ORB_SLAM3
         walls.push_back(value);
     }
 
+    void Room::clearWalls()
+    {
+        walls.clear();
+    }  
+
     std::vector<Door *> Room::getDoors() const
     {
         return doors;
