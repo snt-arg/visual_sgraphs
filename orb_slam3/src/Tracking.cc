@@ -3511,8 +3511,8 @@ namespace ORB_SLAM3
 
                     // ----------- Room Detection and Mapping --------
                     // Early creation of a room as soon as all elements of at least one of its pairs has been seen
-                    earlyRoomDetection();
-
+                    std::vector<Room *>  currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
+                   
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
                     {
                         break;
@@ -4637,8 +4637,29 @@ namespace ORB_SLAM3
         mpAtlas->AddMapDoor(newMapDoor);
     }
 
-    void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, std::vector<int> markerIds)
+    ORB_SLAM3::Room* Tracking::roomAssociation(const ORB_SLAM3::Room *detectedRoom)
     {
+        ORB_SLAM3::Room* foundMappedRoom = nullptr;
+        double min_dist = 100;
+        Eigen::Vector3d detetedRoomCenter = detectedRoom->getRoomCenter();   
+
+        for(const auto& mapRoom : mpAtlas->GetAllRooms()) 
+        {
+            Eigen::Vector3d mapRoomCenter = mapRoom->getRoomCenter();
+            double dist = (detetedRoomCenter -  mapRoomCenter).norm();
+
+            if(dist < min_dist)
+            {
+               min_dist = dist;
+               foundMappedRoom = mapRoom;   
+            }
+        }
+
+        return foundMappedRoom;
+    }
+
+    void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, std::vector<int> markerIds)
+    {   
         // Find attached walls and add them to the room
         std::string detectedWalls("");
         std::string detectedMarkers("");
@@ -4705,17 +4726,26 @@ namespace ORB_SLAM3
             roomCenter = getRoomCenter(wall1, wall2, wall3, wall4);
         }
 
-        // Update the room values
-        detectedRoom->setAllSeenMarkers(true);
-        detectedRoom->setRoomCenter(roomCenter);
-        detectedRoom->SetMap(mpAtlas->GetCurrentMap());
-        detectedRoom->setId(mpAtlas->GetAllRooms().size());
+        //TODO: Room association   
+        ORB_SLAM3::Room* foundMappedRoom = roomAssociation(detectedRoom);
 
-        std::cout << "Adding new room: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
-                  << "), with walls [ " << detectedWalls << "], connected doors [ " << detectedDoors
-                  << "], and attached markers [ " << detectedMarkers << "]!" << std::endl;
+        if(foundMappedRoom == nullptr) 
+        {
+            // Update the room values
+            detectedRoom->setAllSeenMarkers(true);
+            detectedRoom->setRoomCenter(roomCenter);
+            detectedRoom->SetMap(mpAtlas->GetCurrentMap());
+            detectedRoom->setId(mpAtlas->GetAllRooms().size());
 
-        mpAtlas->AddMapRoom(detectedRoom);
+            std::cout << "Adding new room: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
+                    << "), with walls [ " << detectedWalls << "], connected doors [ " << detectedDoors
+                    << "], and attached markers [ " << detectedMarkers << "]!" << std::endl;
+
+            mpAtlas->AddMapRoom(detectedRoom);
+        } else 
+        {
+            std::cout << "found an already mapped room " << std::endl;
+        }
     }
 
     void Tracking::reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom)
@@ -4784,13 +4814,14 @@ namespace ORB_SLAM3
         detectedRoom->setWalls(wall4);
     }    
 
-    void Tracking::earlyRoomDetection()
-    {
+    std::vector<Room *> Tracking::earlyRoomDetection(const std::vector<Marker *>& mvpMapMarkers)
+    {   
+        std::vector<Room *> currentFoundRooms;
         // Loop over all real rooms in the map
         for (Room *envRoom : env_rooms)
         {
             // Check if a room has not been created for it before
-            if (!envRoom->getAllSeenMarkers())
+            //if (!envRoom->getAllSeenMarkers())
             {
                 // Get all detected walls' marker IDs
                 std::vector<int> detectedMarkerIds = mpAtlas->visitedWallsMarkerIds;
@@ -4803,14 +4834,31 @@ namespace ORB_SLAM3
                     bool allFound = std::all_of(begin(realMarkerIds[idx]), end(realMarkerIds[idx]), [&](int x)
                                                 {
                                     bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
-                                    return found; });
+                                    return found;});
 
+                    //TODO: check if current detected marker belong to this rooms otherwise continue
+                    bool detMarkerinRoom = false;
+                    for(const auto& detMarker : mvpMapMarkers) {
+                       for(const auto& realMarker : realMarkerIds[idx]) {
+                            if(detMarker->getId() == realMarker) {
+                                detMarkerinRoom = true;
+                                break;
+                            }
+                        }
+                        if(detMarkerinRoom)
+                            break;
+                    }   
+                    
                     // Create a new room
-                    if (allFound)
-                        createMapRoom(envRoom, realMarkerIds[idx]);
+                    if (allFound && detMarkerinRoom) {
+                       createMapRoom(envRoom, realMarkerIds[idx]);
+                       currentFoundRooms.push_back(envRoom);
+                    }
                 }
             }
         }
+
+        return currentFoundRooms;
     }
 
 #ifdef REGISTER_LOOP

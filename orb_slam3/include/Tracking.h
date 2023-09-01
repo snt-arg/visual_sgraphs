@@ -258,7 +258,9 @@ namespace ORB_SLAM3
          * @brief Early creation of a room as soon as all elements of at least one of its pairs has been seen
          * (e.g., if all elements of [[1,2,3,4]] or both 1 & 2 in [[1,2][3,4]] visited)
          */
-        void earlyRoomDetection();
+        std::vector<Room *> earlyRoomDetection(const std::vector<Marker *>& mvpMapMarkers);
+
+        ORB_SLAM3::Room* roomAssociation(const ORB_SLAM3::Room *detectedRoom);
 
 #ifdef REGISTER_LOOP
         void RequestStop();
