@@ -1783,7 +1783,6 @@ namespace ORB_SLAM3
 
         for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
         {   
-            std::cout << "adding room vertex " << std::endl;
             // Adding a vertex for each door
             Room *pMapRoom = *idx;
             g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
