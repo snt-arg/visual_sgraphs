@@ -3322,7 +3322,8 @@ namespace ORB_SLAM3
     }
 
     void Tracking::CreateNewKeyFrame()
-    {
+    {   
+        std::vector<Room *>  currentFoundRooms;
         if (mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized())
             return;
 
@@ -3511,7 +3512,7 @@ namespace ORB_SLAM3
 
                     // ----------- Room Detection and Mapping --------
                     // Early creation of a room as soon as all elements of at least one of its pairs has been seen
-                    std::vector<Room *>  currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
+                    currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
                    
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
                     {
@@ -3524,11 +3525,14 @@ namespace ORB_SLAM3
         }
 
         mpLocalMapper->InsertKeyFrame(pKF);
+        for(const auto& currentRoom : currentFoundRooms) 
+            mpLocalMapper->InsertRoom(currentRoom);
 
         mpLocalMapper->SetNotStop(false);
 
         mnLastKeyFrameId = mCurrentFrame.mnId;
         mpLastKeyFrame = pKF;
+        currentFoundRooms.clear();
     }
 
     void Tracking::SearchLocalPoints()
@@ -4726,7 +4730,6 @@ namespace ORB_SLAM3
             roomCenter = getRoomCenter(wall1, wall2, wall3, wall4);
         }
 
-        //TODO: Room association   
         ORB_SLAM3::Room* foundMappedRoom = roomAssociation(detectedRoom);
 
         if(foundMappedRoom == nullptr) 
@@ -4836,7 +4839,7 @@ namespace ORB_SLAM3
                                     bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
                                     return found;});
 
-                    //TODO: check if current detected marker belong to this rooms otherwise continue
+                    //check if current detected marker belong to this rooms otherwise continue
                     bool detMarkerinRoom = false;
                     for(const auto& detMarker : mvpMapMarkers) {
                        for(const auto& realMarker : realMarkerIds[idx]) {

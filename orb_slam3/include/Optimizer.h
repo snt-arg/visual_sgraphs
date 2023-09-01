@@ -26,6 +26,7 @@
 #include "Frame.h"
 
 #include <math.h>
+#include <boost/bind.hpp>
 
 #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
 #include "Thirdparty/g2o/g2o/core/sparse_block_matrix.h"
@@ -56,7 +57,7 @@ namespace ORB_SLAM3
 
         void static FullInertialBA(Map *pMap, int its, const bool bFixLocal = false, const unsigned long nLoopKF = 0, bool *pbStopFlag = NULL, bool bInit = false, float priorG = 1e2, float priorA = 1e6, Eigen::VectorXd *vSingVal = NULL, bool *bHess = NULL);
 
-        void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF, int &num_MPs, int &num_edges);
+        void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF, int &num_MPs, int &num_edges, std::list<Room *> vpRooms);
 
         int static PoseOptimization(Frame *pFrame);
         int static PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit = false);

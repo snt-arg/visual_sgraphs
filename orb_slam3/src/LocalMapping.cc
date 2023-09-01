@@ -148,7 +148,8 @@ namespace ORB_SLAM3
                         }
                         else
                         {
-                            Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(), num_FixedKF_BA, num_OptKF_BA, num_MPs_BA, num_edges_BA);
+                            Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(), num_FixedKF_BA, num_OptKF_BA, num_MPs_BA, num_edges_BA, mlDetRooms);
+                            mlDetRooms.clear();                        
                             b_doneLBA = true;
                         }
                     }
@@ -285,6 +286,12 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexNewKFs);
         mlNewKeyFrames.push_back(pKF);
         mbAbortBA = true;
+    }
+
+    void LocalMapping::InsertRoom(Room *pRoom)
+    {
+        unique_lock<mutex> lock(mMutexNewKFs);
+        mlDetRooms.push_back(pRoom);
     }
 
     bool LocalMapping::CheckNewKeyFrames()

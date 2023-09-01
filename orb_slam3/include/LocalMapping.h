@@ -50,6 +50,7 @@ namespace ORB_SLAM3
         void Run();
 
         void InsertKeyFrame(KeyFrame *pKF);
+        void InsertRoom(Room* pRoom);
         void EmptyQueue();
 
         // Thread Synch
@@ -74,7 +75,7 @@ namespace ORB_SLAM3
             unique_lock<std::mutex> lock(mMutexNewKFs);
             return mlNewKeyFrames.size();
         }
-
+    
         bool IsInitializing();
         double GetCurrKFTime();
         KeyFrame *GetCurrKF();
@@ -159,6 +160,7 @@ namespace ORB_SLAM3
         Tracking *mpTracker;
 
         std::list<KeyFrame *> mlNewKeyFrames;
+        std::list<Room *> mlDetRooms;
 
         KeyFrame *mpCurrentKeyFrame;
 
