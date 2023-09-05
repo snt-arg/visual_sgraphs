@@ -1778,12 +1778,11 @@ namespace ORB_SLAM3
                 optimizer.addEdge(e);
             }
         }
-
         maxOpId += nWalls;
 
         for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
         {   
-            // Adding a vertex for each door
+            // Adding a vertex for each room
             Room *pMapRoom = *idx;
             g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
 
@@ -1794,7 +1793,7 @@ namespace ORB_SLAM3
             optimizer.addVertex(vRoom);
             nRooms++;
 
-            // Setting the local optimization ID for the door
+            // Setting the local optimization ID for the room
             pMapRoom->setOpId(opId);
 
             // Get list of walls of the room
@@ -1829,47 +1828,47 @@ namespace ORB_SLAM3
                 rk->setDelta(thHuberMono);
                 optimizer.addEdge(e);
             }
-
-            // TODO: Get list of doors of the room 
-            // vector<Door *> doors = pMapRoom->getDoors();
-            // for (const auto &door : doors)
-            // {
-            //     // Adding an edge between the room and the door
-            //     ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
-            //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-            //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpId())));
-            //     e->setInformation(Eigen::MatrixXd::Identity(6, 6));
-
-            //     Eigen::Isometry3d relativePose = Eigen::Isometry3d::Identity();
-            //     relativePose.matrix() = (vRoom->estimate().inverse() *
-            //                              dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
-            //                                 .to_homogeneous_matrix();
-            //     e->setMeasurement(relativePose);
-
-            //     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-            //     e->setRobustKernel(rk);
-            //     rk->setDelta(thHuberMono);
-            //     optimizer.addEdge(e);
-            // }
         }
+        maxOpId += nRooms;
 
-        // Doors (Local Optimization) -> Only adding Door vertices to be connected later to rooms
-        for (list<Door *>::iterator idx = lLocalMapDoors.begin(), lend = lLocalMapDoors.end(); idx != lend; idx++)
+        //Add doors connected to the rooms in the current local optimization
+        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++) 
         {
-            // Adding a vertex for each door
-            Door *pMapDoor = *idx;
-            g2o::VertexSE3Expmap *vDoor = new g2o::VertexSE3Expmap();
-            int opId = maxOpId + nDoors;
-            vDoor->setId(opId);
-            vDoor->setEstimate(g2o::SE3Quat(pMapDoor->getGlobalPose().unit_quaternion().cast<double>(),
-                                            pMapDoor->getGlobalPose().translation().cast<double>()));
-            optimizer.addVertex(vDoor);
-            nDoors++;
+            Room *pMapRoom = *idx;
+            vector<Door *> doors = pMapRoom->getDoors();
+            for (const auto &door : doors)
+            {
+                // Adding a vertex for each door
+                g2o::VertexSE3Expmap *vDoor = new g2o::VertexSE3Expmap();
+                int opId = maxOpId + nDoors;
+                vDoor->setId(opId);
+                vDoor->setEstimate(g2o::SE3Quat(door->getGlobalPose().unit_quaternion().cast<double>(),
+                                                door->getGlobalPose().translation().cast<double>()));
+                optimizer.addVertex(vDoor);
+                nDoors++;
 
-            // Setting the local optimization ID for the door
-            pMapDoor->setOpId(opId);
+                // Setting the local optimization ID for the door
+                door->setOpId(opId);
+
+                // Adding an edge between the room and the door
+                ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
+                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpId())));
+                e->setInformation(Eigen::MatrixXd::Identity(6, 6));
+
+                Eigen::Isometry3d relativePose = Eigen::Isometry3d::Identity();
+                relativePose.matrix() = (dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(pMapRoom->getOpId())))->estimate().inverse() *
+                                         dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
+                                            .to_homogeneous_matrix();
+                e->setMeasurement(relativePose);
+
+                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                e->setRobustKernel(rk);
+                rk->setDelta(thHuberMono);
+                optimizer.addEdge(e);
+            }
+
         }
-
         maxOpId += nDoors;
 
         if (pbStopFlag)
@@ -1981,8 +1980,24 @@ namespace ORB_SLAM3
             pMapWall->setPlaneEquation(wallPlane);
         }
 
-        // [TODO] Locally Optimized Doors
-
+        // Locally Optimized Rooms
+        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++) 
+        {
+            Room *pMapRoom = *idx;
+            g2o::VertexSE3Expmap *vRoom = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapRoom->getOpId()));
+            g2o::SE3Quat SE3quat = vRoom->estimate();
+            pMapRoom->setRoomCenter(SE3quat.translation());
+            
+            // Locally Optimized Doors
+            for(const auto door : pMapRoom->getDoors()) 
+            {
+                Door *pMapDoor = door;
+                g2o::VertexSE3Expmap *vDoor = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapDoor->getOpId()));
+                g2o::SE3Quat SE3quat = vDoor->estimate();
+                Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
+                pMapDoor->setGlobalPose(Tiw);
+            }
+        }
         pMap->IncreaseChangeIndex();
     }
 
