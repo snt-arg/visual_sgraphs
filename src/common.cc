@@ -734,7 +734,7 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
 
             geometry_msgs::Point point2;
             point2.x = door_point_transformed.x();
-            point2.y = door_point_transformed.y() - 1.0;
+            point2.y = door_point_transformed.y() - 2.0;
             point2.z = door_point_transformed.z();
 
             roomDoorLine.points.push_back(point2);
