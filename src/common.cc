@@ -594,9 +594,8 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
     if (numRooms == 0)
         return;
 
-    visualization_msgs::MarkerArray roomArray, roomLinesArray;
+    visualization_msgs::MarkerArray roomArray;
     roomArray.markers.resize(numRooms);
-    roomLinesArray.markers.resize(numRooms);
 
     for (int idx = 0; idx < numRooms; idx++)
     {
@@ -605,7 +604,7 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         if (rooms[idx]->getWalls().size() == 2)
             color = {0.5, 0.0, 1.0};
 
-        visualization_msgs::Marker room, roomLine;
+        visualization_msgs::Marker room, roomWallLine, roomDoorLine, roomString;
         Eigen::Vector3d roomCenter = rooms[idx]->getRoomCenter();
 
         room.color.a = 0;
@@ -637,20 +636,53 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         room.pose.position.z = roomCenter.z();
         roomArray.markers.push_back(room);
 
-        roomLine.scale.x = 0.01;
-        roomLine.scale.y = 0.01;
-        roomLine.scale.z = 0.01;
-        roomLine.ns = "room_lines";
-        roomLine.action = roomLine.ADD;
-        roomLine.color.r = color[0];
-        roomLine.color.g = color[1];
-        roomLine.color.b = color[2];
-        roomLine.color.a = 0.8;
-        roomLine.lifetime = ros::Duration();
-        roomLine.id = roomArray.markers.size();
-        roomLine.header.stamp = ros::Time().now();
-        roomLine.header.frame_id = world_frame_id;
-        roomLine.type = visualization_msgs::Marker::LINE_LIST;
+        roomString.color.a = 1;
+        roomString.ns = "roomString";
+        roomString.scale.z = 0.2;
+        roomString.action = roomString.ADD;
+        roomString.color.r = 0;
+        roomString.color.g = 0;
+        roomString.color.b = 0;
+        roomString.lifetime = ros::Duration();
+        roomString.id = roomArray.markers.size();
+        roomString.header.stamp = ros::Time().now();
+        roomString.header.frame_id = room_frame_id;
+        roomString.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+        roomString.pose.position.x = roomCenter.x();
+        roomString.pose.position.y = roomCenter.y() + 0.5;
+        roomString.pose.position.z = roomCenter.z();
+        roomString.text = rooms[idx]->getName();
+        roomArray.markers.push_back(roomString);    
+
+        roomWallLine.scale.x = 0.01;
+        roomWallLine.scale.y = 0.01;
+        roomWallLine.scale.z = 0.01;
+        roomWallLine.ns = "room_wall_lines";
+        roomWallLine.action = roomWallLine.ADD;
+        roomWallLine.color.r = color[0];
+        roomWallLine.color.g = color[1];
+        roomWallLine.color.b = color[2];
+        roomWallLine.color.a = 0.8;
+        roomWallLine.lifetime = ros::Duration();
+        roomWallLine.id = roomArray.markers.size();
+        roomWallLine.header.stamp = ros::Time().now();
+        roomWallLine.header.frame_id = world_frame_id;
+        roomWallLine.type = visualization_msgs::Marker::LINE_LIST;
+
+        roomDoorLine.scale.x = 0.01;
+        roomDoorLine.scale.y = 0.01;
+        roomDoorLine.scale.z = 0.01;
+        roomDoorLine.ns = "room_door_lines";
+        roomDoorLine.action = roomDoorLine.ADD;
+        roomDoorLine.color.r = color[0];
+        roomDoorLine.color.g = color[1];
+        roomDoorLine.color.b = color[2];
+        roomDoorLine.color.a = 0.8;
+        roomDoorLine.lifetime = ros::Duration();
+        roomDoorLine.id = roomArray.markers.size() + 1;
+        roomDoorLine.header.stamp = ros::Time().now();
+        roomDoorLine.header.frame_id = world_frame_id;
+        roomDoorLine.type = visualization_msgs::Marker::LINE_LIST;
 
         tf::Stamped<tf::Point> room_point;
         room_point.frame_id_ = room_frame_id;
@@ -666,7 +698,7 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
             point1.x = room_point_transformed.x();
             point1.y = room_point_transformed.y();
             point1.z = room_point_transformed.z();
-            roomLine.points.push_back(point1);
+            roomWallLine.points.push_back(point1);
             
             tf::Stamped<tf::Point> wall_point;
             wall_point.frame_id_ = wall_frame_id;
@@ -681,9 +713,35 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
             point2.y = wall_point_transformed.y();
             point2.z = wall_point_transformed.z();
 
-            roomLine.points.push_back(point2);
+            roomWallLine.points.push_back(point2);
         }
-        roomArray.markers.push_back(roomLine);
+
+        for(const auto door : rooms[idx]->getDoors()) 
+        {
+            geometry_msgs::Point point1;
+            point1.x = room_point_transformed.x();
+            point1.y = room_point_transformed.y();
+            point1.z = room_point_transformed.z();
+            roomDoorLine.points.push_back(point1);
+
+            tf::Stamped<tf::Point> door_point;
+            door_point.frame_id_ = wall_frame_id;
+            door_point.setX(door->getGlobalPose().translation()(0));
+            door_point.setY(door->getGlobalPose().translation()(1));
+            door_point.setZ(door->getGlobalPose().translation()(2));
+            tf::Stamped<tf::Point> door_point_transformed;
+            transform_listener->transformPoint(world_frame_id, ros::Time(0), door_point, wall_frame_id, door_point_transformed);
+
+            geometry_msgs::Point point2;
+            point2.x = door_point_transformed.x();
+            point2.y = door_point_transformed.y() - 1.0;
+            point2.z = door_point_transformed.z();
+
+            roomDoorLine.points.push_back(point2);
+        }   
+
+        roomArray.markers.push_back(roomWallLine);
+        roomArray.markers.push_back(roomDoorLine);
     }
 
     rooms_pub.publish(roomArray);
