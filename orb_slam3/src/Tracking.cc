@@ -2494,14 +2494,13 @@ namespace ORB_SLAM3
                 {
                     // Calculate the plane (wall) equation on which the marker is attached
                     Eigen::Vector4d planeEstimate =
-                    getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
-                                             mCurrentMarker->getGlobalPose().translation());
+                        getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
+                                                 mCurrentMarker->getGlobalPose().translation());
 
                     // Calculate the wall equation from points lying close to the marker
-                    //Eigen::Vector4d planeEstimateFromPoint;
-                    //bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimateFromPoint);   
+                    // Eigen::Vector4d planeEstimateFromPoint;
+                    // bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimateFromPoint);
 
-                
                     // Get the plane based on the equation
                     g2o::Plane3D detectedPlane(planeEstimate);
 
@@ -2518,7 +2517,6 @@ namespace ORB_SLAM3
                         // The wall already exists in the map, fetching that one
                         updateMapWall(matchedWallId, mCurrentMarker, pKFini);
                     }
-                    
                 }
                 else
                 {
@@ -3322,8 +3320,8 @@ namespace ORB_SLAM3
     }
 
     void Tracking::CreateNewKeyFrame()
-    {   
-        std::vector<Room *>  currentFoundRooms;
+    {
+        std::vector<Room *> currentFoundRooms;
         if (mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized())
             return;
 
@@ -3471,20 +3469,20 @@ namespace ORB_SLAM3
                             }
                         }
 
-                        // ----------- Wall and Door Detection and Mapping --------                      
+                        // ----------- Wall and Door Detection and Mapping --------
                         // Check the current marker if it is attached to a door or a wall
                         std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
                         bool markerIsWall = result.first;
                         if (markerIsWall)
-                        {    
+                        {
                             // Calculate the plane (wall) equation on which the marker is attached
                             Eigen::Vector4d planeEstimate =
-                            getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
-                                                     currentMapMarker->getGlobalPose().translation());
+                                getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
+                                                         currentMapMarker->getGlobalPose().translation());
 
                             // Calculate the wall equation from points lying close to the marker
                             // Eigen::Vector4d planeEstimatefromPoint;
-                            // bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimatefromPoint);                                            
+                            // bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimatefromPoint);
 
                             // Get the plane based on the equation
                             g2o::Plane3D detectedPlane(planeEstimate);
@@ -3513,7 +3511,7 @@ namespace ORB_SLAM3
                     // ----------- Room Detection and Mapping --------
                     // Early creation of a room as soon as all elements of at least one of its pairs has been seen
                     currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
-                   
+
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
                     {
                         break;
@@ -3525,7 +3523,7 @@ namespace ORB_SLAM3
         }
 
         mpLocalMapper->InsertKeyFrame(pKF);
-        for(const auto& currentRoom : currentFoundRooms) 
+        for (const auto &currentRoom : currentFoundRooms)
             mpLocalMapper->InsertRoom(currentRoom);
 
         mpLocalMapper->SetNotStop(false);
@@ -4431,30 +4429,33 @@ namespace ORB_SLAM3
         return Eigen::Vector4d(normal.x(), normal.y(), normal.z(), D);
     }
 
-    bool Tracking::getPlaneEquationFromPoints(const Marker* currentMarker, Eigen::Vector4d& planeEstimate) 
+    bool Tracking::getPlaneEquationFromPoints(const Marker *currentMarker, Eigen::Vector4d &planeEstimate)
     {
-        std::vector<MapPoint*> allmapPoints = mpAtlas->GetAllMapPoints();
-        std::vector<MapPoint*> closePoints = findPointsCloseToLocation(allmapPoints, currentMarker->getGlobalPose().translation(), 0.1);
+        std::vector<MapPoint *> allmapPoints = mpAtlas->GetAllMapPoints();
+        std::vector<MapPoint *> closePoints = findPointsCloseToLocation(allmapPoints, currentMarker->getGlobalPose().translation(), 0.1);
 
-        if(closePoints.size() > 5) {
+        if (closePoints.size() > 5)
+        {
 
             Eigen::Vector4d initplaneEstimate = ransacPlaneFitting(closePoints);
-            //convert the plane to closest plane formulation
+            // convert the plane to closest plane formulation
             Eigen::Vector3d closestPoint = initplaneEstimate.head(3) * initplaneEstimate(3);
             Eigen::Vector4d closestPlaneform;
             closestPlaneform.head(3) = closestPoint / closestPoint.norm();
             closestPlaneform(3) = closestPoint.norm();
             planeEstimate = closestPlaneform;
-            return true;    
-        } 
+            return true;
+        }
 
         return false;
     }
 
-    Eigen::Vector4d Tracking::ransacPlaneFitting(const std::vector<MapPoint*>& points) {
+    Eigen::Vector4d Tracking::ransacPlaneFitting(const std::vector<MapPoint *> &points)
+    {
         pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-        for(const auto mapPoint : points) {
+        for (const auto mapPoint : points)
+        {
             pcl::PointXYZ pcl_point;
             pcl_point.x = mapPoint->GetWorldPos()(0);
             pcl_point.y = mapPoint->GetWorldPos()(1);
@@ -4478,33 +4479,33 @@ namespace ORB_SLAM3
         seg.segment(*inliers, *coefficients);
 
         Eigen::Vector4d plane_equation(coefficients->values[0],
-                                coefficients->values[1],
-                                coefficients->values[2],
-                                coefficients->values[3]);
+                                       coefficients->values[1],
+                                       coefficients->values[2],
+                                       coefficients->values[3]);
 
         return plane_equation;
     }
 
-
-    std::vector<MapPoint*> Tracking::findPointsCloseToLocation(const std::vector<MapPoint*>& points,
-                                                               const Eigen::Vector3f& location,
-                                                               double distanceThreshold) {
-        std::vector<MapPoint*> closePoints;
-        for (MapPoint* point : points) 
+    std::vector<MapPoint *> Tracking::findPointsCloseToLocation(const std::vector<MapPoint *> &points,
+                                                                const Eigen::Vector3f &location,
+                                                                double distanceThreshold)
+    {
+        std::vector<MapPoint *> closePoints;
+        for (MapPoint *point : points)
         {
             double distance = calculateDistance(point->GetWorldPos(), location);
-            if (distance <= distanceThreshold) 
-            {   
+            if (distance <= distanceThreshold)
+            {
                 closePoints.push_back(point);
             }
         }
-        
 
         return closePoints;
     }
 
     // Function to calculate Euclidean distance between two points
-    double Tracking::calculateDistance(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2) {
+    double Tracking::calculateDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2)
+    {
         double dx = p1.x() - p2.x();
         double dy = p1.y() - p2.y();
         double dz = p1.z() - p2.z();
@@ -4641,21 +4642,21 @@ namespace ORB_SLAM3
         mpAtlas->AddMapDoor(newMapDoor);
     }
 
-    ORB_SLAM3::Room* Tracking::roomAssociation(const ORB_SLAM3::Room *detectedRoom)
+    ORB_SLAM3::Room *Tracking::roomAssociation(const ORB_SLAM3::Room *detectedRoom)
     {
-        ORB_SLAM3::Room* foundMappedRoom = nullptr;
+        ORB_SLAM3::Room *foundMappedRoom = nullptr;
         double min_dist = 100;
-        Eigen::Vector3d detetedRoomCenter = detectedRoom->getRoomCenter();   
+        Eigen::Vector3d detetedRoomCenter = detectedRoom->getRoomCenter();
 
-        for(const auto& mapRoom : mpAtlas->GetAllRooms()) 
+        for (const auto &mapRoom : mpAtlas->GetAllRooms())
         {
             Eigen::Vector3d mapRoomCenter = mapRoom->getRoomCenter();
-            double dist = (detetedRoomCenter -  mapRoomCenter).norm();
+            double dist = (detetedRoomCenter - mapRoomCenter).norm();
 
-            if(dist < min_dist)
+            if (dist < min_dist)
             {
-               min_dist = dist;
-               foundMappedRoom = mapRoom;   
+                min_dist = dist;
+                foundMappedRoom = mapRoom;
             }
         }
 
@@ -4663,7 +4664,7 @@ namespace ORB_SLAM3
     }
 
     void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, std::vector<int> markerIds)
-    {   
+    {
         // Find attached walls and add them to the room
         std::string detectedWalls("");
         std::string detectedMarkers("");
@@ -4673,7 +4674,7 @@ namespace ORB_SLAM3
             for (auto marker : markers)
             {
                 if (std::find(markerIds.begin(), markerIds.end(), marker->getId()) != markerIds.end())
-                {   
+                {
                     detectedRoom->setWalls(wall);
                     detectedWalls += to_string(wall->getId()) + " ";
                     detectedMarkers += to_string(marker->getId()) + " ";
@@ -4715,7 +4716,7 @@ namespace ORB_SLAM3
             roomCenter = getRoomCenter(markerPosition, wall1, wall2);
         }
         else if (roomWalls.size() == 4)
-        {   
+        {
             reorganizeRoomWalls(detectedRoom);
             // If it is a four-wall room
             Eigen::Vector4d wall1 = correctPlaneDirection(
@@ -4730,9 +4731,9 @@ namespace ORB_SLAM3
             roomCenter = getRoomCenter(wall1, wall2, wall3, wall4);
         }
 
-        ORB_SLAM3::Room* foundMappedRoom = roomAssociation(detectedRoom);
+        ORB_SLAM3::Room *foundMappedRoom = roomAssociation(detectedRoom);
 
-        if(foundMappedRoom == nullptr) 
+        if (foundMappedRoom == nullptr)
         {
             // Update the room values
             detectedRoom->setAllSeenMarkers(true);
@@ -4741,90 +4742,90 @@ namespace ORB_SLAM3
             detectedRoom->setId(mpAtlas->GetAllRooms().size());
 
             std::cout << "Adding new room: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
-                    << "), with walls [ " << detectedWalls << "], connected doors [ " << detectedDoors
-                    << "], and attached markers [ " << detectedMarkers << "]!" << std::endl;
+                      << "), with walls [ " << detectedWalls << "], connected doors [ " << detectedDoors
+                      << "], and attached markers [ " << detectedMarkers << "]!" << std::endl;
 
             mpAtlas->AddMapRoom(detectedRoom);
-        } else 
+        }
+        else
         {
-            std::cout << "found an already mapped room " << std::endl;
+            //
         }
     }
 
     void Tracking::reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom)
     {
-        Wall* wall1 = nullptr;
-        for(const auto wall : detectedRoom->getWalls()) 
-        {       
-            if(wall1 == nullptr) 
+        Wall *wall1 = nullptr;
+        for (const auto wall : detectedRoom->getWalls())
+        {
+            if (wall1 == nullptr)
                 wall1 = wall;
-            else 
+            else
             {
-                if(wall->getPlaneEquation().coeffs()(0) < wall1->getPlaneEquation().coeffs()(0)) 
+                if (wall->getPlaneEquation().coeffs()(0) < wall1->getPlaneEquation().coeffs()(0))
                     wall1 = wall;
-                else 
-                    continue;        
-            }                 
-        } 
+                else
+                    continue;
+            }
+        }
 
-        Wall* wall2 = nullptr;
-        for(const auto wall : detectedRoom->getWalls()) 
-        {   
-            if(wall2 == nullptr) 
+        Wall *wall2 = nullptr;
+        for (const auto wall : detectedRoom->getWalls())
+        {
+            if (wall2 == nullptr)
                 wall2 = wall;
-            else 
+            else
             {
-                if(wall->getPlaneEquation().coeffs()(0) > wall2->getPlaneEquation().coeffs()(0)) 
+                if (wall->getPlaneEquation().coeffs()(0) > wall2->getPlaneEquation().coeffs()(0))
                     wall2 = wall;
-                else 
-                    continue;        
-            }                 
-        } 
+                else
+                    continue;
+            }
+        }
 
-        Wall* wall3 = nullptr;
-        for(const auto wall : detectedRoom->getWalls()) 
-        {   
-            if(wall3 == nullptr) 
+        Wall *wall3 = nullptr;
+        for (const auto wall : detectedRoom->getWalls())
+        {
+            if (wall3 == nullptr)
                 wall3 = wall;
-            else 
+            else
             {
-                if(wall->getPlaneEquation().coeffs()(2) < wall3->getPlaneEquation().coeffs()(2)) 
+                if (wall->getPlaneEquation().coeffs()(2) < wall3->getPlaneEquation().coeffs()(2))
                     wall3 = wall;
-                else 
-                    continue;        
-            }                 
-        } 
+                else
+                    continue;
+            }
+        }
 
-        Wall* wall4 = nullptr;
-        for(const auto wall : detectedRoom->getWalls()) 
-        {   
-            if(wall4 == nullptr) 
+        Wall *wall4 = nullptr;
+        for (const auto wall : detectedRoom->getWalls())
+        {
+            if (wall4 == nullptr)
                 wall4 = wall;
-            else 
+            else
             {
-                if(wall->getPlaneEquation().coeffs()(2) > wall4->getPlaneEquation().coeffs()(2)) 
+                if (wall->getPlaneEquation().coeffs()(2) > wall4->getPlaneEquation().coeffs()(2))
                     wall4 = wall;
-                else 
-                    continue;        
-            }             
-
-        } 
+                else
+                    continue;
+            }
+        }
 
         detectedRoom->clearWalls();
         detectedRoom->setWalls(wall1);
         detectedRoom->setWalls(wall2);
         detectedRoom->setWalls(wall3);
         detectedRoom->setWalls(wall4);
-    }    
+    }
 
-    std::vector<Room *> Tracking::earlyRoomDetection(const std::vector<Marker *>& mvpMapMarkers)
-    {   
+    std::vector<Room *> Tracking::earlyRoomDetection(const std::vector<Marker *> &mvpMapMarkers)
+    {
         std::vector<Room *> currentFoundRooms;
         // Loop over all real rooms in the map
         for (Room *envRoom : env_rooms)
         {
             // Check if a room has not been created for it before
-            //if (!envRoom->getAllSeenMarkers())
+            // if (!envRoom->getAllSeenMarkers())
             {
                 // Get all detected walls' marker IDs
                 std::vector<int> detectedMarkerIds = mpAtlas->visitedWallsMarkerIds;
@@ -4837,25 +4838,29 @@ namespace ORB_SLAM3
                     bool allFound = std::all_of(begin(realMarkerIds[idx]), end(realMarkerIds[idx]), [&](int x)
                                                 {
                                     bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
-                                    return found;});
+                                    return found; });
 
-                    //check if current detected marker belong to this rooms otherwise continue
+                    // check if current detected marker belong to this rooms otherwise continue
                     bool detMarkerinRoom = false;
-                    for(const auto& detMarker : mvpMapMarkers) {
-                       for(const auto& realMarker : realMarkerIds[idx]) {
-                            if(detMarker->getId() == realMarker) {
+                    for (const auto &detMarker : mvpMapMarkers)
+                    {
+                        for (const auto &realMarker : realMarkerIds[idx])
+                        {
+                            if (detMarker->getId() == realMarker)
+                            {
                                 detMarkerinRoom = true;
                                 break;
                             }
                         }
-                        if(detMarkerinRoom)
+                        if (detMarkerinRoom)
                             break;
-                    }   
-                    
+                    }
+
                     // Create a new room
-                    if (allFound && detMarkerinRoom) {
-                       createMapRoom(envRoom, realMarkerIds[idx]);
-                       currentFoundRooms.push_back(envRoom);
+                    if (allFound && detMarkerinRoom)
+                    {
+                        createMapRoom(envRoom, realMarkerIds[idx]);
+                        currentFoundRooms.push_back(envRoom);
                     }
                 }
             }

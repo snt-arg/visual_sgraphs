@@ -168,36 +168,33 @@ namespace ORB_SLAM3
 
         /**
          * @brief Calculation of plane equation from map points
-         * 
-        */
-        bool getPlaneEquationFromPoints(const Marker* currentMarker, Eigen::Vector4d& planeEstimate);
+         * @param currentMarker the address of the currently observing marker
+         * @param planeEstimate the plane estimation of the current wall
+         */
+        bool getPlaneEquationFromPoints(const Marker *currentMarker, Eigen::Vector4d &planeEstimate);
 
         /**
          * @brief Get the points close to a given location
-         * 
-         * @param points 
-         * @param location 
-         * @param distanceThreshold  
+         * @param points the set of map-points
+         * @param location the given location
+         * @param distanceThreshold the pre-defined threshold
          */
-        std::vector<MapPoint*> findPointsCloseToLocation(const std::vector<MapPoint*>& points,
-                                                               const Eigen::Vector3f& location,
-                                                               double distanceThreshold);
+        std::vector<MapPoint *> findPointsCloseToLocation(const std::vector<MapPoint *> &points,
+                                                          const Eigen::Vector3f &location,
+                                                          double distanceThreshold);
 
         /**
-         * @brief Calculate L2 norm between points
-         * 
-         * @param point1 
-         * @param point2 
-         *
+         * @brief Calculate L2-norm between two given points
+         * @param point1 first point
+         * @param point2 second point
          */
-        double calculateDistance(const Eigen::Vector3f& p1, const Eigen::Vector3f& p2);    
+        double calculateDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2);
 
         /**
-         * @brief Perform PCL ransac to get the plane equation from the points
-         * 
-         * @param points 
+         * @brief Perform PCL ransac to get the plane equation from the points         *
+         * @param points the set of given map-points
          */
-        Eigen::Vector4d ransacPlaneFitting(const std::vector<MapPoint*>& points);    
+        Eigen::Vector4d ransacPlaneFitting(const std::vector<MapPoint *> &points);
 
         /**
          * @brief Checks to see if the marker is attached to a wall or not (e.g., a door)
@@ -252,15 +249,23 @@ namespace ORB_SLAM3
          */
         void createMapRoom(Room *detectedRoom, std::vector<int> markerIds);
 
+        /**
+         * @brief Extracts all the walls related to a room
+         * @param detectedRoom the address of the detected room
+         */
         void reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom);
 
         /**
          * @brief Early creation of a room as soon as all elements of at least one of its pairs has been seen
          * (e.g., if all elements of [[1,2,3,4]] or both 1 & 2 in [[1,2][3,4]] visited)
          */
-        std::vector<Room *> earlyRoomDetection(const std::vector<Marker *>& mvpMapMarkers);
+        std::vector<Room *> earlyRoomDetection(const std::vector<Marker *> &mvpMapMarkers);
 
-        ORB_SLAM3::Room* roomAssociation(const ORB_SLAM3::Room *detectedRoom);
+        /**
+         * @brief Checks for the association of a given room
+         * @param detectedRoom the address of the detected room
+         */
+        ORB_SLAM3::Room *roomAssociation(const ORB_SLAM3::Room *detectedRoom);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

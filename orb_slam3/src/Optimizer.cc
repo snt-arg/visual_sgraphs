@@ -1289,7 +1289,6 @@ namespace ORB_SLAM3
         return nInitialCorrespondences - nBad;
     }
 
-
     void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF,
                                           int &num_OptKF, int &num_MPs, int &num_edges, std::list<Room *> vpRooms)
     {
@@ -1374,46 +1373,47 @@ namespace ORB_SLAM3
         // Get all the currently detected Rooms (Local Optimization)
         lLocalMapRooms = vpRooms;
         list<Wall *> lRecentLocalMapWalls;
-        //based on the added room, check all its walls and add then to add it llocalwall if not added
+        // based on the added room, check all its walls and add then to add it llocalwall if not added
         for (list<Room *>::iterator idx = lLocalMapRooms.begin(), vend = lLocalMapRooms.end(); idx != vend; idx++)
-        {   
-            vector<Wall*> roomWalls = (*idx)->getWalls();   
-            for(const auto& roomWall : roomWalls) 
-            {   
-                auto foundWall = std::find_if(lLocalMapWalls.begin(), lLocalMapWalls.end(), boost::bind(&Wall::getId, _1) == roomWall->getId()); 
-                if(foundWall == lLocalMapWalls.end()) {
-                  lLocalMapWalls.push_back(roomWall);   
-                  lRecentLocalMapWalls.push_back(roomWall);             
+        {
+            vector<Wall *> roomWalls = (*idx)->getWalls();
+            for (const auto &roomWall : roomWalls)
+            {
+                auto foundWall = std::find_if(lLocalMapWalls.begin(), lLocalMapWalls.end(), boost::bind(&Wall::getId, _1) == roomWall->getId());
+                if (foundWall == lLocalMapWalls.end())
+                {
+                    lLocalMapWalls.push_back(roomWall);
+                    lRecentLocalMapWalls.push_back(roomWall);
                 }
             }
         }
 
-        //loop through the recent added rooms walls and get all the markers and add them
+        // loop through the recent added rooms walls and get all the markers and add them
         list<Marker *> lRecentLocalMapMarkers;
-        for (list<Wall *>::iterator idx = lRecentLocalMapWalls.begin(), vend = lRecentLocalMapWalls.end(); idx != vend; idx++) 
-        {   
-            vector<Marker*> wallMarkers = (*idx)->getMarkers();
-            for(const auto& wallMarker : wallMarkers) 
+        for (list<Wall *>::iterator idx = lRecentLocalMapWalls.begin(), vend = lRecentLocalMapWalls.end(); idx != vend; idx++)
+        {
+            vector<Marker *> wallMarkers = (*idx)->getMarkers();
+            for (const auto &wallMarker : wallMarkers)
             {
-                auto foundMarker = std::find_if(lLocalMapMarkers.begin(), lLocalMapMarkers.end(), boost::bind(&Marker::getId, _1) == wallMarker->getId()); 
-                if(foundMarker == lLocalMapMarkers.end())
+                auto foundMarker = std::find_if(lLocalMapMarkers.begin(), lLocalMapMarkers.end(), boost::bind(&Marker::getId, _1) == wallMarker->getId());
+                if (foundMarker == lLocalMapMarkers.end())
                 {
                     lLocalMapMarkers.push_back(wallMarker);
                     lRecentLocalMapMarkers.push_back(wallMarker);
-                } 
+                }
             }
         }
 
-
-        //loop through the recent added room walls and add their map points
+        // loop through the recent added room walls and add their map points
         list<MapPoint *> lRecentLocalMapPoints;
-        for (list<Wall *>::iterator idx = lRecentLocalMapWalls.begin(), vend = lRecentLocalMapWalls.end(); idx != vend; idx++) 
+        for (list<Wall *>::iterator idx = lRecentLocalMapWalls.begin(), vend = lRecentLocalMapWalls.end(); idx != vend; idx++)
         {
-            set<MapPoint *> mapPoints =  (*idx)->getMapPoints();
-            for(const auto& mapPoint : mapPoints) 
+            set<MapPoint *> mapPoints = (*idx)->getMapPoints();
+            for (const auto &mapPoint : mapPoints)
             {
-                auto foundPoint = std::find_if(lLocalMapPoints.begin(), lLocalMapPoints.end(), [mapPoint](const MapPoint* p) { return p == mapPoint; }); 
-                if(foundPoint == lLocalMapPoints.end()) 
+                auto foundPoint = std::find_if(lLocalMapPoints.begin(), lLocalMapPoints.end(), [mapPoint](const MapPoint *p)
+                                               { return p == mapPoint; });
+                if (foundPoint == lLocalMapPoints.end())
                 {
                     lLocalMapPoints.push_back(mapPoint);
                     lRecentLocalMapPoints.push_back(mapPoint);
@@ -1421,36 +1421,37 @@ namespace ORB_SLAM3
             }
         }
 
-        //loop through the recent added markers and add their keyframes
-        for (list<Marker *>::iterator idx = lRecentLocalMapMarkers.begin(), vend = lRecentLocalMapMarkers.end(); idx != vend; idx++) 
+        // loop through the recent added markers and add their keyframes
+        for (list<Marker *>::iterator idx = lRecentLocalMapMarkers.begin(), vend = lRecentLocalMapMarkers.end(); idx != vend; idx++)
         {
             std::map<KeyFrame *, Sophus::SE3f> markerObservations = (*idx)->getObservations();
-             for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = markerObservations.begin(), obLast = markerObservations.end(); obsId != obLast; obsId++)
+            for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = markerObservations.begin(), obLast = markerObservations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
-                auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame * k) { return k == pKFi; }); 
-                if(foundKeyframe == lLocalKeyFrames.end()) 
+                auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame *k)
+                                                  { return k == pKFi; });
+                if (foundKeyframe == lLocalKeyFrames.end())
                 {
                     lLocalKeyFrames.push_back(pKFi);
                 }
             }
         }
 
-          //loop through the recent added mappoints and add their keyframes
-        for (list<MapPoint *>::iterator idx = lRecentLocalMapPoints.begin(), vend = lRecentLocalMapPoints.end(); idx != vend; idx++) 
+        // loop through the recent added mappoints and add their keyframes
+        for (list<MapPoint *>::iterator idx = lRecentLocalMapPoints.begin(), vend = lRecentLocalMapPoints.end(); idx != vend; idx++)
         {
             std::map<KeyFrame *, std::tuple<int, int>> mapPointObservations = (*idx)->GetObservations();
-             for (std::map<KeyFrame *, std::tuple<int, int>>::const_iterator obsId = mapPointObservations.begin(), obLast = mapPointObservations.end(); obsId != obLast; obsId++)
+            for (std::map<KeyFrame *, std::tuple<int, int>>::const_iterator obsId = mapPointObservations.begin(), obLast = mapPointObservations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
-                auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame * k) { return k == pKFi; }); 
-                if(foundKeyframe == lLocalKeyFrames.end()) 
+                auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame *k)
+                                                  { return k == pKFi; });
+                if (foundKeyframe == lLocalKeyFrames.end())
                 {
                     lLocalKeyFrames.push_back(pKFi);
                 }
             }
         }
-
 
         // Fixed Keyframes (Keyframes that see Local MapPoints but that are not Local Keyframes)
         list<KeyFrame *> lFixedCameras;
@@ -1781,7 +1782,7 @@ namespace ORB_SLAM3
         maxOpId += nWalls;
 
         for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
-        {   
+        {
             // Adding a vertex for each room
             Room *pMapRoom = *idx;
             g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
@@ -1831,8 +1832,8 @@ namespace ORB_SLAM3
         }
         maxOpId += nRooms;
 
-        //Add doors connected to the rooms in the current local optimization
-        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++) 
+        // Add doors connected to the rooms in the current local optimization
+        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
         {
             Room *pMapRoom = *idx;
             vector<Door *> doors = pMapRoom->getDoors();
@@ -1867,7 +1868,6 @@ namespace ORB_SLAM3
                 rk->setDelta(thHuberMono);
                 optimizer.addEdge(e);
             }
-
         }
         maxOpId += nDoors;
 
@@ -1981,15 +1981,15 @@ namespace ORB_SLAM3
         }
 
         // Locally Optimized Rooms
-        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++) 
+        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
         {
             Room *pMapRoom = *idx;
             g2o::VertexSE3Expmap *vRoom = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapRoom->getOpId()));
             g2o::SE3Quat SE3quat = vRoom->estimate();
             pMapRoom->setRoomCenter(SE3quat.translation());
-            
+
             // Locally Optimized Doors
-            for(const auto door : pMapRoom->getDoors()) 
+            for (const auto door : pMapRoom->getDoors())
             {
                 Door *pMapDoor = door;
                 g2o::VertexSE3Expmap *vDoor = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapDoor->getOpId()));
