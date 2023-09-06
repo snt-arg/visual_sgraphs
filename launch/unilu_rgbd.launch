@@ -2,7 +2,7 @@
     <param name="use_sim_time" value="true" />
     <!-- Default values -->
     <!-- Which semantic data file should be loaded? -->
-    <arg name="env_database" default="ulms_seq03_jfk_e04.json" />
+    <arg name="env_database" default="ulms_seq03_jfk_e04_ofc.json" />
 
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_rgbd" output="screen">

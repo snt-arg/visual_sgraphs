@@ -23,29 +23,9 @@
                 14,
                 23,
                 29,
+                38,
                 39,
                 41
-            ]
-        },
-        {
-            "name": "HR Corridor",
-            "markers": [
-                [
-                    3,
-                    10
-                ],
-                [
-                    4,
-                    5
-                ]
-            ],
-            "doorMarkers": [
-                6,
-                7,
-                13,
-                21,
-                22,
-                26
             ]
         },
         {
@@ -155,26 +135,6 @@
         {
             "name": "ARG Corridor Exit",
             "marker": 39
-        },
-        {
-            "name": "HR Corridor Exit",
-            "marker": 26
-        },
-        {
-            "name": "Room 401 Door",
-            "marker": 7
-        },
-        {
-            "name": "Room 402 Door",
-            "marker": 6
-        },
-        {
-            "name": "Room 416 Door",
-            "marker": 13
-        },
-        {
-            "name": "Room 417 Door",
-            "marker": 22
         }
     ]
 }
