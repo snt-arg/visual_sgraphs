@@ -1645,30 +1645,33 @@ namespace ORB_SLAM3
                         obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
 
                         g2o::EdgeStereoSE3ProjectXYZ *e = new g2o::EdgeStereoSE3ProjectXYZ();
+                        
+                        if(optimizer.vertex(id) && optimizer.vertex(pKFi->mnId)) 
+                        {
+                            e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
+                            e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                            e->setMeasurement(obs);
+                            const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
+                            Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
+                            e->setInformation(Info);
 
-                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
-                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
-                        e->setMeasurement(obs);
-                        const float &invSigma2 = pKFi->mvInvLevelSigma2[kpUn.octave];
-                        Eigen::Matrix3d Info = Eigen::Matrix3d::Identity() * invSigma2;
-                        e->setInformation(Info);
+                            g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                            e->setRobustKernel(rk);
+                            rk->setDelta(thHuberStereo);
 
-                        g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                        e->setRobustKernel(rk);
-                        rk->setDelta(thHuberStereo);
+                            e->fx = pKFi->fx;
+                            e->fy = pKFi->fy;
+                            e->cx = pKFi->cx;
+                            e->cy = pKFi->cy;
+                            e->bf = pKFi->mbf;
 
-                        e->fx = pKFi->fx;
-                        e->fy = pKFi->fy;
-                        e->cx = pKFi->cx;
-                        e->cy = pKFi->cy;
-                        e->bf = pKFi->mbf;
+                            optimizer.addEdge(e);
+                            vpEdgesStereo.push_back(e);
+                            vpEdgeKFStereo.push_back(pKFi);
+                            vpMapPointEdgeStereo.push_back(pMP);
 
-                        optimizer.addEdge(e);
-                        vpEdgesStereo.push_back(e);
-                        vpEdgeKFStereo.push_back(pKFi);
-                        vpMapPointEdgeStereo.push_back(pMP);
-
-                        nEdges++;
+                            nEdges++;
+                        }
                     }
 
                     if (pKFi->mpCamera2)
@@ -1685,27 +1688,30 @@ namespace ORB_SLAM3
 
                             ORB_SLAM3::EdgeSE3ProjectXYZToBody *e = new ORB_SLAM3::EdgeSE3ProjectXYZToBody();
 
-                            e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
-                            e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
-                            e->setMeasurement(obs);
-                            const float &invSigma2 = pKFi->mvInvLevelSigma2[kp.octave];
-                            e->setInformation(Eigen::Matrix2d::Identity() * invSigma2);
+                            if(optimizer.vertex(id) && optimizer.vertex(pKFi->mnId)) 
+                            {
+                                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
+                                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                                e->setMeasurement(obs);
+                                const float &invSigma2 = pKFi->mvInvLevelSigma2[kp.octave];
+                                e->setInformation(Eigen::Matrix2d::Identity() * invSigma2);
 
-                            g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                            e->setRobustKernel(rk);
-                            rk->setDelta(thHuberMono);
+                                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                                e->setRobustKernel(rk);
+                                rk->setDelta(thHuberMono);
 
-                            Sophus::SE3f Trl = pKFi->GetRelativePoseTrl();
-                            e->mTrl = g2o::SE3Quat(Trl.unit_quaternion().cast<double>(), Trl.translation().cast<double>());
+                                Sophus::SE3f Trl = pKFi->GetRelativePoseTrl();
+                                e->mTrl = g2o::SE3Quat(Trl.unit_quaternion().cast<double>(), Trl.translation().cast<double>());
 
-                            e->pCamera = pKFi->mpCamera2;
+                                e->pCamera = pKFi->mpCamera2;
 
-                            optimizer.addEdge(e);
-                            vpEdgesBody.push_back(e);
-                            vpEdgeKFBody.push_back(pKFi);
-                            vpMapPointEdgeBody.push_back(pMP);
+                                optimizer.addEdge(e);
+                                vpEdgesBody.push_back(e);
+                                vpEdgeKFBody.push_back(pKFi);
+                                vpMapPointEdgeBody.push_back(pMP);
 
-                            nEdges++;
+                                nEdges++;
+                            }
                         }
                     }
                 }
@@ -1736,19 +1742,23 @@ namespace ORB_SLAM3
                 KeyFrame *pKFi = obsId->first;
                 Sophus::SE3f MarkerLocalObs = obsId->second;
                 ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
 
-                Eigen::Isometry3d MarkerLocalObsIso = Eigen::Isometry3d::Identity();
-                MarkerLocalObsIso.matrix() = MarkerLocalObs.cast<double>().matrix();
-                e->setMeasurement(MarkerLocalObsIso);
-                double markerInfo = 0.1; // [TODO] Should read from marker score in aruco_ros
-                Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
-                e->setInformation(informationMat * markerInfo);
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
+                if(optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
+                { 
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+
+                    Eigen::Isometry3d MarkerLocalObsIso = Eigen::Isometry3d::Identity();
+                    MarkerLocalObsIso.matrix() = MarkerLocalObs.cast<double>().matrix();
+                    e->setMeasurement(MarkerLocalObsIso);
+                    double markerInfo = 0.1; // [TODO] Should read from marker score in aruco_ros
+                    Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
+                    e->setInformation(informationMat * markerInfo);
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberMono);
+                    optimizer.addEdge(e);
+                }
             }
         }
 
@@ -1773,16 +1783,19 @@ namespace ORB_SLAM3
             vector<Marker *> attachedMarkers = pMapWall->getMarkers();
             for (const auto &wallMarker : attachedMarkers)
             {
-                // Adding an edge between the Wall and the Marker
-                ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(wallMarker->getOpId())));
-                e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
+                if(optimizer.vertex(opId) && optimizer.vertex(wallMarker->getOpId()))
+                {
+                    // Adding an edge between the Wall and the Marker
+                    ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(wallMarker->getOpId())));
+                    e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
 
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberMono);
+                    optimizer.addEdge(e);
+                }
             }
         }
         maxOpId += nWalls;
@@ -1807,34 +1820,40 @@ namespace ORB_SLAM3
             // Get list of walls of the room
             vector<Wall *> walls = pMapRoom->getWalls();
             if (walls.size() == 2)
-            {
-                // Adding an edge between the room and the two walls
-                ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
-                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
-                e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+            {   
+                if(optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()))
+                {            
+                    //Adding an edge between the room and the two walls
+                    ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
+                    e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
+                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
 
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberMono);
+                    optimizer.addEdge(e);
+                }
             }
             else if (walls.size() == 4)
             {
-                // Adding an edge between the room and the two walls
-                ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
-                e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
-                e->setVertex(3, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[2]->getOpId())));
-                e->setVertex(4, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[3]->getOpId())));
-                e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+                if(optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()) && optimizer.vertex(walls[2]->getOpId()) && optimizer.vertex(walls[2]->getOpId()))
+                {
+                    // Adding an edge between the room and the two walls
+                    ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
+                    e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
+                    e->setVertex(3, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[2]->getOpId())));
+                    e->setVertex(4, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[3]->getOpId())));
+                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
 
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberMono);
+                    optimizer.addEdge(e);
+                }
             }
         }
         maxOpId += nRooms;
@@ -1858,22 +1877,25 @@ namespace ORB_SLAM3
                 // Setting the local optimization ID for the door
                 door->setOpId(opId);
 
-                // Adding an edge between the room and the door
-                ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpId())));
-                e->setInformation(Eigen::MatrixXd::Identity(6, 6));
+                if(optimizer.vertex(opId) && optimizer.vertex(door->getOpId()))
+                {
+                    // Adding an edge between the room and the door
+                    ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpId())));
+                    e->setInformation(Eigen::MatrixXd::Identity(6, 6));
 
-                Eigen::Isometry3d relativePose = Eigen::Isometry3d::Identity();
-                relativePose.matrix() = (dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(pMapRoom->getOpId())))->estimate().inverse() *
-                                         dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
-                                            .to_homogeneous_matrix();
-                e->setMeasurement(relativePose);
+                    Eigen::Isometry3d relativePose = Eigen::Isometry3d::Identity();
+                    relativePose.matrix() = (dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(pMapRoom->getOpId())))->estimate().inverse() *
+                                            dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
+                                                .to_homogeneous_matrix();
+                    e->setMeasurement(relativePose);
 
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuberMono);
-                optimizer.addEdge(e);
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberMono);
+                    optimizer.addEdge(e);
+                }
             }
         }
         maxOpId += nDoors;
