@@ -1,0 +1,73 @@
+{
+    "rooms": [
+        {
+            "name": "Block A/B Corridor",
+            "markers": [
+                [
+                    10,
+                    11
+                ]
+            ],
+            "doorMarkers": [
+            ]
+        },
+        {
+            "name": "Block A Corridor",
+            "markers": [
+                [
+                    2,
+                    7
+                ]
+            ],
+            "doorMarkers": [
+                17
+            ]
+        },
+        {
+            "name": "Block B Corridor",
+            "markers": [
+                [
+                    3,
+                    15
+                ]
+            ],
+            "doorMarkers": [
+                0
+            ]
+        },
+        {
+            "name": "Block C Corridor",
+            "markers": [
+                [
+                    13,
+                    26
+                ]
+            ],
+            "doorMarkers": [
+            ]
+        },
+        {
+            "name": "Study Room",
+            "markers": [
+                [
+                    8,
+                    12,
+                    14,
+                    33
+                ]
+            ],
+            "doorMarkers": [
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Devider Block B Door",
+            "marker": 0
+        },
+        {
+            "name": "Devider Block A Door",
+            "marker": 17
+        }
+    ]
+}
