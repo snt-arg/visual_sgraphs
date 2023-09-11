@@ -4559,7 +4559,7 @@ namespace ORB_SLAM3
         newMapWall->SetMap(mpAtlas->GetCurrentMap());
         newMapWall->setId(mpAtlas->GetAllWalls().size());
 
-        std::cout << "Adding new wall: Wall#" << newMapWall->getId() << ", with Marker#"
+        std::cout << "Adding new wall: Wall#" << newMapWall->getId() << " with Equation " << newMapWall->getPlaneEquation().coeffs() << ", with Marker#"
                   << attachedMarker->getId() << " attached on it!" << std::endl;
 
         // Loop to find the points lying on wall
@@ -4606,7 +4606,7 @@ namespace ORB_SLAM3
             planeEquation(3);
 
         // Apply a threshold
-        if (pointPlaneDist < 0.01)
+        if (fabs(pointPlaneDist) < 0.01)
             return true;
 
         return false;
