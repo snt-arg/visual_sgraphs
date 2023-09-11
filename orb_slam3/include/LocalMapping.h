@@ -167,6 +167,8 @@ namespace ORB_SLAM3
         std::list<MapPoint *> mlpRecentAddedMapPoints;
 
         std::mutex mMutexNewKFs;
+        std::mutex mMutexNewRooms;
+
 
         bool mbAbortBA;
 

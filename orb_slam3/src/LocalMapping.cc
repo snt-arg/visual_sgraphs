@@ -290,7 +290,7 @@ namespace ORB_SLAM3
 
     void LocalMapping::InsertRoom(Room *pRoom)
     {
-        unique_lock<mutex> lock(mMutexNewKFs);
+        unique_lock<mutex> lock(mMutexNewRooms);
         mlDetRooms.push_back(pRoom);
     }
 
@@ -874,6 +874,7 @@ namespace ORB_SLAM3
         for (list<KeyFrame *>::iterator lit = mlNewKeyFrames.begin(), lend = mlNewKeyFrames.end(); lit != lend; lit++)
             delete *lit;
         mlNewKeyFrames.clear();
+        mlDetRooms.clear();
 
         cout << "Local Mapping RELEASE" << endl;
     }
@@ -1117,6 +1118,7 @@ namespace ORB_SLAM3
                 cout << "LM: Reseting Atlas in Local Mapping..." << endl;
                 mlNewKeyFrames.clear();
                 mlpRecentAddedMapPoints.clear();
+                mlDetRooms.clear();
                 mbResetRequested = false;
                 mbResetRequestedActiveMap = false;
 
@@ -1137,6 +1139,7 @@ namespace ORB_SLAM3
                 cout << "LM: Reseting current map in Local Mapping..." << endl;
                 mlNewKeyFrames.clear();
                 mlpRecentAddedMapPoints.clear();
+                mlDetRooms.clear();
 
                 // Inertial parameters
                 mTinit = 0.f;
