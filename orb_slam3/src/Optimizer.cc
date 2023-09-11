@@ -1645,8 +1645,8 @@ namespace ORB_SLAM3
                         obs << kpUn.pt.x, kpUn.pt.y, kp_ur;
 
                         g2o::EdgeStereoSE3ProjectXYZ *e = new g2o::EdgeStereoSE3ProjectXYZ();
-                        
-                        if(optimizer.vertex(id) && optimizer.vertex(pKFi->mnId)) 
+
+                        if (optimizer.vertex(id) && optimizer.vertex(pKFi->mnId))
                         {
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
                             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
@@ -1688,7 +1688,7 @@ namespace ORB_SLAM3
 
                             ORB_SLAM3::EdgeSE3ProjectXYZToBody *e = new ORB_SLAM3::EdgeSE3ProjectXYZToBody();
 
-                            if(optimizer.vertex(id) && optimizer.vertex(pKFi->mnId)) 
+                            if (optimizer.vertex(id) && optimizer.vertex(pKFi->mnId))
                             {
                                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
                                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
@@ -1743,8 +1743,8 @@ namespace ORB_SLAM3
                 Sophus::SE3f MarkerLocalObs = obsId->second;
                 ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
 
-                if(optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
-                { 
+                if (optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
+                {
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
 
@@ -1783,7 +1783,7 @@ namespace ORB_SLAM3
             vector<Marker *> attachedMarkers = pMapWall->getMarkers();
             for (const auto &wallMarker : attachedMarkers)
             {
-                if(optimizer.vertex(opId) && optimizer.vertex(wallMarker->getOpId()))
+                if (optimizer.vertex(opId) && optimizer.vertex(wallMarker->getOpId()))
                 {
                     // Adding an edge between the Wall and the Marker
                     ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
@@ -1820,10 +1820,10 @@ namespace ORB_SLAM3
             // Get list of walls of the room
             vector<Wall *> walls = pMapRoom->getWalls();
             if (walls.size() == 2)
-            {   
-                if(optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()))
-                {            
-                    //Adding an edge between the room and the two walls
+            {
+                if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()))
+                {
+                    // Adding an edge between the room and the two walls
                     ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
@@ -1838,7 +1838,7 @@ namespace ORB_SLAM3
             }
             else if (walls.size() == 4)
             {
-                if(optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()) && optimizer.vertex(walls[2]->getOpId()) && optimizer.vertex(walls[2]->getOpId()))
+                if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()) && optimizer.vertex(walls[2]->getOpId()) && optimizer.vertex(walls[2]->getOpId()))
                 {
                     // Adding an edge between the room and the two walls
                     ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
@@ -1877,7 +1877,7 @@ namespace ORB_SLAM3
                 // Setting the local optimization ID for the door
                 door->setOpId(opId);
 
-                if(optimizer.vertex(opId) && optimizer.vertex(door->getOpId()))
+                if (optimizer.vertex(opId) && optimizer.vertex(door->getOpId()))
                 {
                     // Adding an edge between the room and the door
                     ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
@@ -1887,7 +1887,7 @@ namespace ORB_SLAM3
 
                     Eigen::Isometry3d relativePose = Eigen::Isometry3d::Identity();
                     relativePose.matrix() = (dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(pMapRoom->getOpId())))->estimate().inverse() *
-                                            dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
+                                             dynamic_cast<g2o::VertexSE3Expmap *>((optimizer.vertex(door->getOpId())))->estimate())
                                                 .to_homogeneous_matrix();
                     e->setMeasurement(relativePose);
 
