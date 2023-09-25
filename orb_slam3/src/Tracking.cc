@@ -4606,7 +4606,7 @@ namespace ORB_SLAM3
             planeEquation(3);
 
         // Apply a threshold
-        if (fabs(pointPlaneDist) < 0.01)
+        if (fabs(pointPlaneDist) < 0.1)
             return true;
 
         return false;
