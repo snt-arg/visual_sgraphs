@@ -40,6 +40,10 @@ make
 sudo make install
 ```
 
+### 🦊 Voxblox
+
+Install `Voxblox` based on the installation guide introduced [here](https://voxblox.readthedocs.io/en/latest/pages/Installation.html), and to make sure if it works fine, try [running it](https://voxblox.readthedocs.io/en/latest/pages/Running-Voxblox.html) on a simple dataset, such as the `basement dataset`.
+
 ### `hector-trajectory-server` (optional)
 
 Using this library you can visualize the real-time trajectory of `camera/IMU`.
