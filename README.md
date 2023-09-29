@@ -188,16 +188,16 @@ To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligne
 | `roll`, `yaw`, and `pitch`                           | poses and dimensions of movement                                                                                                       |
 | `map_frame_id`, `world_frame_id`, and `cam_frame_id` | different frame identifiers                                                                                                            |
 
-### Save and load map
+## Save and load map
 
 The map file will have `.osa` extension, and is located in the `ROS_HOME` folder (`~/.ros/` by default).
 
-#### Load map:
+### Load map:
 
 - Set the name of the map file to be loaded with `System.LoadAtlasFromFile` param in the settings file (`.yaml`).
 - If the map file is not available, `System.LoadAtlasFromFile` param should be commented out otherwise there will be error.
 
-#### Save map:
+### Save map:
 
 - **Option 1**: If `System.SaveAtlasToFile` is set in the settings file, the map file will be automatically saved when you kill the ros node.
 - **Option 2**: You can also call the following ros service at the end of the session
@@ -211,7 +211,22 @@ rosservice call /orb_slam3/save_map [file_name]
 - `rosservice call /orb_slam3/save_map [file_name]`: save the map as `[file_name].osa` in `ROS_HOME` folder.
 - `rosservice call /orb_slam3/save_traj [file_name]`: save the estimated trajectory of camera and keyframes as `[file_name]_cam_traj.txt` and `[file_name]_kf_traj.txt` in `ROS_HOME` folder.
 
-### Docker
+## 📊 Evaluation
+
+In order to evaluate the current method with others, such as UcoSLAM, ORB-SLAM 3.0, etc., you need to follow the below instructions:
+
+- Prepare the `.txt` file containing robot poses, generated using a framework:
+  1. Run `generate_pose_txt_files.py` in the `evaluation` folder of this repository.
+     - Declare the file path to be saved, the slame method you want to obtain the poses, the dataset name, etc. before running it. For instance, if `slam_pose_semorb3_seq01.txt` is generated, it means it contain the SLAM poses of `Semantic ORB-SLAM 3.0` on `Seq01` dataset instance.
+     - It will create a new `txt` file, and the poses will be added there.
+  2. Run the framework you need for the evaluation:
+     - For `S-Graphs`, the file is generated while running it on a rosbag file.
+     - For `ORB-SLAM 3.0 (ROS version)` and `Semantic ORB-SLAM 3.0 (current repo)`, they need to be run and a rosbag should be played to fill the `txt` file.
+     - For `UcoSLAM` and `Semantic UcoSLAM`, we need to have the poses created in a new way. Accordingly, we need to put the poses created by the `S-Graphs` in `/tmp/timestamp.txt`, and then run the codes from the [ros-wrapper](https://github.com/snt-arg/ucoslam_ros_wrapper/tree/main/src):
+       - UcoSLAM: `rosrun ucoslam_ros ucoslam_ros_video /[PATH]/vid.mp4 [PATH]/ucoslam_ros_wrapper/config/realsense_color_640_480_spot.yml -aruco-markerSize 0.78 -dict ARUCO -voc [PATH]/ucoslam_ros_wrapper/config/orb.fbow`
+       - Semantic UcoSLAM: `rosrun ucoslam_ros ucoslam_ros_semantics_video /[PATH]/vid.mp4 [PATH]/ucoslam_ros_wrapper/config/realsense_color_640_480_spot.yml -aruco-markerSize 0.78 -dict ARUCO -voc [PATH]/ucoslam_ros_wrapper/config/orb.fbow`
+
+## 🐋 Docker
 
 Provided [Dockerfile](Dockerfile) sets up an image based a ROS noetic environment including RealSense SDK
 
@@ -221,4 +236,4 @@ To access a USB device (such as RealSense camera) inside docker container use:
 docker run --network host --privileged -v /dev:/dev -it [image_name]
 ```
 
-> **_NOTE:_** `--network host` is recommended to listen to rostopics outside the container
+> **_NOTE:_** `--network host` is recommended to listen to rostopics outside the container.
