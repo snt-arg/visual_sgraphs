@@ -112,7 +112,11 @@ You can find the configuration files for the application in the `config` folder.
 | RGB-D-Inertial  | [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/)                                                                 | `roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch` <br /> `rosbag play Normal.bag --clock`                                                                                                                  | decompress the downloaded bag using `rosbag decompress Normal.bag` and change the params in `RealSense_D435i.yaml` if necessary.                            |
 | RGB-D-Inertial  | Live (\*)                                                                                                                                                                                                       | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true unite_imu_method:=linear_interpolation`                                                | follow the hints (\*) - use the sample modified file for RGB-D-Inertial device available [here](doc/realsense2_camera_rs_rgbd.launch)                       |
 
-(\*) For live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
+### ⚠️ Useful Hints
+
+#### 🎞️ Live Mode
+
+For running in live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
 
 ```
 # Catkin workspace folder
@@ -138,6 +142,21 @@ roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
 ```
 
 Moreover, for using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error.
+
+#### 🦊 Voxblox Integration
+
+You need to first create a launch file that can be integrated into this framework. You can find a sample of such launch file [here](doc/voxblox_rs_rgbd.launch). Then, for running `voxblox`, you need to source it and run it in a separate terminal using `roslaunch voxblox_ros unilu_rgbd.launch`.
+
+Additionally, before running the framework, you need to source it, source `voxblox` with a `--extend` command, and then launch the framework.
+
+```
+source /opt/ros/noetic/setup.bash &&
+source ~/[VSGRAPHS_PATH]/devel/setup.bash &&
+source ~/[VOXBLOX_PATH]/devel/setup.bash --extend &&
+roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
+```
+
+[Note] As `voxblox` and `Visual S-Graphs` both need to access/modify TF data, it may become slow. So, in order to run it with less computation cost and avoid chunking the reconstructed map, you may need to run the rosbag file slower using `rosbag play [file] --clock -r 0.5`.
 
 ## 💾 Data Collection
 
