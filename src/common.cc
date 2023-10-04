@@ -405,9 +405,10 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
 
     for (int idx = 0; idx < numDoors; idx++)
     {
-        visualization_msgs::Marker door, doorLines;
         Sophus::SE3f doorPose = doors[idx]->getGlobalPose();
+        visualization_msgs::Marker door, doorLines, doorLabel;
 
+        // Door values
         door.color.a = 0;
         door.ns = "doors";
         door.scale.x = 0.5;
@@ -426,7 +427,6 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         // Rotation and displacement for better visualization
         Sophus::SE3f rotatedDoorPose = doorPose * Sophus::SE3f::rotX(-M_PI_2);
         rotatedDoorPose.translation().y() -= 1.0;
-
         door.pose.position.x = rotatedDoorPose.translation().x();
         door.pose.position.y = rotatedDoorPose.translation().y();
         door.pose.position.z = rotatedDoorPose.translation().z();
@@ -436,6 +436,26 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         door.pose.orientation.w = rotatedDoorPose.unit_quaternion().w();
         doorArray.markers.push_back(door);
 
+        // Door label (name)
+        doorLabel.color.a = 1;
+        doorLabel.color.r = 0;
+        doorLabel.color.g = 0;
+        doorLabel.color.b = 0;
+        doorLabel.scale.z = 0.2;
+        doorLabel.ns = "doorLabel";
+        doorLabel.action = doorLabel.ADD;
+        doorLabel.lifetime = ros::Duration();
+        doorLabel.text = doors[idx]->getName();
+        doorLabel.id = doorArray.markers.size();
+        doorLabel.header.frame_id = wall_frame_id;
+        doorLabel.header.stamp = ros::Time().now();
+        doorLabel.pose.position.x = door.pose.position.x;
+        doorLabel.pose.position.z = door.pose.position.z;
+        doorLabel.pose.position.y = door.pose.position.y - 1.2;
+        doorLabel.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+        doorArray.markers.push_back(doorLabel);
+
+        // Door to points connection line
         doorLines.color.a = 0.5;
         doorLines.color.r = 0.0;
         doorLines.color.g = 0.0;
@@ -443,12 +463,12 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         doorLines.scale.x = 0.005;
         doorLines.scale.y = 0.005;
         doorLines.scale.z = 0.005;
-        doorLines.action = doorLines.ADD;
         doorLines.ns = "doorLines";
+        doorLines.action = doorLines.ADD;
         doorLines.lifetime = ros::Duration();
         doorLines.id = doorArray.markers.size();
-        doorLines.header.stamp = ros::Time().now();
         doorLines.header.frame_id = wall_frame_id;
+        doorLines.header.stamp = ros::Time().now();
         doorLines.type = visualization_msgs::Marker::LINE_LIST;
 
         geometry_msgs::Point point1;
@@ -462,6 +482,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         point2.y = rotatedDoorPose.translation().y();
         point2.z = rotatedDoorPose.translation().z();
         doorLines.points.push_back(point2);
+
         doorArray.markers.push_back(doorLines);
     }
 
