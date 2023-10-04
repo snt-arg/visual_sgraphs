@@ -1,7 +1,7 @@
 {
     "rooms": [
         {
-            "name": "Block A/B Corridor",
+            "name": "Block A/B Corr.",
             "markers": [
                 [
                     10,
@@ -12,7 +12,7 @@
             ]
         },
         {
-            "name": "Block A Corridor",
+            "name": "Block-A Corr.",
             "markers": [
                 [
                     2,
@@ -24,7 +24,7 @@
             ]
         },
         {
-            "name": "Block B Corridor",
+            "name": "Block-B Corr.",
             "markers": [
                 [
                     3,
@@ -36,7 +36,7 @@
             ]
         },
         {
-            "name": "Block C Corridor",
+            "name": "Block-C Corr.",
             "markers": [
                 [
                     13,
@@ -62,11 +62,11 @@
     ],
     "doors": [
         {
-            "name": "Devider Block B Door",
+            "name": "Block-B Door",
             "marker": 0
         },
         {
-            "name": "Devider Block A Door",
+            "name": "Block-A Door",
             "marker": 17
         }
     ]

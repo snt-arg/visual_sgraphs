@@ -1,7 +1,7 @@
 {
     "rooms": [
         {
-            "name": "ARG Corridor",
+            "name": "ARG Corr.",
             "markers": [
                 [
                     15,
@@ -29,7 +29,7 @@
             ]
         },
         {
-            "name": "HR Corridor",
+            "name": "HR Corr.",
             "markers": [
                 [
                     3,
@@ -52,59 +52,59 @@
     ],
     "doors": [
         {
-            "name": "Room 421 Door",
+            "name": "Office-421 Door",
             "marker": 0
         },
         {
-            "name": "Room 422 Door",
+            "name": "Office-422 Door",
             "marker": 11
         },
         {
-            "name": "Room 423 Door",
+            "name": "Office-423 Door",
             "marker": 41
         },
         {
-            "name": "Room 424 Door",
+            "name": "Office-424 Door",
             "marker": 14
         },
         {
-            "name": "Room 425 Door",
+            "name": "Office-425 Door",
             "marker": 23
         },
         {
-            "name": "Room 426 Door",
+            "name": "Office-426 Door",
             "marker": 5
         },
         {
-            "name": "Room 427 Door",
+            "name": "Office-427 Door",
             "marker": 29
         },
         {
-            "name": "Emergency Exit ARG Corridor",
+            "name": "Emergency Exit ARG Door",
             "marker": 38
         },
         {
-            "name": "ARG Corridor Exit",
+            "name": "ARG Corr. Exit Door",
             "marker": 39
         },
         {
-            "name": "HR Corridor Exit",
+            "name": "HR Corr. Exit Door",
             "marker": 26
         },
         {
-            "name": "Room 401 Door",
+            "name": "Office-401 Door",
             "marker": 7
         },
         {
-            "name": "Room 402 Door",
+            "name": "Office-402 Door",
             "marker": 6
         },
         {
-            "name": "Room 416 Door",
+            "name": "Office-416 Door",
             "marker": 13
         },
         {
-            "name": "Room 417 Door",
+            "name": "Office-417 Door",
             "marker": 22
         }
     ]

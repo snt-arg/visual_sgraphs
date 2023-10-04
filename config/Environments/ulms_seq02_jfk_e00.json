@@ -1,7 +1,7 @@
 {
     "rooms": [
         {
-            "name": "Ground Floor Corridor",
+            "name": "GF Corr.",
             "markers": [
                 [
                     24,
@@ -18,7 +18,7 @@
             ]
         },
         {
-            "name": "Nancy/Metz Corridor",
+            "name": "Nancy/Metz Corr.",
             "markers": [
                 [
                     22,
@@ -55,27 +55,27 @@
     ],
     "doors": [
         {
-            "name": "Ground Floor Disabled People Restroom",
+            "name": "GF Restroom Door",
             "marker": 23
         },
         {
-            "name": "Ground Floor Metz Door",
+            "name": "Metz Door",
             "marker": 19
         },
         {
-            "name": "Ground Floor Nancy Door",
+            "name": "Nancy Door",
             "marker": 29
         },
         {
-            "name": "Ground Floor Exit Door",
+            "name": "GF Exit Door",
             "marker": 39
         },
         {
-            "name": "Ground Floor Nancy/Metz Restroom",
+            "name": "Nancy Restroom Door",
             "marker": 31
         },
         {
-            "name": "GF and Nancy/Metz Corridor Connection",
+            "name": "GF and Nancy/Metz Corr. Door",
             "marker": 41
         }
     ]
