@@ -7,16 +7,16 @@
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_rgbd" output="screen">
 
-        <!-- Remap to prepare /camera/rgb/image_raw -->
+        <!-- Remap to prepare the raw image -->
         <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>
 
-        <!-- Change the topics according to the dataset -->
+        <!-- Remap to prepare the depth data -->
         <remap from="/camera/depth_registered/image_raw"    to="/camera/aligned_depth_to_color/image_raw"/>
 
         <!-- Parameters for loading real semantic data from the environment -->
         <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>
 
-        <!-- Parameters for original ORB-SLAM3 -->
+        <!-- Parameters for loading setting files -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
         <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D-Inertial/RealSense_D435i_640_Spot.yaml"/>
 

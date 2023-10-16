@@ -7,17 +7,19 @@
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_rgbd_inertial" output="screen">
 
-        <!-- Remap to prepare /camera/rgb/image_raw -->
+        <!-- Remap to prepare the raw image -->
         <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>
 
-        <!-- Change the topics according to the dataset -->
+        <!-- Remap to prepare the inertial data -->
         <remap from="/imu"                                  to="/camera/imu"/>
+
+        <!-- Remap to prepare the depth data -->
         <remap from="/camera/depth_registered/image_raw"    to="/camera/aligned_depth_to_color/image_raw"/>
 
         <!-- Parameters for loading real semantic data from the environment -->
         <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>
 
-        <!-- Parameters for original ORB-SLAM3 -->
+        <!-- Parameters for loading setting files -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
         <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D-Inertial/RealSense_D435i_640_Spot.yaml"/>        
 
@@ -32,6 +34,11 @@
         <param name="publish_static_transform" type="bool" value="true" />
 
     </node>
+
+    <!-- Transformation parameters -->
+    <node pkg="tf" type="static_transform_publisher" name="wall_to_room" args="0 -3 0 0 0 0 wall room 10" />
+    <node pkg="tf" type="static_transform_publisher" name="world_to_wall" args="0 -3 0 0 0 0 world wall 10" />
+    <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera camera_color_optical_frame 10" />
     
     <!-- Visualization -->
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/unilu_rgbd_imu.rviz" output="screen" />
@@ -54,5 +61,4 @@
         <remap from="depth_registered/points" to="/camera/depth/points"/>
         <remap from="depth_registered/image_rect" to="/camera/aligned_depth_to_color/image_raw"/>
     </node>
-
 </launch>
