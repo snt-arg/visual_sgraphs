@@ -1,20 +1,17 @@
 <launch>
-    <param name="use_sim_time" value="false" />
+    <param name="use_sim_time" value="true" />
     <!-- Default values -->
-    <!-- If true, run roslaunch aruco_ros marker_publisher.launch and modify the marker_publisher.launch content -->
-    <arg name="enable_marker_detector" default="true" />
+    <!-- Which semantic data file should be loaded? -->
+    <arg name="env_database" default="ulms_seq03_jfk_e04_ofc.json" />
 
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_mono" output="screen">
-        
-        <!-- Parameters for ArUco marker detection -->
-        <param name="enable_marker_detection" type="bool" value="$(arg enable_marker_detector)" />
 
-        <!-- Remap to prepare /camera/image_raw -->
+        <!-- Remap to prepare /camera/rgb/image_raw -->
         <remap from="/camera/image_raw" to="/camera/color/image_raw"/>
-        <!-- [Old] Below condition checks what to remap according to enable_marker_detector status -->
-        <!-- <remap unless="$(arg enable_marker_detector)" from="/camera/image_raw" to="/camera/color/image_raw"/> -->
-        <!-- <remap if="$(arg enable_marker_detector)" from="/camera/image_raw" to="/aruco_marker_publisher/result"/> -->
+
+        <!-- Parameters for loading real semantic data from the environment -->
+        <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>
 
         <!-- Parameters for original ORB-SLAM3 -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
@@ -34,6 +31,11 @@
     
     <!-- Visualization -->
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/unilu_mono.rviz" output="screen" />
+
+    <!-- Transformation parameters -->
+    <node pkg="tf" type="static_transform_publisher" name="wall_to_room" args="0 -3 0 0 0 0 wall room 10" />
+    <node pkg="tf" type="static_transform_publisher" name="world_to_wall" args="0 -3 0 0 0 0 world wall 10" />
+    <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera camera_color_optical_frame 10" />
     
     <!-- Trajectory path -->
     <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_server_orb_slam3" output="screen" ns="orb_slam3_ros" >
