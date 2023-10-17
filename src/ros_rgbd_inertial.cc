@@ -1,9 +1,3 @@
-/**
- *
- * Adapted from ORB-SLAM3: Examples/ROS/src/ros_mono_inertial.cc and ros_rgbd.cc
- *
- */
-
 #include "common.h"
 
 using namespace std;
@@ -12,10 +6,11 @@ class ImuGrabber
 {
 public:
     ImuGrabber(){};
+
     void GrabImu(const sensor_msgs::ImuConstPtr &imu_msg);
 
-    queue<sensor_msgs::ImuConstPtr> imuBuf;
     std::mutex mBufMutex;
+    queue<sensor_msgs::ImuConstPtr> imuBuf;
 };
 
 class ImageGrabber
@@ -23,19 +18,22 @@ class ImageGrabber
 public:
     ImageGrabber(ImuGrabber *pImuGb) : mpImuGb(pImuGb) {}
 
-    void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD);
-    cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
     void SyncWithImu();
 
-    queue<sensor_msgs::ImageConstPtr> imgRGBBuf, imgDBuf;
-    std::mutex mBufMutex;
+    void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
+    cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
+    void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD);
+
     ImuGrabber *mpImuGb;
+    std::mutex mBufMutex;
+    queue<sensor_msgs::ImageConstPtr> imgRGBBuf, imgDBuf;
 };
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "RGBD_Inertial");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+
     if (argc > 1)
     {
         ROS_WARN("Arguments supplied via command line are ignored.");
@@ -46,13 +44,21 @@ int main(int argc, char **argv)
     ros::NodeHandle node_handler;
     image_transport::ImageTransport image_transport(node_handler);
 
-    std::string voc_file, settings_file;
+    std::string voc_file, settings_file, json_path;
+    node_handler.param<std::string>(node_name + "/env_file", json_path, "");
     node_handler.param<std::string>(node_name + "/voc_file", voc_file, "file_not_set");
     node_handler.param<std::string>(node_name + "/settings_file", settings_file, "file_not_set");
 
     if (voc_file == "file_not_set" || settings_file == "file_not_set")
     {
         ROS_ERROR("Please provide voc_file and settings_file in the launch file");
+        ros::shutdown();
+        return 1;
+    }
+
+    if (json_path == "file_not_set")
+    {
+        ROS_ERROR("Please provide the JSON file containing environment data in the launch file!");
         ros::shutdown();
         return 1;
     }
@@ -66,28 +72,38 @@ int main(int argc, char **argv)
     node_handler.param<std::string>(node_name + "/imu_frame_id", imu_frame_id, "imu");
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
+    node_handler.param<std::string>(node_name + "/wall_frame_id", wall_frame_id, "wall");
+    node_handler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
     node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
+    // Read environment data containing markers attached to rooms and corridors
+    load_json_values(json_path);
+
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    ImuGrabber imugb;
+    ImageGrabber igb(&imugb);
     sensor_type = ORB_SLAM3::System::IMU_RGBD;
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sensor_type, enable_pangolin);
 
-    ImuGrabber imugb;
-    ImageGrabber igb(&imugb);
-
+    // Subscribe to get raw images and IMU data
     ros::Subscriber sub_imu = node_handler.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb);
-
     message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
     message_filters::Subscriber<sensor_msgs::Image> sub_depth_img(node_handler, "/camera/depth_registered/image_raw", 100);
 
+    // Synchronization of raw and depth images
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2));
 
+    // Subscribe to the markers detected by `aruco_ros` library
+    ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
+                                                       &ImageGrabber::GrabArUcoMarker, &igb);
+
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
 
+    // Syncing images with IMU
     std::thread sync_thread(&ImageGrabber::SyncWithImu, &igb);
 
     ros::spin();
@@ -197,4 +213,10 @@ void ImuGrabber::GrabImu(const sensor_msgs::ImuConstPtr &imu_msg)
     mBufMutex.unlock();
 
     return;
+}
+
+void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
+{
+    // Pass the visited markers to a buffer to be processed later
+    add_markers_to_buffer(marker_array);
 }

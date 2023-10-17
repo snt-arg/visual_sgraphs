@@ -1,9 +1,3 @@
-/**
- *
- * Adapted from ORB-SLAM3: Examples/ROS/src/ros_rgbd.cc
- *
- */
-
 #include "common.h"
 
 using namespace std;
@@ -21,6 +15,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "RGBD");
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
+
     if (argc > 1)
     {
         ROS_WARN("Arguments supplied via command line are ignored.");
@@ -43,8 +38,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
+    if (json_path == "file_not_set")
+    {
+        ROS_ERROR("Please provide the JSON file containing environment data in the launch file!");
+        ros::shutdown();
+        return 1;
+    }
 
     bool enable_pangolin;
     node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
@@ -54,23 +53,24 @@ int main(int argc, char **argv)
     node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
     node_handler.param<std::string>(node_name + "/wall_frame_id", wall_frame_id, "wall");
     node_handler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
+    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Read environment data containing markers attached to rooms and corridors
     load_json_values(json_path);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    ImageGrabber igb;
     sensor_type = ORB_SLAM3::System::RGBD;
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sensor_type, enable_pangolin);
 
-    ImageGrabber igb;
-
+    // Subscribe to get raw images
     message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
     message_filters::Subscriber<sensor_msgs::Image> sub_depth_img(node_handler, "/camera/depth_registered/image_raw", 100);
 
+    // Synchronization of raw and depth images
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
     message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2));
