@@ -112,22 +112,27 @@ namespace ORB_SLAM3
         // Proccess the given stereo frame. Images must be synchronized and rectified.
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Returns the camera pose (empty if tracking fails).
-        Sophus::SE3f TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "");
+        Sophus::SE3f TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
+                                 const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
+                                 const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
+                                 const vector<Room *> envRooms = vector<Room *>{});
 
         // Process the given rgbd frame. Depthmap must be registered to the RGB frame.
         // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Input depthmap: Float (CV_32F).
         // Returns the camera pose (empty if tracking fails).
         Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
-                               const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "", const vector<Marker *> markers = vector<Marker *>{},
-                               const vector<Door *> envDoors = vector<Door *>{}, const vector<Room *> envRooms = vector<Room *>{});
+                               const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
+                               const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
+                               const vector<Room *> envRooms = vector<Room *>{});
 
         // Proccess the given monocular frame and optionally imu data
         // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Returns the camera pose (empty if tracking fails).
         Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp,
                                     const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                                    const vector<Marker *> markers = vector<Marker *>{});
+                                    const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
+                                    const vector<Room *> envRooms = vector<Room *>{});
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();

@@ -42,16 +42,13 @@ namespace ORB_SLAM3
     {
         // Output welcome message
         cout << endl
-             << "Marker-based Semantic ORB-SLAM3 Copyright (C) 2023 Ali Tourani, Hriday Bavle, Jose Luis Sanchez-Lopez, Rafel Munoz-Salinas, and Holger Voos, SnT - University of Luxembourg." << endl
-             << "ORB-SLAM3 Copyright (C) 2017-2020 Carlos Campos, Richard Elvira, Juan J. Gómez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl
-             << "ORB-SLAM2 Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza." << endl
-             << "This program comes with ABSOLUTELY NO WARRANTY;" << endl
-             << "This is free software, and you are welcome to redistribute it" << endl
-             << "under certain conditions. See LICENSE.txt." << endl
+             << "Visual S-Graphs Copyright © 2023 by Ali Tourani, Hriday Bavle, Jose Luis Sanchez-Lopez, and Holger Voos, SnT - University of Luxembourg." << endl
+             << "Based on ORB-SLAM3 Copyright © 2017-2023 by C. Campos, R. Elvira, J.J. Gómez, J.M.M. Montiel, and J.D. Tardós, University of Zaragoza." << endl
+             << "To redistribute the software please see LICENSE.txt." << endl
              << endl;
 
-        cout << "Input sensor was set to: ";
-
+        // Input sensor
+        cout << "Input sensor is set to: ";
         if (mSensor == MONOCULAR)
             cout << "Monocular" << endl;
         else if (mSensor == STEREO)
@@ -160,6 +157,7 @@ namespace ORB_SLAM3
             // usleep(10*1000*1000);
         }
 
+        // If the sensor is integrated with IMU, initialize the IMU first
         if (mSensor == IMU_STEREO || mSensor == IMU_MONOCULAR || mSensor == IMU_RGBD)
             mpAtlas->SetInertialSensor();
 
@@ -191,7 +189,6 @@ namespace ORB_SLAM3
             mpLocalMapper->mbFarPoints = false;
 
         // Initialize the Loop Closing thread and launch
-        //  mSensor!=MONOCULAR && mSensor!=IMU_MONOCULAR
         mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR, activeLC); // mSensor!=MONOCULAR);
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
@@ -204,8 +201,6 @@ namespace ORB_SLAM3
 
         mpLoopCloser->SetTracker(mpTracker);
         mpLoopCloser->SetLocalMapper(mpLocalMapper);
-
-        // usleep(10*1000*1000);
 
         // Initialize the Viewer thread and launch
         if (bUseViewer)
@@ -221,7 +216,9 @@ namespace ORB_SLAM3
         Verbose::SetTh(Verbose::VERBOSITY_QUIET);
     }
 
-    Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp, const vector<IMU::Point> &vImuMeas, string filename)
+    Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
+                                     const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker *> markers,
+                                     const vector<Door *> doors, const vector<Room *> rooms)
     {
         if (mSensor != STEREO && mSensor != IMU_STEREO)
         {
@@ -296,7 +293,8 @@ namespace ORB_SLAM3
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
         // std::cout << "start GrabImageStereo" << std::endl;
-        Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed, imRightToFeed, timestamp, filename);
+        Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed, imRightToFeed, timestamp, filename,
+                                                      markers, doors, rooms);
 
         // std::cout << "out grabber" << std::endl;
 
@@ -387,21 +385,24 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas,
-                                        string filename, const std::vector<Marker *> markers)
+                                        string filename, const std::vector<Marker *> markers,
+                                        const vector<Door *> doors, const vector<Room *> rooms)
     {
-
+        // Multi-thread to prevent race conditions
         {
             unique_lock<mutex> lock(mMutexReset);
             if (mbShutDown)
                 return Sophus::SE3f();
         }
 
+        // Check if the sensor is Monocular
         if (mSensor != MONOCULAR && mSensor != IMU_MONOCULAR)
         {
             cerr << "ERROR: you called TrackMonocular but input sensor was not set to Monocular nor Monocular-Inertial." << endl;
             exit(-1);
         }
 
+        // Obtain the images
         cv::Mat imToFeed = im.clone();
         if (settings_ && settings_->needToResize())
         {
@@ -455,13 +456,12 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename);
+        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename, markers, doors, rooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
         mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
         mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
-
         return Tcw;
     }
 

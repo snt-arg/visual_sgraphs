@@ -1511,8 +1511,14 @@ namespace ORB_SLAM3
         return bStepByStep;
     }
 
-    Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp, string filename)
+    Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp,
+                                           string filename, const std::vector<Marker *> markers,
+                                           const std::vector<Door *> doors, const std::vector<Room *> rooms)
     {
+        // Set arguments to local variables
+        env_doors = doors;
+        env_rooms = rooms;
+
         mImGray = imRectLeft;
         cv::Mat imGrayRight = imRectRight;
         mImRight = imRectRight;
@@ -1618,8 +1624,14 @@ namespace ORB_SLAM3
         return mCurrentFrame.GetPose();
     }
 
-    Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename)
+    Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename,
+                                              const std::vector<Marker *> markers, const std::vector<Door *> doors,
+                                              const std::vector<Room *> rooms)
     {
+        // Set arguments to local variables
+        env_doors = doors;
+        env_rooms = rooms;
+
         mImGray = im;
         if (mImGray.channels() == 3)
         {
