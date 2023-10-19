@@ -1551,13 +1551,21 @@ namespace ORB_SLAM3
         }
 
         if (mSensor == System::STEREO && !mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera);
+            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+                                  mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, NULL, IMU::Calib(),
+                                  markers);
         else if (mSensor == System::STEREO && mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, mpCamera2, mTlr);
+            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+                                  mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, mpCamera2, mTlr,
+                                  NULL, IMU::Calib(), markers);
         else if (mSensor == System::IMU_STEREO && !mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib);
+            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+                                  mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame,
+                                  *mpImuCalib, markers);
         else if (mSensor == System::IMU_STEREO && mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight, mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, mpCamera2, mTlr, &mLastFrame, *mpImuCalib);
+            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+                                  mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, mpCamera2, mTlr,
+                                  &mLastFrame, *mpImuCalib, markers);
 
         mCurrentFrame.mNameFile = filename;
         mCurrentFrame.mnDataset = mnNumDataset;
@@ -1651,18 +1659,22 @@ namespace ORB_SLAM3
         if (mSensor == System::MONOCULAR)
         {
             if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET || (lastID - initID) < mMaxFrames)
-                mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary, mpCamera, mDistCoef, mbf, mThDepth);
+                mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
+                                      mpCamera, mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers);
             else
-                mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mpCamera, mDistCoef, mbf, mThDepth);
+                mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mpCamera,
+                                      mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers);
         }
         else if (mSensor == System::IMU_MONOCULAR)
         {
             if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET)
             {
-                mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary, mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib);
+                mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
+                                      mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers);
             }
             else
-                mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib);
+                mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary,
+                                      mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers);
         }
 
         if (mState == NO_IMAGES_YET)

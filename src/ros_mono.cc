@@ -103,8 +103,21 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
         return;
     }
 
-    // ORB-SLAM3 runs in TrackMonocular()
-    Sophus::SE3f Tcw = pSLAM->TrackMonocular(cv_ptr->image, cv_ptr->header.stamp.toSec());
+    // Find the marker with the minimum time difference compared to the current frame
+    std::pair<double, std::vector<ORB_SLAM3::Marker *>> result = find_nearest_marker(cv_ptr->header.stamp.toSec());
+    double min_time_diff = result.first;
+    std::vector<ORB_SLAM3::Marker *> matched_markers = result.second;
+
+    // Tracking process sends markers found in this frame for tracking and clears the buffer
+    if (min_time_diff < 0.05)
+    {
+        Sophus::SE3f Tcw = pSLAM->TrackMonocular(cv_ptr->image, cv_ptr->header.stamp.toSec(), {},
+                                                 "", matched_markers, env_doors, env_rooms);
+        markers_buff.clear();
+    }
+    else
+        Sophus::SE3f Tcw = pSLAM->TrackMonocular(cv_ptr->image, cv_ptr->header.stamp.toSec());
+
     ros::Time msg_time = msg->header.stamp;
     publish_topics(msg_time);
 }

@@ -62,11 +62,18 @@ namespace ORB_SLAM3
         // Copy constructor.
         Frame(const Frame &frame);
 
-        // Constructor for stereo cameras (with or without IMU)
+        // Constructor for stereo cameras (with or without IMU) #1
         Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
               ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
               const float &thDepth, GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL),
-              const IMU::Calib &ImuCalib = IMU::Calib());
+              const IMU::Calib &ImuCalib = IMU::Calib(), const std::vector<Marker *> markers = std::vector<Marker *>{});
+
+        // Constructor for stereo cameras (with or without IMU) #2
+        Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
+              ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
+              const float &thDepth, GeometricCamera *pCamera, GeometricCamera *pCamera2, Sophus::SE3f &Tlr,
+              Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
+              const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Constructor for RGB-D cameras (with or without IMU)
         Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor *extractor,
@@ -77,7 +84,8 @@ namespace ORB_SLAM3
         // Constructor for Monocular cameras (with or without IMU)
         Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
               GeometricCamera *pCamera, cv::Mat &distCoef, const float &bf, const float &thDepth,
-              Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
+              Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
+              const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Destructor
         // ~Frame();
@@ -361,8 +369,6 @@ namespace ORB_SLAM3
 
         // Grid for the right image
         std::vector<std::size_t> mGridRight[FRAME_GRID_COLS][FRAME_GRID_ROWS];
-
-        Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft, ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera *pCamera, GeometricCamera *pCamera2, Sophus::SE3f &Tlr, Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib());
 
         // Stereo fisheye
         void ComputeStereoFishEyeMatches();
