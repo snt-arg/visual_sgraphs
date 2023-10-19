@@ -2556,8 +2556,6 @@ namespace ORB_SLAM3
                                    to_string(mpAtlas->GetAllDoors().size()) + " doors.",
                                Verbose::VERBOSITY_QUIET);
 
-            // cout << "Active map: " << mpAtlas->GetCurrentMap()->GetId() << endl;
-
             mpLocalMapper->InsertKeyFrame(pKFini);
 
             mLastFrame = Frame(mCurrentFrame);
@@ -2582,7 +2580,6 @@ namespace ORB_SLAM3
 
     void Tracking::MonocularInitialization()
     {
-
         if (!mbReadyToInitializate)
         {
             // Set Reference Frame
@@ -2607,7 +2604,6 @@ namespace ORB_SLAM3
                 }
 
                 mbReadyToInitializate = true;
-
                 return;
             }
         }
@@ -2616,7 +2612,6 @@ namespace ORB_SLAM3
             if (((int)mCurrentFrame.mvKeys.size() <= 100) || ((mSensor == System::IMU_MONOCULAR) && (mLastFrame.mTimeStamp - mInitialFrame.mTimeStamp > 1.0)))
             {
                 mbReadyToInitializate = false;
-
                 return;
             }
 
@@ -2701,6 +2696,57 @@ namespace ORB_SLAM3
             mpAtlas->AddMapPoint(pMP);
         }
 
+        // Initialization of variables
+        string mapMarkerStr = "";
+
+        // Add Markers in the initialization stage
+        for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
+        {
+            // Setting the Global Pose of the marker
+            mCurrentMarker->setGlobalPose(pKFini->GetPoseInverse() * mCurrentMarker->getLocalPose());
+            mCurrentMarker->setMarkerInGMap(true);
+
+            // Creating a new marker in the map
+            ORB_SLAM3::Marker *currentMapMarker = createMapMarker(mCurrentMarker, pKFini);
+
+            mapMarkerStr += std::to_string(currentMapMarker->getId()) + " ";
+
+            // ----------- Wall and Door Detection and Mapping --------
+            // Check the currect marker if it is attached to a door or a wall
+            std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
+            bool markerIsWall = result.first;
+            if (markerIsWall)
+            {
+                // Calculate the plane (wall) equation on which the marker is attached
+                Eigen::Vector4d planeEstimate =
+                    getPlaneEquationFromPose(mCurrentMarker->getGlobalPose().rotationMatrix(),
+                                             mCurrentMarker->getGlobalPose().translation());
+
+                // Get the plane based on the equation
+                g2o::Plane3D detectedPlane(planeEstimate);
+
+                // The current marker is placed on a wall
+                // Check if we need to add the wall to the map or not
+                int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
+                if (matchedWallId == -1)
+                {
+                    // A wall with the same equation was not found in the map, creating a new one
+                    createMapWall(currentMapMarker, detectedPlane, pKFini);
+                }
+                else
+                {
+                    // The wall already exists in the map, fetching that one
+                    updateMapWall(matchedWallId, mCurrentMarker, pKFini);
+                }
+            }
+            else
+            {
+                // The current marker is placed on a door
+                std::string doorName = result.second;
+                createMapDoor(mCurrentMarker, pKFini, doorName);
+            }
+        }
+
         // Update Connections
         pKFini->UpdateConnections();
         pKFcur->UpdateConnections();
@@ -2709,7 +2755,11 @@ namespace ORB_SLAM3
         sMPs = pKFini->GetMapPoints();
 
         // Bundle Adjustment
-        Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points", Verbose::VERBOSITY_QUIET);
+        Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
+                               to_string(mpAtlas->MarkersInMap()) + " markers [" + mapMarkerStr +
+                               "], and " + to_string(mpAtlas->GetAllWalls().size()) + " walls, and " +
+                               to_string(mpAtlas->GetAllDoors().size()) + " doors.",
+                           Verbose::VERBOSITY_QUIET);
         Optimizer::GlobalBundleAdjustemnt(mpAtlas->GetCurrentMap(), 20);
 
         float medianDepth = pKFini->ComputeSceneMedianDepth(2);
