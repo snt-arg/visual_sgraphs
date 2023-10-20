@@ -3489,84 +3489,6 @@ namespace ORB_SLAM3
                     else
                         nPoints++;
 
-                    // Check if the marker ids fromt he current frame exist in all the previous keyframes
-                    // first get the mapped marker from the keyframes
-                    for (const auto currentMapMarker : mpAtlas->GetAllMarkers())
-                    {
-                        // Check if the marker is already in the Global map
-                        for (auto currentFrameMaker : mCurrentFrame.mvpMapMarkers)
-                            if (currentFrameMaker->getId() == currentMapMarker->getId())
-                                currentFrameMaker->setMarkerInGMap(true);
-                    }
-
-                    // Add Markers while progressing in KFs
-                    for (Marker *mCurrentMarker : mCurrentFrame.mvpMapMarkers)
-                    {
-                        ORB_SLAM3::Marker *currentMapMarker;
-                        if (!mCurrentMarker->isMarkerInGMap())
-                        {
-                            mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
-                            mCurrentMarker->setGlobalPose(pKF->GetPoseInverse() * mCurrentMarker->getLocalPose());
-                            mCurrentMarker->setMarkerInGMap(true);
-
-                            // Creating a new marker in the map
-                            currentMapMarker = createMapMarker(mCurrentMarker, pKF);
-                        }
-                        else
-                        {
-                            for (auto currentMapMarkerAtlas : mpAtlas->GetAllMarkers())
-                            {
-                                if (currentMapMarkerAtlas->getId() == mCurrentMarker->getId())
-                                {
-                                    currentMapMarker = currentMapMarkerAtlas;
-                                    currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
-                                }
-                            }
-                        }
-
-                        // ----------- Wall and Door Detection and Mapping --------
-                        // Check the current marker if it is attached to a door or a wall
-                        std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
-                        bool markerIsWall = result.first;
-                        if (markerIsWall)
-                        {
-                            // Calculate the plane (wall) equation on which the marker is attached
-                            Eigen::Vector4d planeEstimate =
-                                getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
-                                                         currentMapMarker->getGlobalPose().translation());
-
-                            // Calculate the wall equation from points lying close to the marker
-                            // Eigen::Vector4d planeEstimatefromPoint;
-                            // bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimatefromPoint);
-
-                            // Get the plane based on the equation
-                            g2o::Plane3D detectedPlane(planeEstimate);
-                            // The current marker is placed on a wall
-                            // Check if we need to add the wall to the map or not
-                            int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
-                            if (matchedWallId == -1)
-                            {
-                                // A wall with the same equation was not found in the map, creating a new one
-                                createMapWall(currentMapMarker, detectedPlane, pKF);
-                            }
-                            else
-                            {
-                                // The wall already exists in the map, fetching that one
-                                updateMapWall(matchedWallId, currentMapMarker, pKF);
-                            }
-                        }
-                        else
-                        {
-                            // The current marker is placed on a door
-                            std::string doorName = result.second;
-                            createMapDoor(mCurrentMarker, pKF, doorName);
-                        }
-                    }
-
-                    // ----------- Room Detection and Mapping --------
-                    // Early creation of a room as soon as all elements of at least one of its pairs has been seen
-                    currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
-
                     if (vDepthIdx[j].first > mThDepth && nPoints > maxPoint)
                     {
                         break;
@@ -3574,6 +3496,84 @@ namespace ORB_SLAM3
                 }
             }
         }
+
+        // Check if the marker ids fromt he current frame exist in all the previous keyframes
+        // first get the mapped marker from the keyframes
+        for (const auto currentMapMarker : mpAtlas->GetAllMarkers())
+        {
+            // Check if the marker is already in the Global map
+            for (auto currentFrameMaker : mCurrentFrame.mvpMapMarkers)
+                if (currentFrameMaker->getId() == currentMapMarker->getId())
+                    currentFrameMaker->setMarkerInGMap(true);
+        }
+
+        // Add Markers while progressing in KFs
+        for (Marker *mCurrentMarker : mCurrentFrame.mvpMapMarkers)
+        {
+            ORB_SLAM3::Marker *currentMapMarker;
+            if (!mCurrentMarker->isMarkerInGMap())
+            {
+                mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
+                mCurrentMarker->setGlobalPose(pKF->GetPoseInverse() * mCurrentMarker->getLocalPose());
+                mCurrentMarker->setMarkerInGMap(true);
+
+                // Creating a new marker in the map
+                currentMapMarker = createMapMarker(mCurrentMarker, pKF);
+            }
+            else
+            {
+                for (auto currentMapMarkerAtlas : mpAtlas->GetAllMarkers())
+                {
+                    if (currentMapMarkerAtlas->getId() == mCurrentMarker->getId())
+                    {
+                        currentMapMarker = currentMapMarkerAtlas;
+                        currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
+                    }
+                }
+            }
+
+            // ----------- Wall and Door Detection and Mapping --------
+            // Check the current marker if it is attached to a door or a wall
+            std::pair<bool, std::string> result = markerIsPlacedOnWall(currentMapMarker->getId());
+            bool markerIsWall = result.first;
+            if (markerIsWall)
+            {
+                // Calculate the plane (wall) equation on which the marker is attached
+                Eigen::Vector4d planeEstimate =
+                    getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
+                                             currentMapMarker->getGlobalPose().translation());
+
+                // Calculate the wall equation from points lying close to the marker
+                // Eigen::Vector4d planeEstimatefromPoint;
+                // bool gotPlaneEstimate = getPlaneEquationFromPoints(mCurrentMarker, planeEstimatefromPoint);
+
+                // Get the plane based on the equation
+                g2o::Plane3D detectedPlane(planeEstimate);
+                // The current marker is placed on a wall
+                // Check if we need to add the wall to the map or not
+                int matchedWallId = associateWalls(mpAtlas->GetAllWalls(), detectedPlane);
+                if (matchedWallId == -1)
+                {
+                    // A wall with the same equation was not found in the map, creating a new one
+                    createMapWall(currentMapMarker, detectedPlane, pKF);
+                }
+                else
+                {
+                    // The wall already exists in the map, fetching that one
+                    updateMapWall(matchedWallId, currentMapMarker, pKF);
+                }
+            }
+            else
+            {
+                // The current marker is placed on a door
+                std::string doorName = result.second;
+                createMapDoor(mCurrentMarker, pKF, doorName);
+            }
+        }
+
+        // ----------- Room Detection and Mapping --------
+        // Early creation of a room as soon as all elements of at least one of its pairs has been seen
+        currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
 
         mpLocalMapper->InsertKeyFrame(pKF);
         for (const auto &currentRoom : currentFoundRooms)
