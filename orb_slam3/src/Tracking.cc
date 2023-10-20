@@ -38,11 +38,13 @@ using namespace std;
 namespace ORB_SLAM3
 {
 
-    Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer, Atlas *pAtlas, KeyFrameDatabase *pKFDB, const string &strSettingPath, const int sensor, Settings *settings, const string &_nameSeq) : mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
-                                                                                                                                                                                                                                                  mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
-                                                                                                                                                                                                                                                  mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
-                                                                                                                                                                                                                                                  mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
-                                                                                                                                                                                                                                                  mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame *>(NULL))
+    Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer,
+                       Atlas *pAtlas, KeyFrameDatabase *pKFDB, const string &strSettingPath, const int sensor,
+                       Settings *settings, const string &_nameSeq) : mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
+                                                                     mbOnlyTracking(false), mbMapUpdated(false), mbVO(false), mpORBVocabulary(pVoc), mpKeyFrameDB(pKFDB),
+                                                                     mbReadyToInitializate(false), mpSystem(pSys), mpViewer(NULL), bStepByStep(false),
+                                                                     mpFrameDrawer(pFrameDrawer), mpMapDrawer(pMapDrawer), mpAtlas(pAtlas), mnLastRelocFrameId(0), time_recently_lost(5.0),
+                                                                     mnInitialFrameId(0), mbCreatedMap(false), mnFirstFrameId(0), mpCamera2(nullptr), mpLastKeyFrame(static_cast<KeyFrame *>(NULL))
     {
         // Load camera parameters from settings file
         if (settings)
@@ -123,8 +125,6 @@ namespace ORB_SLAM3
             Eigen::Quaternionf qRPY = AngleR * AngleP * AngleY;
             Eigen::Matrix3f RotRPY = qRPY.matrix();
             Tc0w = Sophus::SE3f(RotRPY, Eigen::Vector3f::Zero());
-            // std::cout << "Tc0w pos is " << Tc0w.translation()<< endl;
-            // std::cout << "Tc0w rot is " << Tc0w.rotationMatrix() << endl;
         }
 
         initID = 0;
@@ -138,17 +138,11 @@ namespace ORB_SLAM3
         {
             std::cout << "Camera " << pCam->GetId();
             if (pCam->GetType() == GeometricCamera::CAM_PINHOLE)
-            {
                 std::cout << " is pinhole" << std::endl;
-            }
             else if (pCam->GetType() == GeometricCamera::CAM_FISHEYE)
-            {
                 std::cout << " is fisheye" << std::endl;
-            }
             else
-            {
                 std::cout << " is unknown" << std::endl;
-            }
         }
 
 #ifdef REGISTER_TIMES
@@ -2765,7 +2759,7 @@ namespace ORB_SLAM3
         float medianDepth = pKFini->ComputeSceneMedianDepth(2);
         float invMedianDepth;
         if (mSensor == System::IMU_MONOCULAR)
-            invMedianDepth = 4.0f / medianDepth; // 4.0f
+            invMedianDepth = 4.0f / medianDepth;
         else
             invMedianDepth = 1.0f / medianDepth;
 
@@ -3425,10 +3419,9 @@ namespace ORB_SLAM3
             mpImuPreintegratedFromLastKF = new IMU::Preintegrated(pKF->GetImuBias(), pKF->mImuCalib);
         }
 
-        if (mSensor != System::MONOCULAR && mSensor != System::IMU_MONOCULAR) // TODO check if incluide imu_stereo
+        if (mSensor != System::MONOCULAR && mSensor != System::IMU_MONOCULAR)
         {
             mCurrentFrame.UpdatePoseMatrices();
-            // cout << "create new MPs" << endl;
             // We sort points by the measured depth by the stereo/RGBD sensor.
             // We create all those MapPoints whose depth < mThDepth.
             // If there are less than 100 close points we create the 100 closest.
@@ -3443,9 +3436,7 @@ namespace ORB_SLAM3
             {
                 float z = mCurrentFrame.mvDepth[i];
                 if (z > 0)
-                {
                     vDepthIdx.push_back(make_pair(z, i));
-                }
             }
 
             if (!vDepthIdx.empty())
@@ -3455,9 +3446,8 @@ namespace ORB_SLAM3
                 int nPoints = 0;
                 for (size_t j = 0; j < vDepthIdx.size(); j++)
                 {
-                    int i = vDepthIdx[j].second;
-
                     bool bCreateNew = false;
+                    int i = vDepthIdx[j].second;
 
                     MapPoint *pMP = mCurrentFrame.mvpMapPoints[i];
                     if (!pMP)
@@ -3473,19 +3463,14 @@ namespace ORB_SLAM3
                         Eigen::Vector3f x3D;
 
                         if (mCurrentFrame.Nleft == -1)
-                        {
                             mCurrentFrame.UnprojectStereo(i, x3D);
-                        }
                         else
-                        {
                             x3D = mCurrentFrame.UnprojectStereoFishEye(i);
-                        }
 
                         MapPoint *pNewMP = new MapPoint(x3D, pKF, mpAtlas->GetCurrentMap());
                         pNewMP->AddObservation(pKF, i);
 
-                        // Check if it is a stereo observation in order to not
-                        // duplicate mappoints
+                        // Check if it is a stereo observation in order to not duplicate mappoints
                         if (mCurrentFrame.Nleft != -1 && mCurrentFrame.mvLeftToRightMatch[i] >= 0)
                         {
                             mCurrentFrame.mvpMapPoints[mCurrentFrame.Nleft + mCurrentFrame.mvLeftToRightMatch[i]] = pNewMP;
@@ -3502,20 +3487,16 @@ namespace ORB_SLAM3
                         nPoints++;
                     }
                     else
-                    {
                         nPoints++;
-                    }
 
-                    // check if the marker ids fromt he current frame exist in all the previous keyframes
+                    // Check if the marker ids fromt he current frame exist in all the previous keyframes
                     // first get the mapped marker from the keyframes
                     for (const auto currentMapMarker : mpAtlas->GetAllMarkers())
                     {
                         // Check if the marker is already in the Global map
                         for (auto currentFrameMaker : mCurrentFrame.mvpMapMarkers)
-                        {
                             if (currentFrameMaker->getId() == currentMapMarker->getId())
                                 currentFrameMaker->setMarkerInGMap(true);
-                        }
                     }
 
                     // Add Markers while progressing in KFs
@@ -3591,8 +3572,6 @@ namespace ORB_SLAM3
                         break;
                     }
                 }
-
-                // Verbose::PrintMess("new mps for stereo KF: " + to_string(nPoints), Verbose::VERBOSITY_NORMAL);
             }
         }
 
