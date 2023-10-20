@@ -239,6 +239,14 @@ namespace ORB_SLAM3
         void updateMapWall(int wallId, Marker *visitedMarker, ORB_SLAM3::KeyFrame *pKF);
 
         /**
+         * @brief Uses the detected markers to detect and map semantic objects, e.g., walls and doors
+         * @param pKF the current keyframe in which the detection took place
+         * @param mvpMapMarkers the address of the detected markers
+         */
+        void markerSemanticAnalyzerAndMapper(ORB_SLAM3::KeyFrame *pKF,
+                                             const std::vector<Marker *> &mvpMapMarkers);
+
+        /**
          * @brief Creates a new door object to be added to the map
          * @param attachedMarker the address of the attached marker
          * @param pKF the address of the current keyframe
