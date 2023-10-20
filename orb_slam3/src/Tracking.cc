@@ -4612,8 +4612,8 @@ namespace ORB_SLAM3
         newMapWall->SetMap(mpAtlas->GetCurrentMap());
         newMapWall->setId(mpAtlas->GetAllWalls().size());
 
-        std::cout << "Adding new wall: Wall#" << newMapWall->getId() << " with Equation " << newMapWall->getPlaneEquation().coeffs() << ", with Marker#"
-                  << attachedMarker->getId() << " attached on it!" << std::endl;
+        std::cout << "- New wall detected: Wall#" << newMapWall->getId() << ", with Marker#"
+                  << attachedMarker->getId() << std::endl;
 
         // Loop to find the points lying on wall
         for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
@@ -4688,8 +4688,8 @@ namespace ORB_SLAM3
         newMapDoor->setLocalPose(attachedMarker->getLocalPose());
         newMapDoor->setGlobalPose(attachedMarker->getGlobalPose());
 
-        std::cout << "Adding new door: Door#" << newMapDoor->getId() << " (" << newMapDoor->getName()
-                  << "), with Marker#" << attachedMarker->getId() << " attached on it!" << std::endl;
+        std::cout << "- New door detected: Door#" << newMapDoor->getId() << " (" << newMapDoor->getName()
+                  << "), with Marker#" << attachedMarker->getId() << std::endl;
 
         pKF->AddMapDoor(newMapDoor);
         mpAtlas->AddMapDoor(newMapDoor);
@@ -4794,15 +4794,11 @@ namespace ORB_SLAM3
             detectedRoom->SetMap(mpAtlas->GetCurrentMap());
             detectedRoom->setId(mpAtlas->GetAllRooms().size());
 
-            std::cout << "Adding new room: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
+            std::cout << "- New room detected: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
                       << "), with walls [ " << detectedWalls << "], connected doors [ " << detectedDoors
                       << "], and attached markers [ " << detectedMarkers << "]!" << std::endl;
 
             mpAtlas->AddMapRoom(detectedRoom);
-        }
-        else
-        {
-            //
         }
     }
 
