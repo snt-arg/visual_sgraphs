@@ -156,7 +156,10 @@ source ~/[VOXBLOX_PATH]/devel/setup.bash --extend &&
 roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
 ```
 
-[Note] As `voxblox` and `Visual S-Graphs` both need to access/modify TF data, it may become slow. So, in order to run it with less computation cost and avoid chunking the reconstructed map, you may need to run the rosbag file slower using `rosbag play [file] --clock -r 0.5`.
+[Note] As `voxblox` and `Visual S-Graphs` both need to access/modify `TF` data, it may become slow. So, in order to run it with less computation cost and avoid chunking the reconstructed map, you may need to:
+
+- Use the command `catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release` in `voxblox`'s workspace to build it in the release mode and run it again,
+- Run the rosbag file slower using `rosbag play [file] --clock -r 0.5`
 
 ## 💾 Data Collection
 
