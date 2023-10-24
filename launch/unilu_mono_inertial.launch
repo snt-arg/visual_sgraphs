@@ -8,10 +8,10 @@
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_mono_inertial" output="screen">
 
         <!-- Remap to prepare the raw image -->
-        <remap from="/camera/image_raw" to="/cam0/image_raw"/>
+        <remap from="/camera/image_raw" to="/camera/color/image_raw"/>
 
         <!-- Remap to prepare the inertial data -->
-        <remap from="/imu"                  to="/imu0"/>
+        <remap from="/imu" to="/camera/imu"/>
 
         <!-- Parameters for loading setting files -->
         <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>
