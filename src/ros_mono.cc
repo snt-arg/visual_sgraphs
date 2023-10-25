@@ -17,9 +17,7 @@ int main(int argc, char **argv)
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 
     if (argc > 1)
-    {
         ROS_WARN("Arguments supplied via command line are ignored.");
-    }
 
     std::string node_name = ros::this_node::getName();
 

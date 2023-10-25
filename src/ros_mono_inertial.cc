@@ -27,6 +27,11 @@ public:
     ImuGrabber *mpImuGb;
     std::mutex mBufMutex;
     queue<sensor_msgs::ImageConstPtr> img0Buf;
+
+private:
+    // Marker detection
+    double min_time_diff;
+    std::vector<ORB_SLAM3::Marker *> matched_markers;
 };
 
 int main(int argc, char **argv)
@@ -35,9 +40,7 @@ int main(int argc, char **argv)
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 
     if (argc > 1)
-    {
         ROS_WARN("Arguments supplied via command line are ignored.");
-    }
 
     std::string node_name = ros::this_node::getName();
 
@@ -135,6 +138,12 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
         ROS_ERROR("cv_bridge exception: %s", e.what());
     }
 
+    // Find the marker with the minimum time difference compared to the current frame
+    std::pair<double, std::vector<ORB_SLAM3::Marker *>> result =
+        find_nearest_marker(cv_ptr->header.stamp.toSec());
+    min_time_diff = result.first;
+    matched_markers = result.second;
+
     if (cv_ptr->image.type() == 0)
     {
         return cv_ptr->image.clone();
@@ -175,22 +184,24 @@ void ImageGrabber::SyncWithImu()
                 while (!mpImuGb->imuBuf.empty() && mpImuGb->imuBuf.front()->header.stamp.toSec() <= tIm)
                 {
                     double t = mpImuGb->imuBuf.front()->header.stamp.toSec();
-
                     cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
-
                     cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
-
                     vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc, gyr, t));
-
                     Wbb << mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z;
-
                     mpImuGb->imuBuf.pop();
                 }
             }
             mpImuGb->mBufMutex.unlock();
 
             // ORB-SLAM3 runs in TrackMonocular()
-            Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tIm, vImuMeas);
+            if (min_time_diff < 0.05)
+            {
+                Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tIm, vImuMeas,
+                                                         "", matched_markers, env_doors, env_rooms);
+                markers_buff.clear();
+            }
+            else
+                Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tIm, vImuMeas);
 
             publish_topics(msg_time, Wbb);
         }
