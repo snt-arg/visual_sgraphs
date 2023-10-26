@@ -1,12 +1,14 @@
 <launch>
-    <param name="use_sim_time" value="true" />
-    <!-- Default values -->
+    <!-- Live or reading a rosbag file (offline) -->
+    <arg name="offline" default="true" />
     <!-- Which semantic data file should be loaded? -->
     <arg name="env_database" default="ulms_seq03_jfk_e04_ofc.json" />
 
+    <!-- Check to see if loads ORB-SLAM's TF values or not -->
+    <param name="use_sim_time" value="$(arg offline)" />
+
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_mono_inertial" output="screen">
-
         <!-- Remap to prepare the raw image -->
         <remap from="/camera/image_raw" to="/camera/color/image_raw"/>
 
