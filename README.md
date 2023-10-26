@@ -208,15 +208,16 @@ To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligne
 
 ### Params
 
-| Param                                                | Description                                                                                                                            |
-| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `voc_file`                                           | path to vocabulary file required by ORB-SLAM3                                                                                          |
-| `settings_file`                                      | path to settings file required by ORB-SLAM3                                                                                            |
-| `enable_pangolin`                                    | enable/disable Pangolin viewer and interface. (`true` by default)                                                                      |
-| `publish_static_transform`                           | enable/disable static transform between two coordinate frames. (`false` by default, needs to be `true` for some datasets like `UniLu`) |
-| `enable_marker_detector`                             | enable/disable ArUco marker detection                                                                                                  |
-| `roll`, `yaw`, and `pitch`                           | poses and dimensions of movement                                                                                                       |
-| `map_frame_id`, `world_frame_id`, and `cam_frame_id` | different frame identifiers                                                                                                            |
+| Param                                                        | Description                                                                                                    |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `offline`                                                    | live or reading rosbag file (offline)?                                                                         |
+| `env_database`                                               | semantic map data file to be loaded                                                                            |
+| `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
+| `settings_file`                                              | path to settings file                                                                                          |
+| `enable_pangolin`                                            | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
+| `publish_static_transform`                                   | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
+| `roll`, `yaw`, and `pitch`                                   | poses and dimensions of movement                                                                               |
+| `map_frame_id` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
 
 ## Save and load map
 
