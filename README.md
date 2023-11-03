@@ -40,7 +40,39 @@ make
 sudo make install
 ```
 
-### 🦊 Voxblox
+### 🎞️ RealSense (Live Mode - optional)
+
+For running in live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
+
+```
+# Catkin workspace folder
+mkdir -p ~/catkin_ws/src
+cd ~/catkin_ws/src/
+
+# Cloning the latest code
+git clone https://github.com/IntelRealSense/realsense-ros.git
+cd realsense-ros/
+git checkout `git tag | sort -V | grep -P "^2.\d+\.\d+" | tail -1`
+cd ..
+
+# Installing the library
+catkin init
+catkin build
+
+# Sourcing the new configurations
+# nano ~/.bashrc -> Add "alias sourcerealsense='source ~/workspace/realsense/rs_ros/devel/setup.bash'"
+sourcerealsense
+
+# Do a quick test
+roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
+```
+
+1. For using the live version, you need to add the flag `offline:=false`, such as `roslaunch orb_slam3_ros unilu_mono.launch offline:=false`, which gets the **TF** values from RealSense instead of reading from `ORB-SLAM` while a `rosbag` file is being played (offline). If the flag is not set, whenever a marker is seen, the tracking will fail due to the mentioned conflict.
+2. For using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error. You can find a sample launch file for RGB-D and Mono [here](/doc/realsense2_camera_rs_rgbd.launch).
+3. For using Stereo cameras as the live feed provider, you can find a sample launch file [here](/doc/realsense2_camera_rs_stereo.launch).
+4. Run realsense using `roslaunch realsense2_camera [rs_rgbd/rs_stereo].launch [align_depth:=true] [unite_imu_method:=linear_interpolation]`.
+
+### 🦊 Voxblox (optional)
 
 Install `Voxblox` based on the installation guide introduced [here](https://voxblox.readthedocs.io/en/latest/pages/Installation.html), and to make sure if it works fine, try [running it](https://voxblox.readthedocs.io/en/latest/pages/Running-Voxblox.html) on a simple dataset, such as the `basement dataset`.
 
@@ -120,38 +152,6 @@ You can find the configuration files for the application in the `config` folder.
 
 ### ⚠️ Useful Hints
 
-#### 🎞️ Live Mode
-
-For running in live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
-
-```
-# Catkin workspace folder
-mkdir -p ~/catkin_ws/src
-cd ~/catkin_ws/src/
-
-# Cloning the latest code
-git clone https://github.com/IntelRealSense/realsense-ros.git
-cd realsense-ros/
-git checkout `git tag | sort -V | grep -P "^2.\d+\.\d+" | tail -1`
-cd ..
-
-# Installing the library
-catkin init
-catkin build
-
-# Sourcing the new configurations
-# nano ~/.bashrc -> Add "alias sourcerealsense='source ~/workspace/realsense/rs_ros/devel/setup.bash'"
-sourcerealsense
-
-# Do a quick test
-roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
-```
-
-1. For using the live version, you need to add the flag `offline:=false`, such as `roslaunch orb_slam3_ros unilu_mono.launch offline:=false`, which gets the **TF** values from RealSense instead of reading from `ORB-SLAM` while a `rosbag` file is being played (offline).
-2. For using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error. You can find a sample launch file for RGB-D and Mono [here](/doc/realsense2_camera_rs_rgbd.launch).
-3. For using Stereo cameras as the live feed provider, you can find a sample launch file [here](/doc/realsense2_camera_rs_stereo.launch).
-4. Run realsense using `roslaunch realsense2_camera [rs_rgbd/rs_stereo].launch [align_depth:=true] [unite_imu_method:=linear_interpolation]`.
-
 #### 🦊 Voxblox Integration
 
 You need to first create a launch file that can be integrated into this framework. You can find a sample of such launch file [here](doc/voxblox_rs_rgbd.launch). Then, for running `voxblox`, you need to source it and run it in a separate terminal using `roslaunch voxblox_ros unilu_rgbd.launch`.
@@ -169,6 +169,12 @@ roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
 
 - Use the command `catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release` in `voxblox`'s workspace to build it in the release mode and run it again,
 - Run the rosbag file slower using `rosbag play [file] --clock -r 0.5`
+
+#### Using IMU
+
+Please note that in order to use inertial sensors (i.e., _IMU_) you need to initialize it first. As you can see in the animation below, the _IMU_ needs to move steady forward and backward for around 10 seconds while facing a scene with lots of visual features. The logs appeared in the console will show if the _IMU_ is initialized or not.
+
+![IMU Initialization](demo-IMU.gif "IMU Initialization")
 
 ## 💾 Data Collection
 
