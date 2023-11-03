@@ -8,7 +8,7 @@ A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com
 
 - [Prerequisites](#prerequisites)
 
-## 📝 Prerequisites
+## 📝 Prerequisites <a id="prerequisites"></a>
 
 Install the required libraries listed below:
 
