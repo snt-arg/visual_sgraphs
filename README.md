@@ -4,6 +4,10 @@
 
 A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com/UZ-SLAMLab/ORB_SLAM3) (ROS implementation version introduced [here](https://github.com/thien94/orb_slam3_ros)) that supports adding semantic entities to the final map and adding hierarchical representations.
 
+## 📃 Table of Content
+
+- [Prerequisites](#prerequisites)
+
 ## 📝 Prerequisites
 
 Install the required libraries listed below:
@@ -170,7 +174,7 @@ roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
 - Use the command `catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release` in `voxblox`'s workspace to build it in the release mode and run it again,
 - Run the rosbag file slower using `rosbag play [file] --clock -r 0.5`
 
-#### Using IMU
+#### 🔖 Using IMU
 
 Please note that in order to use inertial sensors (i.e., _IMU_) you need to initialize it first. As you can see in the animation below, the _IMU_ needs to move steady forward and backward for around 10 seconds while facing a scene with lots of visual features. The logs appeared in the console will show if the _IMU_ is initialized or not.
 
