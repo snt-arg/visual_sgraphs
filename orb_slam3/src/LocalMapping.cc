@@ -33,14 +33,11 @@ namespace ORB_SLAM3
                                                                                                                                  mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true),
                                                                                                                                  mIdxInit(0), mScale(1.0), mInitSect(0), mbNotBA1(true), mbNotBA2(true), mIdxIteration(0), infoInertial(Eigen::MatrixXd::Zero(9, 9))
     {
-        mnMatchesInliers = 0;
-
-        mbBadImu = false;
-
-        mTinit = 0.f;
-
         mNumLM = 0;
+        mTinit = 0.f;
+        mbBadImu = false;
         mNumKFCulling = 0;
+        mnMatchesInliers = 0;
 
 #ifdef REGISTER_TIMES
         nLBA_exec = 0;
@@ -149,7 +146,7 @@ namespace ORB_SLAM3
                         else
                         {
                             Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(), num_FixedKF_BA, num_OptKF_BA, num_MPs_BA, num_edges_BA, mlDetRooms);
-                            mlDetRooms.clear();                        
+                            mlDetRooms.clear();
                             b_doneLBA = true;
                         }
                     }
@@ -174,7 +171,7 @@ namespace ORB_SLAM3
 
 #endif
 
-                    // Initialize IMU here
+                    // IMU initialization
                     if (!mpCurrentKeyFrame->GetMap()->isImuInitialized() && mbInertial)
                     {
                         if (mbMonocular)
@@ -195,7 +192,8 @@ namespace ORB_SLAM3
 
                     if ((mTinit < 50.0f) && mbInertial)
                     {
-                        if (mpCurrentKeyFrame->GetMap()->isImuInitialized() && mpTracker->mState == Tracking::OK) // Enter here everytime local-mapping is called
+                        // Enter here everytime local-mapping is called
+                        if (mpCurrentKeyFrame->GetMap()->isImuInitialized() && mpTracker->mState == Tracking::OK)
                         {
                             if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA1())
                             {
@@ -207,7 +205,6 @@ namespace ORB_SLAM3
                                         InitializeIMU(1.f, 1e5, true);
                                     else
                                         InitializeIMU(1.f, 1e5, true);
-
                                     cout << "end VIBA 1" << endl;
                                 }
                             }
@@ -221,7 +218,6 @@ namespace ORB_SLAM3
                                         InitializeIMU(0.f, 0.f, true);
                                     else
                                         InitializeIMU(0.f, 0.f, true);
-
                                     cout << "end VIBA 2" << endl;
                                 }
                             }
@@ -1067,11 +1063,11 @@ namespace ORB_SLAM3
     {
         {
             unique_lock<mutex> lock(mMutexReset);
-            cout << "LM: Map reset recieved" << endl;
+            // Request to reset the map
             mbResetRequested = true;
         }
-        cout << "LM: Map reset, waiting..." << endl;
 
+        // Wait until the mutex is free
         while (1)
         {
             {
@@ -1081,19 +1077,18 @@ namespace ORB_SLAM3
             }
             usleep(3000);
         }
-        cout << "LM: Map reset, Done!!!" << endl;
     }
 
     void LocalMapping::RequestResetActiveMap(Map *pMap)
     {
         {
             unique_lock<mutex> lock(mMutexReset);
-            cout << "LM: Active map reset recieved" << endl;
+            // Request to reset the active map
             mbResetRequestedActiveMap = true;
             mpMapToReset = pMap;
         }
-        cout << "LM: Active map reset, waiting..." << endl;
 
+        // Wait until the mutex is free
         while (1)
         {
             {
@@ -1103,7 +1098,6 @@ namespace ORB_SLAM3
             }
             usleep(3000);
         }
-        cout << "LM: Active map reset, Done!!!" << endl;
     }
 
     void LocalMapping::ResetIfRequested()
@@ -1115,7 +1109,7 @@ namespace ORB_SLAM3
             {
                 executed_reset = true;
 
-                cout << "LM: Reseting Atlas in Local Mapping..." << endl;
+                cout << "Reseting Atlas in Local Mapping ..." << endl;
                 mlNewKeyFrames.clear();
                 mlpRecentAddedMapPoints.clear();
                 mlDetRooms.clear();
@@ -1124,19 +1118,17 @@ namespace ORB_SLAM3
 
                 // Inertial parameters
                 mTinit = 0.f;
+                mIdxInit = 0;
                 mbNotBA2 = true;
                 mbNotBA1 = true;
                 mbBadImu = false;
-
-                mIdxInit = 0;
-
-                cout << "LM: End reseting Local Mapping..." << endl;
             }
 
             if (mbResetRequestedActiveMap)
             {
                 executed_reset = true;
-                cout << "LM: Reseting current map in Local Mapping..." << endl;
+                cout << "Reseting the Current Map in Local Mapping ..." << endl;
+
                 mlNewKeyFrames.clear();
                 mlpRecentAddedMapPoints.clear();
                 mlDetRooms.clear();
@@ -1146,14 +1138,12 @@ namespace ORB_SLAM3
                 mbNotBA2 = true;
                 mbNotBA1 = true;
                 mbBadImu = false;
-
                 mbResetRequested = false;
                 mbResetRequestedActiveMap = false;
-                cout << "LM: End reseting Local Mapping..." << endl;
             }
         }
         if (executed_reset)
-            cout << "LM: Reset free the mutex" << endl;
+            cout << "Reset free the mutex in Local Mapping" << endl;
     }
 
     void LocalMapping::RequestFinish()

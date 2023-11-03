@@ -1871,7 +1871,7 @@ namespace ORB_SLAM3
 
         if (bStepByStep)
         {
-            std::cout << "Tracking: Waiting to the next step" << std::endl;
+            std::cout << "Waiting for the next step in Tracking ..." << std::endl;
             while (!mbStep && bStepByStep)
                 usleep(500);
             mbStep = false;
@@ -1879,7 +1879,7 @@ namespace ORB_SLAM3
 
         if (mpLocalMapper->mbBadImu)
         {
-            cout << "TRACK: Reset map because local mapper set the bad imu flag " << endl;
+            cout << "Reseting map because the Local Mapper set the 'Bad IMU' flag ..." << endl;
             mpSystem->ResetActiveMap();
             return;
         }
@@ -1887,7 +1887,7 @@ namespace ORB_SLAM3
         Map *pCurrentMap = mpAtlas->GetCurrentMap();
         if (!pCurrentMap)
         {
-            cout << "ERROR: There is not an active map in the atlas" << endl;
+            cout << "[ERROR] No active maps found in the ATLAS!" << endl;
         }
 
         if (mState != NO_IMAGES_YET)
@@ -4061,7 +4061,6 @@ namespace ORB_SLAM3
         list<bool> lbLost;
         // lbLost.reserve(mlbLost.size());
         unsigned int index = mnFirstFrameId;
-        cout << "mnFirstFrameId = " << mnFirstFrameId << endl;
         for (Map *pMap : mpAtlas->GetAllMaps())
         {
             if (pMap->GetAllKeyFrames().size() > 0)
@@ -4071,9 +4070,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // cout << "First Frame id: " << index << endl;
         int num_lost = 0;
-        cout << "mnInitialFrameId = " << mnInitialFrameId << endl;
 
         for (list<bool>::iterator ilbL = mlbLost.begin(); ilbL != mlbLost.end(); ilbL++)
         {
@@ -4087,6 +4084,7 @@ namespace ORB_SLAM3
 
             index++;
         }
+
         cout << num_lost << " Frames set to lost" << endl;
 
         mlbLost = lbLost;

@@ -446,7 +446,6 @@ namespace ORB_SLAM3
             }
             else if (mbResetActiveMap)
             {
-                cout << "SYSTEM-> Reseting active map in monocular case" << endl;
                 mpTracker->ResetActiveMap();
                 mbResetActiveMap = false;
             }
