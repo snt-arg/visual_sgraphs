@@ -7,12 +7,36 @@ A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com
 ## 📃 Table of Content
 
 - [Prerequisites](#prerequisites)
+  - [OpenCV](#opencv)
+  - [Eigen3](#eigen)
+  - [Pangolin](#pangolin)
+  - [RealSense](#realsense)
+  - [Voxblox](#voxblox)
+- [Installation](#installation)
+  - [Cloning](#cloning)
+  - [Aruco](#aruco)
+  - [Libraries](#libraries)
+- [Configurations](#configurations)
+- [Run Examples](#run)
+  - [Hints](#hints)
+    - [Voxblox Integration](#voxblox-integrate)
+    - [IMU](#imu)
+- [Data Collection](#data)
+- [ROS Topics, Params and Services](#ros)
+  - [Subscribed Topics](#ros-sub)
+  - [Published Topics](#ros-pub)
+  - [Params](#ros-param)
+- [Maps](#maps)
+  - [Load Map](#maps-load)
+  - [Save Map](#maps-save)
+  - [Services](#maps-services)
+- [Evaluation](#eval)
 
 ## 📝 Prerequisites <a id="prerequisites"></a>
 
 Install the required libraries listed below:
 
-### OpenCV
+### OpenCV <a id="opencv"></a>
 
 Check the OpenCV version on your computer (required [at least 3.0](https://github.com/UZ-SLAMLab/ORB_SLAM3)):
 
@@ -22,7 +46,7 @@ python3 -c "import cv2; print(cv2.__version__)"
 
 On a freshly installed Ubuntu 20.04.4 LTS with desktop image, OpenCV 4.2.0 is already included. If a newer version is required (>= 3.0), follow [installation instruction](https://docs.opencv.org/4.x/d0/d3d/tutorial_general_install.html) and change the corresponding OpenCV version in `CMakeLists.txt`
 
-### Eigen3
+### Eigen3 <a id="eigen"></a>
 
 Install `Eigen`, which is a C++ template library for linear algebra (including matrices, vectors, and numerical solvers):
 
@@ -30,7 +54,7 @@ Install `Eigen`, which is a C++ template library for linear algebra (including m
 sudo apt install libeigen3-dev
 ```
 
-### Pangolin
+### Pangolin <a id="pangolin"></a>
 
 Install `Pangolin`, which is a set of lightweight and portable utility libraries for prototyping 3D, numeric or video based programs and algorithms:
 
@@ -44,7 +68,7 @@ make
 sudo make install
 ```
 
-### 🎞️ RealSense (Live Mode - optional)
+### 🎞️ RealSense (Live Mode - optional) <a id="realsense"></a>
 
 For running in live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
 
@@ -76,7 +100,7 @@ roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
 3. For using Stereo cameras as the live feed provider, you can find a sample launch file [here](/doc/realsense2_camera_rs_stereo.launch).
 4. Run realsense using `roslaunch realsense2_camera [rs_rgbd/rs_stereo].launch [align_depth:=true] [unite_imu_method:=linear_interpolation]`.
 
-### 🦊 Voxblox (optional)
+### 🦊 Voxblox (optional) <a id="voxblox"></a>
 
 Install `Voxblox` based on the installation guide introduced [here](https://voxblox.readthedocs.io/en/latest/pages/Installation.html), and to make sure if it works fine, try [running it](https://voxblox.readthedocs.io/en/latest/pages/Running-Voxblox.html) on a simple dataset, such as the `basement dataset`.
 
@@ -88,11 +112,11 @@ Using this library you can visualize the real-time trajectory of `camera/IMU`.
 sudo apt install ros-[DISTRO]-hector-trajectory-server
 ```
 
-## ⚙️ Installation
+## ⚙️ Installation <a id="installation"></a>
 
 After installing the prerequisites, you can install the repository using commands below:
 
-### I. Cloning the Repository
+### I. Cloning the Repository <a id="cloning"></a>
 
 You should first create a workspace and clone the Semantic ORB-SLAM 3.0 repository in it:
 
@@ -101,7 +125,7 @@ cd ~/[workspace]/src
 git clone git@github.com:snt-arg/semantic_orb_slam3_ros.git
 ```
 
-### II. Cloning the `aruco_ros` Repository
+### II. Cloning the `aruco_ros` Repository <a id="aruco"></a>
 
 This package (available [here](https://github.com/pal-robotics/aruco_ros)) enables you to detect ArUco Markers in cameras' field of view. Accordingly, install it using the commands below in **the same folder (i.e., [workspace]/src)**:
 
@@ -114,7 +138,7 @@ git clone git@github.com:pal-robotics/aruco_ros.git
 
 It is important to put the file in the same folder, as the Semantic ORB-SLAM 3.0 library depends on it. Instead of the original launch file, you can use the sample modified `marker_publisher.launch` file for this library available [here](doc/aruco_ros_marker_publisher.launch), which works fine with the _UniLu_ dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed based on the use case). Do not forget to set proper `ref_frame`, `markerSize`, `imageRaw`, and `cameraInfo` values in the launch file.
 
-### III. Installing the Libraries
+### III. Installing the Libraries <a id="libraries"></a>
 
 Install both the libraries using `catkin build`. Finally, you can add a new alias to the `bashrc` file to run the environment whenever needed:
 
@@ -129,11 +153,11 @@ As a quick test, you can do as follows:
   - The final results (scene with detected markers) produced by `aruco_ros` are published and accessible on `/aruco_marker_publisher/result` and the pose of the markers will be shown using `rostopic echo /aruco_marker_publisher/markers`.
 - Run the Semantic ORB-SLAM using `sourceorb3ros` and then `roslaunch orb_slam3_ros unilu_rgbd.launch [2>/dev/null]`
 
-## 🔨 Configurations
+## 🔨 Configurations <a id="configurations"></a>
 
 You can find the configuration files for the application in the `config` folder. It contains some `Calibration` processes, camera parameter for various sensors, and some `rviz` files for different datasets. You can define your own `rviz` and `yaml` files according to the characteristics of the sensor you collected data with. A sample of how to set camera intrinsic and extrinsic parameters can be found [here](https://github.com/shanpenghui/ORB_SLAM3_Fixed#73-set-camera-intrinsic--extrinsic-parameters).
 
-## 🚀 Run Examples
+## 🚀 Run Examples <a id="run"></a>
 
 1. You can download some sample dataset instances from the links provided below and run them using `rosbag play [sample].bag --clock [-s x]`:
 
@@ -154,9 +178,9 @@ You can find the configuration files for the application in the `config` folder.
 | RGB-D-Inertial  | [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/)                                            | `roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch` <br /> `rosbag play Normal.bag --clock`                                                                   | decompress the downloaded bag using `rosbag decompress Normal.bag` and change the params in `RealSense_D435i.yaml` if necessary.      |
 | RGB-D-Inertial  | Live (\*)                                                                                                                                                                                  | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true unite_imu_method:=linear_interpolation` | follow the hints (\*) - use the sample modified file for RGB-D-Inertial device available [here](doc/realsense2_camera_rs_rgbd.launch) |
 
-### ⚠️ Useful Hints
+### ⚠️ Useful Hints <a id="hints"></a>
 
-#### 🦊 Voxblox Integration
+#### 🦊 Voxblox Integration <a id="voxblox-integrate"></a>
 
 You need to first create a launch file that can be integrated into this framework. You can find a sample of such launch file [here](doc/voxblox_rs_rgbd.launch). Then, for running `voxblox`, you need to source it and run it in a separate terminal using `roslaunch voxblox_ros unilu_rgbd.launch`.
 
@@ -174,13 +198,13 @@ roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
 - Use the command `catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release` in `voxblox`'s workspace to build it in the release mode and run it again,
 - Run the rosbag file slower using `rosbag play [file] --clock -r 0.5`
 
-#### 🔖 Using IMU
+#### 🔖 Using IMU <a id="imu"></a>
 
 Please note that in order to use inertial sensors (i.e., _IMU_) you need to initialize it first. As you can see in the animation below, the _IMU_ needs to move steady forward and backward for around 10 seconds while facing a scene with lots of visual features. The logs appeared in the console will show if the _IMU_ is initialized or not.
 
 ![IMU Initialization](demo-IMU.gif "IMU Initialization")
 
-## 💾 Data Collection
+## 💾 Data Collection <a id="data"></a>
 
 To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, _aligned depth_, _stereo_, and _color_, you can follow these steps:
 
@@ -193,9 +217,9 @@ To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, 
   - For Mono and RGB-D, with or without IMU, run `rosbag record /camera/color/image_raw /camera/aligned_depth_to_color/image_raw /camera/imu /camera/color/camera_info /camera/aligned_depth_to_color/camera_info`.
   - For Stereo, with or without IMU, run `rosbag record /camera/color/image_raw /camera/infra1/image_rect_raw /camera/infra2/image_rect_raw /camera/imu /camera/color/camera_info /camera/infra1/camera_info /camera/infra2/camera_info`.
 
-## 🤖 ROS topics, params and services
+## 🤖 ROS Topics, Params and Services <a id="ros"></a>
 
-### Subscribed topics
+### Subscribed Topics <a id="ros-sub"></a>
 
 | Topic                                                            | Description                        |
 | ---------------------------------------------------------------- | ---------------------------------- |
@@ -205,7 +229,7 @@ To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, 
 | `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw` | for RGBD node                      |
 | `/aruco_marker_publisher/markers`                                | for ArUco marker library node      |
 
-### Published topics
+### Published Topics <a id="ros-pub"></a>
 
 | Topic                         | Description                                                          |
 | ----------------------------- | -------------------------------------------------------------------- |
@@ -221,7 +245,7 @@ To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, 
 | `/orb_slam3/walls`            | walls detected in the environment                                    |
 | `/orb_slam3/rooms`            | corridors and rooms markers detected in the environment              |
 
-### Params
+### Params <a id="ros-param"></a>
 
 | Param                                                        | Description                                                                                                    |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
@@ -234,16 +258,16 @@ To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, 
 | `roll`, `yaw`, and `pitch`                                   | poses and dimensions of movement                                                                               |
 | `map_frame_id` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
 
-## Save and load map
+## 📍 Maps <a id="maps"></a>
 
 The map file will have `.osa` extension, and is located in the `ROS_HOME` folder (`~/.ros/` by default).
 
-### Load map:
+### Load Map <a id="maps-load"></a>
 
 - Set the name of the map file to be loaded with `System.LoadAtlasFromFile` param in the settings file (`.yaml`).
 - If the map file is not available, `System.LoadAtlasFromFile` param should be commented out otherwise there will be error.
 
-### Save map:
+### Save Map <a id="maps-save"></a>
 
 - **Option 1**: If `System.SaveAtlasToFile` is set in the settings file, the map file will be automatically saved when you kill the ros node.
 - **Option 2**: You can also call the following ros service at the end of the session
@@ -252,12 +276,12 @@ The map file will have `.osa` extension, and is located in the `ROS_HOME` folder
 rosservice call /orb_slam3/save_map [file_name]
 ```
 
-### Services
+### Services <a id="maps-services"></a>
 
 - `rosservice call /orb_slam3/save_map [file_name]`: save the map as `[file_name].osa` in `ROS_HOME` folder.
 - `rosservice call /orb_slam3/save_traj [file_name]`: save the estimated trajectory of camera and keyframes as `[file_name]_cam_traj.txt` and `[file_name]_kf_traj.txt` in `ROS_HOME` folder.
 
-## 📊 Evaluation
+## 📊 Evaluation <a id="eval"></a>
 
 In order to evaluate the current method with others, such as UcoSLAM, ORB-SLAM 3.0, etc., you need to follow the below instructions:
 
