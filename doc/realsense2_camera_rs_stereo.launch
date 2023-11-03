@@ -1,6 +1,6 @@
 <!-- 
   A modified version of `rs_rgbd.launch` for `realsense2_camera` library.
-  Used for Mono and RGBD cameras.
+  Used for Stereo cameras.
  -->
 
 <launch>
@@ -20,22 +20,22 @@
   <arg name="fisheye_height"      default="-1"/>
   <arg name="enable_fisheye"      default="false"/>
 
-  <arg name="depth_width"         default="640"/> <!-- maximum supported -->
-  <arg name="depth_height"        default="480"/> <!-- maximum supported -->
-  <arg name="enable_depth"        default="true"/> <!-- should be on -->
+  <arg name="depth_width"         default="-1"/>
+  <arg name="depth_height"        default="-1"/>
+  <arg name="enable_depth"        default="false"/> <!-- should be off for stereo -->
 
-  <arg name="infra_width"         default="-1"/>
-  <arg name="infra_height"        default="-1"/>
-  <arg name="enable_infra1"       default="false"/>
-  <arg name="enable_infra2"       default="false"/>
+  <arg name="infra_width"         default="640"/> <!-- maximum supported -->
+  <arg name="infra_height"        default="480"/> <!-- maximum supported -->
+  <arg name="enable_infra1"       default="true"/> <!-- changed -->
+  <arg name="enable_infra2"       default="true"/> <!-- changed -->
 
-  <arg name="color_width"         default="640"/> <!-- maximum supported, aligned by depth -->
-  <arg name="color_height"        default="480"/> <!-- maximum supported, aligned by depth -->
+  <arg name="color_width"         default="640"/> <!-- maximum supported -->
+  <arg name="color_height"        default="480"/> <!-- maximum supported -->
   <arg name="enable_color"        default="true"/> <!-- should be on -->
 
   <arg name="fisheye_fps"         default="-1"/>
-  <arg name="depth_fps"           default="30"/> <!-- changed -->
-  <arg name="infra_fps"           default="-1"/>
+  <arg name="depth_fps"           default="-1"/> <!-- changed -->
+  <arg name="infra_fps"           default="30"/> <!-- changed -->
   <arg name="color_fps"           default="30"/> <!-- changed -->
   <arg name="gyro_fps"            default="-1"/>
   <arg name="accel_fps"           default="-1"/>
@@ -43,7 +43,7 @@
   <arg name="enable_accel"        default="true"/>
   <arg name="unite_imu_method"    default="linear_interpolation"/> <!-- united IMU data -->
 
-  <arg name="enable_pointcloud"   default="true"/>
+  <arg name="enable_pointcloud"   default="false"/> <!-- should be off for stereo -->
   <arg name="enable_sync"         default="true"/>
   <arg name="align_depth"         default="true"/>
   <arg name="filters"             default=""/>
@@ -51,7 +51,7 @@
   <arg name="publish_tf"          default="false"/>
   <arg name="tf_publish_rate"     default="0"/> <!-- 0 - static transform -->
 
-  <!-- rgbd_launch specific arguments -->
+  <!-- stereo_launch specific arguments -->
 
   <!-- Arguments for remapping all device namespaces -->
   <arg name="rgb"                             default="color" />

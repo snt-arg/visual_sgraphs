@@ -148,8 +148,9 @@ roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
 ```
 
 1. For using the live version, you need to add the flag `offline:=false`, such as `roslaunch orb_slam3_ros unilu_mono.launch offline:=false`, which gets the **TF** values from RealSense instead of reading from `ORB-SLAM` while a `rosbag` file is being played (offline).
-2. For using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error.
-3. Run realsense using `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true unite_imu_method:=linear_interpolation`.
+2. For using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error. You can find a sample launch file for RGB-D and Mono [here](/doc/realsense2_camera_rs_rgbd.launch).
+3. For using Stereo cameras as the live feed provider, you can find a sample launch file [here](/doc/realsense2_camera_rs_stereo.launch).
+4. Run realsense using `roslaunch realsense2_camera [rs_rgbd/rs_stereo].launch [align_depth:=true] [unite_imu_method:=linear_interpolation]`.
 
 #### 🦊 Voxblox Integration
 
@@ -171,12 +172,16 @@ roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
 
 ## 💾 Data Collection
 
-To record a `rosbag` file using a RealSense D435i camera and capture IMU, aligned depth, and color, you can follow these steps:
+To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, _aligned depth_, _stereo_, and _color_, you can follow these steps:
 
-- Make sure you have the necessary drivers and packages installed for the RealSense camera to work with ROS, including `realsense2_camera` and `realsense2_description` packages using the following command:
-- Launch the `realsense2_camera` node using the command `roslaunch realsense2_camera rs_aligned_depth.launch`
-- Navigate to the directory where you want to save the rosbag file.
-- Record the topics of interest. For instance, `rosbag record /camera/aligned_depth_to_color/image_raw /camera/color/image_raw /camera/imu /camera/aligned_depth_to_color/camera_info /camera/color/camera_info` for RGB-D or Mono setups.
+- Make sure you have the necessary drivers and packages installed for the RealSense camera to work with `ROS`, including `realsense2_camera` and `realsense2_description` packages using the following command:
+- Launch the `realsense2_camera` node using the proper command:
+  - For Mono and RGB-D, with or without IMU, run `roslaunch realsense2_camera rs_rgbd.launch` (sample provided [here](/doc/realsense2_camera_rs_rgbd.launch)),
+  - For Mono and RGB-D, with or without IMU, run `roslaunch realsense2_camera rs_stereo.launch` (sample provided [here](/doc/realsense2_camera_rs_stereo.launch)),
+- Navigate to the directory where you want to save the rosbag file,
+- Record the topics of interest:
+  - For Mono and RGB-D, with or without IMU, run `rosbag record /camera/color/image_raw /camera/aligned_depth_to_color/image_raw /camera/imu /camera/color/camera_info /camera/aligned_depth_to_color/camera_info`.
+  - For Stereo, with or without IMU, run `rosbag record /camera/color/image_raw /camera/infra1/image_rect_raw /camera/infra2/image_rect_raw /camera/imu /camera/color/camera_info /camera/infra1/camera_info /camera/infra2/camera_info`.
 
 ## 🤖 ROS topics, params and services
 
