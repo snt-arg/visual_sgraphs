@@ -10,11 +10,11 @@
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_stereo_inertial" output="screen">
         <!-- Remap to prepare the raw images -->
-        <remap from="/camera/left/image_raw"    to="/cam0/image_raw"/>
-        <remap from="/camera/right/image_raw"   to="/cam1/image_raw"/>
+        <remap from="/camera/left/image_raw"    to="/camera/infra2/image_rect_raw"/>
+        <remap from="/camera/right/image_raw"   to="/camera/infra1/image_rect_raw"/>
 
         <!-- Remap to prepare the inertial data -->
-        <remap from="/imu"                      to="/imu0"/>
+        <remap from="/imu"                      to="/camera/imu"/>
 
         <!-- Parameters for loading real semantic data from the environment -->
         <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>

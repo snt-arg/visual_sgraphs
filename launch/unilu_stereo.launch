@@ -10,8 +10,8 @@
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_stereo" output="screen">
         <!-- Remap to prepare the raw images -->
-        <remap from="/camera/left/image_raw"    to="/cam0/image_raw"/>
-        <remap from="/camera/right/image_raw"   to="/cam1/image_raw"/>
+        <remap from="/camera/right/image_raw"   to="/camera/infra1/image_rect_raw"/>
+        <remap from="/camera/left/image_raw"    to="/camera/infra2/image_rect_raw"/>
 
         <!-- Parameters for loading real semantic data from the environment -->
         <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>

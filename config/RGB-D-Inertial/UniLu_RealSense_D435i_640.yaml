@@ -12,13 +12,12 @@ Camera1.fx: 605.856689453125
 Camera1.fy: 606.26611328125
 Camera1.cx: 325.021026611328
 Camera1.cy: 244.760711669922
-# distortion parameters
+
+# Distortion parameters
 Camera1.k1: 0.0
 Camera1.k2: 0.0
 Camera1.p1: 0.0
 Camera1.p2: 0.0
-# stereo
-Stereo.b: 0.0499585
 
 # Camera resolution
 Camera.width: 640

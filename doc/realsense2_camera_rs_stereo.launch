@@ -29,29 +29,29 @@
   <arg name="enable_infra1"       default="true"/> <!-- changed -->
   <arg name="enable_infra2"       default="true"/> <!-- changed -->
 
-  <arg name="color_width"         default="640"/> <!-- maximum supported -->
-  <arg name="color_height"        default="480"/> <!-- maximum supported -->
-  <arg name="enable_color"        default="true"/> <!-- should be on -->
+  <arg name="color_width"         default="-1"/> <!-- changed -->
+  <arg name="color_height"        default="-1"/> <!-- changed -->
+  <arg name="enable_color"        default="false"/> <!-- changed -->
 
   <arg name="fisheye_fps"         default="-1"/>
   <arg name="depth_fps"           default="-1"/> <!-- changed -->
   <arg name="infra_fps"           default="30"/> <!-- changed -->
-  <arg name="color_fps"           default="30"/> <!-- changed -->
+  <arg name="color_fps"           default="-1"/> <!-- changed -->
   <arg name="gyro_fps"            default="-1"/>
   <arg name="accel_fps"           default="-1"/>
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
   <arg name="unite_imu_method"    default="linear_interpolation"/> <!-- united IMU data -->
 
-  <arg name="enable_pointcloud"   default="false"/> <!-- should be off for stereo -->
+  <arg name="enable_pointcloud"   default="true"/>
   <arg name="enable_sync"         default="true"/>
-  <arg name="align_depth"         default="true"/>
+  <arg name="align_depth"         default="false"/>
   <arg name="filters"             default=""/>
 
   <arg name="publish_tf"          default="false"/>
   <arg name="tf_publish_rate"     default="0"/> <!-- 0 - static transform -->
 
-  <!-- stereo_launch specific arguments -->
+  <!-- rgbd_launch specific arguments -->
 
   <!-- Arguments for remapping all device namespaces -->
   <arg name="rgb"                             default="color" />
@@ -68,11 +68,11 @@
   <arg name="respawn"                         default="$(arg bond)" />
 
   <!-- Processing Modules -->
-  <arg name="rgb_processing"                  default="true"/>
+  <arg name="rgb_processing"                  default="false"/> <!-- changed -->
   <arg name="debayer_processing"              default="false" />
   <arg name="ir_processing"                   default="false"/>
   <arg name="depth_processing"                default="false"/>
-  <arg name="depth_registered_processing"     default="true"/>
+  <arg name="depth_registered_processing"     default="false"/>
   <arg name="disparity_processing"            default="false"/>
   <arg name="disparity_registered_processing" default="false"/>
   <arg name="hw_registered_processing"        default="$(arg align_depth)" />
@@ -80,7 +80,6 @@
   <arg name="sw_registered_processing"        default="false" if="$(arg align_depth)" />
 
   <group ns="$(arg camera)">
-
     <!-- Launch the camera device nodelet-->
     <include file="$(find realsense2_camera)/launch/includes/nodelet.launch.xml">
       <arg name="external_manager"         value="$(arg external_manager)"/>
