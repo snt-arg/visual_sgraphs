@@ -78,11 +78,6 @@ sourcerealsense
 roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
 ```
 
-1. For using the live version, you need to add the flag `offline:=false`, such as `roslaunch orb_slam3_ros unilu_mono.launch offline:=false`, which gets the **TF** values from RealSense instead of reading from `ORB-SLAM` while a `rosbag` file is being played (offline). If the flag is not set, whenever a marker is seen, the tracking will fail due to the mentioned conflict.
-2. For using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error. You can find a sample launch file for RGB-D and Mono [here](/doc/realsense2_camera_rs_rgbd.launch).
-3. For using Stereo cameras as the live feed provider, you can find a sample launch file [here](/doc/realsense2_camera_rs_stereo.launch).
-4. Run realsense using `roslaunch realsense2_camera [rs_rgbd/rs_stereo].launch [align_depth:=true] [unite_imu_method:=linear_interpolation]`.
-
 ### 🦊 Voxblox (optional) <a id="voxblox"></a>
 
 Install `Voxblox` based on the installation guide introduced [here](https://voxblox.readthedocs.io/en/latest/pages/Installation.html), and to make sure if it works fine, try [running it](https://voxblox.readthedocs.io/en/latest/pages/Running-Voxblox.html) on a simple dataset, such as the `basement dataset`.
@@ -149,17 +144,14 @@ You can find the configuration files for the application in the `config` folder.
 
 2. Run the ArUco marker detector module using `roslaunch aruco_ros marker_publisher.launch`
 
-| Mode            | Dataset                                                                                                                                                                                    | Commands                                                                                                                                                          | Notes                                                                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Mono            | UniLu's single office                                                                                                                                                                      | `roslaunch orb_slam3_ros unilu_mono.launch`                                                                                                                       | data collected using RealSense                                                                                                        |
-| Mono            | Live(\*)                                                                                                                                                                                   | `roslaunch orb_slam3_ros unilu_mono.launch offline:=false`                                                                                                        | -                                                                                                                                     |
-| Mono-Inertial   | UniLu's single                                                                                                                                                                             | `roslaunch orb_slam3_ros unilu_mono_inertial.launch`                                                                                                              | data collected using RealSense                                                                                                        |
-| Mono-Inertial   | Live (\*)                                                                                                                                                                                  | `roslaunch orb_slam3_ros unilu_mono_inertial.launch`                                                                                                              | -                                                                                                                                     |
-| Stereo-Inertial | [TUM-VI](https://vision.in.tum.de/data/datasets/visual-inertial-dataset)'s [`dataset-corridor1_512_16.bag`](https://vision.in.tum.de/tumvi/calibrated/512_16/dataset-corridor1_512_16.bag) | `roslaunch orb_slam3_ros tum_vi_stereo_inertial.launch` <br /> `rosbag play dataset-corridor1_512_16.bag --clock`                                                 | -                                                                                                                                     |
-| Stereo-Inertial | Live (\*)                                                                                                                                                                                  | `roslaunch realsense2_camera rs_t265.launch` <br /> `roslaunch orb_slam3_ros rs_t265_stereo_inertial.launch`                                                      | follow the hints (\*)                                                                                                                 |
-| RGB-D           | [TUM](http://vision.in.tum.de/data/datasets/rgbd-dataset/download)'s [`rgbd_dataset_freiburg1_xyz.bag`](https://vision.in.tum.de/rgbd/dataset/freiburg1/rgbd_dataset_freiburg1_xyz.bag)    | `roslaunch orb_slam3_ros tum_rgbd.launch` <br /> `rosbag play rgbd_dataset_freiburg1_xyz.bag --clock`                                                             | change `TUMX.yaml` to `TUM1.yaml`,`TUM2.yaml` or `TUM3.yaml` for freiburg1, freiburg2 and freiburg3 sequences respectively.           |
-| RGB-D-Inertial  | [VINS-RGBD](https://github.com/STAR-Center/VINS-RGBD)'s [`Normal.bag`](https://star-center.shanghaitech.edu.cn/seafile/d/0ea45d1878914077ade5/)                                            | `roslaunch orb_slam3_ros rs_d435i_rgbd_inertial.launch` <br /> `rosbag play Normal.bag --clock`                                                                   | decompress the downloaded bag using `rosbag decompress Normal.bag` and change the params in `RealSense_D435i.yaml` if necessary.      |
-| RGB-D-Inertial  | Live (\*)                                                                                                                                                                                  | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch` <br /> `roslaunch realsense2_camera rs_rgbd.launch align_depth:=true unite_imu_method:=linear_interpolation` | follow the hints (\*) - use the sample modified file for RGB-D-Inertial device available [here](doc/realsense2_camera_rs_rgbd.launch) |
+| Mode            | Dataset                            | Commands                                                                | Notes                          |
+| --------------- | ---------------------------------- | ----------------------------------------------------------------------- | ------------------------------ |
+| Mono            | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_mono.launch [offline:=false]`            | data collected using RealSense |
+| Mono-Inertial   | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_mono_inertial.launch [offline:=false]`   | data collected using RealSense |
+| Stereo          | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_stereo.launch [offline:=false]`          | data collected using RealSense |
+| Stereo-Inertial | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_stereo_inertial.launch [offline:=false]` | data collected using RealSense |
+| RGB-D           | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_rgbd.launch [offline:=false]`            | data collected using RealSense |
+| RGB-D-Inertial  | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch [offline:=false]`   | data collected using RealSense |
 
 ### ⚠️ Useful Hints <a id="hints"></a>
 
@@ -180,6 +172,13 @@ roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
 
 - Use the command `catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release` in `voxblox`'s workspace to build it in the release mode and run it again,
 - Run the rosbag file slower using `rosbag play [file] --clock -r 0.5`
+
+#### 📸 Live Version <a id="imu"></a>
+
+1. For using the live version, you need to add the flag `offline:=false`, such as `roslaunch orb_slam3_ros unilu_mono.launch offline:=false`, which gets the **TF** values from RealSense instead of reading from `ORB-SLAM` while a `rosbag` file is being played (offline). If the flag is not set, whenever a marker is seen, the tracking will fail due to the mentioned conflict.
+2. For using RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error. You can find a sample launch file for RGB-D and Mono [here](/doc/realsense2_camera_rs_rgbd.launch).
+3. For using Stereo cameras as the live feed provider, you can find a sample launch file [here](/doc/realsense2_camera_rs_stereo.launch).
+4. Run realsense using `roslaunch realsense2_camera [rs_rgbd/rs_stereo].launch [align_depth:=true] [unite_imu_method:=linear_interpolation]`.
 
 #### 🔖 Using IMU <a id="imu"></a>
 
