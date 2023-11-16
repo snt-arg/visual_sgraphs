@@ -35,6 +35,9 @@
 #include <mutex>
 #include <opencv2/opencv.hpp>
 
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
 #include "Eigen/Core"
 #include "sophus/se3.hpp"
 
@@ -76,10 +79,10 @@ namespace ORB_SLAM3
               const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Constructor for RGB-D cameras (with or without IMU)
-        Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor *extractor,
-              ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth,
-              GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
-              const std::vector<Marker *> markers = std::vector<Marker *>{});
+        Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
+              const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef,
+              const float &bf, const float &thDepth, GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL),
+              const IMU::Calib &ImuCalib = IMU::Calib(), const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Constructor for Monocular cameras (with or without IMU)
         Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
@@ -251,6 +254,9 @@ namespace ORB_SLAM3
         // In the RGB-D case, RGB images can be distorted.
         std::vector<cv::KeyPoint> mvKeys, mvKeysRight;
         std::vector<cv::KeyPoint> mvKeysUn;
+
+        // Corresponding point clouds
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr mvpPointClouds;
 
         // Corresponding stereo coordinate and depth for each keypoint.
         std::vector<MapPoint *> mvpMapPoints;

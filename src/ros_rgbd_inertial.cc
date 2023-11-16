@@ -22,11 +22,13 @@ public:
 
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
     cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
-    void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD);
+    void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
+                  const sensor_msgs::PointCloud2ConstPtr &msgPC);
 
     ImuGrabber *mpImuGb;
     std::mutex mBufMutex;
     queue<sensor_msgs::ImageConstPtr> imgRGBBuf, imgDBuf;
+    queue<sensor_msgs::PointCloud2ConstPtr> imgPCBuf;
 };
 
 int main(int argc, char **argv)
@@ -91,10 +93,14 @@ int main(int argc, char **argv)
     message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
     message_filters::Subscriber<sensor_msgs::Image> sub_depth_img(node_handler, "/camera/depth_registered/image_raw", 100);
 
+    // Subscribe to get pointcloud from depth sensor
+    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pointcloud(node_handler, "/camera/depth/color/points", 100);
+
     // Synchronization of raw and depth images
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
-    message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img);
-    sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2));
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::PointCloud2>
+        sync_pol;
+    message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img, sub_pointcloud);
+    sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2, _3));
 
     // Subscribe to the markers detected by `aruco_ros` library
     ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
@@ -119,7 +125,8 @@ int main(int argc, char **argv)
 // Functions
 //////////////////////////////////////////////////
 
-void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD)
+void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
+                            const sensor_msgs::PointCloud2ConstPtr &msgPC)
 {
     mBufMutex.lock();
 
@@ -130,6 +137,10 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     if (!imgDBuf.empty())
         imgDBuf.pop();
     imgDBuf.push(msgD);
+
+    if (!imgPCBuf.empty())
+        imgPCBuf.pop();
+    imgPCBuf.push(msgPC);
 
     mBufMutex.unlock();
 }
@@ -157,6 +168,7 @@ void ImageGrabber::SyncWithImu()
         if (!imgRGBBuf.empty() && !mpImuGb->imuBuf.empty())
         {
             cv::Mat im, depth;
+            sensor_msgs::PointCloud2ConstPtr msgPC;
             double tIm = 0;
 
             tIm = imgRGBBuf.front()->header.stamp.toSec();
@@ -169,6 +181,9 @@ void ImageGrabber::SyncWithImu()
             imgRGBBuf.pop();
             depth = GetImage(imgDBuf.front());
             imgDBuf.pop();
+            msgPC = imgPCBuf.front();
+            imgPCBuf.pop();
+
             this->mBufMutex.unlock();
 
             vector<ORB_SLAM3::IMU::Point> vImuMeas;
@@ -181,22 +196,35 @@ void ImageGrabber::SyncWithImu()
                 while (!mpImuGb->imuBuf.empty() && mpImuGb->imuBuf.front()->header.stamp.toSec() <= tIm)
                 {
                     double t = mpImuGb->imuBuf.front()->header.stamp.toSec();
-
                     cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
-
                     cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
-
                     vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc, gyr, t));
-
                     Wbb << mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z;
-
                     mpImuGb->imuBuf.pop();
                 }
             }
             mpImuGb->mBufMutex.unlock();
 
-            // ORB-SLAM3 runs in TrackRGBD()
-            Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, tIm, vImuMeas);
+            // Convert pointclouds from ros to pcl format
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+            pcl::fromROSMsg(*msgPC, *cloud);
+
+            // Find the marker with the minimum time difference compared to the current frame
+            std::pair<double, std::vector<ORB_SLAM3::Marker *>> result = find_nearest_marker(tIm);
+            double min_time_diff = result.first;
+            std::vector<ORB_SLAM3::Marker *> matched_markers = result.second;
+
+            // Tracking process sends markers found in this frame for tracking and clears the buffer
+            if (min_time_diff < 0.05)
+            {
+                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, cloud, tIm, vImuMeas, "",
+                                                    matched_markers, env_doors, env_rooms);
+                markers_buff.clear();
+            }
+            else
+            {
+                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, cloud, tIm, vImuMeas);
+            }
 
             publish_topics(msg_time, Wbb);
         }

@@ -125,7 +125,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
 
     // Setup publishers
     publish_doors(pSLAM->GetAllDoors(), msg_time);
-    publish_walls(pSLAM->GetAllWalls(), msg_time);
+    // publish_walls(pSLAM->GetAllWalls(), msg_time);
     publish_rooms(pSLAM->GetAllRooms(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);

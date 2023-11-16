@@ -305,9 +305,10 @@ namespace ORB_SLAM3
     }
 
     // RGB-D Frames Processing
-    Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const double &timeStamp, ORBextractor *extractor,
-                 ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth,
-                 GeometricCamera *pCamera, Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
+    Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
+                 const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K,
+                 cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera *pCamera,
+                 Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
           mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL),
@@ -350,6 +351,9 @@ namespace ORB_SLAM3
 
         // Initialize MapMarkers
         mvpMapMarkers = markers;
+
+        // Initialize PointCloud
+        mvpPointClouds = pointcloud;
 
         mmProjectPoints.clear();
         mmMatchedInImage.clear();

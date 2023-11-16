@@ -8,7 +8,8 @@ public:
     ImageGrabber(){};
 
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
-    void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD);
+    void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
+                  const sensor_msgs::PointCloud2ConstPtr &msgPC);
 };
 
 int main(int argc, char **argv)
@@ -70,10 +71,14 @@ int main(int argc, char **argv)
     message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
     message_filters::Subscriber<sensor_msgs::Image> sub_depth_img(node_handler, "/camera/depth_registered/image_raw", 100);
 
+    // Subscribe to get pointcloud from depth sensor
+    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pointcloud(node_handler, "/camera/depth/points", 100);
+
     // Synchronization of raw and depth images
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> sync_pol;
-    message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img);
-    sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2));
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::PointCloud2>
+        sync_pol;
+    message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img, sub_pointcloud);
+    sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2, _3));
 
     // Subscribe to the markers detected by `aruco_ros` library
     ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
@@ -95,7 +100,8 @@ int main(int argc, char **argv)
 // Functions
 //////////////////////////////////////////////////
 
-void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD)
+void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
+                            const sensor_msgs::PointCloud2ConstPtr &msgPC)
 {
     // Copy the ros image message to cv::Mat.
     cv_bridge::CvImageConstPtr cv_ptrRGB;
@@ -120,6 +126,10 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
         return;
     }
 
+    // Convert pointclouds from ros to pcl format
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::fromROSMsg(*msgPC, *cloud);
+
     // Find the marker with the minimum time difference compared to the current frame
     std::pair<double, std::vector<ORB_SLAM3::Marker *>> result = find_nearest_marker(cv_ptrRGB->header.stamp.toSec());
     double min_time_diff = result.first;
@@ -128,13 +138,13 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     // Tracking process sends markers found in this frame for tracking and clears the buffer
     if (min_time_diff < 0.05)
     {
-        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec(),
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, cv_ptrRGB->header.stamp.toSec(),
                                             {}, "", matched_markers, env_doors, env_rooms);
         markers_buff.clear();
     }
     else
     {
-        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cv_ptrRGB->header.stamp.toSec());
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, cv_ptrRGB->header.stamp.toSec());
     }
 
     ros::Time msg_time = cv_ptrRGB->header.stamp;

@@ -80,8 +80,9 @@ namespace ORB_SLAM3
                                      const double &timestamp, string filename,
                                      const std::vector<Marker *> markers, const std::vector<Door *> doors,
                                      const std::vector<Room *> rooms);
-        Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD, const double &timestamp,
-                                   string filename, const std::vector<Marker *> markers,
+        Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD,
+                                   const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
+                                   const double &timestamp, string filename, const std::vector<Marker *> markers,
                                    const std::vector<Door *> doors, const std::vector<Room *> rooms);
         Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename,
                                         const std::vector<Marker *> markers, const std::vector<Door *> doors,
@@ -171,11 +172,22 @@ namespace ORB_SLAM3
                                                  const Eigen::Vector3f &translation);
 
         /**
-         * @brief Calculation of plane equation from map points
-         * @param currentMarker the address of the currently observing marker
-         * @param planeEstimate the plane estimation of the current wall
+         * @brief Calculation of plane equation from point clouds (provided by depth in RGB-D or calculated from
+         * map points in Monocular and Stereo)
          */
-        bool getPlaneEquationFromPoints(const Marker *currentMarker, Eigen::Vector4d &planeEstimate);
+        g2o::Plane3D getPlaneEquationFromPointClouds();
+
+        /**
+         * @brief Get the points close to a given marker
+         * @param currentMarker the address of the current marker
+         */
+        std::vector<MapPoint *> findPointsCloseToMarker(const Marker *currentMarker);
+
+        /**
+         * @brief Get the point cloud from a set of map-points
+         * @param points the set of map-points
+         */
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCloudFromPoints(const std::vector<MapPoint *> &points);
 
         /**
          * @brief Get the points close to a given location
@@ -195,17 +207,17 @@ namespace ORB_SLAM3
         double calculateDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2);
 
         /**
-         * @brief Perform PCL ransac to get the plane equation from the points         *
+         * @brief Perform PCL ransac to get the plane equation from the a given point cloud
          * @param points the set of given map-points
          */
-        Eigen::Vector4d ransacPlaneFitting(const std::vector<MapPoint *> &points);
+        Eigen::Vector4d ransacPlaneFitting(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
 
         /**
-         * @brief Checks to see if the marker is attached to a wall or not (e.g., a door)
+         * @brief Checks to see if the marker is attached to a door or not (e.g., a window)
          * and returns the name of it if exists (only valid for doors)
          * @param markerId the id of the marker
          */
-        std::pair<bool, std::string> markerIsPlacedOnWall(const int &markerId);
+        std::pair<bool, std::string> markerIsPlacedOnDoor(const int &markerId);
 
         /**
          * @brief Finds the point lying on wall
@@ -228,7 +240,7 @@ namespace ORB_SLAM3
          * @param mapPoints all the map points to check the ones lying on the wall
          * @param pKF the address of the current keyframe
          */
-        void createMapWall(Marker *attachedMarker, const g2o::Plane3D estimatedPlane, KeyFrame *pKF);
+        void createMapWall(const g2o::Plane3D estimatedPlane, KeyFrame *pKF, Marker *attachedMarker = NULL);
 
         /**
          * @brief Updates an existing wall object in the map
@@ -236,7 +248,7 @@ namespace ORB_SLAM3
          * @param visitedMarker the address of the visited marker
          * @param pKF the address of the current keyframe
          */
-        void updateMapWall(int wallId, Marker *visitedMarker, ORB_SLAM3::KeyFrame *pKF);
+        void updateMapWall(int wallId, ORB_SLAM3::KeyFrame *pKF, Marker *visitedMarker = NULL);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., walls and doors

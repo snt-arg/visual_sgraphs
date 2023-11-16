@@ -121,9 +121,11 @@ namespace ORB_SLAM3
         // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
         // Input depthmap: Float (CV_32F).
         // Returns the camera pose (empty if tracking fails).
-        Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap, const double &timestamp,
+        Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap,
+                               const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud, const double &timestamp,
                                const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                               const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
+                               const vector<Marker *> markers = vector<Marker *>{},
+                               const vector<Door *> envDoors = vector<Door *>{},
                                const vector<Room *> envRooms = vector<Room *>{});
 
         // Proccess the given monocular frame and optionally imu data
