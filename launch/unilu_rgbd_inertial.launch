@@ -9,14 +9,17 @@
 
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_rgbd_inertial" output="screen">
-        <!-- Remap to prepare the raw image -->
-        <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>
-
         <!-- Remap to prepare the inertial data -->
-        <remap from="/imu"                                  to="/camera/imu"/>
+        <remap from="/imu" to="/camera/imu"/>
+        
+        <!-- Remap to prepare the raw image -->
+        <remap from="/camera/rgb/image_raw" to="/camera/color/image_raw"/>        
 
         <!-- Remap to prepare the depth data -->
         <remap from="/camera/depth_registered/image_raw"    to="/camera/aligned_depth_to_color/image_raw"/>
+
+        <!-- Remap to prepare the pointcloud -->
+        <remap from="/camera/pointcloud"    to="/camera/depth/color/points"/>
 
         <!-- Parameters for loading real semantic data from the environment -->
         <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>

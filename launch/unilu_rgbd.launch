@@ -15,6 +15,9 @@
         <!-- Remap to prepare the depth data -->
         <remap from="/camera/depth_registered/image_raw"    to="/camera/aligned_depth_to_color/image_raw"/>
 
+        <!-- Remap to prepare the pointcloud -->
+        <remap from="/camera/pointcloud"    to="/camera/depth/color/points"/>
+
         <!-- Parameters for loading real semantic data from the environment -->
         <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>
 
