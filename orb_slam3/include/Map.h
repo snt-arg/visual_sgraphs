@@ -21,9 +21,6 @@
 
 #include "MapPoint.h"
 #include "KeyFrame.h"
-// #include "Semantic/Wall.h"
-// #include "Semantic/Door.h"
-// #include "Semantic/Room.h"
 #include "Semantic/Marker.h"
 
 #include <set>
@@ -39,7 +36,7 @@ namespace ORB_SLAM3
     class KeyFrame;
     class Atlas;
     class Marker;
-    class Wall;
+    class Plane;
     class Door;
     class Room;
     class KeyFrameDatabase;
@@ -51,26 +48,26 @@ namespace ORB_SLAM3
         template <class Archive>
         void serialize(Archive &ar, const unsigned int version)
         {
-            ar &mnId;
-            ar &mnInitKFid;
-            ar &mnMaxKFid;
-            ar &mnBigChangeIdx;
+            ar & mnId;
+            ar & mnInitKFid;
+            ar & mnMaxKFid;
+            ar & mnBigChangeIdx;
 
             // Save/load a set structure, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated
             // ar & mspKeyFrames;
             // ar & mspMapPoints;
-            ar &mvpBackupKeyFrames;
-            ar &mvpBackupMapPoints;
+            ar & mvpBackupKeyFrames;
+            ar & mvpBackupMapPoints;
 
-            ar &mvBackupKeyFrameOriginsId;
+            ar & mvBackupKeyFrameOriginsId;
 
-            ar &mnBackupKFinitialID;
-            ar &mnBackupKFlowerID;
+            ar & mnBackupKFinitialID;
+            ar & mnBackupKFlowerID;
 
-            ar &mbImuInitialized;
-            ar &mbIsInertial;
-            ar &mbIMU_BA1;
-            ar &mbIMU_BA2;
+            ar & mbImuInitialized;
+            ar & mbIsInertial;
+            ar & mbIMU_BA1;
+            ar & mbIMU_BA2;
         }
 
     public:
@@ -82,14 +79,14 @@ namespace ORB_SLAM3
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapMarker(Marker *pMarker);
-        void AddMapWall(Wall *pWall);
+        void AddMapPlane(Plane *pPlane);
         void AddMapDoor(Door *pDoor);
         void AddMapRoom(Room *pRoom);
 
         void EraseMapPoint(MapPoint *pMP);
         void EraseKeyFrame(KeyFrame *pKF);
         void EraseMapMarker(Marker *pMarker);
-        void EraseMapWall(Wall *pWall);
+        void EraseMapPlane(Plane *pPlane);
         void EraseMapDoor(Door *pDoor);
         void EraseMapRoom(Room *pRoom);
 
@@ -97,7 +94,7 @@ namespace ORB_SLAM3
         void InformNewBigChange();
         int GetLastBigChangeIdx();
 
-        std::vector<Wall *> GetAllWalls();
+        std::vector<Plane *> GetAllPlanes();
         std::vector<Door *> GetAllDoors();
         std::vector<Room *> GetAllRooms();
         std::vector<Marker *> GetAllMarkers();
@@ -179,9 +176,9 @@ namespace ORB_SLAM3
     protected:
         long unsigned int mnId;
 
-        std::set<Wall *> mspWalls;
         std::set<Door *> mspDoors;
         std::set<Room *> mspRooms;
+        std::set<Plane *> mspPlanes;
         std::set<Marker *> mspMarkers;
         std::set<MapPoint *> mspMapPoints;
         std::set<KeyFrame *> mspKeyFrames;

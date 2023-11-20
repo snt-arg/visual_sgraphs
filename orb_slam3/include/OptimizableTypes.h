@@ -315,31 +315,31 @@ namespace ORB_SLAM3
             // Calculating marker's pose
             g2o::Isometry3D markerPose = vMarkerGP->estimate();
 
-            // Calculate the wall's coefficients (in global frame)
-            g2o::Vector4D wallCoeffs = vWallGP->estimate().coeffs();
+            // Calculate the plane's coefficients (in global frame)
+            g2o::Vector4D planeCoeffs = vWallGP->estimate().coeffs();
 
-            // Normalize the wall vector if necessary
-            if (wallCoeffs(3) < 0)
+            // Normalize the plane vector if necessary
+            if (planeCoeffs(3) < 0)
             {
-                wallCoeffs *= -1;
+                planeCoeffs *= -1;
             }
 
-            // Create the wall plane in global frame
-            g2o::Plane3D wall_g(wallCoeffs);
+            // Create the plane plane in global frame
+            g2o::Plane3D plane_g(planeCoeffs);
 
-            // Calculate the wall in marker's frame
-            g2o::Plane3D wall_m = markerPose.inverse() * wall_g;
+            // Calculate the plane in marker's frame
+            g2o::Plane3D plane_m = markerPose.inverse() * plane_g;
 
             // Calculate the normal of the marker in marker's frame
             g2o::Plane3D markerNormal_m = markerPose.inverse() * markerPose.matrix().col(2);
 
             // Calculate the difference of the planes
-            Eigen::Vector3d planeDiff = wall_m.coeffs().head(3) - markerNormal_m.coeffs().head(3);
+            Eigen::Vector3d planeDiff = plane_m.coeffs().head(3) - markerNormal_m.coeffs().head(3);
 
             _error[0] = planeDiff(0);
             _error[1] = planeDiff(1);
             _error[2] = planeDiff(2);
-            _error[3] = wall_m.coeffs()(3); // Distance (d) of the cacmera
+            _error[3] = plane_m.coeffs()(3); // Distance (d) of the cacmera
         }
     };
 

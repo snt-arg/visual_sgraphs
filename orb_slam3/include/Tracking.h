@@ -35,7 +35,7 @@
 #include "System.h"
 #include "ImuTypes.h"
 #include "Settings.h"
-#include "Semantic/Wall.h"
+#include "Geometric/Plane.h"
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Semantic/Marker.h"
@@ -156,12 +156,12 @@ namespace ORB_SLAM3
                                       const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2);
 
         /**
-         * @brief Associates a detected wall into the walls found in the map and returns
+         * @brief Associates a detected plane into the planes found in the map and returns
          * if it needs to be added to the plane or not.
-         * @param mappedWalls an array of walls with their IDs and equations
+         * @param mappedPlanes an array of planes with their IDs and equations
          * @param givenPlane the detected 3D plane
          */
-        int associateWalls(const vector<Wall *> &mappedWalls, g2o::Plane3D givenPlane);
+        int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane);
 
         /**
          * @brief Calculation of the equation of the plane from marker pose
@@ -220,7 +220,7 @@ namespace ORB_SLAM3
         std::pair<bool, std::string> markerIsPlacedOnDoor(const int &markerId);
 
         /**
-         * @brief Finds the point lying on wall
+         * @brief Finds the point lying on plane
          * @param planeEquation equation of a given plane
          * @param mapPoint current map point
          */
@@ -234,24 +234,24 @@ namespace ORB_SLAM3
         Marker *createMapMarker(const Marker *visitedMarker, KeyFrame *pKF);
 
         /**
-         * @brief Creates a new wall object to be added to the map
+         * @brief Creates a new plane object to be added to the map
          * @param attachedMarker the address of the attached marker
          * @param estimatedPlane the equation of the plane estimated from the marker
-         * @param mapPoints all the map points to check the ones lying on the wall
+         * @param mapPoints all the map points to check the ones lying on the plane
          * @param pKF the address of the current keyframe
          */
-        void createMapWall(const g2o::Plane3D estimatedPlane, KeyFrame *pKF, Marker *attachedMarker = NULL);
+        void createMapPlane(const g2o::Plane3D estimatedPlane, KeyFrame *pKF, Marker *attachedMarker = NULL);
 
         /**
-         * @brief Updates an existing wall object in the map
-         * @param wallId the identifier of the existing wall
+         * @brief Updates an existing plane object in the map
+         * @param planeId the identifier of the existing plane
          * @param visitedMarker the address of the visited marker
          * @param pKF the address of the current keyframe
          */
-        void updateMapWall(int wallId, ORB_SLAM3::KeyFrame *pKF, Marker *visitedMarker = NULL);
+        void updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF, Marker *visitedMarker = NULL);
 
         /**
-         * @brief Uses the detected markers to detect and map semantic objects, e.g., walls and doors
+         * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
          * @param pKF the current keyframe in which the detection took place
          * @param mvpMapMarkers the address of the detected markers
          */
@@ -269,7 +269,7 @@ namespace ORB_SLAM3
         /**
          * @brief Creates a new room object (corridor or room) to be added to the map
          * @param detectedRoom the address of the detected room
-         * @param markerIds the list of the detected marker-ids belong to the wall
+         * @param markerIds the list of the detected marker-ids belong to the plane
          */
         void createMapRoom(Room *detectedRoom, std::vector<int> markerIds);
 

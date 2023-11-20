@@ -132,8 +132,8 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/TwoViewReconstruction.cc
   orb_slam3/src/Config.cc
   orb_slam3/src/Settings.cc
+  orb_slam3/src/Geometric/Plane.cc
   orb_slam3/src/Semantic/Marker.cc
-  orb_slam3/src/Semantic/Wall.cc
   orb_slam3/src/Semantic/Door.cc
   orb_slam3/src/Semantic/Room.cc
   orb_slam3/src/DatabaseParser.cc
@@ -167,8 +167,8 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/SerializationUtils.h
   orb_slam3/include/Config.h
   orb_slam3/include/Settings.h
+  orb_slam3/include/Geometric/Plane.h
   orb_slam3/include/Semantic/Marker.h
-  orb_slam3/include/Semantic/Wall.h
   orb_slam3/include/Semantic/Door.h
   orb_slam3/include/Semantic/Room.h
   orb_slam3/include/DatabaseParser.h

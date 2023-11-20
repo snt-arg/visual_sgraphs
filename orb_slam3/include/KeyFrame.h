@@ -28,7 +28,7 @@
 #include "KeyFrameDatabase.h"
 #include "ImuTypes.h"
 #include "Semantic/Marker.h"
-#include "Semantic/Wall.h"
+#include "Geometric/Plane.h"
 #include "Semantic/Door.h"
 
 #include "GeometricCamera.h"
@@ -50,7 +50,7 @@ namespace ORB_SLAM3
     class GeometricCamera;
 
     class Marker;
-    class Wall;
+    class Plane;
     class Door;
 
     class KeyFrame
@@ -265,9 +265,9 @@ namespace ORB_SLAM3
         void AddMapMarker(Marker *marker);
         std::vector<Marker *> GetMapMarkers();
 
-        // MapWall observation functions
-        void AddMapWall(Wall *wall);
-        std::vector<Wall *> GetMapWalls();
+        // MapPlane observation functions
+        void AddMapPlane(Plane *plane);
+        std::vector<Plane *> GetMapPlanes();
 
         // MapDoor observation functions
         void AddMapDoor(Door *door);
@@ -466,8 +466,8 @@ namespace ORB_SLAM3
         // Markers available in each keyframe
         std::vector<Marker *> mvpMapMarkers;
 
-        // Walls available in each keyframe
-        std::vector<Wall *> mvpMapWalls;
+        // Planes available in each keyframe
+        std::vector<Plane *> mvpMapPlanes;
 
         // Doors available in each keyframe
         std::vector<Door *> mvpMapDoors;

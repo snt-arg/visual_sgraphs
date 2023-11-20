@@ -40,7 +40,7 @@
 #include "Semantic/Marker.h"
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
-#include "Semantic/Wall.h"
+#include "Geometric/Plane.h"
 
 namespace ORB_SLAM3
 {
@@ -191,8 +191,8 @@ namespace ORB_SLAM3
         int GetTrackingState();
         cv::Mat GetCurrentFrame();
         std::vector<Door *> GetAllDoors();
-        std::vector<Wall *> GetAllWalls();
         std::vector<Room *> GetAllRooms();
+        std::vector<Plane *> GetAllPlanes();
         std::vector<Marker *> GetAllMarkers();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetTrackedMapPoints();

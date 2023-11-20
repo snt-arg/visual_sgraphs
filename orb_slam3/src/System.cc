@@ -1623,10 +1623,10 @@ namespace ORB_SLAM3
         return pActiveMap->GetAllDoors();
     }
 
-    vector<Wall *> System::GetAllWalls()
+    vector<Plane *> System::GetAllPlanes()
     {
         Map *pActiveMap = mpAtlas->GetCurrentMap();
-        return pActiveMap->GetAllWalls();
+        return pActiveMap->GetAllPlanes();
     }
 
     vector<Room *> System::GetAllRooms()

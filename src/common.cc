@@ -15,11 +15,11 @@ bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
-rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
+rviz_visual_tools::RvizVisualToolsPtr plane_visual_tools;
 std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
-std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id, room_frame_id;
-ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, walls_pub, rooms_pub;
+std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, plane_frame_id, room_frame_id;
+ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
 
 // List of semantic entities available in the real environment (filled using JSON)
 std::vector<ORB_SLAM3::Room *> env_rooms;
@@ -86,7 +86,7 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
     // Semantic
     doors_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
-    walls_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/walls", 1);
+    planes_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/planes", 1);
     rooms_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
     fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
@@ -96,13 +96,13 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
         odom_pub = node_handler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
     }
 
-    // Tools for showing walls
-    wall_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-        wall_frame_id, "/rviz_wall_visual_tools");
-    wall_visual_tools->loadMarkerPub();
-    wall_visual_tools->deleteAllMarkers();
-    wall_visual_tools->enableBatchPublishing();
-    wall_visual_tools->setAlpha(0.5);
+    // Tools for showing planes
+    plane_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
+        plane_frame_id, "/rviz_plane_visual_tools");
+    plane_visual_tools->loadMarkerPub();
+    plane_visual_tools->deleteAllMarkers();
+    plane_visual_tools->enableBatchPublishing();
+    plane_visual_tools->setAlpha(0.5);
 
     transform_listener = std::make_shared<tf::TransformListener>();
 }
@@ -125,7 +125,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
 
     // Setup publishers
     publish_doors(pSLAM->GetAllDoors(), msg_time);
-    // publish_walls(pSLAM->GetAllWalls(), msg_time);
+    // publish_planes(pSLAM->GetAllPlanes(), msg_time);
     publish_rooms(pSLAM->GetAllRooms(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
@@ -325,7 +325,7 @@ void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Tim
         fiducial_marker.action = fiducial_marker.ADD;
         fiducial_marker.id = markerArray.markers.size();
         fiducial_marker.header.stamp = ros::Time().now();
-        fiducial_marker.header.frame_id = wall_frame_id;
+        fiducial_marker.header.frame_id = plane_frame_id;
         fiducial_marker.mesh_use_embedded_materials = true;
         fiducial_marker.type = visualization_msgs::Marker::MESH_RESOURCE;
         fiducial_marker.mesh_resource =
@@ -361,13 +361,13 @@ void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Tim
         for (map<ORB_SLAM3::KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
         {
             tf::Stamped<tf::Point> marker_point;
-            marker_point.frame_id_ = wall_frame_id;
+            marker_point.frame_id_ = plane_frame_id;
             marker_point.setX(markerPose.translation().x());
             marker_point.setY(markerPose.translation().y());
             marker_point.setZ(markerPose.translation().z());
 
             tf::Stamped<tf::Point> marker_point_transformed;
-            transform_listener->transformPoint(world_frame_id, ros::Time(0), marker_point, wall_frame_id, marker_point_transformed);
+            transform_listener->transformPoint(world_frame_id, ros::Time(0), marker_point, plane_frame_id, marker_point_transformed);
 
             geometry_msgs::Point point1;
             point1.x = marker_point_transformed.x();
@@ -417,7 +417,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         door.action = door.ADD;
         door.lifetime = ros::Duration();
         door.id = doorArray.markers.size();
-        door.header.frame_id = wall_frame_id;
+        door.header.frame_id = plane_frame_id;
         door.header.stamp = ros::Time().now();
         door.mesh_use_embedded_materials = true;
         door.type = visualization_msgs::Marker::MESH_RESOURCE;
@@ -447,7 +447,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         doorLabel.lifetime = ros::Duration();
         doorLabel.text = doors[idx]->getName();
         doorLabel.id = doorArray.markers.size();
-        doorLabel.header.frame_id = wall_frame_id;
+        doorLabel.header.frame_id = plane_frame_id;
         doorLabel.header.stamp = ros::Time().now();
         doorLabel.pose.position.x = door.pose.position.x;
         doorLabel.pose.position.z = door.pose.position.z;
@@ -467,7 +467,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         doorLines.action = doorLines.ADD;
         doorLines.lifetime = ros::Duration();
         doorLines.id = doorArray.markers.size();
-        doorLines.header.frame_id = wall_frame_id;
+        doorLines.header.frame_id = plane_frame_id;
         doorLines.header.stamp = ros::Time().now();
         doorLines.type = visualization_msgs::Marker::LINE_LIST;
 
@@ -489,124 +489,124 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
     doors_pub.publish(doorArray);
 }
 
-void publish_walls(std::vector<ORB_SLAM3::Wall *> walls, ros::Time msg_time)
+void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
 {
-    int numWalls = walls.size();
-    if (numWalls == 0)
+    int numPlanes = planes.size();
+    if (numPlanes == 0)
         return;
 
-    visualization_msgs::MarkerArray wallArray;
-    wallArray.markers.resize(numWalls);
+    visualization_msgs::MarkerArray planeArray;
+    planeArray.markers.resize(numPlanes);
 
-    for (int idx = 0; idx < numWalls; idx++)
+    for (int idx = 0; idx < numPlanes; idx++)
     {
-        visualization_msgs::Marker wall, wallPoints, wallLines;
-        std::vector<double> color = walls[idx]->getColor();
+        visualization_msgs::Marker plane, planePoints, planeLines;
+        std::vector<double> color = planes[idx]->getColor();
 
-        // Get the orientation of the wall from markers
-        Sophus::SE3f wallOrientation = walls[idx]->getMarkers().front()->getGlobalPose();
+        // Get the orientation of the plane from markers
+        Sophus::SE3f planeOrientation = planes[idx]->getMarkers().front()->getGlobalPose();
 
-        // Get the position of the walls from map-points to put it in the middle of the cluster
+        // Get the position of the planes from map-points to put it in the middle of the cluster
         Eigen::Vector3f centroid(0.0, 0.0, 0.0);
-        const auto &mapPoints = walls[idx]->getMapPoints();
+        const auto &mapPoints = planes[idx]->getMapPoints();
 
         for (const auto &mapPoint : mapPoints)
         {
-            // Wall plane
+            // Plane plane
             Eigen::Vector3f mPosition = mapPoint->GetWorldPos();
             centroid += mPosition;
-            // Wall rooms
+            // Plane rooms
             geometry_msgs::Point point;
             point.x = mapPoint->GetWorldPos().x();
             point.y = mapPoint->GetWorldPos().y();
             point.z = mapPoint->GetWorldPos().z();
-            wallPoints.points.push_back(point);
+            planePoints.points.push_back(point);
         }
 
         // Calculate the centroid
         if (mapPoints.size() > 0)
             centroid /= static_cast<float>(mapPoints.size());
-        walls[idx]->setCentroid(centroid);
+        planes[idx]->setCentroid(centroid);
 
-        wall.ns = "walls";
-        wall.scale.x = 0.5;
-        wall.scale.y = 0.5;
-        wall.scale.z = 0.5;
-        wall.color.a = 0.5;
-        wall.action = wall.ADD;
-        wall.color.r = color[0] / 255;
-        wall.color.g = color[1] / 255;
-        wall.color.b = color[2] / 255;
-        wall.lifetime = ros::Duration();
-        wall.id = wallArray.markers.size();
-        wall.header.stamp = ros::Time::now();
-        wall.header.frame_id = wall_frame_id;
-        wall.mesh_use_embedded_materials = true;
-        wall.type = visualization_msgs::Marker::MESH_RESOURCE;
-        wall.mesh_resource =
+        plane.ns = "planes";
+        plane.scale.x = 0.5;
+        plane.scale.y = 0.5;
+        plane.scale.z = 0.5;
+        plane.color.a = 0.5;
+        plane.action = plane.ADD;
+        plane.color.r = color[0] / 255;
+        plane.color.g = color[1] / 255;
+        plane.color.b = color[2] / 255;
+        plane.lifetime = ros::Duration();
+        plane.id = planeArray.markers.size();
+        plane.header.stamp = ros::Time::now();
+        plane.header.frame_id = plane_frame_id;
+        plane.mesh_use_embedded_materials = true;
+        plane.type = visualization_msgs::Marker::MESH_RESOURCE;
+        plane.mesh_resource =
             "package://orb_slam3_ros/config/Visualization/wall.dae";
 
         // Rotation and displacement for better visualization
-        wallOrientation *= Sophus::SE3f::rotX(-M_PI_2);
+        planeOrientation *= Sophus::SE3f::rotX(-M_PI_2);
 
-        wall.pose.position.x = centroid.x();
-        wall.pose.position.y = centroid.y();
-        wall.pose.position.z = centroid.z();
-        wall.pose.orientation.x = wallOrientation.unit_quaternion().x();
-        wall.pose.orientation.y = wallOrientation.unit_quaternion().y();
-        wall.pose.orientation.z = wallOrientation.unit_quaternion().z();
-        wall.pose.orientation.w = wallOrientation.unit_quaternion().w();
-        wallArray.markers.push_back(wall);
+        plane.pose.position.x = centroid.x();
+        plane.pose.position.y = centroid.y();
+        plane.pose.position.z = centroid.z();
+        plane.pose.orientation.x = planeOrientation.unit_quaternion().x();
+        plane.pose.orientation.y = planeOrientation.unit_quaternion().y();
+        plane.pose.orientation.z = planeOrientation.unit_quaternion().z();
+        plane.pose.orientation.w = planeOrientation.unit_quaternion().w();
+        planeArray.markers.push_back(plane);
 
-        wallPoints.color.a = 1;
-        wallPoints.scale.x = 0.03;
-        wallPoints.scale.y = 0.03;
-        wallPoints.scale.z = 0.03;
-        wallPoints.ns = "walls_points";
-        wallPoints.action = wallPoints.ADD;
-        wallPoints.color.r = color[0] / 255;
-        wallPoints.color.g = color[1] / 255;
-        wallPoints.color.b = color[2] / 255;
-        wallPoints.lifetime = ros::Duration();
-        wallPoints.id = wallArray.markers.size();
-        wallPoints.header.stamp = ros::Time::now();
-        wallPoints.header.frame_id = wall_frame_id;
-        wallPoints.type = visualization_msgs::Marker::CUBE_LIST;
-        wallArray.markers.push_back(wallPoints);
+        planePoints.color.a = 1;
+        planePoints.scale.x = 0.03;
+        planePoints.scale.y = 0.03;
+        planePoints.scale.z = 0.03;
+        planePoints.ns = "planes_points";
+        planePoints.action = planePoints.ADD;
+        planePoints.color.r = color[0] / 255;
+        planePoints.color.g = color[1] / 255;
+        planePoints.color.b = color[2] / 255;
+        planePoints.lifetime = ros::Duration();
+        planePoints.id = planeArray.markers.size();
+        planePoints.header.stamp = ros::Time::now();
+        planePoints.header.frame_id = plane_frame_id;
+        planePoints.type = visualization_msgs::Marker::CUBE_LIST;
+        planeArray.markers.push_back(planePoints);
 
-        wallLines.color.a = 0.5;
-        wallLines.color.r = 0.0;
-        wallLines.color.g = 0.0;
-        wallLines.color.b = 0.0;
-        wallLines.scale.x = 0.005;
-        wallLines.scale.y = 0.005;
-        wallLines.scale.z = 0.005;
-        wallLines.action = wallLines.ADD;
-        wallLines.ns = "wallLines";
-        wallLines.lifetime = ros::Duration();
-        wallLines.id = wallArray.markers.size();
-        wallLines.header.stamp = ros::Time().now();
-        wallLines.header.frame_id = wall_frame_id;
-        wallLines.type = visualization_msgs::Marker::LINE_LIST;
+        planeLines.color.a = 0.5;
+        planeLines.color.r = 0.0;
+        planeLines.color.g = 0.0;
+        planeLines.color.b = 0.0;
+        planeLines.scale.x = 0.005;
+        planeLines.scale.y = 0.005;
+        planeLines.scale.z = 0.005;
+        planeLines.action = planeLines.ADD;
+        planeLines.ns = "planeLines";
+        planeLines.lifetime = ros::Duration();
+        planeLines.id = planeArray.markers.size();
+        planeLines.header.stamp = ros::Time().now();
+        planeLines.header.frame_id = plane_frame_id;
+        planeLines.type = visualization_msgs::Marker::LINE_LIST;
 
-        for (const auto &wallMarker : walls[idx]->getMarkers())
+        for (const auto &planeMarker : planes[idx]->getMarkers())
         {
             geometry_msgs::Point point1;
-            point1.x = wallMarker->getGlobalPose().translation().x();
-            point1.y = wallMarker->getGlobalPose().translation().y();
-            point1.z = wallMarker->getGlobalPose().translation().z();
-            wallLines.points.push_back(point1);
+            point1.x = planeMarker->getGlobalPose().translation().x();
+            point1.y = planeMarker->getGlobalPose().translation().y();
+            point1.z = planeMarker->getGlobalPose().translation().z();
+            planeLines.points.push_back(point1);
 
             geometry_msgs::Point point2;
             point2.x = centroid.x();
             point2.y = centroid.y();
             point2.z = centroid.z();
-            wallLines.points.push_back(point2);
+            planeLines.points.push_back(point2);
         }
-        wallArray.markers.push_back(wallLines);
+        planeArray.markers.push_back(planeLines);
     }
 
-    walls_pub.publish(wallArray);
+    planes_pub.publish(planeArray);
 }
 
 void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
@@ -677,7 +677,7 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         roomLabel.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         roomArray.markers.push_back(roomLabel);
 
-        // Room to wall connection line
+        // Room to plane connection line
         roomWallLine.color.a = 0.8;
         roomWallLine.scale.x = 0.01;
         roomWallLine.scale.y = 0.01;
@@ -729,13 +729,13 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
             roomWallLine.points.push_back(point1);
 
             tf::Stamped<tf::Point> wall_point;
-            wall_point.frame_id_ = wall_frame_id;
+            wall_point.frame_id_ = plane_frame_id;
             wall_point.setX(wall->getCentroid().x());
             wall_point.setY(wall->getCentroid().y());
             wall_point.setZ(wall->getCentroid().z());
             tf::Stamped<tf::Point> wall_point_transformed;
             transform_listener->transformPoint(world_frame_id, ros::Time(0), wall_point,
-                                               wall_frame_id, wall_point_transformed);
+                                               plane_frame_id, wall_point_transformed);
 
             geometry_msgs::Point point2;
             point2.x = wall_point_transformed.x();
@@ -755,13 +755,13 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
             roomDoorLine.points.push_back(point1);
 
             tf::Stamped<tf::Point> door_point;
-            door_point.frame_id_ = wall_frame_id;
+            door_point.frame_id_ = plane_frame_id;
             tf::Stamped<tf::Point> door_point_transformed;
             door_point.setX(door->getGlobalPose().translation()(0));
             door_point.setY(door->getGlobalPose().translation()(1));
             door_point.setZ(door->getGlobalPose().translation()(2));
             transform_listener->transformPoint(world_frame_id, ros::Time(0), door_point,
-                                               wall_frame_id, door_point_transformed);
+                                               plane_frame_id, door_point_transformed);
 
             geometry_msgs::Point point2;
             point2.x = door_point_transformed.x();

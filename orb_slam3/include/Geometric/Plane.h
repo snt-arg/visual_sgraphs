@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef WALL_H
-#define WALL_H
+#ifndef PLANE_H
+#define PLANE_H
 
 #include <set>
 #include "Map.h"
@@ -20,21 +20,21 @@ namespace ORB_SLAM3
     class Marker;
     class MapPoint;
 
-    class Wall
+    class Plane
     {
     private:
-        int id;                          // The wall's identifier
-        int opId;                        // The wall's identifier in the local optimizer
-        int opIdG;                       // The wall's identifier in the global optimizer
+        int id;                          // The plane's identifier
+        int opId;                        // The plane's identifier in the local optimizer
+        int opIdG;                       // The plane's identifier in the global optimizer
+        g2o::Plane3D equation;           // The plane equation
+        Eigen::Vector3f centroid;        // centroid of the plane
         std::vector<double> color;       // A color devoted for visualization
-        g2o::Plane3D plane_equation;     // The plane equation of the wall
-        std::vector<Marker *> markers;   // The list of markers lying on the wall
-        std::set<MapPoint *> map_points; // The unique set of map points lying on the wall
-        Eigen::Vector3f centroid;         //centroid of the wall 
+        std::vector<Marker *> markers;   // The list of markers lying on the plane
+        std::set<MapPoint *> map_points; // The unique set of map points lying on the plane
 
     public:
-        Wall();
-        ~Wall();
+        Plane();
+        ~Plane();
 
         int getId() const;
         void setId(int value);
@@ -54,8 +54,8 @@ namespace ORB_SLAM3
         void setMapPoints(MapPoint *value);
         std::set<MapPoint *> getMapPoints();
 
-        g2o::Plane3D getPlaneEquation() const;
-        void setPlaneEquation(const g2o::Plane3D &value);
+        g2o::Plane3D getEquation() const;
+        void setEquation(const g2o::Plane3D &value);
 
         Eigen::Vector3f getCentroid() const;
         void setCentroid(const Eigen::Vector3f &value);

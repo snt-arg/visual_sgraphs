@@ -27,7 +27,7 @@
 #include "KannalaBrandt8.h"
 #include "Semantic/Marker.h"
 #include "Semantic/Door.h"
-#include "Semantic/Wall.h"
+#include "Geometric/Plane.h"
 #include "Semantic/Room.h"
 
 #include <set>
@@ -46,7 +46,7 @@ namespace ORB_SLAM3
     class KannalaBrandt8;
     class Pinhole;
     class Marker;
-    class Wall;
+    class Plane;
     class Door;
     class Room;
 
@@ -65,15 +65,15 @@ namespace ORB_SLAM3
 
             // Save/load a set structure, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated
             // ar & mspMaps;
-            ar &mvpBackupMaps;
-            ar &mvpCameras;
+            ar & mvpBackupMaps;
+            ar & mvpCameras;
             // Need to save/load the static Id from Frame, KeyFrame, MapPoint and Map
             ar &Map::nNextId;
             ar &Frame::nNextId;
             ar &KeyFrame::nNextId;
             ar &MapPoint::nNextId;
             ar &GeometricCamera::nNextId;
-            ar &mnLastInitKFidMap;
+            ar & mnLastInitKFidMap;
         }
 
     public:
@@ -91,9 +91,9 @@ namespace ORB_SLAM3
         void SetViewer(Viewer *pViewer);
 
         // Method for change components in the current map
-        void AddMapWall(Wall *wall);
         void AddMapDoor(Door *door);
         void AddMapRoom(Room *room);
+        void AddMapPlane(Plane *plane);
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapMarker(Marker *marker);
@@ -113,13 +113,13 @@ namespace ORB_SLAM3
         long unsigned KeyFramesInMap();
         long unsigned int MapPointsInMap();
 
-        // List of marker-ids placed on walls detected so far
-        std::vector<int> visitedWallsMarkerIds;
+        // List of marker-ids placed on planes detected so far
+        std::vector<int> visitedPlanesMarkerIds;
 
         // Method for get data in current map
-        std::vector<Wall *> GetAllWalls();
         std::vector<Door *> GetAllDoors();
         std::vector<Room *> GetAllRooms();
+        std::vector<Plane *> GetAllPlanes();
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();

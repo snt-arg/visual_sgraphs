@@ -62,12 +62,12 @@ namespace ORB_SLAM3
         all_seen_markers = value;
     }
 
-    std::vector<Wall *> Room::getWalls() const
+    std::vector<Plane *> Room::getWalls() const
     {
         return walls;
     }
 
-    void Room::setWalls(Wall *value)
+    void Room::setWalls(Plane *value)
     {
         walls.push_back(value);
     }
@@ -75,7 +75,7 @@ namespace ORB_SLAM3
     void Room::clearWalls()
     {
         walls.clear();
-    }  
+    }
 
     std::vector<Door *> Room::getDoors() const
     {

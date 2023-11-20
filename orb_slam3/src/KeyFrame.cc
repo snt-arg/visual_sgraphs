@@ -310,10 +310,10 @@ namespace ORB_SLAM3
         mvpMapMarkers.push_back(marker);
     }
 
-    void KeyFrame::AddMapWall(Wall *wall)
+    void KeyFrame::AddMapPlane(Plane *plane)
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        mvpMapWalls.push_back(wall);
+        mvpMapPlanes.push_back(plane);
     }
 
     void KeyFrame::AddMapDoor(Door *door)
@@ -403,10 +403,10 @@ namespace ORB_SLAM3
         return mvpMapMarkers;
     }
 
-    vector<Wall *> KeyFrame::GetMapWalls()
+    vector<Plane *> KeyFrame::GetMapPlanes()
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        return mvpMapWalls;
+        return mvpMapPlanes;
     }
 
     vector<Door *> KeyFrame::GetMapDoors()

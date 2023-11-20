@@ -9,13 +9,13 @@
 #define ROOM_H
 
 #include "Door.h"
-#include "Wall.h"
+#include "../Geometric/Plane.h"
 #include "Thirdparty/g2o/g2o/types/vertex_plane.h"
 
 namespace ORB_SLAM3
 {
     class Door;
-    class Wall;
+    class Plane;
 
     class Room
     {
@@ -26,7 +26,7 @@ namespace ORB_SLAM3
         std::string name;                              // The name devoted for each room (optional)
         bool all_seen_markers;                         // Checks if the room markers are already detected
         std::vector<Door *> doors;                     // The vector of detected doors of a room
-        std::vector<Wall *> walls;                     // The vector of detected walls of a room
+        std::vector<Plane *> walls;                    // The vector of detected walls of a room
         Eigen::Vector3d room_center;                   // The center of the room as a 3D vector
         std::vector<int> door_marker_ids;              // Markers attached to the doors of a room [in real map], e.g. [3, 4]
         std::vector<std::vector<int>> wall_marker_ids; // Marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
@@ -55,10 +55,10 @@ namespace ORB_SLAM3
         void setDoors(Door *value);
         std::vector<Door *> getDoors() const;
 
-        void setWalls(Wall *value);
-        std::vector<Wall *> getWalls() const;
+        void setWalls(Plane *value);
+        std::vector<Plane *> getWalls() const;
 
-        void clearWalls();  
+        void clearWalls();
 
         void setDoorMarkerIds(int value);
         std::vector<int> getDoorMarkerIds() const;

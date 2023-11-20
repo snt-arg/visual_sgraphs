@@ -120,15 +120,15 @@ namespace ORB_SLAM3
         pMapMP->AddMapMarker(marker);
     }
 
-    void Atlas::AddMapWall(Wall *wall)
+    void Atlas::AddMapPlane(Plane *plane)
     {
-        // Add it to the list of visited marker-ids of walls
-        for (Marker *wallMarker : wall->getMarkers())
-            visitedWallsMarkerIds.push_back(wallMarker->getId());
+        // Add it to the list of visited marker-ids of planes
+        for (Marker *planeMarker : plane->getMarkers())
+            visitedPlanesMarkerIds.push_back(planeMarker->getId());
 
         // Add it to the map
-        Map *pMapMP = wall->GetMap();
-        pMapMP->AddMapWall(wall);
+        Map *pMapMP = plane->GetMap();
+        pMapMP->AddMapPlane(plane);
     }
 
     void Atlas::AddMapDoor(Door *door)
@@ -246,10 +246,10 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllMarkers();
     }
 
-    std::vector<Wall *> Atlas::GetAllWalls()
+    std::vector<Plane *> Atlas::GetAllPlanes()
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        return mpCurrentMap->GetAllWalls();
+        return mpCurrentMap->GetAllPlanes();
     }
 
     std::vector<Door *> Atlas::GetAllDoors()

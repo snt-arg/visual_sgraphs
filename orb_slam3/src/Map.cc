@@ -52,7 +52,7 @@ namespace ORB_SLAM3
         mspMarkers.clear();
 
         // Erase all semantic entities from memory
-        mspWalls.clear();
+        mspPlanes.clear();
         mspDoors.clear();
         mspRooms.clear();
 
@@ -97,10 +97,10 @@ namespace ORB_SLAM3
         mspMarkers.insert(pMarker);
     }
 
-    void Map::AddMapWall(Wall *pWall)
+    void Map::AddMapPlane(Plane *pPlane)
     {
         unique_lock<mutex> lock(mMutexMap);
-        mspWalls.insert(pWall);
+        mspPlanes.insert(pPlane);
     }
 
     void Map::AddMapDoor(Door *pDoor)
@@ -142,10 +142,10 @@ namespace ORB_SLAM3
         mspMarkers.erase(pMarker);
     }
 
-    void Map::EraseMapWall(Wall *pWall)
+    void Map::EraseMapPlane(Plane *pPlane)
     {
         unique_lock<mutex> lock(mMutexMap);
-        mspWalls.erase(pWall);
+        mspPlanes.erase(pPlane);
     }
 
     void Map::EraseMapDoor(Door *pDoor)
@@ -218,10 +218,10 @@ namespace ORB_SLAM3
         return vector<Marker *>(mspMarkers.begin(), mspMarkers.end());
     }
 
-    vector<Wall *> Map::GetAllWalls()
+    vector<Plane *> Map::GetAllPlanes()
     {
         unique_lock<mutex> lock(mMutexMap);
-        return vector<Wall *>(mspWalls.begin(), mspWalls.end());
+        return vector<Plane *>(mspPlanes.begin(), mspPlanes.end());
     }
 
     vector<Door *> Map::GetAllDoors()
@@ -309,9 +309,9 @@ namespace ORB_SLAM3
             //        delete *sit;
         }
 
-        mspWalls.clear();
         mspDoors.clear();
         mspRooms.clear();
+        mspPlanes.clear();
         mspMarkers.clear();
         mspMapPoints.clear();
         mspKeyFrames.clear();

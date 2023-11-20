@@ -5,49 +5,49 @@
  *
  */
 
-#include "Semantic/Wall.h"
+#include "Geometric/Plane.h"
 
 namespace ORB_SLAM3
 {
-    Wall::Wall() {}
-    Wall::~Wall() {}
+    Plane::Plane() {}
+    Plane::~Plane() {}
 
-    int Wall::getId() const
+    int Plane::getId() const
     {
         return id;
     }
 
-    void Wall::setId(int value)
+    void Plane::setId(int value)
     {
         id = value;
     }
 
-    int Wall::getOpId() const
+    int Plane::getOpId() const
     {
         return opId;
     }
 
-    void Wall::setOpId(int value)
+    void Plane::setOpId(int value)
     {
         opId = value;
     }
 
-    int Wall::getOpIdG() const
+    int Plane::getOpIdG() const
     {
         return opIdG;
     }
 
-    void Wall::setOpIdG(int value)
+    void Plane::setOpIdG(int value)
     {
         opIdG = value;
     }
 
-    std::vector<double> Wall::getColor() const
+    std::vector<double> Plane::getColor() const
     {
         return color;
     }
 
-    void Wall::setColor()
+    void Plane::setColor()
     {
         if (color.size() == 0)
         {
@@ -57,60 +57,59 @@ namespace ORB_SLAM3
         }
     }
 
-    std::vector<Marker *> Wall::getMarkers() const
+    std::vector<Marker *> Plane::getMarkers() const
     {
         return markers;
     }
 
-    void Wall::setMarkers(Marker *value)
+    void Plane::setMarkers(Marker *value)
     {
-        // Check if the marker is not already added in the list of wall markers
+        // Check if the marker is not already added in the list of plane markers
         if (std::find(markers.begin(), markers.end(), value) == markers.end())
         {
             markers.push_back(value);
         }
     }
 
-    std::set<MapPoint *> Wall::getMapPoints()
+    std::set<MapPoint *> Plane::getMapPoints()
     {
         unique_lock<mutex> lock(mMutexPoint);
         return map_points;
     }
 
-    void Wall::setMapPoints(MapPoint *value)
+    void Plane::setMapPoints(MapPoint *value)
     {
         unique_lock<mutex> lock(mMutexPoint);
         map_points.insert(value);
     }
 
-    g2o::Plane3D Wall::getPlaneEquation() const
+    g2o::Plane3D Plane::getEquation() const
     {
-        return plane_equation;
+        return equation;
     }
 
-    void Wall::setPlaneEquation(const g2o::Plane3D &value)
+    void Plane::setEquation(const g2o::Plane3D &value)
     {
-        plane_equation = value;
+        equation = value;
     }
 
-
-    Eigen::Vector3f Wall::getCentroid() const 
+    Eigen::Vector3f Plane::getCentroid() const
     {
         return centroid;
     }
-    
-    void Wall::setCentroid(const Eigen::Vector3f &value)
+
+    void Plane::setCentroid(const Eigen::Vector3f &value)
     {
         centroid = value;
     }
 
-    Map *Wall::GetMap()
+    Map *Plane::GetMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Wall::SetMap(Map *pMap)
+    void Plane::SetMap(Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;

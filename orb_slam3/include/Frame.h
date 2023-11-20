@@ -42,7 +42,7 @@
 #include "sophus/se3.hpp"
 
 #include "Semantic/Marker.h"
-#include "Semantic/Wall.h"
+#include "Geometric/Plane.h"
 
 namespace ORB_SLAM3
 {

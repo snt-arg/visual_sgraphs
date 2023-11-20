@@ -61,7 +61,7 @@ extern ORB_SLAM3::System::eSensor sensor_type;
 
 extern double roll, pitch, yaw;       // Defining axes for transformation
 extern bool publish_static_transform; // If true, it should use transformed calculations
-extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, wall_frame_id, room_frame_id;
+extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, plane_frame_id, room_frame_id;
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
@@ -74,7 +74,7 @@ extern image_transport::Publisher tracking_img_pub;
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
 
-extern rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
+extern rviz_visual_tools::RvizVisualToolsPtr plane_visual_tools;
 
 struct MapPointStruct
 {
@@ -93,7 +93,7 @@ void publish_camera_pose(Sophus::SE3f, ros::Time);
 void publish_static_tf_transform(string, string, ros::Time);
 void publish_kf_markers(std::vector<Sophus::SE3f>, ros::Time);
 void publish_doors(std::vector<ORB_SLAM3::Door *>, ros::Time);
-void publish_walls(std::vector<ORB_SLAM3::Wall *>, ros::Time);
+void publish_planes(std::vector<ORB_SLAM3::Wall *>, ros::Time);
 void publish_rooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
 void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
 void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
