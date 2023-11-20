@@ -208,7 +208,7 @@ To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, 
   - For Mono and RGB-D, with or without IMU, run `roslaunch realsense2_camera rs_stereo.launch` (sample provided [here](/doc/realsense2_camera_rs_stereo.launch)),
 - Navigate to the directory where you want to save the rosbag file,
 - Record the topics of interest:
-  - For Mono and RGB-D, with or without IMU, run `rosbag record /camera/color/image_raw /camera/aligned_depth_to_color/image_raw /camera/imu /camera/color/camera_info /camera/aligned_depth_to_color/camera_info`.
+  - For Mono and RGB-D, with or without IMU, run `rosbag record /camera/color/image_raw /camera/aligned_depth_to_color/image_raw /camera/color/camera_info /camera/aligned_depth_to_color/camera_info /camera/imu /camera/depth/color/points`.
   - For Stereo, with or without IMU, run `rosbag record /camera/color/image_raw /camera/infra1/image_rect_raw /camera/infra2/image_rect_raw /camera/imu /camera/color/camera_info /camera/infra1/camera_info /camera/infra2/camera_info`.
 
 ## 🤖 ROS Topics, Params and Services <a id="ros"></a>

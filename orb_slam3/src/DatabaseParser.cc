@@ -39,8 +39,6 @@ namespace ORB_SLAM3
         {
             // Initialization
             Room *envRoom = new Room();
-            std::string wallMarkersStr("");
-            std::string doorMarkersStr("");
 
             // Fill the room entity
             envRoom->setOpId(-1);
@@ -52,29 +50,25 @@ namespace ORB_SLAM3
             // Fill the set of walls (marker-pairs attached to walls) of a room
             for (int idx = 0; idx < envDatum.value()["markers"].size(); idx++)
             {
+                // Get the marker IDs of a wall
                 std::vector<int> markerIds;
                 for (const auto &marker : envDatum.value()["markers"][idx].items())
-                {
                     markerIds.push_back(marker.value());
-                    wallMarkersStr.append(to_string(marker.value()) + " ");
-                }
+                // Add the marker IDs to the set of walls
                 envRoom->setWallMarkerIds(markerIds);
             }
 
             // Fill the set of doors (markers attached to doors) of a room
             for (const auto &marker : envDatum.value()["doorMarkers"].items())
-            {
-                doorMarkersStr.append(to_string(marker.value()) + " ");
                 envRoom->setDoorMarkerIds(marker.value());
-            }
-
-            std::cout << "- Room#" << envDatum.key() << " (" << envDatum.value()["name"]
-                      << ") fetched with wall markers [ " << wallMarkersStr << "] and door markers [ "
-                      << doorMarkersStr << "]." << std::endl;
 
             // Fill the vector
             envRooms.push_back(envRoom);
         }
+
+        // Print the loaded rooms
+        std::cout << "- Fetched " << envRooms.size() << " rooms from the JSON file! [e.g., '"
+                  << envRooms[0]->getName() << "']." << std::endl;
 
         return envRooms;
     }
@@ -89,9 +83,6 @@ namespace ORB_SLAM3
             // Initialization
             Door *envDoor = new Door();
 
-            std::cout << "- Door#" << envDatum.key() << " (" << envDatum.value()["name"]
-                      << ") fetched with marker " << envDatum.value()["marker"] << "." << std::endl;
-
             // Fill the room entity
             envDoor->setOpId(-1);
             envDoor->setOpIdG(-1);
@@ -102,6 +93,10 @@ namespace ORB_SLAM3
             // Fill the vector
             envDoors.push_back(envDoor);
         }
+
+        // Print the loaded doors
+        std::cout << "- Fetched " << envDoors.size() << " doors from the JSON file! [e.g., '"
+                  << envDoors[0]->getName() << "']." << std::endl;
 
         return envDoors;
     }
