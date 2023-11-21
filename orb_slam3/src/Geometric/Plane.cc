@@ -83,6 +83,16 @@ namespace ORB_SLAM3
         map_points.insert(value);
     }
 
+    semanticType Plane::getPlaneType() const
+    {
+        return planeType;
+    }
+
+    void Plane::setPlaneType(semanticType newType)
+    {
+        planeType = newType;
+    }
+
     g2o::Plane3D Plane::getEquation() const
     {
         return equation;

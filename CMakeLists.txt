@@ -9,7 +9,7 @@ MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wall   -O3")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
-# [Hint] We commented below lines as it gut stuck in the normalize function of g2o::plane3d
+# [Hint] We commented below lines as it got stuck in the normalize function of g2o::plane3d
 # set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -march=native")
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -march=native")
 
@@ -17,6 +17,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall   -O3")
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++14" COMPILER_SUPPORTS_CXX14)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+
 if(COMPILER_SUPPORTS_CXX14)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
   add_definitions(-DCOMPILEDWITHC11)
@@ -167,6 +168,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/SerializationUtils.h
   orb_slam3/include/Config.h
   orb_slam3/include/Settings.h
+  orb_slam3/include/Geometric/Types.h
   orb_slam3/include/Geometric/Plane.h
   orb_slam3/include/Semantic/Marker.h
   orb_slam3/include/Semantic/Door.h

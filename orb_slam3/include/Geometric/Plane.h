@@ -10,6 +10,7 @@
 
 #include <set>
 #include "Map.h"
+#include "Types.h"
 #include "MapPoint.h"
 #include "Semantic/Marker.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
@@ -27,6 +28,7 @@ namespace ORB_SLAM3
         int opId;                        // The plane's identifier in the local optimizer
         int opIdG;                       // The plane's identifier in the global optimizer
         g2o::Plane3D equation;           // The plane equation
+        semanticType planeType;          // The plane's semantic type (e.g., wall, floor, etc.)
         Eigen::Vector3f centroid;        // centroid of the plane
         std::vector<double> color;       // A color devoted for visualization
         std::vector<Marker *> markers;   // The list of markers lying on the plane
@@ -50,6 +52,9 @@ namespace ORB_SLAM3
 
         void setMarkers(Marker *value);
         std::vector<Marker *> getMarkers() const;
+
+        semanticType getPlaneType() const;
+        void setPlaneType(semanticType newType);
 
         void setMapPoints(MapPoint *value);
         std::set<MapPoint *> getMapPoints();

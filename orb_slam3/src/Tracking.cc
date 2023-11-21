@@ -4610,6 +4610,9 @@ namespace ORB_SLAM3
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
 
+        // Set the plane type to undefined, as it is not known yet
+        newMapPlane->setPlaneType(semanticType::UNDEFINED);
+
         // If there is a marker placed on the wall (entrance of a room), add it to the wall
         std::string markerInfoStr = "";
         if (attachedMarker != NULL)
@@ -4618,7 +4621,7 @@ namespace ORB_SLAM3
             markerInfoStr = ", with Marker#" + attachedMarker->getId();
         }
 
-        std::cout << "- New wall detected: Plane#" << newMapPlane->getId() << markerInfoStr << std::endl;
+        std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << markerInfoStr << std::endl;
 
         // Loop to find the points lying on wall
         for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
