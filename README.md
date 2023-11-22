@@ -236,7 +236,7 @@ To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, 
 | `/orb_slam3/kf_markers`       | markers for all keyframes' positions                                 |
 | `/orb_slam3/fiducial_markers` | fiducial markers detected in the environment                         |
 | `/orb_slam3/doors`            | doorways detected in the environment                                 |
-| `/orb_slam3/walls`            | walls detected in the environment                                    |
+| `/orb_slam3/planes`           | planes detected in the environment                                   |
 | `/orb_slam3/rooms`            | corridors and rooms markers detected in the environment              |
 
 ### Params <a id="ros-param"></a>

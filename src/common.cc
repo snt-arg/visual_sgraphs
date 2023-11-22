@@ -86,15 +86,14 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
     // Semantic
     doors_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
-    planes_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/planes", 1);
     rooms_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
+    planes_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/planes", 1);
     fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Get body odometry if IMU data is also available
-    if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
-    {
+    if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO ||
+        sensor_type == ORB_SLAM3::System::IMU_RGBD)
         odom_pub = node_handler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
-    }
 
     // Tools for showing planes
     plane_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
@@ -125,8 +124,8 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
 
     // Setup publishers
     publish_doors(pSLAM->GetAllDoors(), msg_time);
-    // publish_planes(pSLAM->GetAllPlanes(), msg_time);
     publish_rooms(pSLAM->GetAllRooms(), msg_time);
+    publish_planes(pSLAM->GetAllPlanes(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
@@ -199,9 +198,7 @@ void publish_camera_pose(Sophus::SE3f Tcw_SE3f, ros::Time msg_time)
 void publish_tf_transform(Sophus::SE3f T_SE3f, string frame_id, string child_frame_id, ros::Time msg_time)
 {
     tf::Transform tf_transform = SE3f_to_tfTransform(T_SE3f);
-
     static tf::TransformBroadcaster tf_broadcaster;
-
     tf_broadcaster.sendTransform(tf::StampedTransform(tf_transform, msg_time, frame_id, child_frame_id));
 }
 
@@ -491,6 +488,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
 
 void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
 {
+    // Publish the planes, if any
     int numPlanes = planes.size();
     if (numPlanes == 0)
         return;
@@ -503,9 +501,6 @@ void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         visualization_msgs::Marker plane, planePoints, planeLines;
         std::vector<double> color = planes[idx]->getColor();
 
-        // Get the orientation of the plane from markers
-        Sophus::SE3f planeOrientation = planes[idx]->getMarkers().front()->getGlobalPose();
-
         // Get the position of the planes from map-points to put it in the middle of the cluster
         Eigen::Vector3f centroid(0.0, 0.0, 0.0);
         const auto &mapPoints = planes[idx]->getMapPoints();
@@ -517,9 +512,9 @@ void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
             centroid += mPosition;
             // Plane rooms
             geometry_msgs::Point point;
-            point.x = mapPoint->GetWorldPos().x();
-            point.y = mapPoint->GetWorldPos().y();
-            point.z = mapPoint->GetWorldPos().z();
+            point.x = mPosition.x();
+            point.y = mPosition.y();
+            point.z = mPosition.z();
             planePoints.points.push_back(point);
         }
 
@@ -527,6 +522,18 @@ void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         if (mapPoints.size() > 0)
             centroid /= static_cast<float>(mapPoints.size());
         planes[idx]->setCentroid(centroid);
+
+        // Get the orientation of the plane
+        Sophus::SE3f planeOrientation;
+        if (planes[idx]->getMarkers().size() > 0)
+        {
+            // If the plane has markers, use the orientation of the marker
+            planeOrientation = planes[idx]->getMarkers().front()->getGlobalPose();
+        }
+        else
+        {
+            // Otherwise, calculate the orientation of the plane using the map-points [TODO]
+        }
 
         plane.ns = "planes";
         plane.scale.x = 0.5;
@@ -544,7 +551,7 @@ void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         plane.mesh_use_embedded_materials = true;
         plane.type = visualization_msgs::Marker::MESH_RESOURCE;
         plane.mesh_resource =
-            "package://orb_slam3_ros/config/Visualization/wall.dae";
+            "package://orb_slam3_ros/config/Visualization/plane.dae";
 
         // Rotation and displacement for better visualization
         planeOrientation *= Sophus::SE3f::rotX(-M_PI_2);
@@ -581,8 +588,8 @@ void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         planeLines.scale.x = 0.005;
         planeLines.scale.y = 0.005;
         planeLines.scale.z = 0.005;
-        planeLines.action = planeLines.ADD;
         planeLines.ns = "planeLines";
+        planeLines.action = planeLines.ADD;
         planeLines.lifetime = ros::Duration();
         planeLines.id = planeArray.markers.size();
         planeLines.header.stamp = ros::Time().now();

@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /TF1/Frames1
-        - /walls1/Namespaces1
+        - /planes1/Namespaces1
       Splitter Ratio: 0.5078651905059814
     Tree Height: 418
   - Class: rviz/Selection
@@ -119,45 +119,30 @@ Visualization Manager:
       Tree:
         odom:
           body:
-            base_link:
-              {}
-            flat_body:
-              {}
-            front_rail:
-              {}
+            base_link: {}
+            flat_body: {}
+            front_rail: {}
             head:
               back:
-                back_fisheye:
-                  {}
+                back_fisheye: {}
               frontleft:
-                frontleft_fisheye:
-                  {}
+                frontleft_fisheye: {}
               frontright:
-                frontright_fisheye:
-                  {}
+                frontright_fisheye: {}
               left:
-                left_fisheye:
-                  {}
+                left_fisheye: {}
               right:
-                right_fisheye:
-                  {}
-            rear_rail:
-              {}
-            velodyne:
-              {}
-            vision:
-              {}
-          gpe:
-            {}
+                right_fisheye: {}
+            rear_rail: {}
+            velodyne: {}
+            vision: {}
+          gpe: {}
         world:
           camera:
-            camera_color_optical_frame:
-              {}
-          map:
-            {}
+            camera_color_optical_frame: {}
+          map: {}
           wall:
-            room:
-              {}
+            room: {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -292,12 +277,12 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /orb_slam3/walls
-      Name: walls
+      Marker Topic: /orb_slam3/planes
+      Name: planes
       Namespaces:
         wallLines: true
-        walls: true
-        walls_points: true
+        planes: true
+        planes_points: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray

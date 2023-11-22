@@ -4618,6 +4618,8 @@ namespace ORB_SLAM3
         if (attachedMarker != NULL)
         {
             newMapPlane->setMarkers(attachedMarker);
+            // Set the plane type to wall, if there is a marker attached to it (temporary) [TODO]
+            newMapPlane->setPlaneType(semanticType::WALL);
             markerInfoStr = ", with Marker#" + attachedMarker->getId();
         }
 

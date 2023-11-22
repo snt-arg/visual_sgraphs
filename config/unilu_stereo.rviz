@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /TF1/Frames1
-        - /walls1/Namespaces1
+        - /planes1/Namespaces1
       Splitter Ratio: 0.5078651905059814
     Tree Height: 418
   - Class: rviz/Selection
@@ -277,12 +277,12 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /orb_slam3/walls
-      Name: walls
+      Marker Topic: /orb_slam3/planes
+      Name: planes
       Namespaces:
         wallLines: true
-        walls: true
-        walls_points: true
+        planes: true
+        planes_points: true
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
