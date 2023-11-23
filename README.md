@@ -14,6 +14,7 @@ A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com
 - [ROS Topics, Params and Services](#ros)
 - [Maps](#maps)
 - [Evaluation](#eval)
+- [TODO](#todo)
 
 ## 📝 Prerequisites <a id="prerequisites"></a>
 
@@ -290,3 +291,9 @@ In order to evaluate the current method with others, such as UcoSLAM, ORB-SLAM 3
        - UcoSLAM: `rosrun ucoslam_ros ucoslam_ros_video /[PATH]/vid.mp4 [PATH]/ucoslam_ros_wrapper/config/realsense_color_640_480_spot.yml -aruco-markerSize 0.78 -dict ARUCO -voc [PATH]/ucoslam_ros_wrapper/config/orb.fbow`
        - Semantic UcoSLAM: `rosrun ucoslam_ros ucoslam_ros_semantics_video /[PATH]/vid.mp4 [PATH]/ucoslam_ros_wrapper/config/realsense_color_640_480_spot.yml -aruco-markerSize 0.78 -dict ARUCO -voc [PATH]/ucoslam_ros_wrapper/config/orb.fbow`
   3. Finally, when the ground-truth (S-Graphs) and SLAM pose (e.g., UcoSLAM, etc.) are ready, you can use the [`evo_ape`](https://github.com/MichaelGrupp/evo) for evaluation, like `evo_ape tum s_graphs_pose_seq05.txt slam_pose_semuco_seq05.txt -va > results.txt --plot --plot_mode xy`
+
+## 🗒️ TODO <a id="todo"></a>
+
+Here is the list of TODO tasks that can be integrated in the project:
+
+- Due to the sparse pointclouds in Mono and Stereo, calculate the depth from points using Machine Learning to get a better plane estimate (`Tracking::getPlaneEquationFromPointClouds()`).
