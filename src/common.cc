@@ -503,25 +503,25 @@ void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
 
         // Get the position of the planes from map-points to put it in the middle of the cluster
         Eigen::Vector3f centroid(0.0, 0.0, 0.0);
-        const auto &mapPoints = planes[idx]->getMapPoints();
+        // const pcl::PointCloud<pcl::PointXYZRGB>::Ptr mapClouds = planes[idx]->getMapClouds();
 
-        for (const auto &mapPoint : mapPoints)
-        {
-            // Plane plane
-            Eigen::Vector3f mPosition = mapPoint->GetWorldPos();
-            centroid += mPosition;
-            // Plane rooms
-            geometry_msgs::Point point;
-            point.x = mPosition.x();
-            point.y = mPosition.y();
-            point.z = mPosition.z();
-            planePoints.points.push_back(point);
-        }
+        // for (const auto &mapCloud : mapClouds->points)
+        // {
+        //     // Plane plane
+        //     Eigen::Vector3f mPosition(mapCloud.x, mapCloud.y, mapCloud.z);
+        //     centroid += mPosition;
+        //     // Plane rooms
+        //     geometry_msgs::Point point;
+        //     point.x = mPosition.x();
+        //     point.y = mPosition.y();
+        //     point.z = mPosition.z();
+        //     planePoints.points.push_back(point);
+        // }
 
-        // Calculate the centroid
-        if (mapPoints.size() > 0)
-            centroid /= static_cast<float>(mapPoints.size());
-        planes[idx]->setCentroid(centroid);
+        // // Calculate the centroid
+        // if (mapClouds->points.size() > 0)
+        //     centroid /= static_cast<float>(mapClouds->points.size());
+        // planes[idx]->setCentroid(centroid);
 
         // Get the orientation of the plane
         if (planes[idx]->getMarkers().size() > 0)
