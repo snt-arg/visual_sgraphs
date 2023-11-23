@@ -327,6 +327,9 @@ namespace ORB_SLAM3
         // Set Plane vertices (Global Optimization)
         for (const auto &vpPlane : vpPlanes)
         {
+            // Skip undefined planes (if not wall for now)
+            if (vpPlane->getPlaneType() == semanticType::UNDEFINED)
+                continue;
             // Adding a vertex for each plane
             g2o::VertexPlane *vPlane = new g2o::VertexPlane();
             int opIdG = maxOpId + nPlanes;
@@ -1365,6 +1368,9 @@ namespace ORB_SLAM3
             for (vector<Plane *>::iterator idx = vpPlanes.begin(), vend = vpPlanes.end(); idx != vend; idx++)
             {
                 Plane *plane = *idx;
+                // If the plane is not wall, do not add it to the local map
+                if (plane->getPlaneType() == semanticType::UNDEFINED)
+                    continue;
                 lLocalMapPlanes.push_back(plane);
             }
 

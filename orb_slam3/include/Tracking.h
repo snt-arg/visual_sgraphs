@@ -175,7 +175,7 @@ namespace ORB_SLAM3
          * @brief Calculation of plane equation from point clouds (provided by depth in RGB-D or calculated from
          * map points in Monocular and Stereo)
          */
-        g2o::Plane3D getPlaneEquationFromPointClouds();
+        std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getPlaneEquationFromPointClouds();
 
         /**
          * @brief Get the points close to a given marker
@@ -210,7 +210,8 @@ namespace ORB_SLAM3
          * @brief Perform PCL ransac to get the plane equation from the a given point cloud
          * @param points the set of given map-points
          */
-        Eigen::Vector4d ransacPlaneFitting(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
+        Eigen::Vector4d ransacPlaneFitting(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud,
+                                           pcl::PointCloud<pcl::PointXYZRGB>::Ptr &planeCloud);
 
         /**
          * @brief Checks to see if the marker is attached to a door or not (e.g., a window)
@@ -240,7 +241,8 @@ namespace ORB_SLAM3
          * @param mapPoints all the map points to check the ones lying on the plane
          * @param pKF the address of the current keyframe
          */
-        void createMapPlane(const g2o::Plane3D estimatedPlane, KeyFrame *pKF, Marker *attachedMarker = NULL);
+        void createMapPlane(const std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair,
+                            KeyFrame *pKF, Marker *attachedMarker = NULL);
 
         /**
          * @brief Updates an existing plane object in the map
@@ -248,7 +250,8 @@ namespace ORB_SLAM3
          * @param visitedMarker the address of the visited marker
          * @param pKF the address of the current keyframe
          */
-        void updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF, Marker *visitedMarker = NULL);
+        void updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF,
+                            pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud, Marker *visitedMarker = NULL);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
