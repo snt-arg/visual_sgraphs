@@ -16,6 +16,7 @@
         <remap from="/camera/depth_registered/image_raw"    to="/camera/aligned_depth_to_color/image_raw"/>
 
         <!-- Remap to prepare the pointcloud -->
+        <!-- ULMS with no depth: /camera/depth/points -->
         <remap from="/camera/pointcloud"    to="/camera/depth/color/points"/>
 
         <!-- Parameters for loading real semantic data from the environment -->

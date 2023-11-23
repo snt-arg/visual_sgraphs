@@ -24,15 +24,16 @@ namespace ORB_SLAM3
     class Plane
     {
     private:
-        int id;                          // The plane's identifier
-        int opId;                        // The plane's identifier in the local optimizer
-        int opIdG;                       // The plane's identifier in the global optimizer
-        g2o::Plane3D equation;           // The plane equation
-        semanticType planeType;          // The plane's semantic type (e.g., wall, floor, etc.)
-        Eigen::Vector3f centroid;        // centroid of the plane
-        std::vector<double> color;       // A color devoted for visualization
-        std::vector<Marker *> markers;   // The list of markers lying on the plane
-        std::set<MapPoint *> map_points; // The unique set of map points lying on the plane
+        int id;                                             // The plane's identifier
+        int opId;                                           // The plane's identifier in the local optimizer
+        int opIdG;                                          // The plane's identifier in the global optimizer
+        g2o::Plane3D equation;                              // The plane equation
+        semanticType planeType;                             // The plane's semantic type (e.g., wall, floor, etc.)
+        Eigen::Vector3f centroid;                           // The centroid of the plane
+        std::vector<double> color;                          // A color devoted for visualization
+        std::vector<Marker *> markers;                      // The list of markers lying on the plane
+        std::set<MapPoint *> map_points;                    // The unique set of map points lying on the plane
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr plane_cloud; // The point cloud of the plane
 
     public:
         Plane();
@@ -58,6 +59,9 @@ namespace ORB_SLAM3
 
         void setMapPoints(MapPoint *value);
         std::set<MapPoint *> getMapPoints();
+
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr getMapClouds();
+        void setMapClouds(pcl::PointCloud<pcl::PointXYZRGB>::Ptr value);
 
         g2o::Plane3D getEquation() const;
         void setEquation(const g2o::Plane3D &value);
