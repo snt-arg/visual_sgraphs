@@ -524,46 +524,46 @@ void publish_planes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         planes[idx]->setCentroid(centroid);
 
         // Get the orientation of the plane
-        Sophus::SE3f planeOrientation;
         if (planes[idx]->getMarkers().size() > 0)
         {
             // If the plane has markers, use the orientation of the marker
-            planeOrientation = planes[idx]->getMarkers().front()->getGlobalPose();
+            Sophus::SE3f planeOrientation = planes[idx]->getMarkers().front()->getGlobalPose();
+
+            // Plane values
+            plane.ns = "planes";
+            plane.scale.x = 0.5;
+            plane.scale.y = 0.5;
+            plane.scale.z = 0.5;
+            plane.color.a = 0.5;
+            plane.action = plane.ADD;
+            plane.color.r = color[0] / 255;
+            plane.color.g = color[1] / 255;
+            plane.color.b = color[2] / 255;
+            plane.lifetime = ros::Duration();
+            plane.id = planeArray.markers.size();
+            plane.header.stamp = ros::Time::now();
+            plane.header.frame_id = plane_frame_id;
+            plane.mesh_use_embedded_materials = true;
+            plane.type = visualization_msgs::Marker::MESH_RESOURCE;
+            plane.mesh_resource =
+                "package://orb_slam3_ros/config/Visualization/plane.dae";
+
+            // Rotation and displacement for better visualization
+            planeOrientation *= Sophus::SE3f::rotX(-M_PI_2);
+
+            plane.pose.position.x = centroid.x();
+            plane.pose.position.y = centroid.y();
+            plane.pose.position.z = centroid.z();
+            plane.pose.orientation.x = planeOrientation.unit_quaternion().x();
+            plane.pose.orientation.y = planeOrientation.unit_quaternion().y();
+            plane.pose.orientation.z = planeOrientation.unit_quaternion().z();
+            plane.pose.orientation.w = planeOrientation.unit_quaternion().w();
+            planeArray.markers.push_back(plane);
         }
         else
         {
             // Otherwise, calculate the orientation of the plane using the map-points [TODO]
         }
-
-        plane.ns = "planes";
-        plane.scale.x = 0.5;
-        plane.scale.y = 0.5;
-        plane.scale.z = 0.5;
-        plane.color.a = 0.5;
-        plane.action = plane.ADD;
-        plane.color.r = color[0] / 255;
-        plane.color.g = color[1] / 255;
-        plane.color.b = color[2] / 255;
-        plane.lifetime = ros::Duration();
-        plane.id = planeArray.markers.size();
-        plane.header.stamp = ros::Time::now();
-        plane.header.frame_id = plane_frame_id;
-        plane.mesh_use_embedded_materials = true;
-        plane.type = visualization_msgs::Marker::MESH_RESOURCE;
-        plane.mesh_resource =
-            "package://orb_slam3_ros/config/Visualization/plane.dae";
-
-        // Rotation and displacement for better visualization
-        planeOrientation *= Sophus::SE3f::rotX(-M_PI_2);
-
-        plane.pose.position.x = centroid.x();
-        plane.pose.position.y = centroid.y();
-        plane.pose.position.z = centroid.z();
-        plane.pose.orientation.x = planeOrientation.unit_quaternion().x();
-        plane.pose.orientation.y = planeOrientation.unit_quaternion().y();
-        plane.pose.orientation.z = planeOrientation.unit_quaternion().z();
-        plane.pose.orientation.w = planeOrientation.unit_quaternion().w();
-        planeArray.markers.push_back(plane);
 
         planePoints.color.a = 1;
         planePoints.scale.x = 0.03;
