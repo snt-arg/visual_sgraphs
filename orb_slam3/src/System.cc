@@ -1635,6 +1635,16 @@ namespace ORB_SLAM3
         return pActiveMap->GetAllRooms();
     }
 
+    void System::SetSystemParameters(SystemParams newParams)
+    {
+        this->params = newParams;
+    }
+
+    System::SystemParams System::GetSystemParameters()
+    {
+        return this->params;
+    }
+
     bool System::SaveMap(const string &filename)
     {
         mStrSaveAtlasToFile = filename;

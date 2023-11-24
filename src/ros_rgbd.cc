@@ -52,11 +52,13 @@ int main(int argc, char **argv)
     node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
     node_handler.param<double>(node_name + "/roll", roll, 0.0);
     node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
+    node_handler.param<int>(node_name + "/pointclouds_threshold", pointcloud_size, 200);
+
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
-    node_handler.param<std::string>(node_name + "/plane_frame_id", plane_frame_id, "wall");
     node_handler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
     node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
+    node_handler.param<std::string>(node_name + "/plane_frame_id", plane_frame_id, "plane");
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Read environment data containing markers attached to rooms and corridors

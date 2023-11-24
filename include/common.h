@@ -59,6 +59,7 @@ using json = nlohmann::json;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
+extern int pointcloud_size;           // Number of points in the pointcloud
 extern double roll, pitch, yaw;       // Defining axes for transformation
 extern bool publish_static_transform; // If true, it should use transformed calculations
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, plane_frame_id, room_frame_id;

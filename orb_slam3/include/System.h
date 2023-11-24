@@ -204,6 +204,17 @@ namespace ORB_SLAM3
         Eigen::Vector3f GetImuVwb();
         bool isImuPreintegrated();
 
+        // Parameters set in common.h (e.g., using launch file)
+        struct SystemParams
+        {
+            int pointCloudSize;
+        };
+        SystemParams params;
+
+        // For accessing parameters set in common.h
+        SystemParams GetSystemParameters();
+        void SetSystemParameters(SystemParams newParams);
+
         // For debugging
         double GetTimeFromIMUInit();
         bool isLost();

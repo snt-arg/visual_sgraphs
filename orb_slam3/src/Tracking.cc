@@ -4527,7 +4527,8 @@ namespace ORB_SLAM3
         }
 
         // Check if the cloud is large enough
-        if (pointcloud->points.size() > 500)
+        int minCloudSize = mpSystem->GetSystemParameters().pointCloudSize;
+        if (pointcloud->points.size() > minCloudSize)
         {
             // Estimate the plane equation
             Eigen::Vector4d initEstimate = ransacPlaneFitting(pointcloud, planeCloud);
@@ -4540,7 +4541,7 @@ namespace ORB_SLAM3
             planeEstimateFromPoints = closestPlaneform;
         }
 
-        // Fill the detected plane
+        // Fill the detected plane [TDOD: a check if not empty]
         g2o::Plane3D detectedPlane(planeEstimateFromPoints);
 
         return std::make_pair(detectedPlane, planeCloud);

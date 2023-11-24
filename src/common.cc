@@ -11,6 +11,7 @@ ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
+int pointcloud_size = 200;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
@@ -108,6 +109,11 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
 void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
 {
+    // Setting parameters to be used in System.cc
+    ORB_SLAM3::System::SystemParams params;
+    params.pointCloudSize = pointcloud_size;
+    pSLAM->SetSystemParameters(params);
+
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
 
     // Avoid publishing NaN
