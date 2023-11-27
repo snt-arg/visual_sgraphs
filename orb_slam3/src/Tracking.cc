@@ -2502,15 +2502,11 @@ namespace ORB_SLAM3
             // Check if we need to add the wall to the map or not
             int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), planePointPair.first);
             if (matchedPlaneId == -1)
-            {
                 // A wall with the same equation was not found in the map, creating a new one
-                createMapPlane(planePointPair, pKFini);
-            }
+                createMapPlane(planePointPair.first, planePointPair.second, pKFini);
             else
-            {
                 // The wall already exists in the map, fetching that one
                 updateMapPlane(matchedPlaneId, pKFini, planePointPair.second);
-            }
 
             // Add Markers in the initialization stage
             for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
@@ -2542,10 +2538,8 @@ namespace ORB_SLAM3
                     // Check if we need to add the wall to the map or not
                     int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane);
                     if (matchedPlaneId != -1)
-                    {
                         // The wall already exists in the map, fetching that one
                         updateMapPlane(matchedPlaneId, pKFini, planePointPair.second, mCurrentMarker);
-                    }
                 }
                 else
                 {
@@ -2713,15 +2707,11 @@ namespace ORB_SLAM3
         // Check if we need to add the wall to the map or not
         int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), planePointPair.first);
         if (matchedPlaneId == -1)
-        {
             // A wall with the same equation was not found in the map, creating a new one
-            createMapPlane(planePointPair, pKFini);
-        }
+            createMapPlane(planePointPair.first, planePointPair.second, pKFini);
         else
-        {
             // The wall already exists in the map, fetching that one
             updateMapPlane(matchedPlaneId, pKFini, planePointPair.second);
-        }
 
         // Add Markers in the initialization stage
         for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
@@ -2753,10 +2743,8 @@ namespace ORB_SLAM3
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane);
                 if (matchedPlaneId != -1)
-                {
                     // The wall already exists in the map, fetching that one
                     updateMapPlane(matchedPlaneId, pKFini, planePointPair.second, mCurrentMarker);
-                }
             }
             else
             {
@@ -3532,8 +3520,23 @@ namespace ORB_SLAM3
                     currentFrameMaker->setMarkerInGMap(true);
         }
 
+        // ----------- Plane Detection and Mapping --------
+        std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
+
+        // Get the plane equation from the points the camera is seeing
+        planePointPair = getPlaneEquationFromPointClouds();
+
+        // Check if we need to add the wall to the map or not
+        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), planePointPair.first);
+        if (matchedPlaneId == -1)
+            // A wall with the same equation was not found in the map, creating a new one
+            createMapPlane(planePointPair.first, planePointPair.second, pKF);
+        else
+            // The wall already exists in the map, fetching that one
+            updateMapPlane(matchedPlaneId, pKF, planePointPair.second);
+
         // Add Markers while progressing in KFs
-        markerSemanticAnalyzerAndMapper(pKF, mCurrentFrame.mvpMapMarkers);
+        markerSemanticAnalyzerAndMapper(pKF, mCurrentFrame.mvpMapMarkers, planePointPair.second);
 
         // Early creation of a room as soon as all elements of at least one of its pairs has been seen
         currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
@@ -4325,17 +4328,13 @@ namespace ORB_SLAM3
 
         // Get the dominant wall by comparing the magnitudes of the last elements of the given walls
         if (fabs(wall1(3)) > fabs(wall2(3)))
-        {
             // Calculate the midpoint of the dominant wall
             vec = (0.5 * (fabs(wall1(3)) * wall1.head(3) - fabs(wall2(3)) * wall2.head(3))) +
                   fabs(wall2(3)) * wall2.head(3);
-        }
         else
-        {
             // Calculate the midpoint of the dominant wall
             vec = (0.5 * (fabs(wall2(3)) * wall2.head(3) - fabs(wall1(3)) * wall1.head(3))) +
                   fabs(wall1(3)) * wall1.head(3);
-        }
 
         // Normalize the vector to obtain the normal direction of the room
         vectorNormal = vec / vec.norm();
@@ -4354,27 +4353,19 @@ namespace ORB_SLAM3
 
         // Calculate the midpoint vector along the x-axis of the room
         if (fabs(x_plane1(3)) > fabs(x_plane2(3)))
-        {
             vectorX = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) +
                       fabs(x_plane2(3)) * x_plane2.head(3);
-        }
         else
-        {
             vectorX = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) +
                       fabs(x_plane1(3)) * x_plane1.head(3);
-        }
 
         // Calculate the midpoint vector along the y-axis of the room
         if (fabs(y_plane1(3)) > fabs(y_plane2(3)))
-        {
             vectorY = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) +
                       fabs(y_plane2(3)) * y_plane2.head(3);
-        }
         else
-        {
             vectorY = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) +
                       fabs(y_plane1(3)) * y_plane1.head(3);
-        }
 
         // Calculate the room center by summing the midpoint vectors along the x and y axes
         roomCenter = vectorX + vectorY;
@@ -4384,7 +4375,7 @@ namespace ORB_SLAM3
 
     int Tracking::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
     {
-        int wallId = -1;
+        int planeId = -1;
 
         // Initialize difference value
         double minDiff = 100.0;
@@ -4393,9 +4384,7 @@ namespace ORB_SLAM3
 
         // Check if mappedPlanes is empty
         if (mappedPlanes.empty())
-        {
-            return wallId;
-        }
+            return planeId;
 
         // Loop over all walls
         for (const auto &wallPtr : mappedPlanes)
@@ -4414,15 +4403,13 @@ namespace ORB_SLAM3
             if (planeDiff < minDiff)
             {
                 minDiff = planeDiff;
-                wallId = wallPtr->getId();
+                planeId = wallPtr->getId();
             }
         }
 
         // If the difference is not large, no need to add the plane
         if (minDiff < diffThreshold)
-        {
-            return wallId;
-        }
+            return planeId;
 
         // Otherwise, return -1 so that the the plane gets added to the map
         return -1;
@@ -4610,13 +4597,10 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    void Tracking::createMapPlane(const std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair,
-                                  ORB_SLAM3::KeyFrame *pKF, ORB_SLAM3::Marker *attachedMarker)
+    void Tracking::createMapPlane(const g2o::Plane3D estimatedPlane,
+                                  const pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud,
+                                  ORB_SLAM3::KeyFrame *pKF)
     {
-        // Split the pair into plane and pointcloud
-        g2o::Plane3D estimatedPlane = planePointPair.first;
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud = planePointPair.second;
-
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
         newMapPlane->setEquation(estimatedPlane);
@@ -4626,55 +4610,45 @@ namespace ORB_SLAM3
         // Set the plane type to undefined, as it is not known yet
         newMapPlane->setPlaneType(semanticType::UNDEFINED);
 
-        // If there is a marker placed on the wall (entrance of a room), add it to the wall
-        std::string markerInfoStr = "";
-        if (attachedMarker != NULL)
-        {
-            newMapPlane->setMarkers(attachedMarker);
-            // Set the plane type to wall, if there is a marker attached to it (temporary) [TODO]
-            newMapPlane->setPlaneType(semanticType::WALL);
-            markerInfoStr = ", with Marker#" + attachedMarker->getId();
-        }
-
+        std::string planeStr = "(" +
+                               std::to_string(newMapPlane->getEquation().coeffs()(0)) + ")x + (" +
+                               std::to_string(newMapPlane->getEquation().coeffs()(1)) + ")y + (" +
+                               std::to_string(newMapPlane->getEquation().coeffs()(2)) + ")z + (" +
+                               std::to_string(newMapPlane->getEquation().coeffs()(3)) + ") = 0";
         std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
-                  << newMapPlane->getEquation().coeffs()
-                  << markerInfoStr << std::endl;
+                  << planeStr << std::endl;
 
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
-        {
             newMapPlane->setMapClouds(planeCloud);
-        }
         else
-        {
             // Loop to find the points lying on wall
             for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-            {
                 if (pointOnPlane(estimatedPlane.coeffs(), mapPoint))
                     newMapPlane->setMapPoints(mapPoint);
-            }
-        }
 
         pKF->AddMapPlane(newMapPlane);
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void Tracking::updateMapPlane(int wallId, ORB_SLAM3::KeyFrame *pKF,
+    void Tracking::updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF,
                                   pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud,
                                   ORB_SLAM3::Marker *visitedMarker)
     {
-        // Find the matched wall among all walls of the map
+        // Find the matched plane among all planes of the map
         for (auto currentPlane : mpAtlas->GetAllPlanes())
-        {
-            if (currentPlane->getId() == wallId)
+            if (currentPlane->getId() == planeId)
             {
-                // If that marker does not belong to the wall, add it there
+                // If there is a marker attached to a plane, set it as 'wall' and store the marker
                 if (visitedMarker != NULL)
                 {
                     currentPlane->setMarkers(visitedMarker);
                     currentPlane->setPlaneType(semanticType::WALL);
+                    std::cout << "- Wall updated: Plane#" << currentPlane->getId() << ", with Marker#"
+                              << visitedMarker->getId() << std::endl;
                 }
 
+                // Update the pointcloud of the plane
                 if (!planeCloud->points.empty())
                     currentPlane->setMapClouds(planeCloud);
                 else
@@ -4682,7 +4656,6 @@ namespace ORB_SLAM3
                         if (pointOnPlane(currentPlane->getEquation().coeffs(), mapPoint))
                             currentPlane->setMapPoints(mapPoint);
             }
-        }
     }
 
     bool Tracking::pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint)
@@ -4957,28 +4930,10 @@ namespace ORB_SLAM3
         return currentFoundRooms;
     }
 
-    void Tracking::markerSemanticAnalyzerAndMapper(ORB_SLAM3::KeyFrame *pKF, const std::vector<Marker *> &mvpMapMarkers)
+    void Tracking::markerSemanticAnalyzerAndMapper(ORB_SLAM3::KeyFrame *pKF,
+                                                   const std::vector<Marker *> &mvpMapMarkers,
+                                                   const pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud)
     {
-
-        // ----------- Plane Detection and Mapping --------
-        std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
-
-        // Get the plane equation from the points the camera is seeing
-        planePointPair = getPlaneEquationFromPointClouds();
-
-        // Check if we need to add the wall to the map or not
-        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), planePointPair.first);
-        if (matchedPlaneId == -1)
-        {
-            // A wall with the same equation was not found in the map, creating a new one
-            createMapPlane(planePointPair, pKF);
-        }
-        else
-        {
-            // The wall already exists in the map, fetching that one
-            updateMapPlane(matchedPlaneId, pKF, planePointPair.second);
-        }
-
         for (Marker *mCurrentMarker : mvpMapMarkers)
         {
             ORB_SLAM3::Marker *currentMapMarker;
@@ -5020,7 +4975,7 @@ namespace ORB_SLAM3
                 if (matchedPlaneId != -1)
                 {
                     // The wall already exists in the map, fetching that one
-                    updateMapPlane(matchedPlaneId, pKF, planePointPair.second, currentMapMarker);
+                    updateMapPlane(matchedPlaneId, pKF, planeCloud, currentMapMarker);
                 }
             }
             else

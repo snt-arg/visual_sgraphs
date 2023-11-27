@@ -236,13 +236,11 @@ namespace ORB_SLAM3
 
         /**
          * @brief Creates a new plane object to be added to the map
-         * @param attachedMarker the address of the attached marker
-         * @param estimatedPlane the equation of the plane estimated from the marker
-         * @param mapPoints all the map points to check the ones lying on the plane
+         * @param planePointPair all the map points to check the ones lying on the plane
          * @param pKF the address of the current keyframe
          */
-        void createMapPlane(const std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair,
-                            KeyFrame *pKF, Marker *attachedMarker = NULL);
+        void createMapPlane(const g2o::Plane3D estimatedPlane, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud,
+                            KeyFrame *pKF);
 
         /**
          * @brief Updates an existing plane object in the map
@@ -259,7 +257,8 @@ namespace ORB_SLAM3
          * @param mvpMapMarkers the address of the detected markers
          */
         void markerSemanticAnalyzerAndMapper(ORB_SLAM3::KeyFrame *pKF,
-                                             const std::vector<Marker *> &mvpMapMarkers);
+                                             const std::vector<Marker *> &mvpMapMarkers,
+                                             const pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud);
 
         /**
          * @brief Creates a new door object to be added to the map
