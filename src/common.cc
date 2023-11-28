@@ -502,7 +502,7 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         if (planes[idx]->getPlaneType() != semanticType::WALL)
             continue;
 
-        visualization_msgs::Marker plane, planePoints, planeLines;
+        visualization_msgs::Marker wall, wallPoints, wallLines;
         std::vector<double> color = planes[idx]->getColor();
 
         // Get the position of the planes from map-points to put it in the middle of the cluster
@@ -519,7 +519,7 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         //     point.x = mPosition.x();
         //     point.y = mPosition.y();
         //     point.z = mPosition.z();
-        //     planePoints.points.push_back(point);
+        //     wallPoints.points.push_back(point);
         // }
 
         // // Calculate the centroid
@@ -531,74 +531,74 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
         if (planes[idx]->getMarkers().size() > 0)
         {
             // If the plane has markers, use the orientation of the marker
-            Sophus::SE3f planeOrientation = planes[idx]->getMarkers().front()->getGlobalPose();
+            Sophus::SE3f wallOrient = planes[idx]->getMarkers().front()->getGlobalPose();
 
             // Plane values
-            plane.ns = "planes";
-            plane.scale.x = 0.5;
-            plane.scale.y = 0.5;
-            plane.scale.z = 0.5;
-            plane.color.a = 0.5;
-            plane.action = plane.ADD;
-            plane.color.r = color[0] / 255;
-            plane.color.g = color[1] / 255;
-            plane.color.b = color[2] / 255;
-            plane.lifetime = ros::Duration();
-            plane.id = planeArray.markers.size();
-            plane.header.stamp = ros::Time::now();
-            plane.header.frame_id = struct_frame_id;
-            plane.mesh_use_embedded_materials = true;
-            plane.type = visualization_msgs::Marker::MESH_RESOURCE;
-            plane.mesh_resource =
+            wall.ns = "wall";
+            wall.scale.x = 0.5;
+            wall.scale.y = 0.5;
+            wall.scale.z = 0.5;
+            wall.color.a = 0.5;
+            wall.action = wall.ADD;
+            wall.color.r = color[0] / 255;
+            wall.color.g = color[1] / 255;
+            wall.color.b = color[2] / 255;
+            wall.lifetime = ros::Duration();
+            wall.id = planeArray.markers.size();
+            wall.header.stamp = ros::Time::now();
+            wall.header.frame_id = struct_frame_id;
+            wall.mesh_use_embedded_materials = true;
+            wall.type = visualization_msgs::Marker::MESH_RESOURCE;
+            wall.mesh_resource =
                 "package://orb_slam3_ros/config/Visualization/plane.dae";
 
             // Rotation and displacement for better visualization
-            planeOrientation *= Sophus::SE3f::rotX(-M_PI_2);
+            wallOrient *= Sophus::SE3f::rotX(-M_PI_2);
 
-            plane.pose.position.x = centroid.x();
-            plane.pose.position.y = centroid.y();
-            plane.pose.position.z = centroid.z();
-            plane.pose.orientation.x = planeOrientation.unit_quaternion().x();
-            plane.pose.orientation.y = planeOrientation.unit_quaternion().y();
-            plane.pose.orientation.z = planeOrientation.unit_quaternion().z();
-            plane.pose.orientation.w = planeOrientation.unit_quaternion().w();
-            planeArray.markers.push_back(plane);
+            wall.pose.position.x = centroid.x();
+            wall.pose.position.y = centroid.y();
+            wall.pose.position.z = centroid.z();
+            wall.pose.orientation.x = wallOrient.unit_quaternion().x();
+            wall.pose.orientation.y = wallOrient.unit_quaternion().y();
+            wall.pose.orientation.z = wallOrient.unit_quaternion().z();
+            wall.pose.orientation.w = wallOrient.unit_quaternion().w();
+            planeArray.markers.push_back(wall);
         }
         else
         {
             // Otherwise, calculate the orientation of the plane using the map-points [TODO]
         }
 
-        planePoints.color.a = 1;
-        planePoints.scale.x = 0.03;
-        planePoints.scale.y = 0.03;
-        planePoints.scale.z = 0.03;
-        planePoints.ns = "planes_points";
-        planePoints.action = planePoints.ADD;
-        planePoints.color.r = color[0] / 255;
-        planePoints.color.g = color[1] / 255;
-        planePoints.color.b = color[2] / 255;
-        planePoints.lifetime = ros::Duration();
-        planePoints.id = planeArray.markers.size();
-        planePoints.header.stamp = ros::Time::now();
-        planePoints.header.frame_id = struct_frame_id;
-        planePoints.type = visualization_msgs::Marker::CUBE_LIST;
-        planeArray.markers.push_back(planePoints);
+        wallPoints.color.a = 1;
+        wallPoints.scale.x = 0.03;
+        wallPoints.scale.y = 0.03;
+        wallPoints.scale.z = 0.03;
+        wallPoints.ns = "wallPoints";
+        wallPoints.action = wallPoints.ADD;
+        wallPoints.color.r = color[0] / 255;
+        wallPoints.color.g = color[1] / 255;
+        wallPoints.color.b = color[2] / 255;
+        wallPoints.lifetime = ros::Duration();
+        wallPoints.id = planeArray.markers.size();
+        wallPoints.header.stamp = ros::Time::now();
+        wallPoints.header.frame_id = struct_frame_id;
+        wallPoints.type = visualization_msgs::Marker::CUBE_LIST;
+        planeArray.markers.push_back(wallPoints);
 
-        planeLines.color.a = 0.5;
-        planeLines.color.r = 0.0;
-        planeLines.color.g = 0.0;
-        planeLines.color.b = 0.0;
-        planeLines.scale.x = 0.005;
-        planeLines.scale.y = 0.005;
-        planeLines.scale.z = 0.005;
-        planeLines.ns = "planeLines";
-        planeLines.action = planeLines.ADD;
-        planeLines.lifetime = ros::Duration();
-        planeLines.id = planeArray.markers.size();
-        planeLines.header.stamp = ros::Time().now();
-        planeLines.header.frame_id = struct_frame_id;
-        planeLines.type = visualization_msgs::Marker::LINE_LIST;
+        wallLines.color.a = 0.5;
+        wallLines.color.r = 0.0;
+        wallLines.color.g = 0.0;
+        wallLines.color.b = 0.0;
+        wallLines.scale.x = 0.005;
+        wallLines.scale.y = 0.005;
+        wallLines.scale.z = 0.005;
+        wallLines.ns = "wallLines";
+        wallLines.action = wallLines.ADD;
+        wallLines.lifetime = ros::Duration();
+        wallLines.id = planeArray.markers.size();
+        wallLines.header.stamp = ros::Time().now();
+        wallLines.header.frame_id = struct_frame_id;
+        wallLines.type = visualization_msgs::Marker::LINE_LIST;
 
         for (const auto &planeMarker : planes[idx]->getMarkers())
         {
@@ -606,15 +606,15 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
             point1.x = planeMarker->getGlobalPose().translation().x();
             point1.y = planeMarker->getGlobalPose().translation().y();
             point1.z = planeMarker->getGlobalPose().translation().z();
-            planeLines.points.push_back(point1);
+            wallLines.points.push_back(point1);
 
             geometry_msgs::Point point2;
             point2.x = centroid.x();
             point2.y = centroid.y();
             point2.z = centroid.z();
-            planeLines.points.push_back(point2);
+            wallLines.points.push_back(point2);
         }
-        planeArray.markers.push_back(planeLines);
+        planeArray.markers.push_back(wallLines);
     }
 
     planes_pub.publish(planeArray);
