@@ -55,7 +55,7 @@ int main(int argc, char **argv)
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
     node_handler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
     node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
-    node_handler.param<std::string>(node_name + "/plane_frame_id", plane_frame_id, "plane");
+    node_handler.param<std::string>(node_name + "/struct_frame_id", struct_frame_id, "plane");
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Read environment data containing markers attached to rooms and corridors
