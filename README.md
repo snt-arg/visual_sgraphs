@@ -101,7 +101,7 @@ You should first create a workspace and clone the Semantic ORB-SLAM 3.0 reposito
 
 ```
 cd ~/[workspace]/src
-git clone git@github.com:snt-arg/semantic_orb_slam3_ros.git
+git clone git@github.com:snt-arg/visual_sgraphs.git
 ```
 
 ### II. Cloning the `aruco_ros` Repository <a id="aruco"></a>
