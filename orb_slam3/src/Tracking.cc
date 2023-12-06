@@ -2499,8 +2499,12 @@ namespace ORB_SLAM3
             // Get the plane equation from the points the camera is seeing
             planePointPair = getPlaneEquationFromPointClouds();
 
+            // Convert the given plane to global coordinates
+            g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
+                                                               planePointPair.first);
+
             // Check if we need to add the wall to the map or not
-            int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), planePointPair.first);
+            int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
                 createMapPlane(planePointPair.first, planePointPair.second, pKFini);
@@ -2534,9 +2538,13 @@ namespace ORB_SLAM3
                     // Get the plane based on the equation
                     g2o::Plane3D detectedPlane(planeEstimateByPose);
 
+                    // Convert the given plane to global coordinates
+                    g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
+                                                                       detectedPlane);
+
                     // The current marker is placed on a wall
                     // Check if we need to add the wall to the map or not
-                    int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane);
+                    int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
                     if (matchedPlaneId != -1)
                         // The wall already exists in the map, fetching that one
                         updateMapPlane(matchedPlaneId, pKFini, planePointPair.second, mCurrentMarker);
@@ -2704,8 +2712,12 @@ namespace ORB_SLAM3
         // Get the plane equation from the points the camera is seeing
         planePointPair = getPlaneEquationFromPointClouds();
 
+        // Convert the given plane to global coordinates
+        g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
+                                                           planePointPair.first);
+
         // Check if we need to add the wall to the map or not
-        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), planePointPair.first);
+        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
         if (matchedPlaneId == -1)
             // A wall with the same equation was not found in the map, creating a new one
             createMapPlane(planePointPair.first, planePointPair.second, pKFini);
@@ -2739,9 +2751,13 @@ namespace ORB_SLAM3
                 // Get the plane based on the equation
                 g2o::Plane3D detectedPlane(planeEstimate);
 
+                // Convert the given plane to global coordinates
+                g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
+                                                                   detectedPlane);
+
                 // The current marker is placed on a wall
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane);
+                int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
                 if (matchedPlaneId != -1)
                     // The wall already exists in the map, fetching that one
                     updateMapPlane(matchedPlaneId, pKFini, planePointPair.second, mCurrentMarker);
@@ -3526,8 +3542,12 @@ namespace ORB_SLAM3
         // Get the plane equation from the points the camera is seeing
         planePointPair = getPlaneEquationFromPointClouds();
 
+        // Convert the given plane to global coordinates
+        g2o::Plane3D globalEquation = convertLocalToGlobal(pKF->GetPoseInverse().matrix().cast<double>(),
+                                                           planePointPair.first);
+
         // Check if we need to add the wall to the map or not
-        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), planePointPair.first);
+        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
         if (matchedPlaneId == -1)
             // A wall with the same equation was not found in the map, creating a new one
             createMapPlane(planePointPair.first, planePointPair.second, pKF);
@@ -4390,7 +4410,7 @@ namespace ORB_SLAM3
         for (const auto &wallPtr : mappedPlanes)
         {
             // Preparing a plane for feeding the detector
-            g2o::Plane3D mappedPlane = wallPtr->getEquation();
+            g2o::Plane3D mappedPlane = wallPtr->getGlobalEquation();
 
             // Calculate difference vector based on walls' equations
             Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
@@ -4603,18 +4623,23 @@ namespace ORB_SLAM3
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
-        newMapPlane->setEquation(estimatedPlane);
+        newMapPlane->setLocalEquation(estimatedPlane);
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
 
         // Set the plane type to undefined, as it is not known yet
         newMapPlane->setPlaneType(semanticType::UNDEFINED);
 
+        // Set the global equation of the plane
+        g2o::Plane3D globalEquation = convertLocalToGlobal(pKF->GetPoseInverse().matrix().cast<double>(),
+                                                           estimatedPlane);
+        newMapPlane->setGlobalEquation(globalEquation);
+
         std::string planeStr = "(" +
-                               std::to_string(newMapPlane->getEquation().coeffs()(0)) + ")x + (" +
-                               std::to_string(newMapPlane->getEquation().coeffs()(1)) + ")y + (" +
-                               std::to_string(newMapPlane->getEquation().coeffs()(2)) + ")z + (" +
-                               std::to_string(newMapPlane->getEquation().coeffs()(3)) + ") = 0";
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(0)) + ")x + (" +
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(1)) + ")y + (" +
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(2)) + ")z + (" +
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(3)) + ") = 0";
         std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
                   << planeStr << std::endl;
 
@@ -4624,7 +4649,7 @@ namespace ORB_SLAM3
         else
             // Loop to find the points lying on wall
             for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-                if (pointOnPlane(estimatedPlane.coeffs(), mapPoint))
+                if (pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
                     newMapPlane->setMapPoints(mapPoint);
 
         pKF->AddMapPlane(newMapPlane);
@@ -4653,10 +4678,20 @@ namespace ORB_SLAM3
                     currentPlane->setMapClouds(planeCloud);
                 else
                     for (const auto &mapPoint : pKF->GetMapPoints())
-                        if (pointOnPlane(currentPlane->getEquation().coeffs(), mapPoint))
+                        if (pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
                             currentPlane->setMapPoints(mapPoint);
             }
     }
+
+    g2o::Plane3D Tracking::convertLocalToGlobal(const Eigen::Matrix4d &kfPose, const g2o::Plane3D &plane)
+    {
+        Eigen::Vector4d v = plane.coeffs();
+        Eigen::Vector4d v2;
+        Eigen::Matrix3d R = kfPose.block<3, 3>(0, 0);
+        v2.head<3>() = R * v.head<3>();
+        v2(3) = v(3) - kfPose.block<3, 1>(0, 3).dot(v2.head<3>());
+        return g2o::Plane3D(v2);
+    };
 
     bool Tracking::pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint)
     {
@@ -4774,9 +4809,9 @@ namespace ORB_SLAM3
                 roomWalls.front()->getMarkers().front()->getGlobalPose().translation().cast<double>();
             // If it is a corridor
             Eigen::Vector4d wall1(correctPlaneDirection(
-                roomWalls.front()->getEquation().coeffs()));
+                roomWalls.front()->getGlobalEquation().coeffs()));
             Eigen::Vector4d wall2(correctPlaneDirection(
-                roomWalls.front()->getEquation().coeffs()));
+                roomWalls.front()->getGlobalEquation().coeffs()));
             // Find the room center and add its vertex
             roomCenter = getRoomCenter(markerPosition, wall1, wall2);
         }
@@ -4785,13 +4820,13 @@ namespace ORB_SLAM3
             reorganizeRoomWalls(detectedRoom);
             // If it is a four-wall room
             Eigen::Vector4d wall1 = correctPlaneDirection(
-                detectedRoom->getWalls()[0]->getEquation().coeffs());
+                detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
             Eigen::Vector4d wall2 = correctPlaneDirection(
-                detectedRoom->getWalls()[1]->getEquation().coeffs());
+                detectedRoom->getWalls()[1]->getGlobalEquation().coeffs());
             Eigen::Vector4d wall3 = correctPlaneDirection(
-                detectedRoom->getWalls()[2]->getEquation().coeffs());
+                detectedRoom->getWalls()[2]->getGlobalEquation().coeffs());
             Eigen::Vector4d wall4 = correctPlaneDirection(
-                detectedRoom->getWalls()[3]->getEquation().coeffs());
+                detectedRoom->getWalls()[3]->getGlobalEquation().coeffs());
             // Find the room center and add its vertex
             roomCenter = getRoomCenter(wall1, wall2, wall3, wall4);
         }
@@ -4823,7 +4858,7 @@ namespace ORB_SLAM3
                 wall1 = wall;
             else
             {
-                if (wall->getEquation().coeffs()(0) < wall1->getEquation().coeffs()(0))
+                if (wall->getGlobalEquation().coeffs()(0) < wall1->getGlobalEquation().coeffs()(0))
                     wall1 = wall;
                 else
                     continue;
@@ -4837,7 +4872,7 @@ namespace ORB_SLAM3
                 wall2 = wall;
             else
             {
-                if (wall->getEquation().coeffs()(0) > wall2->getEquation().coeffs()(0))
+                if (wall->getGlobalEquation().coeffs()(0) > wall2->getGlobalEquation().coeffs()(0))
                     wall2 = wall;
                 else
                     continue;
@@ -4851,7 +4886,7 @@ namespace ORB_SLAM3
                 wall3 = wall;
             else
             {
-                if (wall->getEquation().coeffs()(2) < wall3->getEquation().coeffs()(2))
+                if (wall->getGlobalEquation().coeffs()(2) < wall3->getGlobalEquation().coeffs()(2))
                     wall3 = wall;
                 else
                     continue;
@@ -4865,7 +4900,7 @@ namespace ORB_SLAM3
                 wall4 = wall;
             else
             {
-                if (wall->getEquation().coeffs()(2) > wall4->getEquation().coeffs()(2))
+                if (wall->getGlobalEquation().coeffs()(2) > wall4->getGlobalEquation().coeffs()(2))
                     wall4 = wall;
                 else
                     continue;
@@ -4970,8 +5005,13 @@ namespace ORB_SLAM3
 
                 // Get the plane based on the equation
                 g2o::Plane3D detectedPlane(planeEstimate);
+
+                // Convert the given plane to global coordinates
+                g2o::Plane3D globalEquation = convertLocalToGlobal(pKF->GetPoseInverse().matrix().cast<double>(),
+                                                                   detectedPlane);
+
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane);
+                int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
                 if (matchedPlaneId != -1)
                 {
                     // The wall already exists in the map, fetching that one

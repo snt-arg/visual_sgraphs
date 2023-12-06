@@ -109,14 +109,24 @@ namespace ORB_SLAM3
         planeType = newType;
     }
 
-    g2o::Plane3D Plane::getEquation() const
+    g2o::Plane3D Plane::getLocalEquation() const
     {
-        return equation;
+        return local_equation;
     }
 
-    void Plane::setEquation(const g2o::Plane3D &value)
+    void Plane::setLocalEquation(const g2o::Plane3D &value)
     {
-        equation = value;
+        local_equation = value;
+    }
+
+    g2o::Plane3D Plane::getGlobalEquation() const
+    {
+        return global_equation;
+    }
+
+    void Plane::setGlobalEquation(const g2o::Plane3D &value)
+    {
+        global_equation = value;
     }
 
     Eigen::Vector3f Plane::getCentroid() const

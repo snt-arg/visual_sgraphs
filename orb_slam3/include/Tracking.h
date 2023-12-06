@@ -235,6 +235,13 @@ namespace ORB_SLAM3
         Marker *createMapMarker(const Marker *visitedMarker, KeyFrame *pKF);
 
         /**
+         * @brief Converts the plane equation from local to global
+         * @param kfPose the pose of the current keyframe
+         * @param plane the plane equation in the local map
+         */
+        g2o::Plane3D convertLocalToGlobal(const Eigen::Matrix4d &kfPose, const g2o::Plane3D &plane);
+
+        /**
          * @brief Creates a new plane object to be added to the map
          * @param planePointPair all the map points to check the ones lying on the plane
          * @param pKF the address of the current keyframe

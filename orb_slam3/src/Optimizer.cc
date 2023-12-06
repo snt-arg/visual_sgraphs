@@ -334,7 +334,7 @@ namespace ORB_SLAM3
             g2o::VertexPlane *vPlane = new g2o::VertexPlane();
             int opIdG = maxOpId + nPlanes;
             vPlane->setId(opIdG);
-            vPlane->setEstimate(vpPlane->getEquation());
+            vPlane->setEstimate(vpPlane->getGlobalEquation());
             optimizer.addVertex(vPlane);
             nPlanes++;
 
@@ -1780,7 +1780,7 @@ namespace ORB_SLAM3
             g2o::VertexPlane *vPlane = new g2o::VertexPlane();
             int opId = maxOpId + nPlanes;
             vPlane->setId(opId);
-            vPlane->setEstimate(pMapPlane->getEquation());
+            vPlane->setEstimate(pMapPlane->getGlobalEquation());
             optimizer.addVertex(vPlane);
             nPlanes++;
 
@@ -2014,7 +2014,7 @@ namespace ORB_SLAM3
             Plane *pMapPlane = *idx;
             g2o::VertexPlane *vPlane = static_cast<g2o::VertexPlane *>(optimizer.vertex(pMapPlane->getOpId()));
             g2o::Plane3D planePlane = vPlane->estimate();
-            pMapPlane->setEquation(planePlane);
+            pMapPlane->setGlobalEquation(planePlane);
         }
 
         // Locally Optimized Rooms
