@@ -112,14 +112,16 @@ This package (available [here](https://github.com/pal-robotics/aruco_ros)) enabl
 cd ~/catkin_ws/src/
 
 # Cloning the latest code
-git clone git@github.com:pal-robotics/aruco_ros.git
+git clone -b noetic-devel git@github.com:pal-robotics/aruco_ros.git
 ```
 
 It is important to put the file in the same folder, as the Semantic ORB-SLAM 3.0 library depends on it. Instead of the original launch file, you can use the sample modified `marker_publisher.launch` file for this library available [here](doc/aruco_ros_marker_publisher.launch), which works fine with the _UniLu_ dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed based on the use case). Do not forget to set proper `ref_frame`, `markerSize`, `imageRaw`, and `cameraInfo` values in the launch file.
 
 ### III. Installing the Libraries <a id="libraries"></a>
 
-Install both the libraries using `catkin build`. Finally, you can add a new alias to the `bashrc` file to run the environment whenever needed:
+First, make sure that you have installed all the required dependencies, such as `ros-noetic-backward-ros` and `ros-noetic-rviz-visual-tools`, using the command `rosdep install --from-paths src --ignore-src -y`.
+
+Then, install both the libraries using `catkin build`. Finally, you can add a new alias to the `bashrc` file to run the environment whenever needed:
 
 ```
 alias sourceorb3ros='source ~/workspace/ros/orbslam3_ros_ws/devel/setup.bash'
