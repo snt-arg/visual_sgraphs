@@ -15,10 +15,10 @@
     -->
     <arg name="imageRaw"   default="/camera/color/image_raw" />
     <!-- cameraInfo variants: 
-        Live RealSense / ULMS dataset:   /camera/aligned_depth_to_color/camera_info
+        Live RealSense / ULMS dataset:   /camera/color/camera_info
         IR camera (stereo):              /camera/infra1/camera_info
     -->
-    <arg name="cameraInfo"   default="/camera/aligned_depth_to_color/camera_info" />
+    <arg name="cameraInfo"   default="/camera/color/camera_info" />
 
     <node pkg="aruco_ros" type="marker_publisher" name="aruco_marker_publisher">
         <remap from="/image" to="$(arg imageRaw)" />

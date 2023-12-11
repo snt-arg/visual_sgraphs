@@ -4523,15 +4523,11 @@ namespace ORB_SLAM3
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud, planeCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
         if (hasDepthCloud)
-        {
             pointcloud = mCurrentFrame.mvpPointClouds;
-        }
         else
-        {
             // [TODO] For Mono and Stereo, the map points are very sparse. We can think of a way to calculate
             // the depth from points using Machine Learning to get a better plane estimate.
             pointcloud = getCloudFromPoints(mCurrentFrame.mvpMapPoints);
-        }
 
         // Check if the cloud is large enough
         int minCloudSize = mpSystem->GetSystemParameters().pointCloudSize;
@@ -5013,10 +5009,8 @@ namespace ORB_SLAM3
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
                 if (matchedPlaneId != -1)
-                {
                     // The wall already exists in the map, fetching that one
                     updateMapPlane(matchedPlaneId, pKF, planeCloud, currentMapMarker);
-                }
             }
             else
             {

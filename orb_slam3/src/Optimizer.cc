@@ -39,7 +39,7 @@ namespace ORB_SLAM3
 {
     // [TODO] Should read from marker score in aruco_ros
     // [TODO] Should be 1e10 for mono and 0.1 for stereo/rgb-d
-    double markerInfo = 1e10;
+    double markerInfo = 0.1;
 
     bool sortByVal(const pair<MapPoint *, int> &a, const pair<MapPoint *, int> &b)
     {
@@ -1786,6 +1786,11 @@ namespace ORB_SLAM3
 
             // Setting the local optimization ID for the plane
             pMapPlane->setOpId(opId);
+
+            // [TODO]: Add the SE3(keyframe)->Plane edge like in s_graphs
+            // const map<KeyFrame *, Sophus::SE3f> observations = pMapPlane->getObservations();
+            // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            // ADD the edge between the plane and the keyframe
 
             // Get list of Markers attached to the plane
             vector<Marker *> attachedMarkers = pMapPlane->getMarkers();
