@@ -201,6 +201,8 @@ Please note that in order to use inertial sensors (i.e., _IMU_) you need to init
 
 ## 💾 Data Collection <a id="data"></a>
 
+### I. Using a RealSense Camera
+
 To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, _aligned depth_, _stereo_, and _color_, you can follow these steps:
 
 - Make sure you have the necessary drivers and packages installed for the RealSense camera to work with `ROS`, including `realsense2_camera` and `realsense2_description` packages using the following command:
@@ -211,6 +213,24 @@ To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, 
 - Record the topics of interest:
   - For Mono and RGB-D, with or without IMU, run `rosbag record /camera/color/image_raw /camera/aligned_depth_to_color/image_raw /camera/color/camera_info /camera/aligned_depth_to_color/camera_info /camera/imu /camera/depth/color/points`.
   - For Stereo, with or without IMU, run `rosbag record /camera/color/image_raw /camera/infra1/image_rect_raw /camera/infra2/image_rect_raw /camera/imu /camera/color/camera_info /camera/infra1/camera_info /camera/infra2/camera_info`.
+
+### II. Using the Handheld Device
+
+To record a `rosbag` file using the **Handheld Device** developed by the team, containing a RealSense D435i and a 3D LiDAR, you need to follow the below steps:
+
+- Create a `SSH` file to connect to the device. You just need to add the ssh information to the `config` file available in your `.ssh` folder. There, you need to add the following settings:
+
+```
+Host unitree
+    Hostname 10.42.0.1
+    User unitree-brain
+```
+
+- Connect to `unitree`'s Wi-Fi and run `ssh unitree`. You need to run the same thing for two `bash` areas. You will be connected to the `bash` control of the device.
+  - [Note] You need to have the password to connect.
+- In the first command area run `neurolink_mprocs`, so that you have access to all the commands required to run services. Run them all one by one.
+- In the second command, run the service provided for `rosbag` recording, which is `./rosbag_collection.sh .`. Note that the second dot is the location to save the rosbag file.
+- You can always connect to `unitree`'s Wi-Fi and check the address `10.42.0.1:8888` to see all the topics provided by the software.
 
 ## 🤖 ROS Topics, Params and Services <a id="ros"></a>
 
