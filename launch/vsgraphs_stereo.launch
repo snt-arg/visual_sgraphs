@@ -41,7 +41,7 @@
     <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera camera_color_optical_frame 10" />
     
     <!-- Visualization -->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/unilu_stereo.rviz" output="screen" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/vsgraphs_stereo.rviz" output="screen" />
 
     <!-- Trajectory path -->
     <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_server_orb_slam3" output="screen" ns="orb_slam3_ros" >

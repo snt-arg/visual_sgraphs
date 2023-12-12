@@ -132,7 +132,7 @@ As a quick test, you can do as follows:
 - Run a `roscore`
 - Run the `aruco_ros` using `sourceorb3ros` and then `roslaunch aruco_ros marker_publisher.launch [2>/dev/null]` for detecting multiple markers in the scene and publishing their poses.
   - The final results (scene with detected markers) produced by `aruco_ros` are published and accessible on `/aruco_marker_publisher/result` and the pose of the markers will be shown using `rostopic echo /aruco_marker_publisher/markers`.
-- Run the Semantic ORB-SLAM using `sourceorb3ros` and then `roslaunch orb_slam3_ros unilu_rgbd.launch [2>/dev/null]`
+- Run the Semantic ORB-SLAM using `sourceorb3ros` and then `roslaunch orb_slam3_ros vsgraphs_rgbd.launch [2>/dev/null]`
 
 ## 🔨 Configurations <a id="configurations"></a>
 
@@ -147,20 +147,20 @@ You can find the configuration files for the application in the `config` folder.
 
 2. Run the ArUco marker detector module using `roslaunch aruco_ros marker_publisher.launch`
 
-| Mode            | Dataset                            | Commands                                                                | Notes                          |
-| --------------- | ---------------------------------- | ----------------------------------------------------------------------- | ------------------------------ |
-| Mono            | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_mono.launch [offline:=false]`            | data collected using RealSense |
-| Mono-Inertial   | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_mono_inertial.launch [offline:=false]`   | data collected using RealSense |
-| Stereo          | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_stereo.launch [offline:=false]`          | data collected using RealSense |
-| Stereo-Inertial | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_stereo_inertial.launch [offline:=false]` | data collected using RealSense |
-| RGB-D           | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_rgbd.launch [offline:=false]`            | data collected using RealSense |
-| RGB-D-Inertial  | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros unilu_rgbd_inertial.launch [offline:=false]`   | data collected using RealSense |
+| Mode            | Dataset                            | Commands                                                                   | Notes                          |
+| --------------- | ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------ |
+| Mono            | UniLu's single office or Live (\*) | `roslaunch orb_slam3_rosvsgraphsmono.launch [offline:=false]`              | data collected using RealSense |
+| Mono-Inertial   | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_mono_inertial.launch [offline:=false]`   | data collected using RealSense |
+| Stereo          | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo.launch [offline:=false]`          | data collected using RealSense |
+| Stereo-Inertial | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo_inertial.launch [offline:=false]` | data collected using RealSense |
+| RGB-D           | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_rgbd.launch [offline:=false]`            | data collected using RealSense |
+| RGB-D-Inertial  | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_rgbd_inertial.launch [offline:=false]`   | data collected using RealSense |
 
 ### ⚠️ Useful Hints <a id="hints"></a>
 
 #### 🦊 Voxblox Integration <a id="voxblox-integrate"></a>
 
-You need to first create a launch file that can be integrated into this framework. You can find a sample of such launch file [here](doc/voxblox_rs_rgbd.launch). Then, for running `voxblox`, you need to source it and run it in a separate terminal using `roslaunch voxblox_ros unilu_rgbd.launch`.
+You need to first create a launch file that can be integrated into this framework. You can find a sample of such launch file [here](doc/voxblox_rs_rgbd.launch). Then, for running `voxblox`, you need to source it and run it in a separate terminal using `roslaunch voxblox_ros vsgraphs_rgbd.launch`.
 
 Additionally, before running the framework, you need to source it, source `voxblox` with a `--extend` command, and then launch the framework.
 
@@ -168,7 +168,7 @@ Additionally, before running the framework, you need to source it, source `voxbl
 source /opt/ros/noetic/setup.bash &&
 source ~/[VSGRAPHS_PATH]/devel/setup.bash &&
 source ~/[VOXBLOX_PATH]/devel/setup.bash --extend &&
-roslaunch orb_slam3_ros unilu_rgbd.launch 2>/dev/null
+roslaunch orb_slam3_ros vsgraphs_rgbd.launch 2>/dev/null
 ```
 
 [Note] As `voxblox` and `Visual S-Graphs` both need to access/modify `TF` data, it may become slow. So, in order to run it with less computation cost and avoid chunking the reconstructed map, you may need to:
@@ -186,7 +186,7 @@ cameraInfo:=/camera/infra1/camera_info`
 
 #### 📸 Live Version <a id="live"></a>
 
-1. For the live version, you need to add the flag `offline:=false`, such as `roslaunch orb_slam3_ros unilu_mono.launch offline:=false`, which gets the **TF** values from RealSense instead of reading from `ORB-SLAM` while a `rosbag` file is being played (offline). If the flag is not set, whenever a marker is seen, the tracking will fail due to the mentioned conflict.
+1. For the live version, you need to add the flag `offline:=false`, such as `roslaunch orb_slam3_ros vsgraphs_mono.launch offline:=false`, which gets the **TF** values from RealSense instead of reading from `ORB-SLAM` while a `rosbag` file is being played (offline). If the flag is not set, whenever a marker is seen, the tracking will fail due to the mentioned conflict.
 2. The next step is to choose among different setups:
 
    - For RGB-D cameras as the live feed provider, you may also require [rgbd_launch](http://wiki.ros.org/rgbd_launch) to load the nodelets to convert raw depth/RGB/IR streams to depth images. Otherwise, you may face a "resource not found" error. You can find a sample launch file for RGB-D and Mono [here](/doc/realsense2_camera_rs_rgbd.launch).
