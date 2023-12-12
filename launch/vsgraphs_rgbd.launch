@@ -4,7 +4,9 @@
     <!-- Which semantic data file should be loaded? -->
     <arg name="env_database" default="ulms_seq03_jfk_e04_ofc.json" />
     <!-- How many pointclouds needed to detect geometric objects (e.g., planes) -->
-    <arg name="pointcloud_size" default="1000" />
+    <arg name="pointcloud_size" default="500" />
+    <!-- How much the framework should trust the markers (higher for mono setups) -->
+    <arg name="marker_impact" default="0.1" />
 
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
@@ -29,6 +31,7 @@
         <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D/UniLu_RealSense_D435i_640.yaml"/>
 
         <!-- Parameters for semantic/geometric objects detection -->
+        <param name="markers_impact" type="double" value="$(arg marker_impact)"/>
         <param name="pointclouds_threshold" type="int" value="$(arg pointcloud_size)"/>
 
         <!-- Parameters for ROS -->
