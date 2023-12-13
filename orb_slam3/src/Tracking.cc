@@ -1964,7 +1964,7 @@ namespace ORB_SLAM3
         }
 
         // Set marker impact to be used in optimization
-        Optimizer::SetMarkerImpact(mpSystem->GetSystemParameters().markerImpact);
+        // Optimizer::SetMarkerImpact(mpSystem->GetSystemParameters().markerImpact);
 
         if (mState == NOT_INITIALIZED)
         {
