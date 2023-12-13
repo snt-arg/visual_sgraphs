@@ -208,6 +208,7 @@ namespace ORB_SLAM3
         struct SystemParams
         {
             int pointCloudSize;
+            double markerImpact;
         };
         SystemParams params;
 

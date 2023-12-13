@@ -20,10 +20,10 @@
 #define OPTIMIZER_H
 
 #include "Map.h"
+#include "Frame.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
 #include "LoopClosing.h"
-#include "Frame.h"
 
 #include <math.h>
 #include <boost/bind.hpp>
@@ -40,11 +40,14 @@
 
 namespace ORB_SLAM3
 {
-
     class LoopClosing;
 
     class Optimizer
     {
+    private:
+        // Variables
+        double markerImpact = 0.1; // Should be 1e10 for mono and 0.1 for stereo/rgb-d
+
     public:
         void static BundleAdjustment(const std::vector<KeyFrame *> &vpKF, const std::vector<MapPoint *> &vpMP,
                                      const std::vector<Marker *> &vpMarkers, const std::vector<Plane *> &vpPlanes,
@@ -55,9 +58,12 @@ namespace ORB_SLAM3
         void static GlobalBundleAdjustemnt(Map *pMap, int nIterations = 5, bool *pbStopFlag = NULL,
                                            const unsigned long nLoopKF = 0, const bool bRobust = true);
 
-        void static FullInertialBA(Map *pMap, int its, const bool bFixLocal = false, const unsigned long nLoopKF = 0, bool *pbStopFlag = NULL, bool bInit = false, float priorG = 1e2, float priorA = 1e6, Eigen::VectorXd *vSingVal = NULL, bool *bHess = NULL);
+        void static FullInertialBA(Map *pMap, int its, const bool bFixLocal = false, const unsigned long nLoopKF = 0,
+                                   bool *pbStopFlag = NULL, bool bInit = false, float priorG = 1e2, float priorA = 1e6,
+                                   Eigen::VectorXd *vSingVal = NULL, bool *bHess = NULL);
 
-        void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF, int &num_MPs, int &num_edges, std::list<Room *> vpRooms);
+        void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF,
+                                          int &num_MPs, int &num_edges, std::list<Room *> vpRooms);
 
         int static PoseOptimization(Frame *pFrame);
         int static PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit = false);
@@ -99,6 +105,10 @@ namespace ORB_SLAM3
         void static InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &scale, Eigen::Vector3d &bg, Eigen::Vector3d &ba, bool bMono, Eigen::MatrixXd &covInertial, bool bFixedVel = false, bool bGauss = false, float priorG = 1e2, float priorA = 1e6);
         void static InertialOptimization(Map *pMap, Eigen::Vector3d &bg, Eigen::Vector3d &ba, float priorG = 1e2, float priorA = 1e6);
         void static InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &scale);
+
+        // Get parameters
+        double GetMarkerImpact() const;
+        void SetMarkerImpact(const double newValue);
 
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     };

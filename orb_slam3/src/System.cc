@@ -1637,7 +1637,8 @@ namespace ORB_SLAM3
 
     void System::SetSystemParameters(SystemParams newParams)
     {
-        this->params = newParams;
+        params.markerImpact = newParams.markerImpact;
+        params.pointCloudSize = newParams.pointCloudSize;
     }
 
     System::SystemParams System::GetSystemParameters()

@@ -37,9 +37,16 @@
 
 namespace ORB_SLAM3
 {
-    // [TODO] Should read from marker score in aruco_ros
-    // [TODO] Should be 1e10 for mono and 0.1 for stereo/rgb-d
-    double markerInfo = 0.1;
+    // Modifying variables using the values passed from common.h to 'System.h'
+    double Optimizer::GetMarkerImpact() const
+    {
+        return markerImpact;
+    };
+
+    void Optimizer::SetMarkerImpact(const double newValue)
+    {
+        markerImpact = newValue;
+    };
 
     bool sortByVal(const pair<MapPoint *, int> &a, const pair<MapPoint *, int> &b)
     {
@@ -65,6 +72,8 @@ namespace ORB_SLAM3
     {
         vector<bool> vbNotIncludedMP;
         vbNotIncludedMP.resize(vpMP.size());
+
+        double markerImpact = 0.1; // [TODO] GetMarkerImpact();
 
         Map *pMap = vpKFs[0]->GetMap();
 
@@ -313,8 +322,10 @@ namespace ORB_SLAM3
                 Eigen::Isometry3d MarkerLocalObsIso = Eigen::Isometry3d::Identity();
                 MarkerLocalObsIso.matrix() = MarkerLocalObs.cast<double>().matrix();
                 e->setMeasurement(MarkerLocalObsIso);
+
                 Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
-                e->setInformation(informationMat * markerInfo);
+                e->setInformation(informationMat * markerImpact);
+
                 g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                 e->setRobustKernel(rk);
                 rk->setDelta(thHuber2D);
@@ -1309,6 +1320,9 @@ namespace ORB_SLAM3
         pKF->mnBALocalForKF = pKF->mnId;
         Map *pCurrentMap = pKF->GetMap();
 
+        double markerImpact = 0.1; // [TODO] GetMarkerImpact();
+        // std::cout << "Marker impact in LocalBundleAdjustment: " << markerImpact << std::endl;
+
         const vector<KeyFrame *> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
         for (int i = 0, iend = vNeighKFs.size(); i < iend; i++)
         {
@@ -1761,7 +1775,7 @@ namespace ORB_SLAM3
                     e->setMeasurement(MarkerLocalObsIso);
 
                     Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
-                    e->setInformation(informationMat * markerInfo);
+                    e->setInformation(informationMat * markerImpact);
                     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                     e->setRobustKernel(rk);
                     rk->setDelta(thHuberMono);

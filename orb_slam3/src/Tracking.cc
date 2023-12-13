@@ -37,7 +37,6 @@ using namespace std;
 
 namespace ORB_SLAM3
 {
-
     Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer,
                        Atlas *pAtlas, KeyFrameDatabase *pKFDB, const string &strSettingPath, const int sensor,
                        Settings *settings, const string &_nameSeq) : mState(NO_IMAGES_YET), mSensor(sensor), mTrackedFr(0), mbStep(false),
@@ -1868,7 +1867,6 @@ namespace ORB_SLAM3
 
     void Tracking::Track()
     {
-
         if (bStepByStep)
         {
             std::cout << "Waiting for the next step in Tracking ..." << std::endl;
@@ -1933,9 +1931,7 @@ namespace ORB_SLAM3
             mCurrentFrame.SetNewBias(mpLastKeyFrame->GetImuBias());
 
         if (mState == NO_IMAGES_YET)
-        {
             mState = NOT_INITIALIZED;
-        }
 
         mLastProcessedState = mState;
 
@@ -1967,29 +1963,25 @@ namespace ORB_SLAM3
             mbMapUpdated = true;
         }
 
+        // Set marker impact to be used in optimization
+        Optimizer::SetMarkerImpact(mpSystem->GetSystemParameters().markerImpact);
+
         if (mState == NOT_INITIALIZED)
         {
             if (mSensor == System::STEREO || mSensor == System::RGBD || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
-            {
                 StereoInitialization();
-            }
             else
-            {
                 MonocularInitialization();
-            }
 
-            // mpFrameDrawer->Update(this);
-
-            if (mState != OK) // If rightly initialized, mState=OK
+            // If initialization succesful, save frame pose
+            if (mState != OK)
             {
                 mLastFrame = Frame(mCurrentFrame);
                 return;
             }
 
             if (mpAtlas->GetAllMaps().size() == 1)
-            {
                 mnFirstFrameId = mCurrentFrame.mnId;
-            }
         }
         else
         {

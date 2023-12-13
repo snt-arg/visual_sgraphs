@@ -110,9 +110,10 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
 void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
 {
-    // Setting parameters to be used in System.cc
+    // Setting parameters to be used in 'System.cc'
     ORB_SLAM3::System::SystemParams params;
     params.pointCloudSize = pointcloud_size;
+    params.markerImpact = marker_impact;
     pSLAM->SetSystemParameters(params);
 
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
