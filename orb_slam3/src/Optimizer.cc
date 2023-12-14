@@ -297,28 +297,11 @@ namespace ORB_SLAM3
             // Setting the Global Optimization ID for the marker
             vpMarker->setOpIdG(opIdG);
 
-            // Adding an edge between the Marker and KeyFrames
-            const map<KeyFrame *, Sophus::SE3f> observations = vpMarker->getObservations();
-            for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
-            {
-                KeyFrame *pKFi = obsId->first;
-                Sophus::SE3f MarkerLocalObs = obsId->second;
-                ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
-
-                Eigen::Isometry3d MarkerLocalObsIso = Eigen::Isometry3d::Identity();
-                MarkerLocalObsIso.matrix() = MarkerLocalObs.cast<double>().matrix();
-                e->setMeasurement(MarkerLocalObsIso);
-
-                Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
-                e->setInformation(informationMat * markerImpact);
-
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuber2D);
-                optimizer.addEdge(e);
-            }
+            /**
+             * The edge used to connect a Marker vertex (SE3) to a KeyFrame vertex (SE3)
+             * 🚧 [vS-Graphs v.2.0] This edge is not used anymore, in contrast to the previous version.
+             * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
+             */
         }
 
         maxOpId += nMarkers;
@@ -1743,31 +1726,9 @@ namespace ORB_SLAM3
             // Setting the local optimization ID for the marker
             pMapMarker->setOpId(opId);
 
-            // Adding an edge between the Marker and KeyFrames
-            const map<KeyFrame *, Sophus::SE3f> observations = pMapMarker->getObservations();
-            for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
-            {
-                KeyFrame *pKFi = obsId->first;
-                Sophus::SE3f MarkerLocalObs = obsId->second;
-                ORB_SLAM3::EdgeSE3ProjectSE3 *e = new ORB_SLAM3::EdgeSE3ProjectSE3();
-
-                if (optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
-                {
-                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
-
-                    Eigen::Isometry3d MarkerLocalObsIso = Eigen::Isometry3d::Identity();
-                    MarkerLocalObsIso.matrix() = MarkerLocalObs.cast<double>().matrix();
-                    e->setMeasurement(MarkerLocalObsIso);
-
-                    Eigen::MatrixXd informationMat = Eigen::MatrixXd::Identity(6, 6);
-                    e->setInformation(informationMat * markerImpact);
-                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                    e->setRobustKernel(rk);
-                    rk->setDelta(thHuberMono);
-                    optimizer.addEdge(e);
-                }
-            }
+            // 🚧 [vS-Graphs v.2.0] in contrast with the first version of visual S-Graphs, where there was an edge between
+            // the marker and the keyframe, in this version we removed that edge and added an edge between the plane and the
+            // keyframe, while still keeping the edge between the marker and the plane.
         }
 
         maxOpId += nMarkers;

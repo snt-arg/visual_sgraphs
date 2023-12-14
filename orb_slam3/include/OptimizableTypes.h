@@ -231,6 +231,7 @@ namespace ORB_SLAM3
 
     /**
      * The edge used to connect a Marker vertex (SE3) to a KeyFrame vertex (SE3)
+     * 🚧 [vS-Graphs v.2.0] This edge is not used anymore, in contrast to the previous version.
      * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
      */
     class EdgeSE3ProjectSE3 : public g2o::BaseBinaryEdge<6, g2o::Isometry3D, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>
