@@ -1963,9 +1963,6 @@ namespace ORB_SLAM3
             mbMapUpdated = true;
         }
 
-        // Set marker impact to be used in optimization
-        // Optimizer::SetMarkerImpact(mpSystem->GetSystemParameters().markerImpact);
-
         if (mState == NOT_INITIALIZED)
         {
             if (mSensor == System::STEREO || mSensor == System::RGBD || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD)
@@ -2775,7 +2772,8 @@ namespace ORB_SLAM3
                                "], and " + to_string(mpAtlas->GetAllPlanes().size()) + " walls, and " +
                                to_string(mpAtlas->GetAllDoors().size()) + " doors.",
                            Verbose::VERBOSITY_QUIET);
-        Optimizer::GlobalBundleAdjustemnt(mpAtlas->GetCurrentMap(), 20);
+        Optimizer::GlobalBundleAdjustemnt(mpAtlas->GetCurrentMap(), 20, NULL, 0, true,
+                                          mpSystem->GetSystemParameters().markerImpact);
 
         float medianDepth = pKFini->ComputeSceneMedianDepth(2);
         float invMedianDepth;
@@ -5012,6 +5010,16 @@ namespace ORB_SLAM3
             }
         }
     }
+
+    double Tracking::GetMarkerImpact() const
+    {
+        return markerImpact;
+    };
+
+    void Tracking::SetMarkerImpact(const double newValue)
+    {
+        markerImpact = newValue;
+    };
 
 #ifdef REGISTER_LOOP
     void

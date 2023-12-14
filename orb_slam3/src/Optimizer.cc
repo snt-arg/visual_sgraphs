@@ -37,24 +37,13 @@
 
 namespace ORB_SLAM3
 {
-    // Modifying variables using the values passed from common.h to 'System.h'
-    double Optimizer::GetMarkerImpact() const
-    {
-        return markerImpact;
-    };
-
-    void Optimizer::SetMarkerImpact(const double newValue)
-    {
-        markerImpact = newValue;
-    };
-
     bool sortByVal(const pair<MapPoint *, int> &a, const pair<MapPoint *, int> &b)
     {
         return (a.second < b.second);
     }
 
     void Optimizer::GlobalBundleAdjustemnt(Map *pMap, int nIterations, bool *pbStopFlag,
-                                           const unsigned long nLoopKF, const bool bRobust)
+                                           const unsigned long nLoopKF, const bool bRobust, double markerImpact)
     {
         vector<MapPoint *> vpMP = pMap->GetAllMapPoints();
         vector<KeyFrame *> vpKFs = pMap->GetAllKeyFrames();
@@ -62,18 +51,17 @@ namespace ORB_SLAM3
         vector<Plane *> vpPlanes = pMap->GetAllPlanes();
         vector<Door *> vpDoors = pMap->GetAllDoors();
         vector<Room *> vpRooms = pMap->GetAllRooms();
-        BundleAdjustment(vpKFs, vpMP, vpMarkers, vpPlanes, vpDoors, vpRooms, nIterations, pbStopFlag, nLoopKF, bRobust);
+        BundleAdjustment(vpKFs, vpMP, vpMarkers, vpPlanes, vpDoors, vpRooms, nIterations, pbStopFlag,
+                         nLoopKF, bRobust, markerImpact);
     }
 
     void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
                                      const vector<Marker *> &vpMarkers, const vector<Plane *> &vpPlanes,
-                                     const vector<Door *> &vpDoors, const vector<Room *> &vpRooms,
-                                     int nIterations, bool *pbStopFlag, const unsigned long nLoopKF, const bool bRobust)
+                                     const vector<Door *> &vpDoors, const vector<Room *> &vpRooms, int nIterations,
+                                     bool *pbStopFlag, const unsigned long nLoopKF, const bool bRobust, double markerImpact)
     {
         vector<bool> vbNotIncludedMP;
         vbNotIncludedMP.resize(vpMP.size());
-
-        double markerImpact = 0.1; // [TODO] GetMarkerImpact();
 
         Map *pMap = vpKFs[0]->GetMap();
 
@@ -1311,7 +1299,8 @@ namespace ORB_SLAM3
     }
 
     void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF,
-                                          int &num_OptKF, int &num_MPs, int &num_edges, std::list<Room *> vpRooms)
+                                          int &num_OptKF, int &num_MPs, int &num_edges, std::list<Room *> vpRooms,
+                                          double markerImpact)
     {
         // Local KeyFrames: First Breath Search from Current Keyframe
         list<KeyFrame *> lLocalKeyFrames;
@@ -1319,9 +1308,6 @@ namespace ORB_SLAM3
         lLocalKeyFrames.push_back(pKF);
         pKF->mnBALocalForKF = pKF->mnId;
         Map *pCurrentMap = pKF->GetMap();
-
-        double markerImpact = 0.1; // [TODO] GetMarkerImpact();
-        // std::cout << "Marker impact in LocalBundleAdjustment: " << markerImpact << std::endl;
 
         const vector<KeyFrame *> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
         for (int i = 0, iend = vNeighKFs.size(); i < iend; i++)

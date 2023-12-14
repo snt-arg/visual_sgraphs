@@ -62,6 +62,9 @@ namespace ORB_SLAM3
 
     class Tracking
     {
+    private:
+        // Variables for tracking and mapping
+        double markerImpact = 0.1; // Should be 1e10 for mono and 0.1 for stereo/rgb-d
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -127,6 +130,10 @@ namespace ORB_SLAM3
         void SaveSubTrajectory(string strNameFile_frames, string strNameFile_kf, Map *pMap);
 
         float GetImageScale();
+
+        // Get parameters
+        double GetMarkerImpact() const;
+        void SetMarkerImpact(const double newValue);
 
         // Semantic Entities
         /**

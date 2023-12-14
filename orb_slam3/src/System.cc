@@ -171,6 +171,9 @@ namespace ORB_SLAM3
         mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                                  mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
+        // Set the value of marker impact
+        mpTracker->SetMarkerImpact(GetSystemParameters().markerImpact);
+
         // Initialize the Local Mapping thread and launch
         mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor == MONOCULAR || mSensor == IMU_MONOCULAR,
                                          mSensor == IMU_MONOCULAR || mSensor == IMU_STEREO || mSensor == IMU_RGBD, strSequence);
@@ -191,6 +194,12 @@ namespace ORB_SLAM3
         // Initialize the Loop Closing thread and launch
         mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR, activeLC); // mSensor!=MONOCULAR);
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
+
+        // [TODO]: create thread ransac geometric based segmentation
+        // [TODO]: create a class called GeometrySegmentation
+
+        // [TODO]: create thread semantic segmentation
+        // [TODO]: create a class called SemanticSegmentation
 
         // Set pointers between threads
         mpTracker->SetLocalMapper(mpLocalMapper);

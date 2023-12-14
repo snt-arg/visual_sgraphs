@@ -44,26 +44,26 @@ namespace ORB_SLAM3
 
     class Optimizer
     {
-    private:
-        // Variables
-        double markerImpact = 0.1; // Should be 1e10 for mono and 0.1 for stereo/rgb-d
-
     public:
         void static BundleAdjustment(const std::vector<KeyFrame *> &vpKF, const std::vector<MapPoint *> &vpMP,
                                      const std::vector<Marker *> &vpMarkers, const std::vector<Plane *> &vpPlanes,
                                      const std::vector<Door *> &vpDoors, const std::vector<Room *> &vpRooms,
-                                     int nIterations = 5, bool *pbStopFlag = NULL,
-                                     const unsigned long nLoopKF = 0, const bool bRobust = true);
+                                     int nIterations = 5, bool *pbStopFlag = NULL, const unsigned long nLoopKF = 0,
+                                     const bool bRobust = true, double markerImpact = 0.1);
 
         void static GlobalBundleAdjustemnt(Map *pMap, int nIterations = 5, bool *pbStopFlag = NULL,
-                                           const unsigned long nLoopKF = 0, const bool bRobust = true);
+                                           const unsigned long nLoopKF = 0, const bool bRobust = true,
+                                           double markerImpact = 0.1);
 
         void static FullInertialBA(Map *pMap, int its, const bool bFixLocal = false, const unsigned long nLoopKF = 0,
                                    bool *pbStopFlag = NULL, bool bInit = false, float priorG = 1e2, float priorA = 1e6,
                                    Eigen::VectorXd *vSingVal = NULL, bool *bHess = NULL);
 
         void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF,
-                                          int &num_MPs, int &num_edges, std::list<Room *> vpRooms);
+                                          int &num_MPs, int &num_edges, std::list<Room *> vpRooms, double markerImpact = 0.1);
+
+        void static LocalBundleAdjustment(KeyFrame *pMainKF, vector<KeyFrame *> vpAdjustKF, vector<KeyFrame *> vpFixedKF,
+                                          bool *pbStopFlag);
 
         int static PoseOptimization(Frame *pFrame);
         int static PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit = false);
@@ -94,9 +94,6 @@ namespace ORB_SLAM3
         void static LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF, int &num_MPs, int &num_edges, bool bLarge = false, bool bRecInit = false);
         void static MergeInertialBA(KeyFrame *pCurrKF, KeyFrame *pMergeKF, bool *pbStopFlag, Map *pMap, LoopClosing::KeyFrameAndPose &corrPoses);
 
-        // Local BA in welding area when two maps are merged
-        void static LocalBundleAdjustment(KeyFrame *pMainKF, vector<KeyFrame *> vpAdjustKF, vector<KeyFrame *> vpFixedKF, bool *pbStopFlag);
-
         // Marginalize block element (start:end,start:end). Perform Schur complement.
         // Marginalized elements are filled with zeros.
         static Eigen::MatrixXd Marginalize(const Eigen::MatrixXd &H, const int &start, const int &end);
@@ -105,10 +102,6 @@ namespace ORB_SLAM3
         void static InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &scale, Eigen::Vector3d &bg, Eigen::Vector3d &ba, bool bMono, Eigen::MatrixXd &covInertial, bool bFixedVel = false, bool bGauss = false, float priorG = 1e2, float priorA = 1e6);
         void static InertialOptimization(Map *pMap, Eigen::Vector3d &bg, Eigen::Vector3d &ba, float priorG = 1e2, float priorA = 1e6);
         void static InertialOptimization(Map *pMap, Eigen::Matrix3d &Rwg, double &scale);
-
-        // Get parameters
-        double GetMarkerImpact() const;
-        void SetMarkerImpact(const double newValue);
 
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
     };

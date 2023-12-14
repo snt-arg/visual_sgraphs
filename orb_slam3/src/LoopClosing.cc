@@ -2243,7 +2243,8 @@ namespace ORB_SLAM3
         const bool bImuInit = pActiveMap->isImuInitialized();
 
         if (!bImuInit)
-            Optimizer::GlobalBundleAdjustemnt(pActiveMap, 10, &mbStopGBA, nLoopKF, false);
+            Optimizer::GlobalBundleAdjustemnt(pActiveMap, 10, &mbStopGBA, nLoopKF, false,
+                                              mpTracker->GetMarkerImpact());
         else
             Optimizer::FullInertialBA(pActiveMap, 7, false, nLoopKF, &mbStopGBA);
 
@@ -2260,7 +2261,6 @@ namespace ORB_SLAM3
 #endif
 
         int idx = mnFullBAIdx;
-        // Optimizer::GlobalBundleAdjustemnt(mpMap,10,&mbStopGBA,nLoopKF,false);
 
         // Update all MapPoints and KeyFrames
         // Local Mapping was active during BA, that means that there might be new keyframes

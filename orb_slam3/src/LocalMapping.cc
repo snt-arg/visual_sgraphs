@@ -119,7 +119,6 @@ namespace ORB_SLAM3
                 {
                     if (mpAtlas->KeyFramesInMap() > 2)
                     {
-
                         if (mbInertial && mpCurrentKeyFrame->GetMap()->isImuInitialized())
                         {
                             float dist = (mpCurrentKeyFrame->mPrevKF->GetCameraCenter() - mpCurrentKeyFrame->GetCameraCenter()).norm() +
@@ -145,7 +144,9 @@ namespace ORB_SLAM3
                         }
                         else
                         {
-                            Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(), num_FixedKF_BA, num_OptKF_BA, num_MPs_BA, num_edges_BA, mlDetRooms);
+                            Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(),
+                                                             num_FixedKF_BA, num_OptKF_BA, num_MPs_BA, num_edges_BA,
+                                                             mlDetRooms, mpSystem->GetSystemParameters().markerImpact);
                             mlDetRooms.clear();
                             b_doneLBA = true;
                         }
