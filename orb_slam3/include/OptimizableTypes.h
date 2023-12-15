@@ -226,7 +226,7 @@ namespace ORB_SLAM3
     };
 
     /**
-     * 🚀 Below classes have been added to ORB-SLAM 3.0 to augment fiducial markers and semantic data.
+     * 🚀 [vS-Graphs] Edges for geometric and semantic constraints
      */
 
     /**
@@ -294,15 +294,44 @@ namespace ORB_SLAM3
     };
 
     /**
-     * The edge used to connect a Wall vertex (VertexPlane) to a Marker vertex (SE3)
-     * [Note]: it creates constraint for four measurements, i.e., (x, y, z, d)
+     * The edge used to connect a Plane vertex (VertexPlane) to a KeyFrame vertex (SE3)
+     * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
      */
-    class EdgeVertexPlaneProjectSE3 : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>
+    class EdgeVertexPlaneProjectSE3KF : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        EdgeVertexPlaneProjectSE3();
+        EdgeVertexPlaneProjectSE3KF();
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
+
+        void computeError()
+        {
+            // KeyFrame's global pose
+            const g2o::VertexSE3Expmap *vKeyFrameGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            // Plane's global pose
+            const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+
+            // Calculating poses (in global frame)
+            g2o::Isometry3D kfPose = vKeyFrameGP->estimate();
+            g2o::Plane3D localPlane = kfPose * vPlaneGP->estimate();
+
+            // Calculating the error [TODO]
+            // _error = localPlane.ominus(_measurement);
+        }
+    };
+
+    /**
+     * The edge used to connect a Plane vertex (VertexPlane) to a Marker vertex (SE3)
+     * [Note]: it creates constraint for four measurements, i.e., (x, y, z, d)
+     */
+    class EdgeVertexPlaneProjectSE3M : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        EdgeVertexPlaneProjectSE3M();
         virtual bool read(std::istream &is);
         virtual bool write(std::ostream &os) const;
 
@@ -310,20 +339,16 @@ namespace ORB_SLAM3
         {
             // Marker's global pose
             const g2o::VertexSE3Expmap *vMarkerGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
-            // Wall's global pose
-            const g2o::VertexPlane *vWallGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+            // Plane's global pose
+            const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
 
-            // Calculating marker's pose
+            // Calculating poses (in global frame)
             g2o::Isometry3D markerPose = vMarkerGP->estimate();
-
-            // Calculate the plane's coefficients (in global frame)
-            g2o::Vector4D planeCoeffs = vWallGP->estimate().coeffs();
+            g2o::Vector4D planeCoeffs = vPlaneGP->estimate().coeffs();
 
             // Normalize the plane vector if necessary
             if (planeCoeffs(3) < 0)
-            {
                 planeCoeffs *= -1;
-            }
 
             // Create the plane plane in global frame
             g2o::Plane3D plane_g(planeCoeffs);

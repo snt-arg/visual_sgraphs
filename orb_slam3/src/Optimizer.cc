@@ -328,7 +328,7 @@ namespace ORB_SLAM3
             for (const auto &planeMarker : attachedMarkers)
             {
                 // Adding an edge between the Plane and the Marker
-                ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
+                ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpIdG())));
                 e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
@@ -1760,7 +1760,7 @@ namespace ORB_SLAM3
                 if (optimizer.vertex(opId) && optimizer.vertex(planeMarker->getOpId()))
                 {
                     // Adding an edge between the Plane and the Marker
-                    ORB_SLAM3::EdgeVertexPlaneProjectSE3 *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3();
+                    ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpId())));
                     e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
