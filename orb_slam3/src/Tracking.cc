@@ -2483,23 +2483,27 @@ namespace ORB_SLAM3
 
             // ----------- Plane Detection and Mapping --------
             // Holds the plane equation and the points lying on the plane
-            std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
+            std::pair<std::vector<g2o::Plane3D>, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
 
             // Get the plane equation from the points the camera is seeing
             planePointPair = getPlaneEquationFromPointClouds();
 
-            // Convert the given plane to global coordinates
-            g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
-                                                               planePointPair.first);
+            // Loop over the planes detected
+            for (auto plane : planePointPair.first)
+            {
+                // Convert the given plane to global coordinates
+                g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
+                                                                   plane);
 
-            // Check if we need to add the wall to the map or not
-            int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
-            if (matchedPlaneId == -1)
-                // A wall with the same equation was not found in the map, creating a new one
-                createMapPlane(planePointPair.first, planePointPair.second, pKFini);
-            else
-                // The wall already exists in the map, fetching that one
-                updateMapPlane(matchedPlaneId, pKFini, planePointPair.second);
+                // Check if we need to add the wall to the map or not
+                int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+                if (matchedPlaneId == -1)
+                    // A wall with the same equation was not found in the map, creating a new one
+                    createMapPlane(plane, planePointPair.second, pKFini);
+                else
+                    // The wall already exists in the map, fetching that one
+                    updateMapPlane(matchedPlaneId, pKFini, planePointPair.second);
+            }
 
             // Add Markers in the initialization stage
             for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
@@ -2696,23 +2700,27 @@ namespace ORB_SLAM3
         string mapMarkerStr = "";
 
         // ----------- Plane Detection and Mapping --------
-        std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
+        std::pair<std::vector<g2o::Plane3D>, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
 
         // Get the plane equation from the points the camera is seeing
         planePointPair = getPlaneEquationFromPointClouds();
 
-        // Convert the given plane to global coordinates
-        g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
-                                                           planePointPair.first);
+        // Loop over the planes detected
+        for (auto plane : planePointPair.first)
+        {
+            // Convert the given plane to global coordinates
+            g2o::Plane3D globalEquation = convertLocalToGlobal(pKFini->GetPoseInverse().matrix().cast<double>(),
+                                                               plane);
 
-        // Check if we need to add the wall to the map or not
-        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
-        if (matchedPlaneId == -1)
-            // A wall with the same equation was not found in the map, creating a new one
-            createMapPlane(planePointPair.first, planePointPair.second, pKFini);
-        else
-            // The wall already exists in the map, fetching that one
-            updateMapPlane(matchedPlaneId, pKFini, planePointPair.second);
+            // Check if we need to add the wall to the map or not
+            int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+            if (matchedPlaneId == -1)
+                // A wall with the same equation was not found in the map, creating a new one
+                createMapPlane(plane, planePointPair.second, pKFini);
+            else
+                // The wall already exists in the map, fetching that one
+                updateMapPlane(matchedPlaneId, pKFini, planePointPair.second);
+        }
 
         // Add Markers in the initialization stage
         for (auto mCurrentMarker : mCurrentFrame.mvpMapMarkers)
@@ -3527,23 +3535,27 @@ namespace ORB_SLAM3
         }
 
         // ----------- Plane Detection and Mapping --------
-        std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
+        std::pair<std::vector<g2o::Plane3D>, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> planePointPair;
 
         // Get the plane equation from the points the camera is seeing
         planePointPair = getPlaneEquationFromPointClouds();
 
-        // Convert the given plane to global coordinates
-        g2o::Plane3D globalEquation = convertLocalToGlobal(pKF->GetPoseInverse().matrix().cast<double>(),
-                                                           planePointPair.first);
+        // Loop through all the planes detected
+        for (auto plane : planePointPair.first)
+        {
+            // Convert the given plane to global coordinates
+            g2o::Plane3D globalEquation = convertLocalToGlobal(pKF->GetPoseInverse().matrix().cast<double>(),
+                                                               plane);
 
-        // Check if we need to add the wall to the map or not
-        int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
-        if (matchedPlaneId == -1)
-            // A wall with the same equation was not found in the map, creating a new one
-            createMapPlane(planePointPair.first, planePointPair.second, pKF);
-        else
-            // The wall already exists in the map, fetching that one
-            updateMapPlane(matchedPlaneId, pKF, planePointPair.second);
+            // Check if we need to add the wall to the map or not
+            int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+            if (matchedPlaneId == -1)
+                // A wall with the same equation was not found in the map, creating a new one
+                createMapPlane(plane, planePointPair.second, pKF);
+            else
+                // The wall already exists in the map, fetching that one
+                updateMapPlane(matchedPlaneId, pKF, planePointPair.second);
+        }
 
         // Add Markers while progressing in KFs
         markerSemanticAnalyzerAndMapper(pKF, mCurrentFrame.mvpMapMarkers, planePointPair.second);
@@ -4469,47 +4481,77 @@ namespace ORB_SLAM3
         return cloud;
     }
 
-    Eigen::Vector4d Tracking::ransacPlaneFitting(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud,
-                                                 pcl::PointCloud<pcl::PointXYZRGB>::Ptr &planeCloud)
+    std::vector<Eigen::Vector4d> Tracking::ransacPlaneFitting(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud,
+                                                              pcl::PointCloud<pcl::PointXYZRGB>::Ptr &planeCloud)
     {
-        // Initialization
-        pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
-        pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-        pcl::ExtractIndices<pcl::PointXYZRGB> extract;
-        // Create the segmentation object
-        pcl::SACSegmentation<pcl::PointXYZRGB> seg;
-        // Fill the values of the segmentation object
+        // Variables
+        int counter = 0;
+        std::vector<Eigen::Vector4d> planes;
+        int minSegmentationPoints = mpSystem->GetSystemParameters().pointCloudSize;
 
-        seg.setInputCloud(cloud);
-        seg.setNumberOfThreads(8);
-        seg.setMaxIterations(200);
-        seg.setDistanceThreshold(0.1);
-        seg.setOptimizeCoefficients(true);
-        seg.setMethodType(pcl::SAC_RANSAC);
-        seg.setModelType(pcl::SACMODEL_PLANE);
-        seg.segment(*inliers, *coeffs);
+        // Loop until the cloud is large enough
+        while (cloud->points.size() > minSegmentationPoints)
+        {
+            try
+            {
+                // Initialization
+                pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
+                pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+                pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+                // Create the segmentation object
+                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
 
-        // Extract the inliers
-        extract.setInputCloud(cloud);
-        extract.setIndices(inliers);
-        extract.setNegative(false);
-        extract.filter(*planeCloud);
+                // Fill the values of the segmentation object
+                seg.setInputCloud(cloud);
+                seg.setNumberOfThreads(8);
+                seg.setMaxIterations(200);
+                seg.setDistanceThreshold(0.1);
+                seg.segment(*inliers, *coeffs);
+                seg.setOptimizeCoefficients(true);
+                seg.setMethodType(pcl::SAC_RANSAC);
+                seg.setModelType(pcl::SACMODEL_PLANE);
 
-        // Return the plane equation
-        Eigen::Vector4d planeEquation(coeffs->values[0],
-                                      coeffs->values[1],
-                                      coeffs->values[2],
-                                      coeffs->values[3]);
-        return planeEquation;
+                // Check if indicies are not empty
+                if (inliers->indices.empty())
+                {
+                    std::cout << "No model found while processing pointcloud indices!" << std::endl;
+                    break;
+                }
+
+                // Extract the inliers
+                extract.setInputCloud(cloud);
+                extract.setIndices(inliers);
+                extract.setNegative(false);
+                extract.filter(*planeCloud);
+
+                // Add the plane equation to the vector
+                Eigen::Vector4d planeEquation(coeffs->values[0],
+                                              coeffs->values[1],
+                                              coeffs->values[2],
+                                              coeffs->values[3]);
+                planes.push_back(planeEquation);
+            }
+            catch (const std::exception &e)
+            {
+                std::cout << "RANSAC model error!" << std::endl;
+                break;
+            }
+        }
+
+        // Return the plane equations
+        return planes;
     }
 
-    std::pair<g2o::Plane3D, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> Tracking::getPlaneEquationFromPointClouds()
+    std::pair<std::vector<g2o::Plane3D>, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> Tracking::getPlaneEquationFromPointClouds()
     {
+        // Variables
+        std::vector<g2o::Plane3D> detectedPlanes;
+
         // Check if the sensor has depth information
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
 
         // Based on the depth information, calculate the plane equation
-        Eigen::Vector4d planeEstimateFromPoints;
+        std::vector<Eigen::Vector4d> planeEstimatesFromPoints;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud, planeCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
         if (hasDepthCloud)
@@ -4524,20 +4566,30 @@ namespace ORB_SLAM3
         if (pointcloud->points.size() > minCloudSize)
         {
             // Estimate the plane equation
-            Eigen::Vector4d initEstimate = ransacPlaneFitting(pointcloud, planeCloud);
-            // Convert the plane to closest plane formulation
-            Eigen::Vector3d closestPoint = initEstimate.head(3) * initEstimate(3);
-            // Return the plane equation
-            Eigen::Vector4d closestPlaneform;
-            closestPlaneform.head(3) = closestPoint / closestPoint.norm();
-            closestPlaneform(3) = closestPoint.norm();
-            planeEstimateFromPoints = closestPlaneform;
+            std::vector<Eigen::Vector4d> planeEstimates = ransacPlaneFitting(pointcloud, planeCloud);
+            // Loop over all plane estimates
+            for (const auto &initEstimate : planeEstimates)
+            {
+                // Convert the plane to closest plane formulation
+                Eigen::Vector3d closestPoint = initEstimate.head(3) * initEstimate(3);
+                // Return the plane equation
+                Eigen::Vector4d closestPlaneform;
+                closestPlaneform.head(3) = closestPoint / closestPoint.norm();
+                closestPlaneform(3) = closestPoint.norm();
+                planeEstimatesFromPoints.push_back(closestPlaneform);
+            }
         }
 
-        // Fill the detected plane [TDOD: a check if not empty]
-        g2o::Plane3D detectedPlane(planeEstimateFromPoints);
+        // Fill the detected planes vector
+        for (const auto &plane : planeEstimatesFromPoints)
+        {
+            // Create a plane object
+            g2o::Plane3D detectedPlane(plane);
+            // Add the plane to the vector
+            detectedPlanes.push_back(detectedPlane);
+        }
 
-        return std::make_pair(detectedPlane, planeCloud);
+        return std::make_pair(detectedPlanes, planeCloud);
     }
 
     std::vector<MapPoint *> Tracking::findPointsCloseToLocation(const std::vector<MapPoint *> &points,
