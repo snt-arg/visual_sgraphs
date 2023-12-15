@@ -329,7 +329,7 @@ namespace ORB_SLAM3
     }
 
     /**
-     * [vS-Graphs] Edges for geometric and semantic constraints
+     * 🚀 [vS-Graphs] Edges for geometric and semantic constraints
      */
 
     EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::Isometry3D, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>() {}
@@ -376,7 +376,7 @@ namespace ORB_SLAM3
         return os.good();
     }
 
-    EdgeVertexPlaneProjectSE3KF::EdgeVertexPlaneProjectSE3KF() : g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>() {}
+    EdgeVertexPlaneProjectSE3KF::EdgeVertexPlaneProjectSE3KF() : g2o::BaseBinaryEdge<3, g2o::Plane3D, g2o::VertexSE3Expmap, g2o::VertexPlane>() {}
 
     bool EdgeVertexPlaneProjectSE3KF::read(std::istream &is)
     {

@@ -295,9 +295,9 @@ namespace ORB_SLAM3
 
     /**
      * The edge used to connect a Plane vertex (VertexPlane) to a KeyFrame vertex (SE3)
-     * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
+     * [Note]: it creates constraint for three measurements, i.e., (x, y, z)
      */
-    class EdgeVertexPlaneProjectSE3KF : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>
+    class EdgeVertexPlaneProjectSE3KF : public g2o::BaseBinaryEdge<3, g2o::Plane3D, g2o::VertexSE3Expmap, g2o::VertexPlane>
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -305,6 +305,8 @@ namespace ORB_SLAM3
         EdgeVertexPlaneProjectSE3KF();
         virtual bool read(std::istream &is);
         virtual bool write(std::ostream &os) const;
+
+        void setMeasurement(const g2o::Plane3D &m) override { _measurement = m; }
 
         void computeError()
         {
@@ -314,11 +316,11 @@ namespace ORB_SLAM3
             const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
 
             // Calculating poses (in global frame)
-            g2o::Isometry3D kfPose = vKeyFrameGP->estimate();
+            Eigen::Isometry3d kfPose = vKeyFrameGP->estimate();
             g2o::Plane3D localPlane = kfPose * vPlaneGP->estimate();
 
-            // Calculating the error [TODO]
-            // _error = localPlane.ominus(_measurement);
+            // Calculating the error
+            _error = localPlane.ominus(_measurement);
         }
     };
 
