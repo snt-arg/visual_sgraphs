@@ -4490,53 +4490,82 @@ namespace ORB_SLAM3
         int minSegmentationPoints = mpSystem->GetSystemParameters().pointCloudSize;
 
         // Loop until the cloud is large enough
-        while (cloud->points.size() > minSegmentationPoints)
-        {
-            try
-            {
-                // Initialization
-                pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
-                pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-                pcl::ExtractIndices<pcl::PointXYZRGB> extract;
-                // Create the segmentation object
-                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+        // while (cloud->points.size() > minSegmentationPoints)
+        // {
+        //     try
+        //     {
+        //         // Create objects for RANSAC plane segmentation
+        //         pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+        //         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+        //         pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
+        //         // Create the SAC segmentation object
+        //         pcl::SACSegmentation<pcl::PointXYZRGB> seg;
 
-                // Fill the values of the segmentation object
-                seg.setInputCloud(cloud);
-                seg.setNumberOfThreads(8);
-                seg.setMaxIterations(200);
-                seg.setDistanceThreshold(0.1);
-                seg.segment(*inliers, *coeffs);
-                seg.setOptimizeCoefficients(true);
-                seg.setMethodType(pcl::SAC_RANSAC);
-                seg.setModelType(pcl::SACMODEL_PLANE);
+        //         // Fill the values of the segmentation object
+        //         seg.setInputCloud(cloud);
+        //         seg.setNumberOfThreads(8);
+        //         seg.setMaxIterations(200);
+        //         seg.setDistanceThreshold(0.1);
+        //         seg.setOptimizeCoefficients(true);
+        //         seg.setMethodType(pcl::SAC_RANSAC);
+        //         seg.setModelType(pcl::SACMODEL_PLANE);
 
-                // Check if indicies are not empty
-                if (inliers->indices.empty())
-                {
-                    std::cout << "No model found while processing pointcloud indices!" << std::endl;
-                    break;
-                }
+        //         // Apply RANSAC segmentation
+        //         seg.segment(*inliers, *coeffs);
 
-                // Extract the inliers
-                extract.setInputCloud(cloud);
-                extract.setIndices(inliers);
-                extract.setNegative(false);
-                extract.filter(*planeCloud);
+        //         // Check if indicies are not empty
+        //         if (inliers->indices.empty())
+        //         {
+        //             std::cout << "No model found while processing pointcloud indices!" << std::endl;
+        //             break;
+        //         }
 
-                // Add the plane equation to the vector
-                Eigen::Vector4d planeEquation(coeffs->values[0],
-                                              coeffs->values[1],
-                                              coeffs->values[2],
-                                              coeffs->values[3]);
-                planes.push_back(planeEquation);
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "RANSAC model error!" << std::endl;
-                break;
-            }
-        }
+        //         // Calculate normal on the plane
+        //         Eigen::Vector4d planeEquation(coeffs->values[0],
+        //                                       coeffs->values[1],
+        //                                       coeffs->values[2],
+        //                                       coeffs->values[3]);
+
+        //         // Calculate the closest points
+        //         Eigen::Vector4d plane;
+        //         Eigen::Vector3d closestPoint = planeEquation.head(3) * planeEquation(3);
+        //         plane.head(3) = closestPoint / closestPoint.norm();
+        //         plane(3) = closestPoint.norm();
+
+        //         // Create a new point cloud containing points of the detected plane
+        //         pcl::PointCloud<pcl::PointNormal>::Ptr extractedCloud(
+        //             new pcl::PointCloud<pcl::PointNormal>);
+        //         for (const auto &idx : inliers->indices)
+        //         {
+        //             pcl::PointNormal tmpCloud;
+        //             // Fill the point cloud
+        //             tmpCloud.x = cloud->points[idx].x;
+        //             tmpCloud.y = cloud->points[idx].y;
+        //             tmpCloud.z = cloud->points[idx].z;
+        //             tmpCloud.normal_x = plane(0);
+        //             tmpCloud.normal_y = plane(1);
+        //             tmpCloud.normal_z = plane(2);
+        //             tmpCloud.curvature = plane(3);
+        //             // Add the point to the cloud
+        //             extractedCloud->points.push_back(tmpCloud);
+        //         }
+
+        //         // [TODO] Maybe we can apply additional filtering to the extracted cloud
+
+        //         // Extract the inliers
+        //         extract.setInputCloud(cloud);
+        //         extract.setIndices(inliers);
+        //         extract.setNegative(false);
+        //         extract.filter(*planeCloud);
+
+        //         planes.push_back(planeEquation);
+        //     }
+        //     catch (const std::exception &e)
+        //     {
+        //         std::cout << "RANSAC model error!" << std::endl;
+        //         break;
+        //     }
+        // }
 
         // Return the plane equations
         return planes;
