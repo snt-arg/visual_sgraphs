@@ -196,10 +196,7 @@ namespace ORB_SLAM3
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
         // [TODO]: create thread ransac geometric based segmentation
-        // [TODO]: create a class called GeometrySegmentation
-
         // [TODO]: create thread semantic segmentation
-        // [TODO]: create a class called SemanticSegmentation
 
         // Set pointers between threads
         mpTracker->SetLocalMapper(mpLocalMapper);
