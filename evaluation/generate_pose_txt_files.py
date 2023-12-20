@@ -6,8 +6,8 @@ from geometry_msgs.msg import PoseStamped
 
 # Parameters
 files_path = "/home/ali"
-# Such as orb3, semorb3 (semantic ORB-SLAM3), uco, suco (semantic UcoSLAM)
-slam_method = "semorb3"
+# Such as orb3, vsgraphs, uco, suco (semantic UcoSLAM)
+slam_method = "vsgraphs"
 dataset_seq = "seq01"  # The dataset sequence running
 gt_pose_topic = "/gazebo/model_states"
 slam_pose_topic = "/orb_slam3/camera_pose"

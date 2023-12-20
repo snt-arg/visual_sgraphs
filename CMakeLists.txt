@@ -60,6 +60,7 @@ find_package(catkin REQUIRED COMPONENTS
   aruco_msgs
   backward_ros
   rviz_visual_tools
+  segmenter_ros
 )
 
 find_package(Eigen3 3.1.0 REQUIRED)
