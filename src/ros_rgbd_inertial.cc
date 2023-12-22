@@ -22,6 +22,7 @@ public:
 
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
     cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
+    void GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSeg);
     void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
                   const sensor_msgs::PointCloud2ConstPtr &msgPC);
 
@@ -108,6 +109,10 @@ int main(int argc, char **argv)
     // Subscribe to the markers detected by `aruco_ros` library
     ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
                                                        &ImageGrabber::GrabArUcoMarker, &igb);
+
+    // Subscribe to the segmentation image detected by `semantic_segmentation` library
+    ros::Subscriber sub_segmentation = node_handler.subscribe("/camera/color/image_segment", 1,
+                                                              &ImageGrabber::GrabSegmentation, &igb);
 
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
@@ -250,4 +255,9 @@ void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
 {
     // Pass the visited markers to a buffer to be processed later
     add_markers_to_buffer(marker_array);
+}
+
+void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSeg)
+{
+    // [TODO] Add segmentation to the SLAM system
 }
