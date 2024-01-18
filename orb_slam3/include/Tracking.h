@@ -182,7 +182,7 @@ namespace ORB_SLAM3
          * @brief Calculation of plane equation from point clouds (provided by depth in RGB-D or calculated from
          * map points in Monocular and Stereo)
          */
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> getPlaneEquationFromPointClouds();
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> getPlanesFromPointClouds();
 
         /**
          * @brief Get the points close to a given marker
@@ -194,7 +194,7 @@ namespace ORB_SLAM3
          * @brief Get the point cloud from a set of map-points
          * @param points the set of map-points
          */
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCloudFromPoints(const std::vector<MapPoint *> &points);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCloudFromSparsePoints(const std::vector<MapPoint *> &points);
 
         /**
          * @brief Get the points close to a given location
@@ -214,10 +214,11 @@ namespace ORB_SLAM3
         double calculateDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2);
 
         /**
-         * @brief Perform PCL ransac to get the plane equation from the a given point cloud
+         * @brief Performs PCL ransac to get the plane equations from the a given point cloud
          * @param cloud the input point cloud
          */
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
 
         /**
          * @brief Checks to see if the marker is attached to a door or not (e.g., a window)

@@ -4302,7 +4302,7 @@ namespace ORB_SLAM3
         return closePoints;
     }
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr Tracking::getCloudFromPoints(const std::vector<MapPoint *> &points)
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr Tracking::getCloudFromSparsePoints(const std::vector<MapPoint *> &points)
     {
         // Create a point cloud
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -4322,11 +4322,10 @@ namespace ORB_SLAM3
     std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Tracking::ransacPlaneFitting(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud)
     {
         // Variables
-        int counter = 0;
         int minSegmentationPoints = mpSystem->GetSystemParameters().pointCloudSize;
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedCloudVec;
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
 
-        // Loop until the cloud is large enough
+        // Loop over cloud points as long as the cloud is large enough
         while (cloud->points.size() > minSegmentationPoints)
         {
             try
@@ -4369,7 +4368,7 @@ namespace ORB_SLAM3
                 plane.head(3) = closestPoint / closestPoint.norm();
                 plane(3) = closestPoint.norm();
 
-                // Create a new point cloud containing points of the detected plane
+                // Create a new point cloud containing the points of the detected planes
                 pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr extractedCloud(
                     new pcl::PointCloud<pcl::PointXYZRGBNormal>);
                 for (const auto &idx : inliers->indices)
@@ -4387,8 +4386,8 @@ namespace ORB_SLAM3
                     extractedCloud->points.push_back(tmpCloud);
                 }
 
-                // Puh the extracted cloud to the vector
-                extractedCloudVec.push_back(extractedCloud);
+                // Add the extracted cloud to the vector
+                extractedPlanes.push_back(extractedCloud);
 
                 // Extract the inliers
                 extract.setInputCloud(cloud);
@@ -4404,14 +4403,14 @@ namespace ORB_SLAM3
         }
 
         // Return the extracted clouds
-        return extractedCloudVec;
+        return extractedPlanes;
     }
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Tracking::getPlaneEquationFromPointClouds()
+    std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Tracking::getPlanesFromPointClouds()
     {
         // Variables
         std::vector<g2o::Plane3D> detectedPlanes;
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> planeEstimatesWithPoints;
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
 
         // Check if the sensor has depth information
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
@@ -4425,17 +4424,17 @@ namespace ORB_SLAM3
         else
             // [TODO] For Mono and Stereo, the map points are very sparse. We can think of a way to calculate
             // the depth from points using Machine Learning to get a better plane estimate.
-            pointcloud = getCloudFromPoints(mCurrentFrame.mvpMapPoints);
+            pointcloud = getCloudFromSparsePoints(mCurrentFrame.mvpMapPoints);
 
         // Check if the cloud is large enough
         int minCloudSize = mpSystem->GetSystemParameters().pointCloudSize;
         if (pointcloud->points.size() > minCloudSize)
         {
             // Estimate the plane equation
-            planeEstimatesWithPoints = ransacPlaneFitting(pointcloud);
+            extractedPlanes = ransacPlaneFitting(pointcloud);
         }
 
-        return planeEstimatesWithPoints;
+        return extractedPlanes;
     }
 
     std::vector<MapPoint *> Tracking::findPointsCloseToLocation(const std::vector<MapPoint *> &points,
@@ -4855,7 +4854,7 @@ namespace ORB_SLAM3
         std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> planePointVec;
 
         // Get the plane equation from the points the camera is seeing
-        planePointVec = getPlaneEquationFromPointClouds();
+        planePointVec = getPlanesFromPointClouds();
 
         // Loop through all the planes detected
         for (auto planePoint : planePointVec)
