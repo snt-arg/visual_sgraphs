@@ -11,7 +11,7 @@ namespace ORB_SLAM3
 {
     Plane::Plane()
     {
-        plane_cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGB>>();
+        plane_cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>();
     }
     Plane::~Plane() {}
 
@@ -86,13 +86,13 @@ namespace ORB_SLAM3
         map_points.insert(value);
     }
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr Plane::getMapClouds()
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Plane::getMapClouds()
     {
         unique_lock<mutex> lock(mMutexPoint);
         return plane_cloud;
     }
 
-    void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGB>::Ptr value)
+    void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexPoint);
         for (const auto &point : value->points)

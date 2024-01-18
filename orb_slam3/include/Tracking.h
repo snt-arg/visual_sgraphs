@@ -182,7 +182,7 @@ namespace ORB_SLAM3
          * @brief Calculation of plane equation from point clouds (provided by depth in RGB-D or calculated from
          * map points in Monocular and Stereo)
          */
-        std::pair<std::vector<g2o::Plane3D>, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getPlaneEquationFromPointClouds();
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> getPlaneEquationFromPointClouds();
 
         /**
          * @brief Get the points close to a given marker
@@ -216,10 +216,8 @@ namespace ORB_SLAM3
         /**
          * @brief Perform PCL ransac to get the plane equation from the a given point cloud
          * @param cloud the input point cloud
-         * @param planeCloud the output point cloud
          */
-        std::vector<Eigen::Vector4d> ransacPlaneFitting(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud,
-                                                        pcl::PointCloud<pcl::PointXYZRGB>::Ptr &planeCloud);
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
 
         /**
          * @brief Checks to see if the marker is attached to a door or not (e.g., a window)
@@ -254,8 +252,14 @@ namespace ORB_SLAM3
          * @param planePointPair all the map points to check the ones lying on the plane
          * @param pKF the address of the current keyframe
          */
-        void createMapPlane(const g2o::Plane3D estimatedPlane, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud,
+        void createMapPlane(const g2o::Plane3D estimatedPlane, const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
                             KeyFrame *pKF);
+
+        /**
+         * @brief Detects all the planes in the current keyframe
+         * @param pKF the address of the current keyframe
+         */
+        void fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF);
 
         /**
          * @brief Updates an existing plane object in the map
@@ -264,7 +268,7 @@ namespace ORB_SLAM3
          * @param pKF the address of the current keyframe
          */
         void updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF,
-                            pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud, Marker *visitedMarker = NULL);
+                            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud, Marker *visitedMarker = NULL);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
@@ -273,7 +277,7 @@ namespace ORB_SLAM3
          */
         void markerSemanticAnalyzerAndMapper(ORB_SLAM3::KeyFrame *pKF,
                                              const std::vector<Marker *> &mvpMapMarkers,
-                                             const pcl::PointCloud<pcl::PointXYZRGB>::Ptr planeCloud);
+                                             const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud);
 
         /**
          * @brief Creates a new door object to be added to the map
