@@ -253,14 +253,7 @@ namespace ORB_SLAM3
          * @param planePointPair all the map points to check the ones lying on the plane
          * @param pKF the address of the current keyframe
          */
-        void createMapPlane(const g2o::Plane3D estimatedPlane, const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
-                            KeyFrame *pKF);
-
-        /**
-         * @brief Detects all the planes in the current keyframe
-         * @param pKF the address of the current keyframe
-         */
-        void fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF);
+        void createMapPlane(KeyFrame *pKF, const g2o::Plane3D estimatedPlane, const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud);
 
         /**
          * @brief Updates an existing plane object in the map
@@ -268,8 +261,15 @@ namespace ORB_SLAM3
          * @param visitedMarker the address of the visited marker
          * @param pKF the address of the current keyframe
          */
-        void updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
-                            const g2o::Plane3D estimatedPlane, Marker *visitedMarker = NULL);
+        void updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
+                            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud, int planeId,
+                            Marker *visitedMarker = NULL);
+
+        /**
+         * @brief Detects all the planes in the current keyframe
+         * @param pKF the address of the current keyframe
+         */
+        void fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors

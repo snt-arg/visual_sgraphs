@@ -4349,18 +4349,13 @@ namespace ORB_SLAM3
                 // Apply RANSAC segmentation
                 seg.segment(*inliers, *coeffs);
 
-                // Check if indicies are not empty
+                // Check if any model was found while processing the point cloud indices
                 if (inliers->indices.empty())
-                {
-                    std::cout << "No model found while processing pointcloud indices!" << std::endl;
                     break;
-                }
 
                 // Calculate normal on the plane
-                Eigen::Vector4d planeEquation(coeffs->values[0],
-                                              coeffs->values[1],
-                                              coeffs->values[2],
-                                              coeffs->values[3]);
+                Eigen::Vector4d planeEquation(coeffs->values[0], coeffs->values[1],
+                                              coeffs->values[2], coeffs->values[3]);
 
                 // Calculate the closest points
                 Eigen::Vector4d plane;
@@ -4500,9 +4495,8 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    void Tracking::createMapPlane(const g2o::Plane3D estimatedPlane,
-                                  const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
-                                  ORB_SLAM3::KeyFrame *pKF)
+    void Tracking::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
+                                  const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
@@ -4540,10 +4534,9 @@ namespace ORB_SLAM3
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void Tracking::updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF,
+    void Tracking::updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
                                   pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
-                                  const g2o::Plane3D estimatedPlane,
-                                  ORB_SLAM3::Marker *visitedMarker)
+                                  int planeId, ORB_SLAM3::Marker *visitedMarker)
     {
         // Find the matched plane among all planes of the map
         for (auto currentPlane : mpAtlas->GetAllPlanes())
@@ -4874,10 +4867,10 @@ namespace ORB_SLAM3
             int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
-                createMapPlane(detectedPlane, planePoint, pKF);
+                createMapPlane(pKF, detectedPlane, planePoint);
             else
                 // The wall already exists in the map, fetching that one
-                updateMapPlane(matchedPlaneId, pKF, planePoint, detectedPlane);
+                updateMapPlane(pKF, detectedPlane, planePoint, matchedPlaneId);
 
             // Add Markers while progressing in KFs
             markerSemanticAnalyzerAndMapper(pKF, mCurrentFrame.mvpMapMarkers, planePoint);
@@ -4933,7 +4926,7 @@ namespace ORB_SLAM3
                 int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
                 if (matchedPlaneId != -1)
                     // The wall already exists in the map, fetching that one
-                    updateMapPlane(matchedPlaneId, pKF, planeCloud, detectedPlane, currentMapMarker);
+                    updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId, currentMapMarker);
             }
             else
             {
