@@ -268,8 +268,8 @@ namespace ORB_SLAM3
          * @param visitedMarker the address of the visited marker
          * @param pKF the address of the current keyframe
          */
-        void updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF,
-                            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud, Marker *visitedMarker = NULL);
+        void updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF, pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
+                            const g2o::Plane3D estimatedPlane, Marker *visitedMarker = NULL);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors

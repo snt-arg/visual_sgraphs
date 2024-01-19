@@ -1385,7 +1385,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Loop through the recently added room planes, get all the markers and add them
+        // Loop through the recently added planes, get all the markers and add them
         list<Marker *> lRecentLocalMapMarkers;
         for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
         {
@@ -1401,7 +1401,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Loop through the recently added room planes, get all the map points and add them
+        // Loop through the recently added planes, get all the map points and add them
         list<MapPoint *> lRecentLocalMapPoints;
         for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
         {
@@ -1418,11 +1418,11 @@ namespace ORB_SLAM3
             }
         }
 
-        // Loop through the recently added markers, get all the keyframes and add them
-        for (list<Marker *>::iterator idx = lRecentLocalMapMarkers.begin(), vend = lRecentLocalMapMarkers.end(); idx != vend; idx++)
+        // Loop through the recently added planes, get all the keyframes and add them
+        for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
         {
-            std::map<KeyFrame *, Sophus::SE3f> markerObservations = (*idx)->getObservations();
-            for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = markerObservations.begin(), obLast = markerObservations.end(); obsId != obLast; obsId++)
+            std::map<KeyFrame *, g2o::Plane3D> planeObservations = (*idx)->getObservations();
+            for (map<KeyFrame *, g2o::Plane3D>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
                 auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame *k)
@@ -1748,10 +1748,27 @@ namespace ORB_SLAM3
             // Setting the local optimization ID for the plane
             pMapPlane->setOpId(opId);
 
-            // [TODO]: Add the SE3(keyframe)->Plane edge like in s_graphs
-            // const map<KeyFrame *, Sophus::SE3f> observations = pMapPlane->getObservations();
-            // for (map<KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
-            // ADD the edge between the plane and the keyframe
+            // Adding an edge between the plane and the keyframes
+            const map<KeyFrame *, g2o::Plane3D> observations = pMapPlane->getObservations();
+            for (map<KeyFrame *, g2o::Plane3D>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            {
+                KeyFrame *pKFi = obsId->first;
+                g2o::Plane3D planeLocalEquation = obsId->second;
+                ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+
+                if (optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
+                {
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+                    e->setMeasurement(planeLocalEquation);
+
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberMono);
+                    optimizer.addEdge(e);
+                }
+            }
 
             // Get list of Markers attached to the plane
             vector<Marker *> attachedMarkers = pMapPlane->getMarkers();
@@ -1772,6 +1789,7 @@ namespace ORB_SLAM3
                 }
             }
         }
+
         maxOpId += nPlanes;
 
         // Rooms (Local Optimization)

@@ -4508,6 +4508,7 @@ namespace ORB_SLAM3
         newMapPlane->setColor();
         newMapPlane->setLocalEquation(estimatedPlane);
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
+        newMapPlane->addObservation(pKF, estimatedPlane);
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
 
         // Set the plane type to undefined, as it is not known yet
@@ -4541,6 +4542,7 @@ namespace ORB_SLAM3
 
     void Tracking::updateMapPlane(int planeId, ORB_SLAM3::KeyFrame *pKF,
                                   pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
+                                  const g2o::Plane3D estimatedPlane,
                                   ORB_SLAM3::Marker *visitedMarker)
     {
         // Find the matched plane among all planes of the map
@@ -4552,6 +4554,7 @@ namespace ORB_SLAM3
                 {
                     currentPlane->setMarkers(visitedMarker);
                     currentPlane->setPlaneType(semanticType::WALL);
+                    currentPlane->addObservation(pKF, estimatedPlane);
                     std::cout << "- Wall updated: Plane#" << currentPlane->getId() << ", with Marker#"
                               << visitedMarker->getId() << std::endl;
                 }
@@ -4874,7 +4877,7 @@ namespace ORB_SLAM3
                 createMapPlane(detectedPlane, planePoint, pKF);
             else
                 // The wall already exists in the map, fetching that one
-                updateMapPlane(matchedPlaneId, pKF, planePoint);
+                updateMapPlane(matchedPlaneId, pKF, planePoint, detectedPlane);
 
             // Add Markers while progressing in KFs
             markerSemanticAnalyzerAndMapper(pKF, mCurrentFrame.mvpMapMarkers, planePoint);
@@ -4930,7 +4933,7 @@ namespace ORB_SLAM3
                 int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
                 if (matchedPlaneId != -1)
                     // The wall already exists in the map, fetching that one
-                    updateMapPlane(matchedPlaneId, pKF, planeCloud, currentMapMarker);
+                    updateMapPlane(matchedPlaneId, pKF, planeCloud, detectedPlane, currentMapMarker);
             }
             else
             {

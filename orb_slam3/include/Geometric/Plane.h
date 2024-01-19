@@ -34,6 +34,7 @@ namespace ORB_SLAM3
         g2o::Plane3D global_equation;                             // The plane equation in the global map
         std::vector<Marker *> markers;                            // The list of markers lying on the plane
         std::set<MapPoint *> map_points;                          // The unique set of map points lying on the plane
+        std::map<KeyFrame *, g2o::Plane3D> observations;          // Plane's observations in keyFrames
         pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr plane_cloud; // The point cloud of the plane
 
     public:
@@ -69,6 +70,9 @@ namespace ORB_SLAM3
 
         g2o::Plane3D getGlobalEquation() const;
         void setGlobalEquation(const g2o::Plane3D &value);
+
+        void addObservation(KeyFrame *pKF, g2o::Plane3D localEquation);
+        const std::map<KeyFrame *, g2o::Plane3D> &getObservations() const;
 
         Eigen::Vector3f getCentroid() const;
         void setCentroid(const Eigen::Vector3f &value);
