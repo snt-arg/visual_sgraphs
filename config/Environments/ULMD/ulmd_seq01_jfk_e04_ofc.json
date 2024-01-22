@@ -1,0 +1,152 @@
+{
+    "rooms": [
+        {
+            "name": "ARG Corr.",
+            "isCorridor": true,
+            "metaMarker": 250,
+            "markers": [
+                [
+                    15,
+                    17
+                ],
+                [
+                    12,
+                    13
+                ],
+                [
+                    40,
+                    36
+                ]
+            ],
+            "doorMarkers": [
+                0,
+                5,
+                11,
+                14,
+                23,
+                29,
+                38,
+                39,
+                41
+            ]
+        },
+        {
+            "name": "Office-421",
+            "isCorridor": false,
+            "metaMarker": 250,
+            "markers": [
+                [
+                    1,
+                    2,
+                    3,
+                    4
+                ]
+            ],
+            "doorMarkers": [
+                0
+            ]
+        },
+        {
+            "name": "Office-422",
+            "isCorridor": false,
+            "metaMarker": 250,
+            "markers": [
+                [
+                    6,
+                    7,
+                    8,
+                    10
+                ]
+            ],
+            "doorMarkers": [
+                11
+            ]
+        },
+        {
+            "name": "Office-423",
+            "isCorridor": false,
+            "metaMarker": 250,
+            "markers": [
+                [
+                    24,
+                    25,
+                    26,
+                    28
+                ]
+            ],
+            "doorMarkers": [
+                41
+            ]
+        },
+        {
+            "name": "Office-424",
+            "isCorridor": false,
+            "metaMarker": 250,
+            "markers": [
+                [
+                    19,
+                    20,
+                    21,
+                    22
+                ]
+            ],
+            "doorMarkers": [
+                14
+            ]
+        },
+        {
+            "name": "Office-427",
+            "isCorridor": false,
+            "metaMarker": 250,
+            "markers": [
+                [
+                    30,
+                    32,
+                    35,
+                    37
+                ]
+            ],
+            "doorMarkers": [
+                29
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Office-421 Door",
+            "marker": 0
+        },
+        {
+            "name": "Office-422 Door",
+            "marker": 11
+        },
+        {
+            "name": "Office-423 Door",
+            "marker": 41
+        },
+        {
+            "name": "Office-424 Door",
+            "marker": 14
+        },
+        {
+            "name": "Office-425 Door",
+            "marker": 23
+        },
+        {
+            "name": "Office-426 Door",
+            "marker": 5
+        },
+        {
+            "name": "Office-427 Door",
+            "marker": 29
+        },
+        {
+            "name": "Emergency Exit Door",
+            "marker": 38
+        },
+        {
+            "name": "ARG Exit Door",
+            "marker": 39
+        }
+    ]
+}
