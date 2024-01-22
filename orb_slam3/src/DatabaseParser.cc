@@ -46,6 +46,8 @@ namespace ORB_SLAM3
             envRoom->setAllSeenMarkers(false);
             envRoom->setId(stoi(envDatum.key()));
             envRoom->setName(envDatum.value()["name"]);
+            envRoom->setIsCorridor(envDatum.value()["isCorridor"]);
+            envRoom->setMetaMarkerId(envDatum.value()["metaMarker"]);
 
             // Fill the set of walls (marker-pairs attached to walls) of a room
             for (int idx = 0; idx < envDatum.value()["markers"].size(); idx++)

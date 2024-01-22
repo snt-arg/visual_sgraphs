@@ -360,7 +360,7 @@ namespace ORB_SLAM3
 
             // Get list of walls of the room
             vector<Plane *> walls = vpRoom->getWalls();
-            if (walls.size() == 2)
+            if (vpRoom->getIsCorridor())
             {
                 // Adding an edge between the room and the two walls
                 ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
@@ -374,7 +374,7 @@ namespace ORB_SLAM3
                 rk->setDelta(thHuber2D);
                 optimizer.addEdge(e);
             }
-            else if (walls.size() == 4)
+            else
             {
                 // Adding an edge between the room and the two walls
                 ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
@@ -1811,7 +1811,7 @@ namespace ORB_SLAM3
 
             // Get list of walls of the room
             vector<Plane *> walls = pMapRoom->getWalls();
-            if (walls.size() == 2)
+            if (pMapRoom->getIsCorridor())
             {
                 if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()))
                 {
@@ -1828,7 +1828,7 @@ namespace ORB_SLAM3
                     optimizer.addEdge(e);
                 }
             }
-            else if (walls.size() == 4)
+            else
             {
                 if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()) && optimizer.vertex(walls[2]->getOpId()) && optimizer.vertex(walls[2]->getOpId()))
                 {

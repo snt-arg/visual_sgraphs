@@ -635,7 +635,7 @@ void publish_rooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
     {
         // Create color for room (magenta or violet based on room type)
         std::vector<double> color = {0.5, 0.1, 1.0};
-        if (rooms[idx]->getWalls().size() == 2)
+        if (rooms[idx]->getIsCorridor())
             color = {0.6, 0.0, 0.3};
 
         Eigen::Vector3d roomCenter = rooms[idx]->getRoomCenter();

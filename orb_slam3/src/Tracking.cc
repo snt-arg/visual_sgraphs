@@ -4513,13 +4513,13 @@ namespace ORB_SLAM3
                                                            estimatedPlane);
         newMapPlane->setGlobalEquation(globalEquation);
 
-        std::string planeStr = "(" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(0)) + ")x + (" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(1)) + ")y + (" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(2)) + ")z + (" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(3)) + ") = 0";
-        std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
-                  << planeStr << std::endl;
+        // std::string planeStr = "(" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(0)) + ")x + (" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(1)) + ")y + (" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(2)) + ")z + (" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(3)) + ") = 0";
+        // std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
+        //           << planeStr << std::endl;
 
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
@@ -4548,7 +4548,7 @@ namespace ORB_SLAM3
                     currentPlane->setMarkers(visitedMarker);
                     currentPlane->setPlaneType(semanticType::WALL);
                     currentPlane->addObservation(pKF, estimatedPlane);
-                    std::cout << "- Wall updated: Plane#" << currentPlane->getId() << ", with Marker#"
+                    std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
                               << visitedMarker->getId() << std::endl;
                 }
 
@@ -4681,7 +4681,7 @@ namespace ORB_SLAM3
         // Set room center
         Eigen::Vector3d roomCenter;
         std::vector<Plane *> roomWalls = detectedRoom->getWalls();
-        if (roomWalls.size() == 2)
+        if (detectedRoom->getIsCorridor())
         {
             // Calculate the marker position placed on a wall
             Eigen::Vector3d markerPosition =
@@ -4694,7 +4694,7 @@ namespace ORB_SLAM3
             // Find the room center and add its vertex
             roomCenter = getRoomCenter(markerPosition, wall1, wall2);
         }
-        else if (roomWalls.size() == 4)
+        else
         {
             reorganizeRoomWalls(detectedRoom);
             // If it is a four-wall room
@@ -4800,7 +4800,7 @@ namespace ORB_SLAM3
         for (Room *envRoom : env_rooms)
         {
             // Check if a room has not been created for it before
-            // if (!envRoom->getAllSeenMarkers())
+            if (!envRoom->getAllSeenMarkers())
             {
                 // Get all detected walls' marker IDs
                 std::vector<int> detectedMarkerIds = mpAtlas->visitedPlanesMarkerIds;

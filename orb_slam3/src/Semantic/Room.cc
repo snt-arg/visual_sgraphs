@@ -42,6 +42,16 @@ namespace ORB_SLAM3
         opIdG = value;
     }
 
+    int Room::getMetaMarkerId() const
+    {
+        return metaMarkerId;
+    }
+
+    void Room::setMetaMarkerId(int value)
+    {
+        metaMarkerId = value;
+    }
+
     std::string Room::getName() const
     {
         return name;
@@ -60,6 +70,16 @@ namespace ORB_SLAM3
     void Room::setAllSeenMarkers(bool value)
     {
         all_seen_markers = value;
+    }
+
+    bool Room::getIsCorridor() const
+    {
+        return isCorridor;
+    }
+
+    void Room::setIsCorridor(bool value)
+    {
+        isCorridor = value;
     }
 
     std::vector<Plane *> Room::getWalls() const
