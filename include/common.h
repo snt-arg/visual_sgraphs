@@ -109,6 +109,8 @@ bool save_traj_srv(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Re
 cv::Mat SE3f_to_cvMat(Sophus::SE3f);
 tf::Transform SE3f_to_tfTransform(Sophus::SE3f);
 sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
+    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
 
 // Markers
 void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array);
