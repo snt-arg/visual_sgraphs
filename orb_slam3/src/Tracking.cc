@@ -4326,7 +4326,8 @@ namespace ORB_SLAM3
         std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
 
         // Loop over cloud points as long as the cloud is large enough
-        while (cloud->points.size() > minSegmentationPoints)
+        // [TODO] Temporary disabling sequential ransac
+        // while (cloud->points.size() > minSegmentationPoints)
         {
             try
             {
@@ -4350,8 +4351,8 @@ namespace ORB_SLAM3
                 seg.segment(*inliers, *coeffs);
 
                 // Check if any model was found while processing the point cloud indices
-                if (inliers->indices.empty())
-                    break;
+                // if (inliers->indices.empty())
+                //     break;
 
                 // Calculate normal on the plane
                 Eigen::Vector4d planeEquation(coeffs->values[0], coeffs->values[1],
@@ -4393,7 +4394,7 @@ namespace ORB_SLAM3
             catch (const std::exception &e)
             {
                 std::cout << "RANSAC model error!" << std::endl;
-                break;
+                // break;
             }
         }
 
