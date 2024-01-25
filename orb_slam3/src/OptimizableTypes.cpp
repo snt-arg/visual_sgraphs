@@ -380,8 +380,8 @@ namespace ORB_SLAM3
 
     bool EdgeVertexPlaneProjectSE3KF::read(std::istream &is)
     {
-        for (int i = 0; i < 4; i++)
-            for (int j = i; j < 4; j++)
+        for (int i = 0; i < 3; i++)
+            for (int j = i; j < 3; j++)
             {
                 is >> information()(i, j);
                 if (i != j)
@@ -392,8 +392,8 @@ namespace ORB_SLAM3
 
     bool EdgeVertexPlaneProjectSE3KF::write(std::ostream &os) const
     {
-        for (int i = 0; i < 4; i++)
-            for (int j = i; j < 4; j++)
+        for (int i = 0; i < 3; i++)
+            for (int j = i; j < 3; j++)
                 os << " " << information()(i, j);
         return os.good();
     }

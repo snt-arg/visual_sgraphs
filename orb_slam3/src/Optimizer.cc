@@ -1758,8 +1758,8 @@ namespace ORB_SLAM3
 
                 if (optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
                 {
-                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                     e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
                     e->setMeasurement(planeLocalEquation);
 
