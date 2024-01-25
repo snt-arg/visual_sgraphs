@@ -219,8 +219,11 @@ void ImageGrabber::SyncWithImu()
             // Convert pointclouds from ros to pcl format
             pcl::fromROSMsg(*msgPC, *cloud);
 
-            // Filter pointclouds based on distance
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = pointcloudDistanceFilter(cloud);
+            // Downsample the given pointcloud
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = pointcloudDownsample(cloud);
+
+            // Filter the pointcloud based on a range of distance
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = pointcloudDistanceFilter(downsampledCloud);
 
             // Find the marker with the minimum time difference compared to the current frame
             std::pair<double, std::vector<ORB_SLAM3::Marker *>> result = find_nearest_marker(tIm);

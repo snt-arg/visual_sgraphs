@@ -509,7 +509,7 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
 
         // Get the position of the planes from map-points to put it in the middle of the cluster
         Eigen::Vector3f centroid(0.0, 0.0, 0.0);
-        // const pcl::PointCloud<pcl::PointXYZRGB>::Ptr mapClouds = planes[idx]->getMapClouds();
+        // const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr mapClouds = planes[idx]->getMapClouds();
 
         // for (const auto &mapCloud : mapClouds->points)
         // {
@@ -844,12 +844,32 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint 
     return cloud;
 }
 
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDownsample(
+    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud)
+{
+    // The filtered point cloud object
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZRGB>());
+
+    // Define the downsampling filter
+    pcl::VoxelGrid<pcl::PointXYZRGB>::Ptr downsampleFilter(new pcl::VoxelGrid<pcl::PointXYZRGB>());
+
+    // Set the parameters of the downsampling filter
+    downsampleFilter->setLeafSize(0.1f, 0.1f, 0.1f);
+    downsampleFilter->setInputCloud(cloud);
+
+    // Apply the downsampling filter
+    downsampleFilter->filter(*filtered);
+    filtered->header = cloud->header;
+
+    return filtered;
+}
+
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
     const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud)
 {
-    // Define the distance threshold parameters
+    // Define the distance threshold parameters (in meters)
     // [TODO] should be read from a config file
-    double thresholdNear = 1.0;
+    double thresholdNear = 0.3;
     double thresholdFar = 3.0;
 
     // Define the filtered point cloud object

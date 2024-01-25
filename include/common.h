@@ -20,6 +20,7 @@
 #include <std_msgs/Header.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
+#include <pcl/filters/voxel_grid.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -109,7 +110,19 @@ bool save_traj_srv(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Re
 cv::Mat SE3f_to_cvMat(Sophus::SE3f);
 tf::Transform SE3f_to_tfTransform(Sophus::SE3f);
 sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
+
+/**
+ * Filters the pointclouds based on the given min/max distance between the points
+ * @param cloud the pointcloud to be filtered
+ */
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
+    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
+
+/**
+ * Downsamples the pointclouds based on the given leaf size
+ * @param cloud the pointcloud to be downsampled
+ */
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDownsample(
     const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
 
 // Markers
