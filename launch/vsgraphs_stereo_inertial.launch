@@ -3,8 +3,8 @@
     <arg name="offline" default="true" />
     <!-- Which semantic data file should be loaded? -->
     <arg name="env_database" default="ULMD/ulmd_seq01_jfk_e04_ofc.json" />
-    <!-- How many pointclouds needed to detect geometric objects (e.g., planes) -->
-    <arg name="pointcloud_size" default="500" />
+    <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
+    <arg name="pointcloud_size" default="300" />
     <!-- How much the framework should trust the markers (0.1 default, higher for mono setups) -->
     <arg name="marker_impact" default="0.1" />
 
