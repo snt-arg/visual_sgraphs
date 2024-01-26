@@ -2,7 +2,7 @@
 
 namespace ORB_SLAM3
 {
-    GeometricSegmentation::GeometricSegmentation() {}
+    GeometricSegmentation::GeometricSegmentation(Atlas *pAtlas) {}
 
     void GeometricSegmentation::Run() {}
 }

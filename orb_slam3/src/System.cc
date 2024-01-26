@@ -192,11 +192,16 @@ namespace ORB_SLAM3
             mpLocalMapper->mbFarPoints = false;
 
         // Initialize the Loop Closing thread and launch
-        mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR, activeLC); // mSensor!=MONOCULAR);
+        mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR, activeLC);
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
-        // [TODO]: create thread ransac geometric based segmentation
-        // [TODO]: create thread semantic segmentation
+        // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
+        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas);
+        // mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
+
+        // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
+        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
+        // mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
         // Set pointers between threads
         mpTracker->SetLocalMapper(mpLocalMapper);

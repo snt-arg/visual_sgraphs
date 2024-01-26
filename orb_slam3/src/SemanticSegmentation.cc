@@ -2,7 +2,7 @@
 
 namespace ORB_SLAM3
 {
-    SemanticSegmentation::SemanticSegmentation() {}
+    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas) {}
 
     void SemanticSegmentation::Run() {}
 }

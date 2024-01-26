@@ -41,6 +41,8 @@
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Geometric/Plane.h"
+#include "SemanticSegmentation.h"
+#include "GeometricSegmentation.h"
 
 namespace ORB_SLAM3
 {
@@ -268,11 +270,18 @@ namespace ORB_SLAM3
         FrameDrawer *mpFrameDrawer;
         MapDrawer *mpMapDrawer;
 
+        // Geometric & Semantic Segmentation
+        SemanticSegmentation *mpSemanticSegmentation;
+        GeometricSegmentation *mpGeometricSegmentation;
+
         // System threads: Local Mapping, Loop Closing, Viewer.
+        // 🚀 [vS-Graphs v.2.0] Two new threads: Geometric Segmentation and Semantic Segmentation
         // The Tracking thread "lives" in the main execution thread that creates the System object.
-        std::thread *mptLocalMapping;
-        std::thread *mptLoopClosing;
         std::thread *mptViewer;
+        std::thread *mptLoopClosing;
+        std::thread *mptLocalMapping;
+        std::thread *mptSemanticSegmentation;
+        std::thread *mptGeometricSegmentation;
 
         // Reset flag
         std::mutex mMutexReset;

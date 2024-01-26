@@ -4549,8 +4549,8 @@ namespace ORB_SLAM3
                     currentPlane->setMarkers(visitedMarker);
                     currentPlane->setPlaneType(semanticType::WALL);
                     currentPlane->addObservation(pKF, estimatedPlane);
-                    std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
-                              << visitedMarker->getId() << std::endl;
+                    // std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
+                    //           << visitedMarker->getId() << std::endl;
                 }
 
                 // Update the pointcloud of the plane
