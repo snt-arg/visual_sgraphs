@@ -233,13 +233,13 @@ void ImageGrabber::SyncWithImu()
             // Tracking process sends markers found in this frame for tracking and clears the buffer
             if (min_time_diff < 0.05)
             {
-                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, filteredCloud, tIm, vImuMeas, "",
+                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, cloud, filteredCloud, tIm, vImuMeas, "",
                                                     matched_markers, env_doors, env_rooms);
                 markers_buff.clear();
             }
             else
             {
-                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, filteredCloud, tIm, vImuMeas);
+                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, cloud, filteredCloud, tIm, vImuMeas);
             }
 
             publish_topics(msg_time, Wbb);

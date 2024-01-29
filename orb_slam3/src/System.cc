@@ -318,7 +318,8 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap,
-                                   const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
+                                   const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &mainCloud,
+                                   const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &filteredCloud,
                                    const double &timestamp, const vector<IMU::Point> &vImuMeas, string filename,
                                    const std::vector<Marker *> markers, const vector<Door *> doors,
                                    const vector<Room *> rooms)
@@ -387,7 +388,7 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, pointcloud, timestamp,
+        Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, filteredCloud, timestamp,
                                                     filename, markers, doors, rooms);
 
         unique_lock<mutex> lock2(mMutexState);

@@ -119,14 +119,25 @@ namespace ORB_SLAM3
                                  const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
                                  const vector<Room *> envRooms = vector<Room *>{});
 
-        // Process the given rgbd frame. Depthmap must be registered to the RGB frame.
-        // Input image: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
-        // Input depthmap: Float (CV_32F).
-        // Returns the camera pose (empty if tracking fails).
+        /**
+         * @brief Process the given rgbd frame for tracking. The DepthMap must be registered to the RGB frame.
+         * @param im the input RGB image (CV_8UC3) or grayscale (CV_8U)
+         * @param depthmap the input DepthMap (CV_32F)
+         * @param mainCloud the main input PointCloud before filtering
+         * @param filteredCloud the filtered input PointCloud
+         * @param timestamp the timestamp of the frame
+         * @param vImuMeas the vector of IMU measurements
+         * @param filename the name of the file
+         * @param markers the vector of fiducial markers
+         * @param envDoors the vector of doors
+         * @param envRooms the vector of rooms
+         * @return the camera pose (empty if tracking fails)
+         */
         Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap,
-                               const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud, const double &timestamp,
-                               const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                               const vector<Marker *> markers = vector<Marker *>{},
+                               const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &mainCloud,
+                               const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &filteredCloud,
+                               const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(),
+                               string filename = "", const vector<Marker *> markers = vector<Marker *>{},
                                const vector<Door *> envDoors = vector<Door *>{},
                                const vector<Room *> envRooms = vector<Room *>{});
 

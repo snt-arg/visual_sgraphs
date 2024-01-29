@@ -155,13 +155,13 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     // Tracking process sends markers found in this frame for tracking and clears the buffer
     if (min_time_diff < 0.05)
     {
-        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, filteredCloud, cv_ptrRGB->header.stamp.toSec(),
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, filteredCloud, cv_ptrRGB->header.stamp.toSec(),
                                             {}, "", matched_markers, env_doors, env_rooms);
         markers_buff.clear();
     }
     else
     {
-        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, filteredCloud, cv_ptrRGB->header.stamp.toSec());
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, filteredCloud, cv_ptrRGB->header.stamp.toSec());
     }
 
     ros::Time msg_time = cv_ptrRGB->header.stamp;
