@@ -4182,70 +4182,6 @@ namespace ORB_SLAM3
     }
 
     // Semantic Entities
-    Eigen::Vector4d Tracking::correctPlaneDirection(const Eigen::Vector4d &plane)
-    {
-        // Check if the transformation is needed
-        if (plane(3) > 0)
-            return -plane;
-
-        else
-            return plane;
-    }
-
-    Eigen::Vector3d Tracking::getRoomCenter(const Eigen::Vector3d &markerPosition,
-                                            const Eigen::Vector4d &wall1,
-                                            const Eigen::Vector4d &wall2)
-    {
-        Eigen::Vector3d roomCenter;
-        Eigen::Vector3d vec, vectorNormal;
-
-        // Get the dominant wall by comparing the magnitudes of the last elements of the given walls
-        if (fabs(wall1(3)) > fabs(wall2(3)))
-            // Calculate the midpoint of the dominant wall
-            vec = (0.5 * (fabs(wall1(3)) * wall1.head(3) - fabs(wall2(3)) * wall2.head(3))) +
-                  fabs(wall2(3)) * wall2.head(3);
-        else
-            // Calculate the midpoint of the dominant wall
-            vec = (0.5 * (fabs(wall2(3)) * wall2.head(3) - fabs(wall1(3)) * wall1.head(3))) +
-                  fabs(wall1(3)) * wall1.head(3);
-
-        // Normalize the vector to obtain the normal direction of the room
-        vectorNormal = vec / vec.norm();
-
-        // Calculate the room center by projecting the marker position onto the room plane
-        roomCenter = vec + (markerPosition - (markerPosition.dot(vectorNormal)) * vectorNormal);
-
-        return roomCenter;
-    }
-
-    Eigen::Vector3d Tracking::getRoomCenter(const Eigen::Vector4d x_plane1, const Eigen::Vector4d x_plane2,
-                                            const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2)
-    {
-        Eigen::Vector3d roomCenter;
-        Eigen::Vector3d vectorX, vectorY;
-
-        // Calculate the midpoint vector along the x-axis of the room
-        if (fabs(x_plane1(3)) > fabs(x_plane2(3)))
-            vectorX = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) +
-                      fabs(x_plane2(3)) * x_plane2.head(3);
-        else
-            vectorX = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) +
-                      fabs(x_plane1(3)) * x_plane1.head(3);
-
-        // Calculate the midpoint vector along the y-axis of the room
-        if (fabs(y_plane1(3)) > fabs(y_plane2(3)))
-            vectorY = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) +
-                      fabs(y_plane2(3)) * y_plane2.head(3);
-        else
-            vectorY = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) +
-                      fabs(y_plane1(3)) * y_plane1.head(3);
-
-        // Calculate the room center by summing the midpoint vectors along the x and y axes
-        roomCenter = vectorX + vectorY;
-
-        return roomCenter;
-    }
-
     int Tracking::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
     {
         int planeId = -1;
@@ -4692,27 +4628,27 @@ namespace ORB_SLAM3
             Eigen::Vector3d markerPosition =
                 roomWalls.front()->getMarkers().front()->getGlobalPose().translation().cast<double>();
             // If it is a corridor
-            Eigen::Vector4d wall1(correctPlaneDirection(
+            Eigen::Vector4d wall1(Utils::correctPlaneDirection(
                 roomWalls.front()->getGlobalEquation().coeffs()));
-            Eigen::Vector4d wall2(correctPlaneDirection(
+            Eigen::Vector4d wall2(Utils::correctPlaneDirection(
                 roomWalls.front()->getGlobalEquation().coeffs()));
             // Find the room center and add its vertex
-            roomCenter = getRoomCenter(markerPosition, wall1, wall2);
+            roomCenter = Utils::getRoomCenter(markerPosition, wall1, wall2);
         }
         else
         {
             reorganizeRoomWalls(detectedRoom);
             // If it is a four-wall room
-            Eigen::Vector4d wall1 = correctPlaneDirection(
+            Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
                 detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall2 = correctPlaneDirection(
+            Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
                 detectedRoom->getWalls()[1]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall3 = correctPlaneDirection(
+            Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
                 detectedRoom->getWalls()[2]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall4 = correctPlaneDirection(
+            Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
                 detectedRoom->getWalls()[3]->getGlobalEquation().coeffs());
             // Find the room center and add its vertex
-            roomCenter = getRoomCenter(wall1, wall2, wall3, wall4);
+            roomCenter = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
         }
 
         ORB_SLAM3::Room *foundMappedRoom = roomAssociation(detectedRoom);

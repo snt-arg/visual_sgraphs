@@ -142,32 +142,6 @@ namespace ORB_SLAM3
 
         // Semantic Entities
         /**
-         * @brief Corrects the given plane equations to apply calculations
-         * @param plane the input plane
-         */
-        Eigen::Vector4d correctPlaneDirection(const Eigen::Vector4d &plane);
-
-        /**
-         * @brief Gets the center points of a room with two walls
-         * @param markerPosition the position of the marker
-         * @param wall1 the first plane
-         * @param wall2 the second plane
-         */
-        Eigen::Vector3d getRoomCenter(const Eigen::Vector3d &markerPosition,
-                                      const Eigen::Vector4d &wall1,
-                                      const Eigen::Vector4d &wall2);
-
-        /**
-         * @brief Gets the center points of a room with four walls
-         * @param x_plane1 the first plane in X direction
-         * @param x_plane2 the second plane in X direction
-         * @param y_plane1 the first plane in Y direction
-         * @param y_plane2 the second plane in Y direction
-         */
-        Eigen::Vector3d getRoomCenter(const Eigen::Vector4d x_plane1, const Eigen::Vector4d x_plane2,
-                                      const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2);
-
-        /**
          * @brief Associates a detected plane into the planes found in the map and returns
          * if it needs to be added to the plane or not.
          * @param mappedPlanes an array of planes with their IDs and equations
