@@ -204,8 +204,9 @@ namespace ORB_SLAM3
         // mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
         // Set pointers between threads
-        mpTracker->SetLocalMapper(mpLocalMapper);
         mpTracker->SetLoopClosing(mpLoopCloser);
+        mpTracker->SetLocalMapper(mpLocalMapper);
+        mpTracker->SetGeometricSegmentation(mpGeometricSegmentation);
 
         mpLocalMapper->SetTracker(mpTracker);
         mpLocalMapper->SetLoopCloser(mpLoopCloser);

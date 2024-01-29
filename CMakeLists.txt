@@ -132,6 +132,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/MLPnPsolver.cpp
   orb_slam3/src/GeometricTools.cc
   orb_slam3/src/TwoViewReconstruction.cc
+  orb_slam3/src/Utils.cc
   orb_slam3/src/Config.cc
   orb_slam3/src/Settings.cc
   orb_slam3/src/Geometric/Plane.cc
@@ -170,6 +171,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/TwoViewReconstruction.h
   orb_slam3/include/SerializationUtils.h
   orb_slam3/include/Config.h
+  orb_slam3/include/Utils.h
   orb_slam3/include/Settings.h
   orb_slam3/include/Geometric/Types.h
   orb_slam3/include/Geometric/Plane.h

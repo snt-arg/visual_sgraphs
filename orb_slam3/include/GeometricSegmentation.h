@@ -13,9 +13,17 @@ namespace ORB_SLAM3
 
     class GeometricSegmentation
     {
+    private:
+        Atlas *mpAtlas;
+        std::mutex mMutexNewKFs;
+        std::list<KeyFrame *> mvpKeyFrameBuffer;
+
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         GeometricSegmentation(Atlas *pAtlas);
+
+        void AddKeyFrameToBuffer(KeyFrame *pKF);
+        std::list<KeyFrame *> GetKeyFrameBuffer();
 
         // Running the thread
         void Run();

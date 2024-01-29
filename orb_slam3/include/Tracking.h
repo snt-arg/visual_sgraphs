@@ -32,14 +32,16 @@
 #include "KeyFrameDatabase.h"
 #include "ORBextractor.h"
 #include "MapDrawer.h"
+#include "Utils.h"
 #include "System.h"
 #include "ImuTypes.h"
 #include "Settings.h"
-#include "Geometric/Plane.h"
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
+#include "Geometric/Plane.h"
 #include "Semantic/Marker.h"
 #include "GeometricCamera.h"
+#include "GeometricSegmentation.h"
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -51,7 +53,6 @@
 
 namespace ORB_SLAM3
 {
-
     class Viewer;
     class FrameDrawer;
     class Atlas;
@@ -59,6 +60,7 @@ namespace ORB_SLAM3
     class LoopClosing;
     class System;
     class Settings;
+    class GeometricSegmentation;
 
     class Tracking
     {
@@ -93,9 +95,12 @@ namespace ORB_SLAM3
 
         void GrabImuData(const IMU::Point &imuMeasurement);
 
-        void SetLocalMapper(LocalMapping *pLocalMapper);
-        void SetLoopClosing(LoopClosing *pLoopClosing);
+        // Setters of various classes
         void SetViewer(Viewer *pViewer);
+        void SetLoopClosing(LoopClosing *pLoopClosing);
+        void SetLocalMapper(LocalMapping *pLocalMapper);
+        void SetGeometricSegmentation(GeometricSegmentation *pGeometricSegmentation);
+
         void SetStepByStep(bool bSet);
         bool GetStepByStep();
 
@@ -205,13 +210,6 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> findPointsCloseToLocation(const std::vector<MapPoint *> &points,
                                                           const Eigen::Vector3f &location,
                                                           double distanceThreshold);
-
-        /**
-         * @brief Calculate L2-norm between two given points
-         * @param point1 first point
-         * @param point2 second point
-         */
-        double calculateDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2);
 
         /**
          * @brief Performs PCL ransac to get the plane equations from the a given point cloud
@@ -432,6 +430,12 @@ namespace ORB_SLAM3
         bool NeedNewKeyFrame();
         void CreateNewKeyFrame();
 
+        /**
+         * @brief Adds a newly created KeyFrame to the buffer in the GeometricSegmentation thread
+         * @param pKF the address of the newly created KeyFrame
+         */
+        void AddKeyFrameToKFBuffer(KeyFrame *pKF);
+
         // Perform preintegration from last frame
         void PreintegrateIMU();
 
@@ -463,8 +467,9 @@ namespace ORB_SLAM3
         bool mbVO;
 
         // Other Thread Pointers
-        LocalMapping *mpLocalMapper;
         LoopClosing *mpLoopClosing;
+        LocalMapping *mpLocalMapper;
+        GeometricSegmentation *mpGeometricSegmentation;
 
         // ORB
         ORBextractor *mpORBextractorLeft, *mpORBextractorRight;

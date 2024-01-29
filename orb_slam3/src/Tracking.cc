@@ -1489,6 +1489,11 @@ namespace ORB_SLAM3
         mpLoopClosing = pLoopClosing;
     }
 
+    void Tracking::SetGeometricSegmentation(GeometricSegmentation *pGeometricSegmentation)
+    {
+        mpGeometricSegmentation = pGeometricSegmentation;
+    }
+
     void Tracking::SetViewer(Viewer *pViewer)
     {
         mpViewer = pViewer;
@@ -1575,8 +1580,7 @@ namespace ORB_SLAM3
 
     Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD,
                                          const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
-                                         const double &timestamp, string filename,
-                                         const std::vector<Marker *> markers,
+                                         const double &timestamp, string filename, const std::vector<Marker *> markers,
                                          const std::vector<Door *> doors, const std::vector<Room *> rooms)
     {
         // Set arguments to local variables
@@ -3403,6 +3407,9 @@ namespace ORB_SLAM3
 
         mpLocalMapper->InsertKeyFrame(pKF);
 
+        // Add the current KeyFrame to the buffer in GeometrySegmentation
+        AddKeyFrameToKFBuffer(pKF);
+
         for (const auto &currentRoom : currentFoundRooms)
             mpLocalMapper->InsertRoom(currentRoom);
 
@@ -3411,6 +3418,12 @@ namespace ORB_SLAM3
         mnLastKeyFrameId = mCurrentFrame.mnId;
         mpLastKeyFrame = pKF;
         currentFoundRooms.clear();
+    }
+
+    void Tracking::AddKeyFrameToKFBuffer(KeyFrame *pKF)
+    {
+        // Add the current KeyFrame to the buffer in GeometrySegmentation
+        mpGeometricSegmentation->AddKeyFrameToBuffer(pKF);
     }
 
     void Tracking::SearchLocalPoints()
@@ -4440,7 +4453,7 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> closePoints;
         for (MapPoint *point : points)
         {
-            double distance = calculateDistance(point->GetWorldPos(), location);
+            double distance = Utils::calculateEuclideanDistance(point->GetWorldPos(), location);
             if (distance <= distanceThreshold)
             {
                 closePoints.push_back(point);
@@ -4448,15 +4461,6 @@ namespace ORB_SLAM3
         }
 
         return closePoints;
-    }
-
-    // Function to calculate Euclidean distance between two points
-    double Tracking::calculateDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2)
-    {
-        double dx = p1.x() - p2.x();
-        double dy = p1.y() - p2.y();
-        double dz = p1.z() - p2.z();
-        return std::sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     std::pair<bool, std::string> Tracking::markerIsPlacedOnDoor(const int &markerId)
