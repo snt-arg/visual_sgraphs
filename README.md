@@ -336,3 +336,5 @@ In order to evaluate the current method with others, such as UcoSLAM, ORB-SLAM 3
 Here is the list of TODO tasks that can be integrated in the project:
 
 - Due to the sparse pointclouds in Mono and Stereo, calculate the depth from points using Machine Learning to get a better plane estimate (`Tracking::getPlanesFromPointClouds()`).
+- Subscribing to the robot's odometry for not getting lost
+- Semantic loop closure detection based on high-level entities
