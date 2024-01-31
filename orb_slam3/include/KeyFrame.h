@@ -507,6 +507,11 @@ namespace ORB_SLAM3
 
         float mHalfBaseline; // Only for visualization
 
+        // Variables to be passed to GeometricSegmentation
+        std::vector<Marker *> mCurrentFrameMarkers;
+        std::vector<MapPoint *> mCurrentFrameMapPoints;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr mCurrentFramePointClouds;
+
         Map *mpMap;
 
         // Backup variables for inertial
@@ -548,6 +553,10 @@ namespace ORB_SLAM3
         Eigen::Vector3f GetRightCameraCenter();
         Eigen::Matrix<float, 3, 3> GetRightRotation();
         Eigen::Vector3f GetRightTranslation();
+
+        std::vector<Marker *> getCurrentFrameMarkers() const;
+        std::vector<MapPoint *> getCurrentFrameMapPoints() const;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCurrentFramePointCloud() const;
 
         void PrintPointDistribution()
         {

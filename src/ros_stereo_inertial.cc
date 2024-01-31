@@ -91,6 +91,9 @@ int main(int argc, char **argv)
     sensor_type = ORB_SLAM3::System::IMU_STEREO;
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sensor_type, enable_pangolin);
 
+    // Set the environment data (doors) for the GeometricSegmentation thread
+    pSLAM->setEnvDoors(env_doors);
+
     // Subscribe to get raw images and IMU data
     // Maximum delay, 5 seconds * 200Hz = 1000 samples
     ros::Subscriber sub_imu = node_handler.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb);

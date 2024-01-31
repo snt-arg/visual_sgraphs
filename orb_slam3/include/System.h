@@ -82,6 +82,8 @@ namespace ORB_SLAM3
     class LocalMapping;
     class LoopClosing;
     class Settings;
+    class SemanticSegmentation;
+    class GeometricSegmentation;
 
     class System
     {
@@ -237,6 +239,12 @@ namespace ORB_SLAM3
         void ChangeDataset();
 
         float GetImageScale();
+
+        /**
+         * @brief Set the vector of doors fetched from the database for GeometricSegmentation
+         * @param envDoors the vector of doors fetched from the database
+         */
+        void setEnvDoors(std::vector<Door *> envDoors);
 
 #ifdef REGISTER_TIMES
         void InsertRectTime(double &time);

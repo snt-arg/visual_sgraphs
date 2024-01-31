@@ -196,8 +196,10 @@ namespace ORB_SLAM3
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
-        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas);
-        // mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
+        int minCloudSize = GetSystemParameters().pointCloudSize;
+        bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
+        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, minCloudSize);
+        mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
         mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
@@ -226,6 +228,11 @@ namespace ORB_SLAM3
 
         // Fix verbosity
         Verbose::SetTh(Verbose::VERBOSITY_QUIET);
+    }
+
+    void System::setEnvDoors(std::vector<Door *> envDoors)
+    {
+        mpGeometricSegmentation->setEnvDoors(envDoors);
     }
 
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,

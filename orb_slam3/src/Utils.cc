@@ -19,6 +19,16 @@ namespace ORB_SLAM3
             return plane;
     }
 
+    g2o::Plane3D Utils::convertToGlobalEquation(const Eigen::Matrix4d &kfPose, const g2o::Plane3D &plane)
+    {
+        Eigen::Vector4d v = plane.coeffs();
+        Eigen::Vector4d v2;
+        Eigen::Matrix3d R = kfPose.block<3, 3>(0, 0);
+        v2.head<3>() = R * v.head<3>();
+        v2(3) = v(3) - kfPose.block<3, 1>(0, 3).dot(v2.head<3>());
+        return g2o::Plane3D(v2);
+    };
+
     Eigen::Vector3d Utils::getRoomCenter(const Eigen::Vector3d &markerPosition,
                                          const Eigen::Vector4d &wall1,
                                          const Eigen::Vector4d &wall2)
@@ -71,5 +81,24 @@ namespace ORB_SLAM3
         roomCenter = vectorX + vectorY;
 
         return roomCenter;
+    }
+
+    std::pair<bool, std::string> Utils::isMarkerAttachedToDoor(const int &markerId,
+                                                               std::vector<ORB_SLAM3::Door *> envDoors)
+    {
+        bool isDoor = false;
+        std::string name = "";
+        // Loop over all markers attached to doors
+        for (const auto &doorPtr : envDoors)
+        {
+            if (doorPtr->getMarkerId() == markerId)
+            {
+                isDoor = true;
+                name = doorPtr->getName();
+                break; // No need to continue searching if found
+            }
+        }
+        // Returning
+        return std::make_pair(isDoor, name);
     }
 }

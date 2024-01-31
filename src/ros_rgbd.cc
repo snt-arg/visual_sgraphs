@@ -71,6 +71,9 @@ int main(int argc, char **argv)
     sensor_type = ORB_SLAM3::System::RGBD;
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sensor_type, enable_pangolin);
 
+    // Set the environment data (doors) for the GeometricSegmentation thread
+    pSLAM->setEnvDoors(env_doors);
+
     // Subscribe to get raw images
     message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
     message_filters::Subscriber<sensor_msgs::Image> sub_depth_img(node_handler, "/camera/depth_registered/image_raw", 100);

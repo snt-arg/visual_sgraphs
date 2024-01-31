@@ -56,7 +56,8 @@ namespace ORB_SLAM3
                                                                        mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb / 2), mpMap(pMap), mbCurrentPlaceRecognition(false), mNameFile(F.mNameFile), mnMergeCorrectedForKF(0),
                                                                        mpCamera(F.mpCamera), mpCamera2(F.mpCamera2),
                                                                        mvLeftToRightMatch(F.mvLeftToRightMatch), mvRightToLeftMatch(F.mvRightToLeftMatch), mTlr(F.GetRelativePoseTlr()),
-                                                                       mvKeysRight(F.mvKeysRight), NLeft(F.Nleft), NRight(F.Nright), mTrl(F.GetRelativePoseTrl()), mnNumberOfOpt(0), mbHasVelocity(false)
+                                                                       mvKeysRight(F.mvKeysRight), NLeft(F.Nleft), NRight(F.Nright), mTrl(F.GetRelativePoseTrl()), mnNumberOfOpt(0), mbHasVelocity(false),
+                                                                       mCurrentFrameMarkers(F.mvpMapMarkers), mCurrentFrameMapPoints(F.mvpMapPoints), mCurrentFramePointClouds(F.mvpPointClouds)
     {
         mnId = nNextId++;
 
@@ -186,6 +187,21 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexPose);
         return mbHasVelocity;
+    }
+
+    std::vector<Marker *> KeyFrame::getCurrentFrameMarkers() const
+    {
+        return mCurrentFrameMarkers;
+    }
+
+    std::vector<MapPoint *> KeyFrame::getCurrentFrameMapPoints() const
+    {
+        return mCurrentFrameMapPoints;
+    }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr KeyFrame::getCurrentFramePointCloud() const
+    {
+        return mCurrentFramePointClouds;
     }
 
     void KeyFrame::AddConnection(KeyFrame *pKF, const int &weight)

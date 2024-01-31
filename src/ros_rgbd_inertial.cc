@@ -92,6 +92,9 @@ int main(int argc, char **argv)
     sensor_type = ORB_SLAM3::System::IMU_RGBD;
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sensor_type, enable_pangolin);
 
+    // Set the environment data (doors) for the GeometricSegmentation thread
+    pSLAM->setEnvDoors(env_doors);
+
     // Subscribe to get raw images and IMU data
     ros::Subscriber sub_imu = node_handler.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb);
     message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
