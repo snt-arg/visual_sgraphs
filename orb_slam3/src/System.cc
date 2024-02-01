@@ -1352,6 +1352,11 @@ namespace ORB_SLAM3
         return mpFrameDrawer->DrawFrame();
     }
 
+    cv::Mat System::GetCurrentKeyFrame()
+    {
+        return mpTracker->geCurrentKF();
+    }
+
     Sophus::SE3f System::GetCamTwc()
     {
         return mpTracker->GetCamTwc();

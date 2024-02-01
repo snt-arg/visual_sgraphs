@@ -15,6 +15,7 @@ int pointcloud_size = 200;
 double marker_impact = 0.1;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
+image_transport::Publisher kf_img_pub;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
@@ -80,6 +81,7 @@ void setup_services(ros::NodeHandle &node_handler, std::string node_name)
 void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTransport &image_transport, std::string node_name)
 {
     // Basic
+    kf_img_pub = image_transport.advertise(node_name + "/keyframe_image", 1);
     tracking_img_pub = image_transport.advertise(node_name + "/tracking_image", 1);
     pose_pub = node_handler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
     all_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
@@ -134,6 +136,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     publish_doors(pSLAM->GetAllDoors(), msg_time);
     publish_rooms(pSLAM->GetAllRooms(), msg_time);
     publish_walls(pSLAM->GetAllPlanes(), msg_time);
+    publish_kf_img(pSLAM->GetCurrentKeyFrame(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
@@ -244,6 +247,15 @@ void publish_static_tf_transform(string frame_id, string child_frame_id, ros::Ti
 
     // Publish the static transform using the broadcaster
     static_broadcaster.sendTransform(static_stamped);
+}
+
+void publish_kf_img(cv::Mat image, ros::Time msg_time)
+{
+    std_msgs::Header header;
+    header.stamp = msg_time;
+    header.frame_id = world_frame_id;
+    const sensor_msgs::ImagePtr rendered_image_msg = cv_bridge::CvImage(header, "bgr8", image).toImageMsg();
+    kf_img_pub.publish(rendered_image_msg);
 }
 
 void publish_tracking_img(cv::Mat image, ros::Time msg_time)

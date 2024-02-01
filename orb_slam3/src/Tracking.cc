@@ -1573,7 +1573,7 @@ namespace ORB_SLAM3
         vdStereoMatch_ms.push_back(mCurrentFrame.mTimeStereoMatch);
 #endif
 
-        Track();
+        Track(imRectLeft);
 
         return mCurrentFrame.GetPose();
     }
@@ -1624,7 +1624,7 @@ namespace ORB_SLAM3
         vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
 #endif
 
-        Track();
+        Track(imRGB);
 
         return mCurrentFrame.GetPose();
     }
@@ -1685,7 +1685,7 @@ namespace ORB_SLAM3
 #endif
 
         lastID = mCurrentFrame.mnId;
-        Track();
+        Track(im);
 
         return mCurrentFrame.GetPose();
     }
@@ -1869,7 +1869,7 @@ namespace ORB_SLAM3
         // TODO To implement...
     }
 
-    void Tracking::Track()
+    void Tracking::Track(const cv::Mat &img)
     {
         if (bStepByStep)
         {
@@ -2306,10 +2306,14 @@ namespace ORB_SLAM3
                 bool bNeedKF = NeedNewKeyFrame();
 
                 // Check if we need to insert a new keyframe
-                // if(bNeedKF && bOK)
                 if (bNeedKF && (bOK || (mInsertKFsLost && mState == RECENTLY_LOST &&
                                         (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD))))
+                {
+                    // Add the current frame to the KF list
+                    setCurrentKF(img);
+                    // Create a new KeyFrame
                     CreateNewKeyFrame();
+                }
 
 #ifdef REGISTER_TIMES
                 std::chrono::steady_clock::time_point time_EndNewKF = std::chrono::steady_clock::now();
@@ -4441,6 +4445,16 @@ namespace ORB_SLAM3
     {
         markerImpact = newValue;
     };
+
+    cv::Mat Tracking::geCurrentKF() const
+    {
+        return mCurrentKF;
+    }
+
+    void Tracking::setCurrentKF(cv::Mat value)
+    {
+        mCurrentKF = value;
+    }
 
 #ifdef REGISTER_LOOP
     void

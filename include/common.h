@@ -73,6 +73,7 @@ extern std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 extern std::vector<ORB_SLAM3::Room *> env_rooms;
 extern std::vector<ORB_SLAM3::Door *> env_doors;
 
+extern image_transport::Publisher kf_img_pub;
 extern image_transport::Publisher tracking_img_pub;
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
@@ -91,6 +92,7 @@ void setup_services(ros::NodeHandle &, std::string);
 void publish_topics(ros::Time, Eigen::Vector3f = Eigen::Vector3f::Zero());
 void setup_publishers(ros::NodeHandle &, image_transport::ImageTransport &, std::string);
 
+void publish_kf_img(cv::Mat, ros::Time);
 void publish_tracking_img(cv::Mat, ros::Time);
 void publish_camera_pose(Sophus::SE3f, ros::Time);
 void publish_static_tf_transform(string, string, ros::Time);
