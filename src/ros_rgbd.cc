@@ -8,7 +8,8 @@ public:
     ImageGrabber(){};
 
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
-    void GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSeg);
+    void GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImage,
+                          const sensor_msgs::PointCloud2ConstPtr &msgSegPrb);
     void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
                   const sensor_msgs::PointCloud2ConstPtr &msgPC);
 };
@@ -91,9 +92,13 @@ int main(int argc, char **argv)
     ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
                                                        &ImageGrabber::GrabArUcoMarker, &igb);
 
-    // Subscribe to the segmentation image detected by `semantic_segmentation` library
-    ros::Subscriber sub_segmentation = node_handler.subscribe("/camera/color/image_segment", 1,
-                                                              &ImageGrabber::GrabSegmentation, &igb);
+    // Synced subscriber for images obtained from the Semantic Segmentater
+    message_filters::Subscriber<sensor_msgs::Image> sub_segmented_img(node_handler, "/camera/color/image_segment", 100);
+    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_segmented_prob(node_handler,
+                                                                             "/camera/color/image_segment/probabilities", 100);
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> sync_seg;
+    message_filters::Synchronizer<sync_seg> sync_segmenter(sync_seg(10), sub_segmented_img, sub_segmented_prob);
+    sync_segmenter.registerCallback(boost::bind(&ImageGrabber::GrabSegmentation, &igb, _1, _2));
 
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
@@ -106,10 +111,6 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-//////////////////////////////////////////////////
-// Functions
-//////////////////////////////////////////////////
 
 void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
                             const sensor_msgs::PointCloud2ConstPtr &msgPC)
@@ -158,13 +159,15 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     // Tracking process sends markers found in this frame for tracking and clears the buffer
     if (min_time_diff < 0.05)
     {
-        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, filteredCloud, cv_ptrRGB->header.stamp.toSec(),
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, filteredCloud,
+                                            cv_ptrRGB->header.stamp.toSec(),
                                             {}, "", matched_markers, env_doors, env_rooms);
         markers_buff.clear();
     }
     else
     {
-        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, filteredCloud, cv_ptrRGB->header.stamp.toSec());
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud,
+                                            filteredCloud, cv_ptrRGB->header.stamp.toSec());
     }
 
     ros::Time msg_time = cv_ptrRGB->header.stamp;
@@ -178,7 +181,22 @@ void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
     add_markers_to_buffer(marker_array);
 }
 
-void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSeg)
+void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImage,
+                                    const sensor_msgs::PointCloud2ConstPtr &msgSegPrb)
 {
-    // [TODO] Add segmentation to the SLAM system
+    // Fetch the segmentation image
+    cv_bridge::CvImageConstPtr cv_imgSeg;
+    try
+    {
+        cv_imgSeg = cv_bridge::toCvShare(msgSegImage);
+    }
+    catch (cv_bridge::Exception &e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
+
+    // Fetch the segmentation probabilities pointcloud
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudProb(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::fromROSMsg(*msgSegPrb, *cloudProb);
 }

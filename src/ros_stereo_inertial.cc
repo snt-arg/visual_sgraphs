@@ -24,7 +24,8 @@ public:
     void GrabImageLeft(const sensor_msgs::ImageConstPtr &msg);
     void GrabImageRight(const sensor_msgs::ImageConstPtr &msg);
     cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
-    void GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSeg);
+    void GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImage,
+                          const sensor_msgs::PointCloud2ConstPtr &msgSegPrb);
 
     ImuGrabber *mpImuGb;
     std::mutex mBufMutexLeft, mBufMutexRight;
@@ -104,9 +105,13 @@ int main(int argc, char **argv)
     ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
                                                        &ImageGrabber::GrabArUcoMarker, &igb);
 
-    // Subscribe to the segmentation image detected by `semantic_segmentation` library
-    ros::Subscriber sub_segmentation = node_handler.subscribe("/camera/color/image_segment", 1,
-                                                              &ImageGrabber::GrabSegmentation, &igb);
+    // Synced subscriber for images obtained from the Semantic Segmentater
+    message_filters::Subscriber<sensor_msgs::Image> sub_segmented_img(node_handler, "/camera/color/image_segment", 100);
+    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_segmented_prob(node_handler,
+                                                                             "/camera/color/image_segment/probabilities", 100);
+    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> sync_seg;
+    message_filters::Synchronizer<sync_seg> sync_segmenter(sync_seg(10), sub_segmented_img, sub_segmented_prob);
+    sync_segmenter.registerCallback(boost::bind(&ImageGrabber::GrabSegmentation, &igb, _1, _2));
 
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
@@ -266,7 +271,8 @@ void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
     add_markers_to_buffer(marker_array);
 }
 
-void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSeg)
+void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImage,
+                                    const sensor_msgs::PointCloud2ConstPtr &msgSegPrb)
 {
     // [TODO] Add segmentation to the SLAM system
 }
