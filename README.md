@@ -272,6 +272,7 @@ Host unitree
 | `/orb_slam3/tracked_points`   | all key points contained in the sliding window                       |
 | `/orb_slam3/all_points`       | all key points in the map                                            |
 | `/orb_slam3/kf_markers`       | markers for all keyframes' positions                                 |
+| `/orb_slam3/keyframe_image`   | keyframe poses images                                                |
 | `/orb_slam3/fiducial_markers` | fiducial markers detected in the environment                         |
 | `/orb_slam3/doors`            | doorways detected in the environment                                 |
 | `/orb_slam3/planes`           | planes detected in the environment                                   |
