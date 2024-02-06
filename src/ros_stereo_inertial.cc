@@ -274,5 +274,25 @@ void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
 void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImage,
                                     const sensor_msgs::PointCloud2ConstPtr &msgSegPrb)
 {
-    // [TODO] Add segmentation to the SLAM system
+    // Fetch the segmentation image
+    cv_bridge::CvImageConstPtr cv_imgSeg;
+    try
+    {
+        cv_imgSeg = cv_bridge::toCvShare(msgSegImage);
+    }
+    catch (cv_bridge::Exception &e)
+    {
+        ROS_ERROR("cv_bridge exception: %s", e.what());
+        return;
+    }
+
+    // Fetch the segmentation probabilities pointcloud
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudProb(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::fromROSMsg(*msgSegPrb, *cloudProb);
+
+    // Create the pair
+    std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> pair(cv_imgSeg->image, cloudProb);
+
+    // Add the segmented image to a buffer to be processed in the SemanticSegmentation thread
+    pSLAM->addSegmentedImage(&pair);
 }

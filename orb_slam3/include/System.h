@@ -247,6 +247,12 @@ namespace ORB_SLAM3
          */
         void setEnvDoors(std::vector<Door *> envDoors);
 
+        /**
+         * @brief Add the segmented image to the buffer in the SemanticSegmentation
+         * @param pair the address of the pair of segmented image and pointcloud
+         */
+        void addSegmentedImage(std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> *pair);
+
 #ifdef REGISTER_TIMES
         void InsertRectTime(double &time);
         void InsertResizeTime(double &time);

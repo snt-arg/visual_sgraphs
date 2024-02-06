@@ -260,4 +260,10 @@ void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImag
     // Fetch the segmentation probabilities pointcloud
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudProb(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::fromROSMsg(*msgSegPrb, *cloudProb);
+
+    // Create the pair
+    std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> pair(cv_imgSeg->image, cloudProb);
+
+    // Add the segmented image to a buffer to be processed in the SemanticSegmentation thread
+    pSLAM->addSegmentedImage(&pair);
 }

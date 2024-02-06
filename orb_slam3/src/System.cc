@@ -203,7 +203,7 @@ namespace ORB_SLAM3
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
         mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
-        // mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
+        mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
         // Set pointers between threads
         mpTracker->SetLoopClosing(mpLoopCloser);
@@ -233,6 +233,12 @@ namespace ORB_SLAM3
     void System::setEnvDoors(std::vector<Door *> envDoors)
     {
         mpGeometricSegmentation->setEnvDoors(envDoors);
+    }
+
+    void System::addSegmentedImage(std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> *pair)
+    {
+        // Adding the segmented image to the buffer of the SemanticSegmentation
+        mpSemanticSegmentation->AddSegmentedFrameToBuffer(pair);
     }
 
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
