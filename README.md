@@ -286,6 +286,7 @@ Host unitree
 | `env_database`                                               | semantic map data file to be loaded                                                                            |
 | `pointcloud_size`                                            | pointclouds needed to detect geometric objects                                                                 |
 | `marker_impact`                                              | how much to trust markers                                                                                      |
+| `seg_prob_threshold`                                         | the threshold of segmentation probability results markers                                                      |
 | `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
 | `settings_file`                                              | path to settings file                                                                                          |
 | `enable_pangolin`                                            | enable/disable Pangolin viewer and interface. (`true` by default)                                              |

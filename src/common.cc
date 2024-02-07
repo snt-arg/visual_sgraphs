@@ -16,6 +16,7 @@ double marker_impact = 0.1;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher kf_img_pub;
+double segmentation_prob_threshold = 0.8;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
@@ -116,6 +117,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     ORB_SLAM3::System::SystemParams params;
     params.pointCloudSize = pointcloud_size;
     params.markerImpact = marker_impact;
+    params.segmentationProbabilityThreshold = segmentation_prob_threshold;
     pSLAM->SetSystemParameters(params);
 
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
@@ -934,12 +936,9 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
     return tf::Transform(R_tf, t_tf);
 }
 
-//////////////////////////////////////////////////
-// Fiducial Marker-related Modules
-//////////////////////////////////////////////////
-
 /**
- * Adds one/list of markers into a common buffer
+ * @brief Adds the markers from the received marker array into the common buffer
+ * @param marker_array The marker array received from the camera
  */
 void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
 {

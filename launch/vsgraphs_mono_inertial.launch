@@ -5,6 +5,8 @@
     <arg name="env_database" default="ULMD/ulmd_seq01_jfk_e04_ofc.json" />
     <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
     <arg name="pointcloud_size" default="300" />
+    <!-- What is the the threshold for semantic segmentation probability validation (rejects values below x) -->
+    <arg name="segmentation_prob_threshold" default="0.9" />
     <!-- How much the framework should trust the markers (0.1 default, higher for mono setups) -->
     <arg name="marker_impact" default="1e10" />
 
@@ -29,6 +31,7 @@
         <!-- Parameters for semantic/geometric objects detection -->
         <param name="markers_impact" type="double" value="$(arg marker_impact)"/>
         <param name="pointclouds_threshold" type="int" value="$(arg pointcloud_size)"/>
+        <param name="seg_prob_threshold" type="double" value="$(arg segmentation_prob_threshold)"/>
 
         <!-- Parameters for ROS -->
         <param name="roll" type="double" value="0" />

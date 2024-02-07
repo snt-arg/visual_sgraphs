@@ -16,11 +16,12 @@ namespace ORB_SLAM3
     private:
         Atlas *mpAtlas;
         std::mutex mMutexNewKFs;
+        double mSegProbThreshold;
         std::list<std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr>> segmentedImageBuffer;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        SemanticSegmentation(Atlas *pAtlas);
+        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold);
 
         void AddSegmentedFrameToBuffer(std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> *pair);
         std::list<std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr>> GetSegmentedFrameBuffer();
