@@ -2486,8 +2486,8 @@ namespace ORB_SLAM3
                 }
             }
 
-            // Add KeyFrame to a buffer in GeometricSegmentation to compute planes
-            mpGeometricSegmentation->AddKeyFrameToBuffer(pKFini);
+            // Add the current KeyFrame to the buffer in GeometrySegmentation
+            AddKeyFrameToKFBuffer(pKFini);
 
             Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
                                    to_string(mpAtlas->MarkersInMap()) + " markers, and " + to_string(mpAtlas->GetAllPlanes().size()) + " walls, and " +
@@ -2633,8 +2633,8 @@ namespace ORB_SLAM3
             mpAtlas->AddMapPoint(pMP);
         }
 
-        // Add KeyFrame to a buffer in GeometricSegmentation to compute planes
-        mpGeometricSegmentation->AddKeyFrameToBuffer(pKFini);
+        // Add the current KeyFrame to the buffer in GeometrySegmentation
+        AddKeyFrameToKFBuffer(pKFini);
 
         // Update Connections
         pKFini->UpdateConnections();
@@ -3402,16 +3402,13 @@ namespace ORB_SLAM3
                     currentFrameMaker->setMarkerInGMap(true);
         }
 
-        // Add KeyFrame to a buffer in GeometricSegmentation to compute planes
-        mpGeometricSegmentation->AddKeyFrameToBuffer(pKF);
+        // Add the current KeyFrame to the buffer in GeometrySegmentation
+        AddKeyFrameToKFBuffer(pKF);
 
         // Early creation of a room as soon as all elements of at least one of its pairs has been seen
         currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
 
         mpLocalMapper->InsertKeyFrame(pKF);
-
-        // Add the current KeyFrame to the buffer in GeometrySegmentation
-        AddKeyFrameToKFBuffer(pKF);
 
         for (const auto &currentRoom : currentFoundRooms)
             mpLocalMapper->InsertRoom(currentRoom);
