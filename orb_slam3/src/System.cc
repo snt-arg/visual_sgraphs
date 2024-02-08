@@ -202,7 +202,8 @@ namespace ORB_SLAM3
         mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
-        double segProbThreshold = GetSystemParameters().segmentationProbabilityThreshold;
+        double segProbThreshold = 0.9;
+        // GetSystemParameters().segmentationProbabilityThreshold; [TODO]
         mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
@@ -1407,7 +1408,7 @@ namespace ORB_SLAM3
     {
         params.markerImpact = newParams.markerImpact;
         params.pointCloudSize = newParams.pointCloudSize;
-        params.segmentationProbabilityThreshold = newParams.segmentationProbabilityThreshold;
+        // params.segmentationProbabilityThreshold = newParams.segmentationProbabilityThreshold;
     }
 
     System::SystemParams System::GetSystemParameters()

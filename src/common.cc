@@ -117,7 +117,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     ORB_SLAM3::System::SystemParams params;
     params.pointCloudSize = pointcloud_size;
     params.markerImpact = marker_impact;
-    params.segmentationProbabilityThreshold = segmentation_prob_threshold;
+    // params.segmentationProbabilityThreshold = segmentation_prob_threshold;
     pSLAM->SetSystemParameters(params);
 
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
