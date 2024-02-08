@@ -225,7 +225,7 @@ namespace ORB_SLAM3
         {
             int pointCloudSize;
             double markerImpact;
-            double segmentationProbabilityThreshold;
+            // double segmentationProbabilityThreshold;
         };
         SystemParams params;
 
