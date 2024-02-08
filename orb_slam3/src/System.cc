@@ -236,7 +236,7 @@ namespace ORB_SLAM3
         mpGeometricSegmentation->setEnvDoors(envDoors);
     }
 
-    void System::addSegmentedImage(std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> *pair)
+    void System::addSegmentedImage(std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr> *pair)
     {
         // Adding the segmented image to the buffer of the SemanticSegmentation
         mpSemanticSegmentation->AddSegmentedFrameToBuffer(pair);

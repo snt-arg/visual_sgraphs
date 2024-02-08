@@ -25,6 +25,7 @@
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <pcl/PCLPointCloud2.h>
 #include <rviz_visual_tools/rviz_visual_tools.h>
 
 #include <message_filters/subscriber.h>

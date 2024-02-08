@@ -252,7 +252,7 @@ namespace ORB_SLAM3
          * @brief Add the segmented image to the buffer in the SemanticSegmentation
          * @param pair the address of the pair of segmented image and pointcloud
          */
-        void addSegmentedImage(std::pair<cv::Mat, pcl::PointCloud<pcl::PointXYZRGB>::Ptr> *pair);
+        void addSegmentedImage(std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr> *pair);
 
 #ifdef REGISTER_TIMES
         void InsertRectTime(double &time);
