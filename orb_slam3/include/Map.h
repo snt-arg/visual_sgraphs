@@ -28,6 +28,7 @@
 #include <mutex>
 
 #include <boost/serialization/base_object.hpp>
+#include <unordered_map>
 
 namespace ORB_SLAM3
 {
@@ -111,8 +112,9 @@ namespace ORB_SLAM3
         long unsigned int GetInitKFid();
         long unsigned int GetMaxKFid();
         void SetInitKFid(long unsigned int initKFif);
-
+        
         KeyFrame *GetOriginKF();
+        KeyFrame *GetKeyFrameById(long unsigned int mnId);
 
         void SetCurrentMap();
         void SetStoredMap();
@@ -182,6 +184,9 @@ namespace ORB_SLAM3
         std::set<Marker *> mspMarkers;
         std::set<MapPoint *> mspMapPoints;
         std::set<KeyFrame *> mspKeyFrames;
+
+        // the Hashmap/Index for key frames
+        std::unordered_map<long unsigned int, KeyFrame *> mKFIndex;
 
         // Save/load, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated
         std::vector<MapPoint *> mvpBackupMapPoints;

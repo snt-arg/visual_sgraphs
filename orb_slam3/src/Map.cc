@@ -83,6 +83,18 @@ namespace ORB_SLAM3
         {
             mpKFlowerID = pKF;
         }
+        mKFIndex[pKF->mnId] = pKF;
+    }
+
+    KeyFrame *Map::GetKeyFrameById(long unsigned int mnId)
+    {
+        KeyFrame *retrievedKF = mKFIndex[mnId];
+
+        // Check if the retrievedObject is null (the key doesn't exist in the Index)
+        if (retrievedKF == nullptr) {
+            cout << "KeyFrame with ID " << mnId << " not found in mKFIndex" << endl;
+        }
+        return retrievedKF;
     }
 
     void Map::AddMapPoint(MapPoint *pMP)

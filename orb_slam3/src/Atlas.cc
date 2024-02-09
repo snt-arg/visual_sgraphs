@@ -234,6 +234,11 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllKeyFrames();
     }
 
+    KeyFrame *Atlas::GetKeyFrameById(long unsigned int mnId){
+        KeyFrame *retrievedKF = mpCurrentMap->GetKeyFrameById(mnId);
+        return retrievedKF;
+    }
+
     std::vector<MapPoint *> Atlas::GetAllMapPoints()
     {
         unique_lock<mutex> lock(mMutexAtlas);
