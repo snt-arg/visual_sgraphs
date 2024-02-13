@@ -11,11 +11,11 @@ ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
+ros::Publisher kf_img_pub;
 int pointcloud_size = 200;
 double marker_impact = 0.1;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
-image_transport::Publisher kf_img_pub;
 double segmentation_prob_threshold = 0.8;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
@@ -82,11 +82,11 @@ void setup_services(ros::NodeHandle &node_handler, std::string node_name)
 void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTransport &image_transport, std::string node_name)
 {
     // Basic
-    kf_img_pub = image_transport.advertise(node_name + "/keyframe_image", 1);
     tracking_img_pub = image_transport.advertise(node_name + "/tracking_image", 1);
     pose_pub = node_handler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
     all_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     kf_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/kf_markers", 1000);
+    kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 1);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
 
     // Semantic
@@ -251,13 +251,24 @@ void publish_static_tf_transform(string frame_id, string child_frame_id, ros::Ti
     static_broadcaster.sendTransform(static_stamped);
 }
 
-void publish_kf_img(cv::Mat image, ros::Time msg_time)
+void publish_kf_img(std::pair<long unsigned int, cv::Mat> imageIdPair, ros::Time msg_time)
 {
+    // Create an object of VSGraphDataMsg
+    segmenter_ros::VSGraphDataMsg vsGraphPublisher = segmenter_ros::VSGraphDataMsg();
+
     std_msgs::Header header;
     header.stamp = msg_time;
     header.frame_id = world_frame_id;
-    const sensor_msgs::ImagePtr rendered_image_msg = cv_bridge::CvImage(header, "bgr8", image).toImageMsg();
-    kf_img_pub.publish(rendered_image_msg);
+    std_msgs::UInt64 kfId;
+    kfId.data = std::get<0>(imageIdPair);
+    const sensor_msgs::ImagePtr rendered_image_msg =
+        cv_bridge::CvImage(header, "bgr8", std::get<1>(imageIdPair)).toImageMsg();
+
+    vsGraphPublisher.header = header;
+    vsGraphPublisher.keyFrameId = kfId;
+    vsGraphPublisher.keyFrameImage = *rendered_image_msg;
+
+    kf_img_pub.publish(vsGraphPublisher);
 }
 
 void publish_tracking_img(cv::Mat image, ros::Time msg_time)

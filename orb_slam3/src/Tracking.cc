@@ -1573,7 +1573,7 @@ namespace ORB_SLAM3
         vdStereoMatch_ms.push_back(mCurrentFrame.mTimeStereoMatch);
 #endif
 
-        Track(imRectLeft);
+        Track();
 
         return mCurrentFrame.GetPose();
     }
@@ -1624,7 +1624,7 @@ namespace ORB_SLAM3
         vdORBExtract_ms.push_back(mCurrentFrame.mTimeORB_Ext);
 #endif
 
-        Track(imRGB);
+        Track();
 
         return mCurrentFrame.GetPose();
     }
@@ -1685,7 +1685,7 @@ namespace ORB_SLAM3
 #endif
 
         lastID = mCurrentFrame.mnId;
-        Track(im);
+        Track();
 
         return mCurrentFrame.GetPose();
     }
@@ -1869,7 +1869,7 @@ namespace ORB_SLAM3
         // TODO To implement...
     }
 
-    void Tracking::Track(const cv::Mat &img)
+    void Tracking::Track()
     {
         if (bStepByStep)
         {
@@ -2309,8 +2309,6 @@ namespace ORB_SLAM3
                 if (bNeedKF && (bOK || (mInsertKFsLost && mState == RECENTLY_LOST &&
                                         (mSensor == System::IMU_MONOCULAR || mSensor == System::IMU_STEREO || mSensor == System::IMU_RGBD))))
                 {
-                    // Add the current frame to the KF list
-                    setCurrentKF(img);
                     // Create a new KeyFrame
                     CreateNewKeyFrame();
                 }
@@ -3402,6 +3400,9 @@ namespace ORB_SLAM3
                     currentFrameMaker->setMarkerInGMap(true);
         }
 
+        // Set the current KF ID and image to be sent to "scene_segment_ros"
+        setCurrentKF(std::make_pair(mCurrentFrame.mnId, mCurrentFrame.imgLeft));
+
         // Add the current KeyFrame to the buffer in GeometrySegmentation
         AddKeyFrameToKFBuffer(pKF);
 
@@ -4443,12 +4444,12 @@ namespace ORB_SLAM3
         markerImpact = newValue;
     };
 
-    cv::Mat Tracking::geCurrentKF() const
+    std::pair<long unsigned int, cv::Mat> Tracking::getCurrentKF() const
     {
         return mCurrentKF;
     }
 
-    void Tracking::setCurrentKF(cv::Mat value)
+    void Tracking::setCurrentKF(std::pair<long unsigned int, cv::Mat> value)
     {
         mCurrentKF = value;
     }

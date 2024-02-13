@@ -69,7 +69,7 @@ namespace ORB_SLAM3
         double markerImpact = 0.1; // Should be 1e10 for mono and 0.1 for stereo/rgb-d
 
         // The current KeyFrame image matrix
-        cv::Mat mCurrentKF;
+        std::pair<long unsigned int, cv::Mat> mCurrentKF;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -146,13 +146,13 @@ namespace ORB_SLAM3
         /**
          * @brief Get the current KeyFrame image matrix
          */
-        cv::Mat geCurrentKF() const;
+        std::pair<long unsigned int, cv::Mat> getCurrentKF() const;
 
         /**
          * @brief Set the current KeyFrame image matrix
          * @param cvMat the value of the current KeyFrame image matrix
          */
-        void setCurrentKF(cv::Mat value);
+        void setCurrentKF(std::pair<long unsigned int, cv::Mat> value);
 
         // Semantic Entities
         /**
@@ -286,7 +286,7 @@ namespace ORB_SLAM3
 
     protected:
         // Main tracking function. It is independent of the input sensor.
-        void Track(const cv::Mat &img);
+        void Track();
 
         // Map initialization for stereo and RGB-D
         void StereoInitialization();

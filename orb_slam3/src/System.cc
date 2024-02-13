@@ -237,10 +237,10 @@ namespace ORB_SLAM3
         mpGeometricSegmentation->setEnvDoors(envDoors);
     }
 
-    void System::addSegmentedImage(std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr> *pair)
+    void System::addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple)
     {
         // Adding the segmented image to the buffer of the SemanticSegmentation
-        mpSemanticSegmentation->AddSegmentedFrameToBuffer(pair);
+        mpSemanticSegmentation->AddSegmentedFrameToBuffer(tuple);
     }
 
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
@@ -1096,9 +1096,9 @@ namespace ORB_SLAM3
         return mpFrameDrawer->DrawFrame();
     }
 
-    cv::Mat System::GetCurrentKeyFrame()
+    std::pair<long unsigned int, cv::Mat> System::GetCurrentKeyFrame()
     {
-        return mpTracker->geCurrentKF();
+        return mpTracker->getCurrentKF();
     }
 
     Sophus::SE3f System::GetCamTwc()

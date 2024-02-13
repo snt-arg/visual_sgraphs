@@ -21,12 +21,12 @@ namespace ORB_SLAM3
 
             // retrieve the oldest one
             mMutexNewKFs.lock();
-            std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr> segImgPair = segmentedImageBuffer.front();
+            std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> segImgTuple = segmentedImageBuffer.front();
             segmentedImageBuffer.pop_front();
             mMutexNewKFs.unlock();
 
             // separate point clouds while applying threshold
-            pcl::PCLPointCloud2::Ptr pclPc2SegPrb = segImgPair.second;
+            pcl::PCLPointCloud2::Ptr pclPc2SegPrb = std::get<2>(segImgTuple);
             std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clsCloudPtrs;
             threshSeparatePointCloud(pclPc2SegPrb, clsCloudPtrs);
 
@@ -37,18 +37,19 @@ namespace ORB_SLAM3
             // Return the pointcloud with only walls and floors
             // Perform distance filter and downsample
             // Send it to the Ransac and get the plane equations
-            // Do the association with the planes in Geometric
+            // Do the association with the planes in Geometric (In GeoSeg, we need to set the KFi>mnId and match it with the
+            // KF->mnId in here)
             // usleep(3000);
         }
     }
 
-    void SemanticSegmentation::AddSegmentedFrameToBuffer(std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr> *pair)
+    void SemanticSegmentation::AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple)
     {
         unique_lock<std::mutex> lock(mMutexNewKFs);
-        segmentedImageBuffer.push_back(*pair);
+        segmentedImageBuffer.push_back(*tuple);
     }
 
-    std::list<std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr>> SemanticSegmentation::GetSegmentedFrameBuffer()
+    std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> SemanticSegmentation::GetSegmentedFrameBuffer()
     {
         return segmentedImageBuffer;
     }
@@ -63,11 +64,12 @@ namespace ORB_SLAM3
         const int width = pclPc2SegPrb->width;
         const int numPoints = width * pclPc2SegPrb->height;
         const int pointStep = pclPc2SegPrb->point_step;
-        const int numClasses = pointStep/bytesPerClassProb;
+        const int numClasses = pointStep / bytesPerClassProb;
 
         cout << numClasses << " " << numPoints << " " << pointStep << endl;
-        
-        for (int i = 0; i < numClasses; i++){
+
+        for (int i = 0; i < numClasses; i++)
+        {
             pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
             pointCloud->is_dense = false;
             pointCloud->height = 1;
@@ -75,13 +77,16 @@ namespace ORB_SLAM3
         }
 
         // read the point cloud and apply thresholding
-        const uint8_t* data = pclPc2SegPrb->data.data();
-        for (int i = 0; i < numPoints; i++) {
-            for (int j = 0; j < numClasses; j++) {
+        const uint8_t *data = pclPc2SegPrb->data.data();
+        for (int i = 0; i < numPoints; i++)
+        {
+            for (int j = 0; j < numClasses; j++)
+            {
                 float value;
                 memcpy(&value, data + pointStep * i + bytesPerClassProb * j + pclPc2SegPrb->fields[0].offset, bytesPerClassProb);
-                
-                if (value >= 0.9){
+
+                if (value >= 0.9)
+                {
                     // inject coordinates as a point to respective point cloud
                     pcl::PointXYZ point;
                     point.y = static_cast<int>(i / width);
@@ -94,14 +99,16 @@ namespace ORB_SLAM3
                     //     mask.at<uchar>(point.y, point.x) = 255;
                     // }
                 }
-                
+
                 // Occasionaly log values
-                if (i%100000 == 0) cout << "Point " << i << ", Class " << j << ": " << value << endl;
+                if (i % 100000 == 0)
+                    cout << "Point " << i << ", Class " << j << ": " << value << endl;
             }
         }
 
         // specify size/width and log statistics
-        for (int i = 0; i < numClasses; i++){
+        for (int i = 0; i < numClasses; i++)
+        {
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
             cout << "Class " << i << " has " << clsCloudPtrs[i]->width << " points." << endl;
         }

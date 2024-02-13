@@ -205,7 +205,6 @@ namespace ORB_SLAM3
         // You can call this right after TrackMonocular (or stereo or RGBD)
         int GetTrackingState();
         cv::Mat GetCurrentFrame();
-        cv::Mat GetCurrentKeyFrame();
         std::vector<Door *> GetAllDoors();
         std::vector<Room *> GetAllRooms();
         std::vector<Plane *> GetAllPlanes();
@@ -214,6 +213,7 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> GetTrackedMapPoints();
         std::vector<Sophus::SE3f> GetAllKeyframePoses();
         std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
+        std::pair<long unsigned int, cv::Mat> GetCurrentKeyFrame();
 
         Sophus::SE3f GetCamTwc();
         Sophus::SE3f GetImuTwb();
@@ -250,9 +250,9 @@ namespace ORB_SLAM3
 
         /**
          * @brief Add the segmented image to the buffer in the SemanticSegmentation
-         * @param pair the address of the pair of segmented image and pointcloud
+         * @param tuple the address of the tuple of segmented image and pointcloud
          */
-        void addSegmentedImage(std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr> *pair);
+        void addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
 
 #ifdef REGISTER_TIMES
         void InsertRectTime(double &time);

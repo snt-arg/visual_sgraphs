@@ -9,8 +9,7 @@ public:
 
     void GrabImage(const sensor_msgs::ImageConstPtr &msg);
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
-    void GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImage,
-                          const sensor_msgs::PointCloud2ConstPtr &msgSegPrb);
+    void GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage);
 };
 
 int main(int argc, char **argv)
@@ -80,13 +79,9 @@ int main(int argc, char **argv)
     ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers",
                                                        1, &ImageGrabber::GrabArUcoMarker, &igb);
 
-    // Synced subscriber for images obtained from the Semantic Segmentater
-    message_filters::Subscriber<sensor_msgs::Image> sub_segmented_img(node_handler, "/camera/color/image_segment", 100);
-    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_segmented_prob(node_handler,
-                                                                             "/camera/color/image_segment/probabilities", 100);
-    typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2> sync_seg;
-    message_filters::Synchronizer<sync_seg> sync_segmenter(sync_seg(10), sub_segmented_img, sub_segmented_prob);
-    sync_segmenter.registerCallback(boost::bind(&ImageGrabber::GrabSegmentation, &igb, _1, _2));
+    // Subscriber for images obtained from the Semantic Segmentater
+    ros::Subscriber sub_segmented_img = node_handler.subscribe("/camera/color/image_segment", 10,
+                                                               &ImageGrabber::GrabSegmentation, &igb);
 
     setup_publishers(node_handler, image_transport, node_name);
     setup_services(node_handler, node_name);
@@ -99,10 +94,6 @@ int main(int argc, char **argv)
 
     return 0;
 }
-
-//////////////////////////////////////////////////
-// Functions
-//////////////////////////////////////////////////
 
 void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
 {
@@ -143,14 +134,15 @@ void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
     add_markers_to_buffer(marker_array);
 }
 
-void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImage,
-                                    const sensor_msgs::PointCloud2ConstPtr &msgSegPrb)
+void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage)
 {
-    // Fetch the segmentation image
+    // Fetch the segmentation results
     cv_bridge::CvImageConstPtr cv_imgSeg;
+    uint64_t keyFrameId = msgSegImage.keyFrameId.data;
+
     try
     {
-        cv_imgSeg = cv_bridge::toCvShare(msgSegImage);
+        cv_imgSeg = cv_bridge::toCvCopy(msgSegImage.segmentedImage, sensor_msgs::image_encodings::BGR8);
     }
     catch (cv_bridge::Exception &e)
     {
@@ -160,11 +152,11 @@ void ImageGrabber::GrabSegmentation(const sensor_msgs::ImageConstPtr &msgSegImag
 
     // convert to PCL PointCloud2 from sensor_msgs PointCloud2
     pcl::PCLPointCloud2::Ptr pclPc2SegPrb(new pcl::PCLPointCloud2);
-    pcl_conversions::toPCL(*msgSegPrb, *pclPc2SegPrb);
+    pcl_conversions::toPCL(msgSegImage.segmentedImageProbability, *pclPc2SegPrb);
 
-    // Create the pair to be appended to the segmentedImageBuffer
-    std::pair<cv::Mat, pcl::PCLPointCloud2::Ptr> pair(cv_imgSeg->image, pclPc2SegPrb);
+    // Create the tuple to be appended to the segmentedImageBuffer
+    std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> tuple(keyFrameId, cv_imgSeg->image, pclPc2SegPrb);
 
     // Add the segmented image to a buffer to be processed in the SemanticSegmentation thread
-    pSLAM->addSegmentedImage(&pair);
+    pSLAM->addSegmentedImage(&tuple);
 }
