@@ -1549,19 +1549,19 @@ namespace ORB_SLAM3
         }
 
         if (mSensor == System::STEREO && !mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+            mCurrentFrame = Frame(imRectLeft, mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
                                   mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, NULL, IMU::Calib(),
                                   markers);
         else if (mSensor == System::STEREO && mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+            mCurrentFrame = Frame(imRectLeft, mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
                                   mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, mpCamera2, mTlr,
                                   NULL, IMU::Calib(), markers);
         else if (mSensor == System::IMU_STEREO && !mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+            mCurrentFrame = Frame(imRectLeft, mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
                                   mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame,
                                   *mpImuCalib, markers);
         else if (mSensor == System::IMU_STEREO && mpCamera2)
-            mCurrentFrame = Frame(mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
+            mCurrentFrame = Frame(imRectLeft, mImGray, imGrayRight, timestamp, mpORBextractorLeft, mpORBextractorRight,
                                   mpORBVocabulary, mK, mDistCoef, mbf, mThDepth, mpCamera, mpCamera2, mTlr,
                                   &mLastFrame, *mpImuCalib, markers);
 
@@ -1610,11 +1610,11 @@ namespace ORB_SLAM3
 
         // RGB-D
         if (mSensor == System::RGBD)
-            mCurrentFrame = Frame(mImGray, imDepth, pointcloud, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
+            mCurrentFrame = Frame(imRGB, mImGray, imDepth, pointcloud, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
                                   mDistCoef, mbf, mThDepth, mpCamera, NULL, IMU::Calib(), markers);
         // RGB-D Intertial
         else if (mSensor == System::IMU_RGBD)
-            mCurrentFrame = Frame(mImGray, imDepth, pointcloud, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
+            mCurrentFrame = Frame(imRGB, mImGray, imDepth, pointcloud, timestamp, mpORBextractorLeft, mpORBVocabulary, mK,
                                   mDistCoef, mbf, mThDepth, mpCamera, &mLastFrame, *mpImuCalib, markers);
 
         mCurrentFrame.mNameFile = filename;
@@ -1656,21 +1656,21 @@ namespace ORB_SLAM3
         if (mSensor == System::MONOCULAR)
         {
             if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET || (lastID - initID) < mMaxFrames)
-                mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
+                mCurrentFrame = Frame(im, mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
                                       mpCamera, mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers);
             else
-                mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mpCamera,
+                mCurrentFrame = Frame(im, mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mpCamera,
                                       mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers);
         }
         else if (mSensor == System::IMU_MONOCULAR)
         {
             if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET)
             {
-                mCurrentFrame = Frame(mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
+                mCurrentFrame = Frame(im, mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
                                       mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers);
             }
             else
-                mCurrentFrame = Frame(mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary,
+                mCurrentFrame = Frame(im, mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary,
                                       mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers);
         }
 
@@ -3400,9 +3400,6 @@ namespace ORB_SLAM3
                     currentFrameMaker->setMarkerInGMap(true);
         }
 
-        // Set the current KF ID and image to be sent to "scene_segment_ros"
-        setCurrentKF(std::make_pair(mCurrentFrame.mnId, mCurrentFrame.imgLeft));
-
         // Add the current KeyFrame to the buffer in GeometrySegmentation
         AddKeyFrameToKFBuffer(pKF);
 
@@ -4443,16 +4440,6 @@ namespace ORB_SLAM3
     {
         markerImpact = newValue;
     };
-
-    std::pair<long unsigned int, cv::Mat> Tracking::getCurrentKF() const
-    {
-        return mCurrentKF;
-    }
-
-    void Tracking::setCurrentKF(std::pair<long unsigned int, cv::Mat> value)
-    {
-        mCurrentKF = value;
-    }
 
 #ifdef REGISTER_LOOP
     void

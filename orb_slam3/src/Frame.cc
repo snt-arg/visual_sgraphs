@@ -99,7 +99,7 @@ namespace ORB_SLAM3
     }
 
     // Stereo Frames Processing #1
-    Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
+    Frame::Frame(const cv::Mat &imColor, const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
                  ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
                  const float &thDepth, GeometricCamera *pCamera, Frame *pPrevF, const IMU::Calib &ImuCalib,
                  const std::vector<Marker *> markers)
@@ -107,6 +107,9 @@ namespace ORB_SLAM3
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
           mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
     {
+        // Setting the color image for Semantic Segmentation
+        colorImg = imColor.clone();
+
         // Frame ID
         mnId = nNextId++;
 
@@ -205,7 +208,7 @@ namespace ORB_SLAM3
     }
 
     // Stereo Frames Processing #2
-    Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
+    Frame::Frame(const cv::Mat &imColor, const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
                  ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
                  const float &thDepth, GeometricCamera *pCamera, GeometricCamera *pCamera2, Sophus::SE3f &Tlr,
                  Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
@@ -216,6 +219,9 @@ namespace ORB_SLAM3
     {
         imgLeft = imLeft.clone();
         imgRight = imRight.clone();
+
+        // Setting the color image for Semantic Segmentation
+        colorImg = imColor.clone();
 
         // Frame ID
         mnId = nNextId++;
@@ -305,7 +311,7 @@ namespace ORB_SLAM3
     }
 
     // RGB-D Frames Processing
-    Frame::Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
+    Frame::Frame(const cv::Mat &imColor, const cv::Mat &imGray, const cv::Mat &imDepth, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
                  const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K,
                  cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera *pCamera,
                  Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
@@ -315,6 +321,9 @@ namespace ORB_SLAM3
           mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
           mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
     {
+        // Setting the color image for Semantic Segmentation
+        colorImg = imColor.clone();
+
         // Frame ID
         mnId = nNextId++;
 
@@ -405,7 +414,7 @@ namespace ORB_SLAM3
     }
 
     // Monocular Frames Processing
-    Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
+    Frame::Frame(const cv::Mat &imColor, const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
                  GeometricCamera *pCamera, cv::Mat &distCoef, const float &bf, const float &thDepth, Frame *pPrevF,
                  const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
@@ -413,6 +422,9 @@ namespace ORB_SLAM3
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mpCamera(pCamera),
           mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
     {
+        // Setting the color image for Semantic Segmentation
+        colorImg = imColor.clone();
+
         // Frame ID
         mnId = nNextId++;
 

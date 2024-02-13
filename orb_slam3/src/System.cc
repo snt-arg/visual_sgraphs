@@ -1096,9 +1096,9 @@ namespace ORB_SLAM3
         return mpFrameDrawer->DrawFrame();
     }
 
-    std::pair<long unsigned int, cv::Mat> System::GetCurrentKeyFrame()
+    std::vector<KeyFrame *> System::GetAllKeyFrames()
     {
-        return mpTracker->getCurrentKF();
+        return mpAtlas->GetAllKeyFrames();
     }
 
     Sophus::SE3f System::GetCamTwc()

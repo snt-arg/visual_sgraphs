@@ -209,11 +209,11 @@ namespace ORB_SLAM3
         std::vector<Room *> GetAllRooms();
         std::vector<Plane *> GetAllPlanes();
         std::vector<Marker *> GetAllMarkers();
+        std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetTrackedMapPoints();
         std::vector<Sophus::SE3f> GetAllKeyframePoses();
         std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
-        std::pair<long unsigned int, cv::Mat> GetCurrentKeyFrame();
 
         Sophus::SE3f GetCamTwc();
         Sophus::SE3f GetImuTwb();

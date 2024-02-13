@@ -66,26 +66,26 @@ namespace ORB_SLAM3
         Frame(const Frame &frame);
 
         // Constructor for stereo cameras (with or without IMU) #1
-        Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
+        Frame(const cv::Mat &imColor, const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
               ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
               const float &thDepth, GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL),
               const IMU::Calib &ImuCalib = IMU::Calib(), const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Constructor for stereo cameras (with or without IMU) #2
-        Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
+        Frame(const cv::Mat &imColor, const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeStamp, ORBextractor *extractorLeft,
               ORBextractor *extractorRight, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef, const float &bf,
               const float &thDepth, GeometricCamera *pCamera, GeometricCamera *pCamera2, Sophus::SE3f &Tlr,
               Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
               const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Constructor for RGB-D cameras (with or without IMU)
-        Frame(const cv::Mat &imGray, const cv::Mat &imDepth, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
+        Frame(const cv::Mat &imColor, const cv::Mat &imGray, const cv::Mat &imDepth, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
               const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef,
               const float &bf, const float &thDepth, GeometricCamera *pCamera, Frame *pPrevF = static_cast<Frame *>(NULL),
               const IMU::Calib &ImuCalib = IMU::Calib(), const std::vector<Marker *> markers = std::vector<Marker *>{});
 
         // Constructor for Monocular cameras (with or without IMU)
-        Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
+        Frame(const cv::Mat &imColor, const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
               GeometricCamera *pCamera, cv::Mat &distCoef, const float &bf, const float &thDepth,
               Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
               const std::vector<Marker *> markers = std::vector<Marker *>{});
@@ -383,6 +383,7 @@ namespace ORB_SLAM3
 
         Eigen::Vector3f UnprojectStereoFishEye(const int &i);
 
+        cv::Mat colorImg; // To get the color image for sending to the Semantic Segmentation
         cv::Mat imgLeft, imgRight;
 
         void PrintPointDistribution()

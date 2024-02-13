@@ -439,6 +439,10 @@ namespace ORB_SLAM3
         // bool mbHasHessian;
         // cv::Mat mHessianPose;
 
+        // For Semantic Segmentation
+        cv::Mat mImage;
+        bool isPublished;
+
         // The following variables need to be accessed trough a mutex to be thread safe.
     protected:
         // sophus poses

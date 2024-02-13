@@ -138,7 +138,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     publish_doors(pSLAM->GetAllDoors(), msg_time);
     publish_rooms(pSLAM->GetAllRooms(), msg_time);
     publish_walls(pSLAM->GetAllPlanes(), msg_time);
-    publish_kf_img(pSLAM->GetCurrentKeyFrame(), msg_time);
+    publish_kf_img(pSLAM->GetAllKeyFrames(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
@@ -251,24 +251,35 @@ void publish_static_tf_transform(string frame_id, string child_frame_id, ros::Ti
     static_broadcaster.sendTransform(static_stamped);
 }
 
-void publish_kf_img(std::pair<long unsigned int, cv::Mat> imageIdPair, ros::Time msg_time)
+void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
 {
-    // Create an object of VSGraphDataMsg
-    segmenter_ros::VSGraphDataMsg vsGraphPublisher = segmenter_ros::VSGraphDataMsg();
+    // Check all keyframes and publish the ones that have not been published for Semantic Segmentation yet
+    for (auto &keyframe : keyframe_vec)
+    {
+        if (keyframe->isPublished)
+            continue;
 
-    std_msgs::Header header;
-    header.stamp = msg_time;
-    header.frame_id = world_frame_id;
-    std_msgs::UInt64 kfId;
-    kfId.data = std::get<0>(imageIdPair);
-    const sensor_msgs::ImagePtr rendered_image_msg =
-        cv_bridge::CvImage(header, "bgr8", std::get<1>(imageIdPair)).toImageMsg();
+        // Create an object of VSGraphDataMsg
+        segmenter_ros::VSGraphDataMsg vsGraphPublisher = segmenter_ros::VSGraphDataMsg();
 
-    vsGraphPublisher.header = header;
-    vsGraphPublisher.keyFrameId = kfId;
-    vsGraphPublisher.keyFrameImage = *rendered_image_msg;
+        std_msgs::Header header;
+        header.stamp = msg_time;
+        header.frame_id = world_frame_id;
+        std_msgs::UInt64 kfId;
+        kfId.data = keyframe->mnId;
+        const sensor_msgs::ImagePtr rendered_image_msg =
+            cv_bridge::CvImage(header, "bgr8", keyframe->mImage).toImageMsg();
 
-    kf_img_pub.publish(vsGraphPublisher);
+        std::cout << "kfId: " << kfId.data << std::endl;
+        std::cout << "rendered_image_msg: " << rendered_image_msg->width << std::endl;
+
+        vsGraphPublisher.header = header;
+        vsGraphPublisher.keyFrameId = kfId;
+        vsGraphPublisher.keyFrameImage = *rendered_image_msg;
+
+        kf_img_pub.publish(vsGraphPublisher);
+        keyframe->isPublished = true;
+    }
 }
 
 void publish_tracking_img(cv::Mat image, ros::Time msg_time)
