@@ -148,6 +148,7 @@ namespace ORB_SLAM3
         void PostLoad();
 
         map<long unsigned int, KeyFrame *> GetAtlasKeyframes();
+        KeyFrame *GetKeyFrameById(long unsigned int mnId);
 
         void SetKeyFrameDababase(KeyFrameDatabase *pKFDB);
         KeyFrameDatabase *GetKeyFrameDatabase();
