@@ -253,13 +253,15 @@ Host unitree
 
 ### Subscribed Topics <a id="ros-sub"></a>
 
-| Topic                                                            | Description                        |
-| ---------------------------------------------------------------- | ---------------------------------- |
-| `/imu`                                                           | for Mono/Stereo/RGBD-Inertial node |
-| `/camera/image_raw`                                              | for Mono(-Inertial) node           |
-| `/camera/left/image_raw` and `/camera/right/image_raw`           | for Stereo(-Inertial) node         |
-| `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw` | for RGBD node                      |
-| `/aruco_marker_publisher/markers`                                | for ArUco marker library node      |
+| Topic                                                            | Description                                           |
+| ---------------------------------------------------------------- | ----------------------------------------------------- |
+| `/imu`                                                           | for Mono/Stereo/RGBD-Inertial node                    |
+| `/camera/image_raw`                                              | for Mono(-Inertial) node                              |
+| `/camera/left/image_raw` and `/camera/right/image_raw`           | for Stereo(-Inertial) node                            |
+| `/camera/rgb/image_raw` and `/camera/depth_registered/image_raw` | for RGBD node                                         |
+| `/aruco_marker_publisher/markers`                                | for ArUco marker library node                         |
+| `/camera/color/image_segment`                                    | for Semantic segmenter library node (custom message)  |
+| `/camera/color/image_segment_vis`                                | for Semantic segmenter library node (segmented image) |
 
 ### Published Topics <a id="ros-pub"></a>
 

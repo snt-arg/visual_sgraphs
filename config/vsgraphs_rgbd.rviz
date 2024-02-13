@@ -79,13 +79,10 @@ Visualization Manager:
       Tree:
         world:
           camera:
-            camera_color_optical_frame:
-              {}
-          map:
-            {}
+            camera_color_optical_frame: {}
+          map: {}
           plane:
-            room:
-              {}
+            room: {}
       Update Interval: 0
       Value: true
     - Class: rviz/Image
@@ -126,7 +123,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/Image
       Enabled: false
-      Image Topic: /camera/color/image_segment
+      Image Topic: /camera/color/image_segment_vis
       Max Value: 1
       Median window: 5
       Min Value: 0
@@ -228,32 +225,28 @@ Visualization Manager:
       Enabled: true
       Marker Topic: /orb_slam3/fiducial_markers
       Name: markers
-      Namespaces:
-        {}
+      Namespaces: {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /orb_slam3/doors
       Name: doors
-      Namespaces:
-        {}
+      Namespaces: {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /orb_slam3/planes
       Name: planes
-      Namespaces:
-        {}
+      Namespaces: {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /orb_slam3/rooms
       Name: rooms
-      Namespaces:
-        {}
+      Namespaces: {}
       Queue Size: 100
       Value: true
     - Alpha: 1
