@@ -270,9 +270,6 @@ void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time m
         const sensor_msgs::ImagePtr rendered_image_msg =
             cv_bridge::CvImage(header, "bgr8", keyframe->mImage).toImageMsg();
 
-        std::cout << "kfId: " << kfId.data << std::endl;
-        std::cout << "rendered_image_msg: " << rendered_image_msg->width << std::endl;
-
         vsGraphPublisher.header = header;
         vsGraphPublisher.keyFrameId = kfId;
         vsGraphPublisher.keyFrameImage = *rendered_image_msg;
