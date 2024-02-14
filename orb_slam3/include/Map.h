@@ -24,11 +24,10 @@
 #include "Semantic/Marker.h"
 
 #include <set>
-#include <pangolin/pangolin.h>
 #include <mutex>
-
-#include <boost/serialization/base_object.hpp>
 #include <unordered_map>
+#include <pangolin/pangolin.h>
+#include <boost/serialization/base_object.hpp>
 
 namespace ORB_SLAM3
 {
@@ -114,6 +113,10 @@ namespace ORB_SLAM3
         void SetInitKFid(long unsigned int initKFif);
 
         KeyFrame *GetOriginKF();
+        Door *GetDoorById(int doorId);
+        Room *GetRoomById(int roomId);
+        Plane *GetPlaneById(int planeId);
+        Marker *GetMarkerById(int markerId);
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
 
         void SetCurrentMap();
@@ -185,7 +188,11 @@ namespace ORB_SLAM3
         std::set<MapPoint *> mspMapPoints;
         std::set<KeyFrame *> mspKeyFrames;
 
-        // the Hashmap/Index for key frames
+        // Hashmaps and indices for fetching elements
+        std::unordered_map<int, Door *> mDoorIndex;
+        std::unordered_map<int, Room *> mRoomIndex;
+        std::unordered_map<int, Plane *> mPlaneIndex;
+        std::unordered_map<int, Marker *> mMarkerIndex;
         std::unordered_map<long unsigned int, KeyFrame *> mKFIndex;
 
         // Save/load, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated

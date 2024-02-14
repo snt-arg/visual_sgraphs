@@ -86,17 +86,6 @@ namespace ORB_SLAM3
         mKFIndex[pKF->mnId] = pKF;
     }
 
-    KeyFrame *Map::GetKeyFrameById(long unsigned int mnId)
-    {
-        KeyFrame *retrievedKF = mKFIndex[mnId];
-
-        // Check if the retrievedObject is null (the key doesn't exist in the Index)
-        if (retrievedKF == nullptr) {
-            cout << "KeyFrame with ID " << mnId << " not found in mKFIndex" << endl;
-        }
-        return retrievedKF;
-    }
-
     void Map::AddMapPoint(MapPoint *pMP)
     {
         unique_lock<mutex> lock(mMutexMap);
@@ -107,24 +96,62 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexMap);
         mspMarkers.insert(pMarker);
+        // Add the marker to the hashmap
+        mMarkerIndex[pMarker->getId()] = pMarker;
     }
 
     void Map::AddMapPlane(Plane *pPlane)
     {
         unique_lock<mutex> lock(mMutexMap);
         mspPlanes.insert(pPlane);
+        // Add the plane to the hashmap
+        mPlaneIndex[pPlane->getId()] = pPlane;
     }
 
     void Map::AddMapDoor(Door *pDoor)
     {
         unique_lock<mutex> lock(mMutexMap);
         mspDoors.insert(pDoor);
+        // Add the door to the hashmap
+        mDoorIndex[pDoor->getId()] = pDoor;
     }
 
     void Map::AddMapRoom(Room *pRoom)
     {
         unique_lock<mutex> lock(mMutexMap);
         mspRooms.insert(pRoom);
+        // [TODO] Add the room to the hashmap
+        // mRoomIndex[pRoom->getId()] = pRoom;
+    }
+
+    KeyFrame *Map::GetKeyFrameById(long unsigned int mnId)
+    {
+        KeyFrame *retrievedKF = mKFIndex[mnId];
+        return retrievedKF;
+    }
+
+    Door *Map::GetDoorById(int doorId)
+    {
+        Door *fetchedDoor = mDoorIndex[doorId];
+        return fetchedDoor;
+    }
+
+    Room *Map::GetRoomById(int roomId)
+    {
+        Room *fetchedRoom = mRoomIndex[roomId];
+        return fetchedRoom;
+    }
+
+    Plane *Map::GetPlaneById(int planeId)
+    {
+        Plane *fetchedPlane = mPlaneIndex[planeId];
+        return fetchedPlane;
+    }
+
+    Marker *Map::GetMarkerById(int markerId)
+    {
+        Marker *fetchedMarker = mMarkerIndex[markerId];
+        return fetchedMarker;
     }
 
     void Map::SetImuInitialized()

@@ -234,9 +234,34 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllKeyFrames();
     }
 
-    KeyFrame *Atlas::GetKeyFrameById(long unsigned int mnId){
+    KeyFrame *Atlas::GetKeyFrameById(long unsigned int mnId)
+    {
         KeyFrame *retrievedKF = mpCurrentMap->GetKeyFrameById(mnId);
         return retrievedKF;
+    }
+
+    Door *Atlas::GetDoorById(int doorId)
+    {
+        Door *fetchedDoor = mpCurrentMap->GetDoorById(doorId);
+        return fetchedDoor;
+    }
+
+    Room *Atlas::GetRoomById(int roomId)
+    {
+        Room *fetchedRoom = mpCurrentMap->GetRoomById(roomId);
+        return fetchedRoom;
+    }
+
+    Plane *Atlas::GetPlaneById(int planeId)
+    {
+        Plane *fetchedPlane = mpCurrentMap->GetPlaneById(planeId);
+        return fetchedPlane;
+    }
+
+    Marker *Atlas::GetMarkerById(int markerId)
+    {
+        Marker *fetchedMarker = mpCurrentMap->GetMarkerById(markerId);
+        return fetchedMarker;
     }
 
     std::vector<MapPoint *> Atlas::GetAllMapPoints()

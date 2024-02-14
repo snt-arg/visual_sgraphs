@@ -96,7 +96,8 @@ namespace ORB_SLAM3
             pointcloud = getCloudFromSparsePoints(pKF->getCurrentFrameMapPoints()); // mCurrentFrame.mvpMapPoints
 
         if (pointcloud->points.size() > minCloudSize)
-            // Estimate the plane equation
+            // [TODO] Filtering the pointcloud
+            //  Estimate the plane equation
             extractedPlanes = ransacPlaneFitting(pointcloud, minCloudSize);
 
         return extractedPlanes;

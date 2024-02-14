@@ -148,6 +148,12 @@ namespace ORB_SLAM3
         void PostLoad();
 
         map<long unsigned int, KeyFrame *> GetAtlasKeyframes();
+
+        // Functions for getting the entities
+        Door *GetDoorById(int doorId);
+        Room *GetRoomById(int roomId);
+        Plane *GetPlaneById(int planeId);
+        Marker *GetMarkerById(int markerId);
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
 
         void SetKeyFrameDababase(KeyFrameDatabase *pKFDB);
