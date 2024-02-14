@@ -877,56 +877,6 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint 
     return cloud;
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDownsample(
-    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud)
-{
-    // The filtered point cloud object
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZRGB>());
-
-    // Define the downsampling filter
-    pcl::VoxelGrid<pcl::PointXYZRGB>::Ptr downsampleFilter(new pcl::VoxelGrid<pcl::PointXYZRGB>());
-
-    // Set the parameters of the downsampling filter
-    downsampleFilter->setLeafSize(0.1f, 0.1f, 0.1f);
-    downsampleFilter->setInputCloud(cloud);
-
-    // Apply the downsampling filter
-    downsampleFilter->filter(*filtered);
-    filtered->header = cloud->header;
-
-    return filtered;
-}
-
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
-    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud)
-{
-    // Define the distance threshold parameters (in meters)
-    // [TODO] should be read from a config file
-    double thresholdNear = 0.3;
-    double thresholdFar = 3.0;
-
-    // Define the filtered point cloud object
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-    filteredCloud->reserve(cloud->size());
-
-    // Filter the point cloud
-    std::copy_if(cloud->begin(),
-                 cloud->end(),
-                 std::back_inserter(filteredCloud->points),
-                 [&](const pcl::PointXYZRGB &p)
-                 {
-                     double distance = p.getVector3fMap().norm();
-                     return distance > thresholdNear && distance < thresholdFar;
-                 });
-
-    filteredCloud->height = 1;
-    filteredCloud->is_dense = false;
-    filteredCloud->header = cloud->header;
-    filteredCloud->width = filteredCloud->size();
-
-    return filteredCloud;
-}
-
 cv::Mat SE3f_to_cvMat(Sophus::SE3f T_SE3f)
 {
     cv::Mat T_cvmat;

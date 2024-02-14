@@ -118,20 +118,6 @@ cv::Mat SE3f_to_cvMat(Sophus::SE3f);
 tf::Transform SE3f_to_tfTransform(Sophus::SE3f);
 sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 
-/**
- * Filters the pointclouds based on the given min/max distance between the points
- * @param cloud the pointcloud to be filtered
- */
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
-    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
-
-/**
- * Downsamples the pointclouds based on the given leaf size
- * @param cloud the pointcloud to be downsampled
- */
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDownsample(
-    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
-
 // Markers
 void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array);
 std::pair<double, std::vector<ORB_SLAM3::Marker *>> find_nearest_marker(double frame_timestamp);

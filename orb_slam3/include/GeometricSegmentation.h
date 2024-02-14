@@ -69,13 +69,6 @@ namespace ORB_SLAM3
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCloudFromSparsePoints(const std::vector<MapPoint *> &points);
 
         /**
-         * @brief Performs PCL ransac to get the plane equations from the a given point cloud
-         * @param cloud the input point cloud
-         */
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints);
-
-        /**
          * @brief Associates a detected plane into the planes found in the map and returns
          * if it needs to be added to the plane or not.
          * @param mappedPlanes an array of planes with their IDs and equations

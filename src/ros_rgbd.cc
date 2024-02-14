@@ -140,12 +140,6 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     // Convert pointclouds from ros to pcl format
     pcl::fromROSMsg(*msgPC, *cloud);
 
-    // Downsample the given pointcloud
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = pointcloudDownsample(cloud);
-
-    // Filter the pointcloud based on a range of distance
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = pointcloudDistanceFilter(downsampledCloud);
-
     // Find the marker with the minimum time difference compared to the current frame
     std::pair<double, std::vector<ORB_SLAM3::Marker *>>
         result = find_nearest_marker(cv_ptrRGB->header.stamp.toSec());
@@ -155,7 +149,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     // Tracking process sends markers found in this frame for tracking and clears the buffer
     if (min_time_diff < 0.05)
     {
-        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud, filteredCloud,
+        Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud,
                                             cv_ptrRGB->header.stamp.toSec(),
                                             {}, "", matched_markers, env_doors, env_rooms);
         markers_buff.clear();
@@ -163,7 +157,7 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     else
     {
         Sophus::SE3f Tcw = pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud,
-                                            filteredCloud, cv_ptrRGB->header.stamp.toSec());
+                                            cv_ptrRGB->header.stamp.toSec());
     }
 
     ros::Time msg_time = cv_ptrRGB->header.stamp;

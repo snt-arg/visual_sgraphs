@@ -10,6 +10,12 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/PCLPointCloud2.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/segmentation/sac_segmentation.h>
 
 namespace ORB_SLAM3
 {
@@ -65,6 +71,28 @@ namespace ORB_SLAM3
          */
         static std::pair<bool, std::string> isMarkerAttachedToDoor(const int &markerId,
                                                                    std::vector<ORB_SLAM3::Door *> envDoors);
+
+        /**
+         * Filters the pointclouds based on the given min/max distance between the points
+         * @param cloud the pointcloud to be filtered
+         */
+        static pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
+            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
+
+        /**
+         * Downsamples the pointclouds based on the given leaf size
+         * @param cloud the pointcloud to be downsampled
+         */
+        static pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDownsample(
+            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
+
+        /**
+         * @brief Performs PCL ransac to get the plane equations from the a given point cloud
+         * @param cloud the input point cloud
+         * @param minSegmentationPoints the minimum number of points
+         */
+        static std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints);
     };
 }
 

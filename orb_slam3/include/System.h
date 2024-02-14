@@ -126,7 +126,6 @@ namespace ORB_SLAM3
          * @param im the input RGB image (CV_8UC3) or grayscale (CV_8U)
          * @param depthmap the input DepthMap (CV_32F)
          * @param mainCloud the main input PointCloud before filtering
-         * @param filteredCloud the filtered input PointCloud
          * @param timestamp the timestamp of the frame
          * @param vImuMeas the vector of IMU measurements
          * @param filename the name of the file
@@ -137,7 +136,6 @@ namespace ORB_SLAM3
          */
         Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap,
                                const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &mainCloud,
-                               const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &filteredCloud,
                                const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(),
                                string filename = "", const vector<Marker *> markers = vector<Marker *>{},
                                const vector<Door *> envDoors = vector<Door *>{},

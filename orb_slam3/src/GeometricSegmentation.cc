@@ -96,9 +96,16 @@ namespace ORB_SLAM3
             pointcloud = getCloudFromSparsePoints(pKF->getCurrentFrameMapPoints()); // mCurrentFrame.mvpMapPoints
 
         if (pointcloud->points.size() > minCloudSize)
-            // [TODO] Filtering the pointcloud
+        {
+            // Downsample the given pointcloud
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
+
+            // Filter the pointcloud based on a range of distance
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud);
+
             //  Estimate the plane equation
-            extractedPlanes = ransacPlaneFitting(pointcloud, minCloudSize);
+            extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
+        }
 
         return extractedPlanes;
     }
@@ -118,89 +125,6 @@ namespace ORB_SLAM3
         }
         // Return the cloud
         return cloud;
-    }
-
-    std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> GeometricSegmentation::ransacPlaneFitting(
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints)
-    {
-        // Variables
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
-
-        // Loop over cloud points as long as the cloud is large enough
-        // [TODO] Temporary disabling sequential ransac
-        // while (cloud->points.size() > minSegmentationPoints)
-        {
-            try
-            {
-                // Create objects for RANSAC plane segmentation
-                pcl::ExtractIndices<pcl::PointXYZRGB> extract;
-                pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-                pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
-                // Create the SAC segmentation object
-                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
-
-                // Fill the values of the segmentation object
-                seg.setInputCloud(cloud);
-                seg.setNumberOfThreads(8);
-                seg.setMaxIterations(200);
-                seg.setDistanceThreshold(0.1);
-                seg.setOptimizeCoefficients(true);
-                seg.setMethodType(pcl::SAC_RANSAC);
-                seg.setModelType(pcl::SACMODEL_PLANE);
-
-                // Apply RANSAC segmentation
-                seg.segment(*inliers, *coeffs);
-
-                // Check if any model was found while processing the point cloud indices
-                // if (inliers->indices.empty())
-                //     break;
-
-                // Calculate normal on the plane
-                Eigen::Vector4d planeEquation(coeffs->values[0], coeffs->values[1],
-                                              coeffs->values[2], coeffs->values[3]);
-
-                // Calculate the closest points
-                Eigen::Vector4d plane;
-                Eigen::Vector3d closestPoint = planeEquation.head(3) * planeEquation(3);
-                plane.head(3) = closestPoint / closestPoint.norm();
-                plane(3) = closestPoint.norm();
-
-                // Create a new point cloud containing the points of the detected planes
-                pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr extractedCloud(
-                    new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-                for (const auto &idx : inliers->indices)
-                {
-                    pcl::PointXYZRGBNormal tmpCloud;
-                    // Fill the point cloud
-                    tmpCloud.x = cloud->points[idx].x;
-                    tmpCloud.y = cloud->points[idx].y;
-                    tmpCloud.z = cloud->points[idx].z;
-                    tmpCloud.normal_x = plane(0);
-                    tmpCloud.normal_y = plane(1);
-                    tmpCloud.normal_z = plane(2);
-                    tmpCloud.curvature = plane(3);
-                    // Add the point to the cloud
-                    extractedCloud->points.push_back(tmpCloud);
-                }
-
-                // Add the extracted cloud to the vector
-                extractedPlanes.push_back(extractedCloud);
-
-                // Extract the inliers
-                extract.setInputCloud(cloud);
-                extract.setIndices(inliers);
-                extract.setNegative(true);
-                extract.filter(*cloud);
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "RANSAC model error!" << std::endl;
-                // break;
-            }
-        }
-
-        // Return the extracted clouds
-        return extractedPlanes;
     }
 
     int GeometricSegmentation::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
