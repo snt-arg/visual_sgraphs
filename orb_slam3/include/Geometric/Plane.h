@@ -10,7 +10,6 @@
 
 #include <set>
 #include "Map.h"
-#include "Types.h"
 #include "MapPoint.h"
 #include "Semantic/Marker.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
@@ -23,6 +22,15 @@ namespace ORB_SLAM3
 
     class Plane
     {
+    public:
+        enum planeVariant
+        {
+            UNDEFINED = -1,
+            WALL = 0,
+            FLOOR = 1,
+            WINDOW = 2
+        };
+
     private:
         int id;                                                   // The plane's identifier
         int opId;                                                 // The plane's identifier in the local optimizer

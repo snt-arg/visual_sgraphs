@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Fiducial Marker Entity
  */
 
 #include "Semantic/Marker.h"
@@ -50,6 +47,16 @@ namespace ORB_SLAM3
     void Marker::setTime(double value)
     {
         time = value;
+    }
+
+    Marker::markerVariant Marker::getMarkerType() const
+    {
+        return markerType;
+    }
+
+    void Marker::setMarkerType(Marker::markerVariant newType)
+    {
+        markerType = newType;
     }
 
     bool Marker::isMarkerInGMap() const

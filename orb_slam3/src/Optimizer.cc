@@ -310,7 +310,7 @@ namespace ORB_SLAM3
         for (const auto &vpPlane : vpPlanes)
         {
             // Skip undefined planes (if not wall for now)
-            if (vpPlane->getPlaneType() == planeVariant::UNDEFINED)
+            if (vpPlane->getPlaneType() == Plane::planeVariant::UNDEFINED)
                 continue;
             // Adding a vertex for each plane
             g2o::VertexPlane *vPlane = new g2o::VertexPlane();
@@ -1352,7 +1352,7 @@ namespace ORB_SLAM3
             {
                 Plane *plane = *idx;
                 // If the plane is not wall, do not add it to the local map
-                if (plane->getPlaneType() == planeVariant::UNDEFINED)
+                if (plane->getPlaneType() == Plane::planeVariant::UNDEFINED)
                     continue;
                 lLocalMapPlanes.push_back(plane);
             }

@@ -112,7 +112,7 @@ namespace ORB_SLAM3
         long unsigned int GetInitKFid();
         long unsigned int GetMaxKFid();
         void SetInitKFid(long unsigned int initKFif);
-        
+
         KeyFrame *GetOriginKF();
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
 

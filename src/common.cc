@@ -534,7 +534,7 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
     for (int idx = 0; idx < numPlanes; idx++)
     {
         // If the plane is not a wall, skip it
-        if (planes[idx]->getPlaneType() != planeVariant::WALL)
+        if (planes[idx]->getPlaneType() != ORB_SLAM3::Plane::planeVariant::WALL)
             continue;
 
         visualization_msgs::Marker wall, wallPoints, wallLines;
@@ -957,43 +957,44 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
 
 /**
  * @brief Adds the markers from the received marker array into the common buffer
- * @param marker_array The marker array received from the camera
+ * @param markerArray The marker array received from the camera
  */
-void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array)
+void add_markers_to_buffer(const aruco_msgs::MarkerArray &markerArray)
 {
     // The list of markers observed in the current frame
-    std::vector<ORB_SLAM3::Marker *> current_markers;
+    std::vector<ORB_SLAM3::Marker *> currentMarkers;
 
     // Process the received marker array
-    for (const auto &marker : marker_array.markers)
+    for (const auto &marker : markerArray.markers)
     {
         // Access information of each passed ArUco marker
-        int marker_id = marker.id;
-        double visit_time = marker.header.stamp.toSec();
-        geometry_msgs::Pose marker_pose = marker.pose.pose;
-        geometry_msgs::Point marker_position = marker_pose.position;            // (x,y,z)
-        geometry_msgs::Quaternion marker_orientation = marker_pose.orientation; // (x,y,z,w)
+        int markerId = marker.id;
+        double visitTime = marker.header.stamp.toSec();
+        geometry_msgs::Pose markerPose = marker.pose.pose;
+        geometry_msgs::Point markerPosition = markerPose.position;            // (x,y,z)
+        geometry_msgs::Quaternion markerOrientation = markerPose.orientation; // (x,y,z,w)
 
-        Eigen::Vector3f marker_translation(marker_position.x, marker_position.y, marker_position.z);
-        Eigen::Quaternionf marker_quaternion(marker_orientation.w, marker_orientation.x,
-                                             marker_orientation.y, marker_orientation.z);
-        Sophus::SE3f normalized_pose(marker_quaternion, marker_translation);
+        Eigen::Vector3f markerTranslation(markerPosition.x, markerPosition.y, markerPosition.z);
+        Eigen::Quaternionf markerQuaternion(markerOrientation.w, markerOrientation.x,
+                                            markerOrientation.y, markerOrientation.z);
+        Sophus::SE3f normalizedPose(markerQuaternion, markerTranslation);
 
         // Create a marker object of the currently visited marker
-        ORB_SLAM3::Marker *current_marker = new ORB_SLAM3::Marker();
-        current_marker->setOpId(-1);
-        current_marker->setId(marker_id);
-        current_marker->setTime(visit_time);
-        current_marker->setMarkerInGMap(false);
-        current_marker->setLocalPose(normalized_pose);
+        ORB_SLAM3::Marker *currentMarker = new ORB_SLAM3::Marker();
+        currentMarker->setOpId(-1);
+        currentMarker->setId(markerId);
+        currentMarker->setTime(visitTime);
+        currentMarker->setMarkerInGMap(false);
+        currentMarker->setLocalPose(normalizedPose);
+        currentMarker->setMarkerType(ORB_SLAM3::Marker::markerVariant::UNKNOWN);
 
         // Add it to the list of observed markers
-        current_markers.push_back(current_marker);
+        currentMarkers.push_back(currentMarker);
     }
 
     // Add the new markers to the list of markers in buffer
-    if (current_markers.size() > 0)
-        markers_buff.push_back(current_markers);
+    if (currentMarkers.size() > 0)
+        markers_buff.push_back(currentMarkers);
 }
 
 /**
