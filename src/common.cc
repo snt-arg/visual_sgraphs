@@ -537,7 +537,7 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
     for (int idx = 0; idx < numPlanes; idx++)
     {
         // If the plane is not a wall, skip it
-        if (planes[idx]->getPlaneType() != semanticType::WALL)
+        if (planes[idx]->getPlaneType() != planeVariant::WALL)
             continue;
 
         visualization_msgs::Marker wall, wallPoints, wallLines;

@@ -1,4 +1,4 @@
-enum semanticType
+enum planeVariant
 {
     UNDEFINED = -1,
     WALL = 0,

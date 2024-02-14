@@ -27,7 +27,7 @@ namespace ORB_SLAM3
         int id;                                                   // The plane's identifier
         int opId;                                                 // The plane's identifier in the local optimizer
         int opIdG;                                                // The plane's identifier in the global optimizer
-        semanticType planeType;                                   // The plane's semantic type (e.g., wall, floor, etc.)
+        planeVariant planeType;                                   // The plane's semantic type (e.g., wall, floor, etc.)
         Eigen::Vector3f centroid;                                 // The centroid of the plane
         std::vector<double> color;                                // A color devoted for visualization
         g2o::Plane3D local_equation;                              // The plane equation in the local map
@@ -56,8 +56,8 @@ namespace ORB_SLAM3
         void setMarkers(Marker *value);
         std::vector<Marker *> getMarkers() const;
 
-        semanticType getPlaneType() const;
-        void setPlaneType(semanticType newType);
+        planeVariant getPlaneType() const;
+        void setPlaneType(planeVariant newType);
 
         void setMapPoints(MapPoint *value);
         std::set<MapPoint *> getMapPoints();

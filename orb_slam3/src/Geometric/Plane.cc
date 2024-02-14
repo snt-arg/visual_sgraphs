@@ -99,12 +99,12 @@ namespace ORB_SLAM3
             plane_cloud->points.push_back(point);
     }
 
-    semanticType Plane::getPlaneType() const
+    planeVariant Plane::getPlaneType() const
     {
         return planeType;
     }
 
-    void Plane::setPlaneType(semanticType newType)
+    void Plane::setPlaneType(planeVariant newType)
     {
         planeType = newType;
     }

@@ -255,7 +255,7 @@ namespace ORB_SLAM3
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
 
         // Set the plane type to undefined, as it is not known yet
-        newMapPlane->setPlaneType(semanticType::UNDEFINED);
+        newMapPlane->setPlaneType(planeVariant::UNDEFINED);
 
         // Set the global equation of the plane
         g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
@@ -314,7 +314,7 @@ namespace ORB_SLAM3
                 if (visitedMarker != NULL)
                 {
                     currentPlane->setMarkers(visitedMarker);
-                    currentPlane->setPlaneType(semanticType::WALL);
+                    currentPlane->setPlaneType(planeVariant::WALL);
                     currentPlane->addObservation(pKF, estimatedPlane);
                     // std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
                     //           << visitedMarker->getId() << std::endl;
