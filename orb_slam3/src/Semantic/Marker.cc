@@ -71,22 +71,22 @@ namespace ORB_SLAM3
 
     Sophus::SE3f Marker::getLocalPose() const
     {
-        return local_pose;
+        return localPose;
     }
 
     void Marker::setLocalPose(const Sophus::SE3f &value)
     {
-        local_pose = value;
+        localPose = value;
     }
 
     Sophus::SE3f Marker::getGlobalPose() const
     {
-        return global_pose;
+        return globalPose;
     }
 
     void Marker::setGlobalPose(const Sophus::SE3f &value)
     {
-        global_pose = value;
+        globalPose = value;
     }
 
     const std::map<KeyFrame *, Sophus::SE3f> &Marker::getObservations() const
@@ -94,9 +94,9 @@ namespace ORB_SLAM3
         return mObservations;
     }
 
-    void Marker::addObservation(KeyFrame *pKF, Sophus::SE3f local_pose)
+    void Marker::addObservation(KeyFrame *pKF, Sophus::SE3f localPose)
     {
-        mObservations.insert({pKF, local_pose});
+        mObservations.insert({pKF, localPose});
     }
 
     Map *Marker::GetMap()

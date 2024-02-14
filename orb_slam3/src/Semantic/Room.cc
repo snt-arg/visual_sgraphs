@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Room (Four-wall Room or Corridor) Entity
  */
 
 #include "Semantic/Room.h"
@@ -64,12 +61,12 @@ namespace ORB_SLAM3
 
     bool Room::getAllSeenMarkers() const
     {
-        return all_seen_markers;
+        return allSeenMarkers;
     }
 
     void Room::setAllSeenMarkers(bool value)
     {
-        all_seen_markers = value;
+        allSeenMarkers = value;
     }
 
     bool Room::getIsCorridor() const
@@ -109,32 +106,32 @@ namespace ORB_SLAM3
 
     Eigen::Vector3d Room::getRoomCenter() const
     {
-        return room_center;
+        return roomCenter;
     }
 
     void Room::setRoomCenter(Eigen::Vector3d value)
     {
-        room_center = value;
+        roomCenter = value;
     }
 
     std::vector<int> Room::getDoorMarkerIds() const
     {
-        return door_marker_ids;
+        return doorMarkerIds;
     }
 
     void Room::setDoorMarkerIds(int value)
     {
-        door_marker_ids.push_back(value);
+        doorMarkerIds.push_back(value);
     }
 
     std::vector<std::vector<int>> Room::getWallMarkerIds() const
     {
-        return wall_marker_ids;
+        return wallMarkerIds;
     }
 
     void Room::setWallMarkerIds(std::vector<int> value)
     {
-        wall_marker_ids.push_back(value);
+        wallMarkerIds.push_back(value);
     }
 
     Map *Room::GetMap()

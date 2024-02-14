@@ -30,8 +30,8 @@ namespace ORB_SLAM3
         int opIdG;                                        // The marker's identifier in the global optimizer
         double time;                                      // The timestamp (in seconds) of observing the marker
         bool markerInGMap;                                // Check if the marker is in the Global Map or not
-        Sophus::SE3f local_pose;                          // Marker's pose (position and orientation) in the Local Map
-        Sophus::SE3f global_pose;                         // Marker's pose (position and orientation) in the Global Map
+        Sophus::SE3f localPose;                           // Marker's pose (position and orientation) in the Local Map
+        Sophus::SE3f globalPose;                          // Marker's pose (position and orientation) in the Global Map
         markerVariant markerType;                         // The semantic object the marker is labeled with (e.g., wall, etc.)
         std::map<KeyFrame *, Sophus::SE3f> mObservations; // Marker's observations in keyFrames
 
@@ -64,7 +64,7 @@ namespace ORB_SLAM3
         void setGlobalPose(const Sophus::SE3f &value);
 
         const std::map<KeyFrame *, Sophus::SE3f> &getObservations() const;
-        void addObservation(KeyFrame *pKF, Sophus::SE3f local_pose);
+        void addObservation(KeyFrame *pKF, Sophus::SE3f localPose);
 
         Map *GetMap();
         void SetMap(Map *pMap);

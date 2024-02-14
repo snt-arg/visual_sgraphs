@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Door Frame Entity
  */
 
 #ifndef DOOR_H
@@ -19,14 +16,14 @@ namespace ORB_SLAM3
     class Door
     {
     private:
-        int id;                   // The door's identifier
-        int opId;                 // The door's identifier in the local optimizer
-        int opIdG;                // The door's identifier in the global optimizer
-        int marker_id;            // The marker attached to a door [in real map]
-        Marker *marker;           // The marker attached on the door
-        std::string name;         // The name devoted for each door (optional)
-        Sophus::SE3f local_pose;  // Door's pose (position and orientation) in the Local Map
-        Sophus::SE3f global_pose; // Door's pose (position and orientation) in the Global Map
+        int id;                  // The door's identifier
+        int opId;                // The door's identifier in the local optimizer
+        int opIdG;               // The door's identifier in the global optimizer
+        int markerId;            // The marker attached to a door [in real map]
+        Marker *marker;          // The marker attached on the door
+        std::string name;        // The name devoted for each door (optional)
+        Sophus::SE3f localPose;  // Door's pose (position and orientation) in the Local Map
+        Sophus::SE3f globalPose; // Door's pose (position and orientation) in the Global Map
 
     public:
         Door();

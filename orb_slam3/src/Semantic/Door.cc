@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Door Frame Entity
  */
 
 #include "Semantic/Door.h"
@@ -44,12 +41,12 @@ namespace ORB_SLAM3
 
     int Door::getMarkerId() const
     {
-        return marker_id;
+        return markerId;
     }
 
     void Door::setMarkerId(int value)
     {
-        marker_id = value;
+        markerId = value;
     }
 
     std::string Door::getName() const
@@ -74,22 +71,22 @@ namespace ORB_SLAM3
 
     Sophus::SE3f Door::getLocalPose() const
     {
-        return local_pose;
+        return localPose;
     }
 
     void Door::setLocalPose(const Sophus::SE3f &value)
     {
-        local_pose = value;
+        localPose = value;
     }
 
     Sophus::SE3f Door::getGlobalPose() const
     {
-        return global_pose;
+        return globalPose;
     }
 
     void Door::setGlobalPose(const Sophus::SE3f &value)
     {
-        global_pose = value;
+        globalPose = value;
     }
 
     Map *Door::GetMap()

@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Room (Four-wall Room or Corridor) Entity
  */
 
 #ifndef ROOM_H
@@ -20,18 +17,18 @@ namespace ORB_SLAM3
     class Room
     {
     private:
-        int id;                                        // The room's identifier
-        int opId;                                      // The room's identifier in the local optimizer
-        int opIdG;                                     // The room's identifier in the global optimizer
-        bool isCorridor;                               // Checks if the room is a corridor or not
-        int metaMarkerId;                              // The identifier of the room's meta-marker (containing information about the room)
-        std::string name;                              // The name devoted for each room (optional)
-        bool all_seen_markers;                         // Checks if the room markers are already detected
-        std::vector<Door *> doors;                     // The vector of detected doors of a room
-        std::vector<Plane *> walls;                    // The vector of detected walls of a room
-        Eigen::Vector3d room_center;                   // The center of the room as a 3D vector
-        std::vector<int> door_marker_ids;              // Markers attached to the doors of a room [in real map], e.g. [3, 4]
-        std::vector<std::vector<int>> wall_marker_ids; // Marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
+        int id;                                      // The room's identifier
+        int opId;                                    // The room's identifier in the local optimizer
+        int opIdG;                                   // The room's identifier in the global optimizer
+        bool isCorridor;                             // Checks if the room is a corridor or not
+        int metaMarkerId;                            // The identifier of the room's meta-marker (containing information about the room)
+        std::string name;                            // The name devoted for each room (optional)
+        bool allSeenMarkers;                         // Checks if the room markers are already detected
+        std::vector<Door *> doors;                   // The vector of detected doors of a room
+        std::vector<Plane *> walls;                  // The vector of detected walls of a room
+        Eigen::Vector3d roomCenter;                  // The center of the room as a 3D vector
+        std::vector<int> doorMarkerIds;              // Markers attached to the doors of a room [in real map], e.g. [3, 4]
+        std::vector<std::vector<int>> wallMarkerIds; // Marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
