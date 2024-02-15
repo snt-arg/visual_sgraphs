@@ -10,7 +10,7 @@ namespace ORB_SLAM3
 
     void SemanticSegmentation::Run()
     {
-        while (1)
+        while (true)
         {
             // Check if there are new KeyFrames in the buffer
             if (segmentedImageBuffer.empty())
@@ -27,8 +27,30 @@ namespace ORB_SLAM3
 
             // separate point clouds while applying threshold
             pcl::PCLPointCloud2::Ptr pclPc2SegPrb = std::get<2>(segImgTuple);
-            std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clsCloudPtrs;
+            std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clsCloudPtrs;
             threshSeparatePointCloud(pclPc2SegPrb, clsCloudPtrs);
+
+            // get the point cloud from the respective keyframe via the atlas - ignore it if KF doesn't exist
+            KeyFrame *thisKF = mpAtlas->GetKeyFrameById(std::get<0>(segImgTuple));
+            if (thisKF == nullptr) continue;
+            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisKFPointCloud = thisKF->getCurrentFramePointCloud();
+
+            // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
+            enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
+
+            // [TODO] make minCloudSize a parameter
+            const int minCloudSize = 200;
+
+            // get all planes for each class specific point cloud using RANSAC
+            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes = 
+                getPlanesFromClassClouds(clsCloudPtrs, minCloudSize);
+
+            cout << "Number of Floor planes detected: " << clsPlanes[0].size() << endl;
+            cout << "Number of Wall planes detected: " << clsPlanes[1].size() << endl;
+
+            // [TODO] Associate the RANSACed planes with semantic classes in Atlas
+            // [TODO] Associate semantic class ID with vector indices
+
 
             // structure below
             // Get the unfiltered point cloud of the KF
@@ -55,28 +77,22 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::threshSeparatePointCloud(
-        pcl::PCLPointCloud2::Ptr &pclPc2SegPrb, std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &clsCloudPtrs)
+        pcl::PCLPointCloud2::Ptr &pclPc2SegPrb, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs)
     {
-        // // only for validation - needs Mat image as input
-        // cv::Mat image = cv_imgSeg->image;
-        // cv::Mat mask = cv::Mat::zeros(image.size(), CV_8UC1);
-
         const int width = pclPc2SegPrb->width;
         const int numPoints = width * pclPc2SegPrb->height;
         const int pointStep = pclPc2SegPrb->point_step;
         const int numClasses = pointStep / bytesPerClassProb;
 
-        cout << numClasses << " " << numPoints << " " << pointStep << endl;
-
         for (int i = 0; i < numClasses; i++)
         {
-            pcl::PointCloud<pcl::PointXYZ>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
             pointCloud->is_dense = false;
             pointCloud->height = 1;
             clsCloudPtrs.push_back(pointCloud);
         }
 
-        // read the point cloud and apply thresholding
+        // parse the point cloud message and apply thresholding
         const uint8_t *data = pclPc2SegPrb->data.data();
         for (int i = 0; i < numPoints; i++)
         {
@@ -85,24 +101,15 @@ namespace ORB_SLAM3
                 float value;
                 memcpy(&value, data + pointStep * i + bytesPerClassProb * j + pclPc2SegPrb->fields[0].offset, bytesPerClassProb);
 
+                // [TODO] make the thresholding a configuration parameter
                 if (value >= 0.9)
                 {
                     // inject coordinates as a point to respective point cloud
-                    pcl::PointXYZ point;
+                    pcl::PointXYZRGB point;
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
                     clsCloudPtrs[j]->push_back(point);
-
-                    // // only for validation
-                    // if (j == 1 && point.x >= 0 && point.x < image.cols && point.y >= 0 && point.y < image.rows) {
-                    // // Set the corresponding pixel in the mask to white (255)
-                    //     mask.at<uchar>(point.y, point.x) = 255;
-                    // }
                 }
-
-                // Occasionaly log values
-                if (i % 100000 == 0)
-                    cout << "Point " << i << ", Class " << j << ": " << value << endl;
             }
         }
 
@@ -110,12 +117,46 @@ namespace ORB_SLAM3
         for (int i = 0; i < numClasses; i++)
         {
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
-            cout << "Class " << i << " has " << clsCloudPtrs[i]->width << " points." << endl;
         }
+    }
+    
+    void SemanticSegmentation::enrichClassSpecificPointClouds(
+        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud)
+    {
+        for (int i = 0; i < clsCloudPtrs.size(); i++){
+            for (int j = 0; j < clsCloudPtrs[i]->width; j++)
+            {
+                const int pointIndex = clsCloudPtrs[i]->points[j].y * thisKFPointCloud->width + clsCloudPtrs[i]->points[j].x;
+                clsCloudPtrs[i]->points[j] = thisKFPointCloud->points[pointIndex];
+            }
+        }
+    }
 
-        // // only for validation
-        // cv::imshow("Image", image);
-        // cv::imshow("Mask", mask);
-        // cv::waitKey(10);
+    std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> SemanticSegmentation::getPlanesFromClassClouds(
+        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, int minCloudSize)
+    {
+        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes;
+
+        // downsample and filter the point clouds
+        for (int i = 0; i < clsCloudPtrs.size(); i++)
+        {
+            // [TODO] decide when to downsample and/or distance filter
+
+            // Downsample the given pointcloud
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(clsCloudPtrs[i]);
+            cout << "Downsampled cloud " << i << " has " << downsampledCloud->width << " points." << endl;
+
+            // Filter the pointcloud based on a range of distance
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud);
+            cout << "Filtered cloud " << i << " has " << filteredCloud->width << " points." << endl;
+
+            std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
+            if (filteredCloud->points.size() > minCloudSize){
+                //  Extract planes from the filtered point cloud
+                extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
+            }
+            clsPlanes.push_back(extractedPlanes);
+        }
+        return clsPlanes;
     }
 }
