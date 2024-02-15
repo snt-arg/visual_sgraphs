@@ -95,14 +95,16 @@ namespace ORB_SLAM3
             // the depth from points using Machine Learning to get a better plane estimate.
             pointcloud = getCloudFromSparsePoints(pKF->getCurrentFrameMapPoints()); // mCurrentFrame.mvpMapPoints
 
-        if (pointcloud->points.size() > minCloudSize)
+        // Downsample the given pointcloud
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
+
+        // Filter the pointcloud based on a range of distance
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud);
+
+        // [TODO] remove minCloudSize from the RANSAC function
+
+        if (filteredCloud->points.size() > minCloudSize)
         {
-            // Downsample the given pointcloud
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
-
-            // Filter the pointcloud based on a range of distance
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud);
-
             //  Estimate the plane equation
             extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
         }
