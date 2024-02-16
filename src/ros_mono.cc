@@ -67,7 +67,11 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImageGrabber igb;
     sensor_type = ORB_SLAM3::System::MONOCULAR;
-    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sensor_type, enable_pangolin);
+
+    // Setting parameters to be used in 'System.cc'
+    setSystemParams(sysParams);
+
+    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sysParams, sensor_type, enable_pangolin);
 
     // Set the environment data (doors) for the GeometricSegmentation thread
     pSLAM->setEnvDoors(env_doors);

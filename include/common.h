@@ -46,6 +46,7 @@
 // ORB-SLAM3-specific libraries
 #include "System.h"
 #include "ImuTypes.h"
+#include "Types/SystemParams.h"
 
 // ArUco-ROS library
 #include <aruco_msgs/MarkerArray.h>
@@ -61,6 +62,7 @@
 
 using json = nlohmann::json;
 
+class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
@@ -68,6 +70,7 @@ extern int pointcloud_size;                // Number of points in the pointcloud
 extern double marker_impact;               // Impact of markers in the optimization process
 extern double roll, pitch, yaw;            // Defining axes for transformation
 extern bool publish_static_transform;      // If true, it should use transformed calculations
+extern ORB_SLAM3::SystemParams sysParams;  // System parameters set in the launch files
 extern double segmentation_prob_threshold; // The probability threshold for the segmentation process
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 
@@ -122,5 +125,15 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint 
 void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array);
 std::pair<double, std::vector<ORB_SLAM3::Marker *>> find_nearest_marker(double frame_timestamp);
 
-// Semantic entities
+/**
+ * @brief Parses JSON values (database) and loads them into
+ * @param jsonFilePath The path to the JSON file containing the environment data
+ */
 void load_json_values(string jsonFilePath);
+
+/**
+ * @brief Sets the values of the system parameters' struct using the values from
+ * the ROS parameter server to be used in other files
+ * @param markerArray The marker array received from the camera
+ */
+void setSystemParams(ORB_SLAM3::SystemParams &sysParams);

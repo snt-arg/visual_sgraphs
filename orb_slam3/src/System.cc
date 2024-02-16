@@ -36,13 +36,13 @@ namespace ORB_SLAM3
 
     Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
-    System::System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
+    System::System(const string &strVocFile, const string &strSettingsFile, const SystemParams &sysParams, const eSensor sensor,
                    const bool bUseViewer, const int initFr, const string &strSequence) : mSensor(sensor), mpViewer(static_cast<Viewer *>(NULL)), mbReset(false), mbResetActiveMap(false),
-                                                                                         mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
+                                                                                         mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false), sysParams(sysParams)
     {
         // Output welcome message
         cout << endl
-             << "Visual S-Graphs Copyright © 2023 by Ali Tourani, Hriday Bavle, Jose Luis Sanchez-Lopez, and Holger Voos, SnT - University of Luxembourg." << endl
+             << "Visual S-Graphs Copyright © 2023-2024 by Ali Tourani, Hriday Bavle, Jose Luis Sanchez-Lopez, and Holger Voos, SnT - University of Luxembourg." << endl
              << "Based on ORB-SLAM3 Copyright © 2017-2023 by C. Campos, R. Elvira, J.J. Gómez, J.M.M. Montiel, and J.D. Tardós, University of Zaragoza." << endl
              << "To redistribute the software please see LICENSE.txt." << endl
              << endl;
@@ -1403,16 +1403,9 @@ namespace ORB_SLAM3
         return pActiveMap->GetAllRooms();
     }
 
-    void System::SetSystemParameters(SystemParams newParams)
+    SystemParams System::GetSystemParameters()
     {
-        params.markerImpact = newParams.markerImpact;
-        params.pointCloudSize = newParams.pointCloudSize;
-        // params.segmentationProbabilityThreshold = newParams.segmentationProbabilityThreshold;
-    }
-
-    System::SystemParams System::GetSystemParameters()
-    {
-        return this->params;
+        return this->sysParams;
     }
 
     bool System::SaveMap(const string &filename)

@@ -1,7 +1,5 @@
 /**
- *
- * Common functions and variables across all modes (mono/stereo, with or w/o imu)
- *
+ * 🚀 [vS-Graphs] Common Functions and Variables Across All Modes (mono/stereo, with or w/o imu)*
  */
 
 #include "common.h"
@@ -28,6 +26,9 @@ ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, d
 // List of semantic entities available in the real environment (filled using JSON)
 std::vector<ORB_SLAM3::Room *> env_rooms;
 std::vector<ORB_SLAM3::Door *> env_doors;
+
+// System parameters set in the launch files
+ORB_SLAM3::SystemParams sysParams;
 
 //////////////////////////////////////////////////
 // Main functions
@@ -113,13 +114,6 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
 
 void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
 {
-    // Setting parameters to be used in 'System.cc'
-    ORB_SLAM3::System::SystemParams params;
-    params.pointCloudSize = pointcloud_size;
-    params.markerImpact = marker_impact;
-    // params.segmentationProbabilityThreshold = segmentation_prob_threshold;
-    pSLAM->SetSystemParameters(params);
-
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
 
     // Avoid publishing NaN
@@ -969,13 +963,6 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> find_nearest_marker(double f
     return std::make_pair(min_time_diff, matched_markers);
 }
 
-//////////////////////////////////////////////////
-// Semantic Analysis Modules
-//////////////////////////////////////////////////
-
-/**
- * @brief Parses JSON values (database) and loads them into
- */
 void load_json_values(string jsonFilePath)
 {
     // Creating an object of the database loader
@@ -985,4 +972,10 @@ void load_json_values(string jsonFilePath)
     // Getting semantic entities
     env_rooms = parser.getEnvRooms(envData);
     env_doors = parser.getEnvDoors(envData);
+}
+
+void setSystemParams(ORB_SLAM3::SystemParams &sysParams)
+{
+    sysParams.pointCloudSize = pointcloud_size;
+    sysParams.markerImpact = marker_impact;
 }

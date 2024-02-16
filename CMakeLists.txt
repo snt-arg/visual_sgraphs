@@ -173,11 +173,12 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/Config.h
   orb_slam3/include/Utils.h
   orb_slam3/include/Settings.h
-  orb_slam3/include/Geometric/Plane.h
-  orb_slam3/include/Semantic/Marker.h
   orb_slam3/include/Semantic/Door.h
   orb_slam3/include/Semantic/Room.h
   orb_slam3/include/DatabaseParser.h
+  orb_slam3/include/Semantic/Marker.h
+  orb_slam3/include/Geometric/Plane.h
+  orb_slam3/include/Types/SystemParams.h
   orb_slam3/include/GeometricSegmentation.h
   orb_slam3/include/SemanticSegmentation.h
 )

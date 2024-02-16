@@ -41,6 +41,7 @@
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Geometric/Plane.h"
+#include "Types/SystemParams.h"
 #include "SemanticSegmentation.h"
 #include "GeometricSegmentation.h"
 
@@ -107,10 +108,13 @@ namespace ORB_SLAM3
             BINARY_FILE = 1,
         };
 
+        // ROS parameters set in 'common.h' using launch files
+        SystemParams sysParams;
+
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-        System(const string &strVocFile, const string &strSettingsFile, const eSensor sensor,
+        System(const string &strVocFile, const string &strSettingsFile, const SystemParams &params, const eSensor sensor,
                const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
 
         // Proccess the given stereo frame. Images must be synchronized and rectified.
@@ -218,18 +222,8 @@ namespace ORB_SLAM3
         Eigen::Vector3f GetImuVwb();
         bool isImuPreintegrated();
 
-        // Parameters set in common.h (e.g., using launch file)
-        struct SystemParams
-        {
-            int pointCloudSize;
-            double markerImpact;
-            // double segmentationProbabilityThreshold;
-        };
-        SystemParams params;
-
-        // For accessing parameters set in common.h
+        // For accessing ROS parameters, set in common.h
         SystemParams GetSystemParameters();
-        void SetSystemParameters(SystemParams newParams);
 
         // For debugging
         double GetTimeFromIMUInit();

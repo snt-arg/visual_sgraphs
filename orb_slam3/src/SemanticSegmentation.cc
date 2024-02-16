@@ -32,7 +32,8 @@ namespace ORB_SLAM3
 
             // get the point cloud from the respective keyframe via the atlas - ignore it if KF doesn't exist
             KeyFrame *thisKF = mpAtlas->GetKeyFrameById(std::get<0>(segImgTuple));
-            if (thisKF == nullptr) continue;
+            if (thisKF == nullptr)
+                continue;
             const pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisKFPointCloud = thisKF->getCurrentFramePointCloud();
 
             // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
@@ -42,7 +43,7 @@ namespace ORB_SLAM3
             const int minCloudSize = 200;
 
             // get all planes for each class specific point cloud using RANSAC
-            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes = 
+            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
                 getPlanesFromClassClouds(clsCloudPtrs, minCloudSize);
 
             cout << "Number of Floor planes detected: " << clsPlanes[0].size() << endl;
@@ -50,18 +51,6 @@ namespace ORB_SLAM3
 
             // [TODO] Associate the RANSACed planes with semantic classes in Atlas
             // [TODO] Associate semantic class ID with vector indices
-
-
-            // structure below
-            // Get the unfiltered point cloud of the KF
-            // Get the probability map for the pointcloud from Semantic Segmenter
-            // For probabilities > 0.9, as the wall, segment all the points in the point cloud
-            // Return the pointcloud with only walls and floors
-            // Perform distance filter and downsample
-            // Send it to the Ransac and get the plane equations
-            // Do the association with the planes in Geometric (In GeoSeg, we need to set the KFi>mnId and match it with the
-            // KF->mnId in here)
-            // usleep(3000);
         }
     }
 
@@ -119,11 +108,12 @@ namespace ORB_SLAM3
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
         }
     }
-    
+
     void SemanticSegmentation::enrichClassSpecificPointClouds(
         std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud)
     {
-        for (int i = 0; i < clsCloudPtrs.size(); i++){
+        for (int i = 0; i < clsCloudPtrs.size(); i++)
+        {
             for (int j = 0; j < clsCloudPtrs[i]->width; j++)
             {
                 const int pointIndex = clsCloudPtrs[i]->points[j].y * thisKFPointCloud->width + clsCloudPtrs[i]->points[j].x;
@@ -151,7 +141,8 @@ namespace ORB_SLAM3
             cout << "Filtered cloud " << i << " has " << filteredCloud->width << " points." << endl;
 
             std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
-            if (filteredCloud->points.size() > minCloudSize){
+            if (filteredCloud->points.size() > minCloudSize)
+            {
                 //  Extract planes from the filtered point cloud
                 extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
             }
