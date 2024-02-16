@@ -40,12 +40,9 @@ namespace ORB_SLAM3
             // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
 
-            // [TODO] make minCloudSize a parameter
-            const int minCloudSize = 200;
-
             // get all planes for each class specific point cloud using RANSAC
             std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes = 
-                getPlanesFromClassClouds(clsCloudPtrs, minCloudSize);
+                getPlanesFromClassClouds(clsCloudPtrs, mMinCloudSize);
 
             cout << "Floor planes detected: " << clsPlanes[0].size() << endl;
             cout << "Wall planes detected: " << clsPlanes[1].size() << endl;
@@ -91,8 +88,7 @@ namespace ORB_SLAM3
                 float value;
                 memcpy(&value, data + pointStep * i + bytesPerClassProb * j + pclPc2SegPrb->fields[0].offset, bytesPerClassProb);
 
-                // [TODO] make the thresholding a configuration parameter
-                if (value >= 0.9)
+                if (value >= mSegProbThreshold)
                 {
                     // inject coordinates as a point to respective point cloud
                     pcl::PointXYZRGB point;
