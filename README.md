@@ -287,8 +287,9 @@ Host unitree
 | `offline`                                                    | live or reading rosbag file (offline)?                                                                         |
 | `env_database`                                               | semantic map data file to be loaded                                                                            |
 | `geo_pointcloud_size`                                        | min number of points in the pointcloud to detect geometric objects                                             |
+| `sem_pointcloud_size`                                        | min number of points in the pointcloud to detect semantic objects                                              |
+| `sem_prob_thresh`                                            | probability threshold to detect semantic objects                                                               |
 | `marker_impact`                                              | how much to trust markers                                                                                      |
-| `seg_prob_threshold`                                         | the threshold of segmentation probability results markers                                                      |
 | `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
 | `settings_file`                                              | path to settings file                                                                                          |
 | `enable_pangolin`                                            | enable/disable Pangolin viewer and interface. (`true` by default)                                              |

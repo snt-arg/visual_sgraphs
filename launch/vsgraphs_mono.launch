@@ -17,7 +17,9 @@
 
     <!-- ****** Semantic Segmentation Arguments ****** -->
     <!-- What is the the threshold for semantic segmentation probability validation (rejects values below x) -->
-    <arg name="segmentation_prob_threshold" default="0.9" />
+    <arg name="prob_sem_thresh" default="0.9" />
+    <!-- How many pointclouds (after downsampling) needed to detect semantic objects (e.g., planes) -->
+    <arg name="pointcloud_size_sem" default="300" />
 
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
@@ -36,8 +38,9 @@
 
         <!-- Parameters for semantic/geometric objects detection -->
         <param name="markers_impact" type="double" value="$(arg marker_impact)"/>
+        <param name="sem_prob_thresh" type="double" value="$(arg prob_sem_thresh)"/>
+        <param name="sem_pointclouds_thresh" type="int" value="$(arg pointcloud_size_sem)"/>
         <param name="geo_pointclouds_thresh" type="int" value="$(arg pointcloud_size_geo)"/>
-        <param name="seg_prob_threshold" type="double" value="$(arg segmentation_prob_threshold)"/>
 
         <!-- Parameters for ROS -->
         <param name="roll" type="double" value="0" />

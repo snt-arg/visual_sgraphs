@@ -13,7 +13,6 @@ ros::Publisher kf_img_pub;
 double marker_impact = 0.1;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
-double segmentation_prob_threshold = 0.8;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
@@ -24,6 +23,10 @@ ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, d
 
 // Geomentric objects detection
 int geo_pointcloud_size = 200;
+
+// Semantic objects detection
+double sem_prob_thresh = 0.8;
+int sem_pointcloud_size = 200;
 
 // List of semantic entities available in the real environment (filled using JSON)
 std::vector<ORB_SLAM3::Room *> env_rooms;
@@ -978,6 +981,8 @@ void load_json_values(string jsonFilePath)
 
 void setSystemParams(ORB_SLAM3::SystemParams &sysParams)
 {
-    sysParams.pointCloudSize_GeoSeg = geo_pointcloud_size;
     sysParams.markerImpact = marker_impact;
+    sysParams.pointCloudSize_GeoSeg = geo_pointcloud_size;
+    sysParams.pointCloudSize_SemSeg = sem_pointcloud_size;
+    sysParams.probabilityThreshold_SemSeg = sem_prob_thresh;
 }

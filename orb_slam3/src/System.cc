@@ -172,7 +172,7 @@ namespace ORB_SLAM3
                                  mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
         // Set the value of marker impact
-        mpTracker->SetMarkerImpact(GetSystemParameters().markerImpact);
+        mpTracker->SetMarkerImpact(sysParams.markerImpact);
 
         // Initialize the Local Mapping thread and launch
         mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor == MONOCULAR || mSensor == IMU_MONOCULAR,
@@ -196,15 +196,15 @@ namespace ORB_SLAM3
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
-        int minCloudSize = GetSystemParameters().pointCloudSize_GeoSeg;
+        int minCloudSize_GeoSeg = sysParams.pointCloudSize_GeoSeg;
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
-        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, minCloudSize);
+        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, minCloudSize_GeoSeg);
         mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
-        double segProbThreshold = 0.9;
-        // GetSystemParameters().segmentationProbabilityThreshold; [TODO]
-        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold);
+        int minCloudSize_SemSeg = sysParams.pointCloudSize_SemSeg;
+        double segProbThreshold = sysParams.probabilityThreshold_SemSeg;
+        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold, minCloudSize_SemSeg);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
         // Set pointers between threads

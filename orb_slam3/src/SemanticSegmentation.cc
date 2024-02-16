@@ -2,9 +2,10 @@
 
 namespace ORB_SLAM3
 {
-    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, double segProbThreshold)
+    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize)
     {
         mpAtlas = pAtlas;
+        mMinCloudSize = minCloudSize;
         mSegProbThreshold = segProbThreshold;
     }
 

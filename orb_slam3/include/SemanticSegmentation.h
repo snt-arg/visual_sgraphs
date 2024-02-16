@@ -20,6 +20,7 @@ namespace ORB_SLAM3
     {
     private:
         Atlas *mpAtlas;
+        int mMinCloudSize;
         std::mutex mMutexNewKFs;
         double mSegProbThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
@@ -27,11 +28,11 @@ namespace ORB_SLAM3
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold);
+        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize);
 
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
         void AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
-        
+
         /**
          * @brief Segments the point cloud into class specific point clouds
          * @param pclPc2SegPrb the point cloud to be segmented
@@ -39,7 +40,7 @@ namespace ORB_SLAM3
          */
         void threshSeparatePointCloud(
             pcl::PCLPointCloud2::Ptr &pclPc2SegPrb, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
-        
+
         /**
          * @brief Enriches the class-specific point clouds (with Z, RGB) with the current keyframe point cloud
          * @param clsCloudPtrs the class specific point clouds
@@ -47,7 +48,7 @@ namespace ORB_SLAM3
          */
         void enrichClassSpecificPointClouds(
             std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud);
-        
+
         /**
          * @brief Gets all planes for each class specific point cloud using RANSAC
          * @param clsCloudPtrs the class specific point clouds

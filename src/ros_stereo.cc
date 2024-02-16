@@ -53,8 +53,9 @@ int main(int argc, char **argv)
     node_handler.param<double>(node_name + "/roll", roll, 0.0);
     node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
     node_handler.param<double>(node_name + "/markers_impact", marker_impact, 0.1);
+    node_handler.param<double>(node_name + "/sem_prob_thresh", sem_prob_thresh, 0.8);
+    node_handler.param<int>(node_name + "/sem_pointclouds_thresh", sem_pointcloud_size, 200);
     node_handler.param<int>(node_name + "/geo_pointclouds_thresh", geo_pointcloud_size, 200);
-    node_handler.param<double>(node_name + "/seg_prob_threshold", segmentation_prob_threshold, 0.9);
 
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
