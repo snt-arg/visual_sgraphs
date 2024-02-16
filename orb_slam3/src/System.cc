@@ -196,7 +196,7 @@ namespace ORB_SLAM3
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
-        int minCloudSize = GetSystemParameters().pointCloudSize;
+        int minCloudSize = GetSystemParameters().pointCloudSize_GeoSeg;
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
         mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, minCloudSize);
         mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);

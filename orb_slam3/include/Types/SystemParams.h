@@ -7,8 +7,8 @@ namespace ORB_SLAM3
     class SystemParams
     {
     public:
-        int pointCloudSize;
         double markerImpact;
+        int pointCloudSize_GeoSeg;
         // int pointCloudSize_SemSeg;
         // double segmentationProbabilityThreshold;
     };

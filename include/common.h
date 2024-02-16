@@ -66,13 +66,15 @@ class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
-extern int pointcloud_size;                // Number of points in the pointcloud
 extern double marker_impact;               // Impact of markers in the optimization process
 extern double roll, pitch, yaw;            // Defining axes for transformation
 extern bool publish_static_transform;      // If true, it should use transformed calculations
 extern ORB_SLAM3::SystemParams sysParams;  // System parameters set in the launch files
 extern double segmentation_prob_threshold; // The probability threshold for the segmentation process
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
+
+// Geomentric objects detection
+extern int geo_pointcloud_size; // Number of points in the pointcloud to detect geometric objects
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;

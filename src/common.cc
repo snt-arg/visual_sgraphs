@@ -10,7 +10,6 @@ ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
 ros::Publisher kf_img_pub;
-int pointcloud_size = 200;
 double marker_impact = 0.1;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
@@ -22,6 +21,9 @@ std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
+
+// Geomentric objects detection
+int geo_pointcloud_size = 200;
 
 // List of semantic entities available in the real environment (filled using JSON)
 std::vector<ORB_SLAM3::Room *> env_rooms;
@@ -976,6 +978,6 @@ void load_json_values(string jsonFilePath)
 
 void setSystemParams(ORB_SLAM3::SystemParams &sysParams)
 {
-    sysParams.pointCloudSize = pointcloud_size;
+    sysParams.pointCloudSize_GeoSeg = geo_pointcloud_size;
     sysParams.markerImpact = marker_impact;
 }

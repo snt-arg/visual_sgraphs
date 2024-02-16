@@ -286,7 +286,7 @@ Host unitree
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `offline`                                                    | live or reading rosbag file (offline)?                                                                         |
 | `env_database`                                               | semantic map data file to be loaded                                                                            |
-| `pointcloud_size`                                            | pointclouds needed to detect geometric objects                                                                 |
+| `geo_pointcloud_size`                                        | min number of points in the pointcloud to detect geometric objects                                             |
 | `marker_impact`                                              | how much to trust markers                                                                                      |
 | `seg_prob_threshold`                                         | the threshold of segmentation probability results markers                                                      |
 | `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
