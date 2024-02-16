@@ -64,7 +64,7 @@ namespace ORB_SLAM3
                                                                          detectedPlane);
 
             // Check if we need to add the wall to the map or not
-            int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
                 createMapPlane(pKF, detectedPlane, planePoint);
@@ -95,20 +95,22 @@ namespace ORB_SLAM3
             // the depth from points using Machine Learning to get a better plane estimate.
             pointcloud = getCloudFromSparsePoints(pKF->getCurrentFrameMapPoints()); // mCurrentFrame.mvpMapPoints
 
-        // Downsample the given pointcloud
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
+        // [TODO] decide when to downsample and/or distance filter
+
+        // // Downsample the given pointcloud
+        // pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
 
         // Filter the pointcloud based on a range of distance
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud);
-
-        // [TODO] remove minCloudSize from the RANSAC function
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(pointcloud);
+        cout << "Filtered cloud size for geometric: " << filteredCloud->points.size() << endl;
 
         if (filteredCloud->points.size() > minCloudSize)
         {
             //  Estimate the plane equation
             extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
         }
-
+        
+        cout << "Planes detected geometric: " << extractedPlanes.size() << endl;
         return extractedPlanes;
     }
 
@@ -129,48 +131,6 @@ namespace ORB_SLAM3
         return cloud;
     }
 
-    int GeometricSegmentation::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
-    {
-        int planeId = -1;
-
-        // Initialize difference value
-        double minDiff = 100.0;
-        // Fixed threshold for comparing two planes
-        double diffThreshold = 0.3;
-
-        // Check if mappedPlanes is empty
-        if (mappedPlanes.empty())
-            return planeId;
-
-        // Loop over all walls
-        for (const auto &mPlane : mappedPlanes)
-        {
-            // Preparing a plane for feeding the detector
-            g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
-
-            // Calculate difference vector based on walls' equations
-            Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
-
-            // Create a single number determining the difference vector
-            // [before] double planeDiff = diffVector.transpose() * Eigen::Matrix3d::Identity() * diffVector;
-            double planeDiff = diffVector.norm();
-
-            // Comparing the with minimum acceptable value
-            if (planeDiff < minDiff)
-            {
-                minDiff = planeDiff;
-                planeId = mPlane->getId();
-            }
-        }
-
-        // If the difference is not large, no need to add the plane
-        if (minDiff < diffThreshold)
-            return planeId;
-
-        // Otherwise, return -1 so that the the plane gets added to the map
-        return -1;
-    }
-
     void GeometricSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
                                                const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
     {
@@ -189,13 +149,13 @@ namespace ORB_SLAM3
                                                                      estimatedPlane);
         newMapPlane->setGlobalEquation(globalEquation);
 
-        // std::string planeStr = "(" +
-        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(0)) + ")x + (" +
-        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(1)) + ")y + (" +
-        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(2)) + ")z + (" +
-        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(3)) + ") = 0";
-        // std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
-        //           << planeStr << std::endl;
+        std::string planeStr = "(" +
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(0)) + ")x + (" +
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(1)) + ")y + (" +
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(2)) + ")z + (" +
+                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(3)) + ") = 0";
+        std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
+                  << planeStr << std::endl;
 
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
@@ -203,30 +163,11 @@ namespace ORB_SLAM3
         else
             // Loop to find the points lying on wall
             for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-                if (pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
+                if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
                     newMapPlane->setMapPoints(mapPoint);
 
         pKF->AddMapPlane(newMapPlane);
         mpAtlas->AddMapPlane(newMapPlane);
-    }
-
-    bool GeometricSegmentation::pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint)
-    {
-        if (mapPoint->isBad())
-            return false;
-
-        // Find the distance of the point from a given plane
-        double pointPlaneDist =
-            planeEquation(0) * mapPoint->GetWorldPos()(0) +
-            planeEquation(1) * mapPoint->GetWorldPos()(1) +
-            planeEquation(2) * mapPoint->GetWorldPos()(2) +
-            planeEquation(3);
-
-        // Apply a threshold
-        if (fabs(pointPlaneDist) < 0.1)
-            return true;
-
-        return false;
     }
 
     void GeometricSegmentation::updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
@@ -234,27 +175,25 @@ namespace ORB_SLAM3
                                                int planeId, ORB_SLAM3::Marker *visitedMarker)
     {
         // Find the matched plane among all planes of the map
-        for (auto currentPlane : mpAtlas->GetAllPlanes())
-            if (currentPlane->getId() == planeId)
-            {
-                // If there is a marker attached to a plane, set it as 'wall' and store the marker
-                if (visitedMarker != NULL)
-                {
-                    currentPlane->setMarkers(visitedMarker);
-                    currentPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::WALL);
-                    currentPlane->addObservation(pKF, estimatedPlane);
-                    // std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
-                    //           << visitedMarker->getId() << std::endl;
-                }
+        Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
 
-                // Update the pointcloud of the plane
-                if (!planeCloud->points.empty())
-                    currentPlane->setMapClouds(planeCloud);
-                else
-                    for (const auto &mapPoint : pKF->GetMapPoints())
-                        if (pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
-                            currentPlane->setMapPoints(mapPoint);
-            }
+        // If there is a marker attached to a plane, set it as 'wall' and store the marker
+        if (visitedMarker != NULL)
+        {
+            currentPlane->setMarkers(visitedMarker);
+            currentPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::WALL);
+            currentPlane->addObservation(pKF, estimatedPlane);
+            // std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
+            //           << visitedMarker->getId() << std::endl;
+        }
+
+        // Update the pointcloud of the plane
+        if (!planeCloud->points.empty())
+            currentPlane->setMapClouds(planeCloud);
+        else
+            for (const auto &mapPoint : pKF->GetMapPoints())
+                if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
+                    currentPlane->setMapPoints(mapPoint);
     }
 
     Eigen::Vector4d GeometricSegmentation::getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
@@ -369,7 +308,7 @@ namespace ORB_SLAM3
                                                                              detectedPlane);
 
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
                 if (matchedPlaneId != -1)
                     // The wall already exists in the map, fetching that one
                     updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId, currentMapMarker);

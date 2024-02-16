@@ -8,6 +8,7 @@
 #include "Atlas.h"
 #include "Utils.h"
 
+#include <unordered_map>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
@@ -42,7 +43,7 @@ namespace ORB_SLAM3
             pcl::PCLPointCloud2::Ptr &pclPc2SegPrb, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
 
         /**
-         * @brief Enriches the class-specific point clouds (with Z, RGB) with the current keyframe point cloud
+         * @brief Enriches the class-specific point clouds (with XYZ and RGB) with the current keyframe point cloud
          * @param clsCloudPtrs the class specific point clouds
          * @param thisKFPointCloud the current keyframe point cloud
          */
@@ -55,8 +56,32 @@ namespace ORB_SLAM3
          * @param minCloudSize the minimum size of the point cloud to be segmented
          * @return a vector of vector of point clouds
          */
-        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> getPlanesFromClassClouds(
+        std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> getPlanesFromClassClouds(
             std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, int minCloudSize);
+
+        /**
+         * @brief Adds the planes to the Atlas
+         * @param clsPlanes the planes to be added
+         */
+        void addPlanesToAtlas(KeyFrame *pKF, std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes);
+
+        /**
+         * @brief Creates a map plane from the estimated plane
+         * @param pKF the current keyframe
+         * @param estimatedPlane the estimated plane
+         * @param clsId the class id
+         * @param planeCloud the plane point cloud
+         */
+        void createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
+                            const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud);
+
+        /**
+         * @brief Updates the map plane
+         * @param planeId the plane id
+         * @param clsId the class id
+         */
+        void updateMapPlane(int planeId, int clsId);
+
 
         // Running the thread
         void Run();

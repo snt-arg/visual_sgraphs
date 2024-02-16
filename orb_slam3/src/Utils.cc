@@ -234,4 +234,77 @@ namespace ORB_SLAM3
         // Return the extracted clouds
         return extractedPlanes;
     }
+
+    ORB_SLAM3::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId){
+        switch (clsId)
+        {
+        case 0:
+            return ORB_SLAM3::Plane::planeVariant::FLOOR;
+        case 1:
+            return ORB_SLAM3::Plane::planeVariant::WALL;
+        default:
+            return ORB_SLAM3::Plane::planeVariant::UNDEFINED;
+        }
+    }
+    
+    bool Utils::pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint)
+    {
+        if (mapPoint->isBad())
+            return false;
+
+        // Find the distance of the point from a given plane
+        double pointPlaneDist =
+            planeEquation(0) * mapPoint->GetWorldPos()(0) +
+            planeEquation(1) * mapPoint->GetWorldPos()(1) +
+            planeEquation(2) * mapPoint->GetWorldPos()(2) +
+            planeEquation(3);
+
+        // Apply a threshold
+        if (fabs(pointPlaneDist) < 0.1)
+            return true;
+
+        return false;
+    }
+
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
+    {
+        int planeId = -1;
+
+        // Initialize difference value
+        double minDiff = 100.0;
+        // Fixed threshold for comparing two planes
+        double diffThreshold = 0.3;
+
+        // Check if mappedPlanes is empty
+        if (mappedPlanes.empty())
+            return planeId;
+
+        // Loop over all walls
+        for (const auto &mPlane : mappedPlanes)
+        {
+            // Preparing a plane for feeding the detector
+            g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
+
+            // Calculate difference vector based on walls' equations
+            Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
+
+            // Create a single number determining the difference vector
+            // [before] double planeDiff = diffVector.transpose() * Eigen::Matrix3d::Identity() * diffVector;
+            double planeDiff = diffVector.norm();
+            
+            // Comparing the with minimum acceptable value
+            if (planeDiff < minDiff)
+            {
+                minDiff = planeDiff;
+                planeId = mPlane->getId();
+            }
+        }
+
+        // If the difference is not large, no need to add the plane
+        if (minDiff < diffThreshold)
+            return planeId;
+
+        // Otherwise, return -1 so that the the plane gets added to the map
+        return -1;
+    }
 }

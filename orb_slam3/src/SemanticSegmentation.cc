@@ -44,14 +44,14 @@ namespace ORB_SLAM3
             const int minCloudSize = 200;
 
             // get all planes for each class specific point cloud using RANSAC
-            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
+            std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes = 
                 getPlanesFromClassClouds(clsCloudPtrs, minCloudSize);
 
-            cout << "Number of Floor planes detected: " << clsPlanes[0].size() << endl;
-            cout << "Number of Wall planes detected: " << clsPlanes[1].size() << endl;
+            cout << "Floor planes detected: " << clsPlanes[0].size() << endl;
+            cout << "Wall planes detected: " << clsPlanes[1].size() << endl;
 
-            // [TODO] Associate the RANSACed planes with semantic classes in Atlas
-            // [TODO] Associate semantic class ID with vector indices
+            // Add the planes to Atlas
+            addPlanesToAtlas(thisKF, clsPlanes);
         }
     }
 
@@ -118,37 +118,102 @@ namespace ORB_SLAM3
             for (int j = 0; j < clsCloudPtrs[i]->width; j++)
             {
                 const int pointIndex = clsCloudPtrs[i]->points[j].y * thisKFPointCloud->width + clsCloudPtrs[i]->points[j].x;
+                
+                // copy complete point since the segmented pointcloud has x, y in pixel coordinates
                 clsCloudPtrs[i]->points[j] = thisKFPointCloud->points[pointIndex];
             }
         }
     }
 
-    std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> SemanticSegmentation::getPlanesFromClassClouds(
+    std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> SemanticSegmentation::getPlanesFromClassClouds(
         std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, int minCloudSize)
     {
-        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes;
+        std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes;
 
-        // downsample and filter the point clouds
+        // downsample/filter the pointcloud and extract planes
         for (int i = 0; i < clsCloudPtrs.size(); i++)
         {
             // [TODO] decide when to downsample and/or distance filter
 
             // Downsample the given pointcloud
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(clsCloudPtrs[i]);
-            cout << "Downsampled cloud " << i << " has " << downsampledCloud->width << " points." << endl;
+            // pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(clsCloudPtrs[i]);
 
             // Filter the pointcloud based on a range of distance
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud);
-            cout << "Filtered cloud " << i << " has " << filteredCloud->width << " points." << endl;
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(clsCloudPtrs[i]);
+            cout << "Downsampled/filtered cloud " << i << " has " << filteredCloud->width << " points." << endl;
 
             std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
             if (filteredCloud->points.size() > minCloudSize)
             {
-                //  Extract planes from the filtered point cloud
                 extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
             }
-            clsPlanes.push_back(extractedPlanes);
+            clsPlanes[i] = extractedPlanes;
         }
         return clsPlanes;
+    }
+
+    void SemanticSegmentation::addPlanesToAtlas(KeyFrame *pKF,
+                                                std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes)
+    {
+        for (int clsId = 0; clsId < clsPlanes.size(); clsId++){
+            for (auto planePoint : clsPlanes[clsId]){
+                // Get the plane equation from the points
+                Eigen::Vector4d planeEstimate(planePoint->back().normal_x, planePoint->back().normal_y,
+                                            planePoint->back().normal_z, planePoint->back().curvature);
+                g2o::Plane3D detectedPlane(planeEstimate);
+                // Convert the given plane to global coordinates
+                g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
+                                                                            detectedPlane);
+
+                // Check if we need to add the wall to the map or not
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+                
+                // [TODO] - Add flags to decide whether SemSeg can add planes or it just updates 
+                if (matchedPlaneId == -1){
+                    // [TODO] - Add a flag to decide whether SemSeg runs indepedently or with GeoSeg
+                    cout << "No matched plane found." << endl;
+                }
+                else{
+                    cout << "Matched a wall! Updating the plane type to " << clsId << endl;
+                    updateMapPlane(matchedPlaneId, clsId);
+                }
+            }
+        }
+    }
+
+    void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
+                                               const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
+    {
+        ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
+        newMapPlane->setColor();
+        newMapPlane->setLocalEquation(estimatedPlane);
+        newMapPlane->SetMap(mpAtlas->GetCurrentMap());
+        newMapPlane->addObservation(pKF, estimatedPlane);
+        newMapPlane->setId(mpAtlas->GetAllPlanes().size());
+
+        // Set the plane type to the semantic class
+        newMapPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));
+
+        // Set the global equation of the plane
+        g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
+                                                                     estimatedPlane);
+        newMapPlane->setGlobalEquation(globalEquation);
+
+        // Fill the plane with the pointcloud
+        if (!planeCloud->points.empty())
+            newMapPlane->setMapClouds(planeCloud);
+        else
+            // Loop to find the points lyinupdateMapPlane(pKF, detectedPlane, planePog on wall
+            for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
+                if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
+                    newMapPlane->setMapPoints(mapPoint);
+
+        pKF->AddMapPlane(newMapPlane);
+        mpAtlas->AddMapPlane(newMapPlane);
+    }
+
+    void SemanticSegmentation::updateMapPlane(int planeId, int clsId){
+        Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
+        matchedPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));      
     }
 }

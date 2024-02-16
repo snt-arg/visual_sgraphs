@@ -8,7 +8,11 @@ namespace ORB_SLAM3
     {
     public:
         double markerImpact;
+        
+        // Geometric Segmentation
         int pointCloudSize_GeoSeg;
+        
+        // Semantic Segmentation
         int pointCloudSize_SemSeg;
         double probabilityThreshold_SemSeg;
     };

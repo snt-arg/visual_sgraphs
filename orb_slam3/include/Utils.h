@@ -93,6 +93,28 @@ namespace ORB_SLAM3
          */
         static std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints);
+
+        /**
+         * @brief Checks to see if the given point is on the plane or not
+         * @param planeEquation the plane equation
+         * @param mapPoint the point to be checked
+         */
+        static bool pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint);
+        
+        /**
+         * @brief associates given planes with the mapped planes
+         * @param mappedPlanes the mapped planes
+         * @param givenPlane the given plane
+         * @return the plane id of the mapped plane
+         */
+        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane);
+
+        /**
+         * @brief Gets the planeVariant type from the class id
+         * @param clsId the class id
+         * @return the planeVariant type
+         */
+        static ORB_SLAM3::Plane::planeVariant getPlaneTypeFromClassId(int clsId);
     };
 }
 
