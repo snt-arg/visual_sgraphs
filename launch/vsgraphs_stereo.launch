@@ -11,6 +11,11 @@
     <!-- How much the framework should trust the markers (0.1 default, higher for mono setups) -->
     <arg name="marker_impact" default="0.1" />
 
+    <!-- ****** Point Cloud Filtering Arguments ****** -->
+    <!-- The threshold (in meters for points in cloud to be considered - <near, far>) -->
+    <arg name="distance_thresh_near" default="0.3" />
+    <arg name="distance_thresh_far" default="3.0" />
+
     <!-- ****** Geometric Segmentation Arguments ****** -->
     <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
     <arg name="pointcloud_size_geo" default="300" />
@@ -39,6 +44,8 @@
 
         <!-- Parameters for semantic/geometric objects detection -->
         <param name="markers_impact" type="double" value="$(arg marker_impact)"/>
+        <param name="distance_thresh_near" type="double" value="$(arg distance_thresh_near)"/>
+        <param name="distance_thresh_far" type="double" value="$(arg distance_thresh_far)"/>
         <param name="sem_prob_thresh" type="double" value="$(arg prob_sem_thresh)"/>
         <param name="sem_pointclouds_thresh" type="int" value="$(arg pointcloud_size_sem)"/>
         <param name="geo_pointclouds_thresh" type="int" value="$(arg pointcloud_size_geo)"/>

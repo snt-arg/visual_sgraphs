@@ -77,7 +77,7 @@ namespace ORB_SLAM3
          * @param cloud the pointcloud to be filtered
          */
         static pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
-            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
+            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, std::pair<float, float> thresholds);
 
         /**
          * Downsamples the pointclouds based on the given leaf size

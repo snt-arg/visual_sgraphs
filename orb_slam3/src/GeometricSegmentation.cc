@@ -2,11 +2,12 @@
 
 namespace ORB_SLAM3
 {
-    GeometricSegmentation::GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud, int minCloudSize)
+    GeometricSegmentation::GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud, int minCloudSize, std::pair<float, float> distFilterThreshold)
     {
         mpAtlas = pAtlas;
         mMinCloudSize = minCloudSize;
         mHasDepthCloud = hasDepthCloud;
+        mDistFilterThreshold = distFilterThreshold;
     }
 
     void GeometricSegmentation::AddKeyFrameToBuffer(KeyFrame *pKF)
@@ -101,7 +102,7 @@ namespace ORB_SLAM3
         // pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
 
         // Filter the pointcloud based on a range of distance
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(pointcloud);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(pointcloud, mDistFilterThreshold);
         cout << "Filtered cloud size for geometric: " << filteredCloud->points.size() << endl;
 
         if (filteredCloud->points.size() > minCloudSize)

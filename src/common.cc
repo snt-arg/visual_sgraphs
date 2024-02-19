@@ -28,6 +28,10 @@ int geo_pointcloud_size = 200;
 double sem_prob_thresh = 0.8;
 int sem_pointcloud_size = 200;
 
+// Distance filtering
+float distance_thresh_near = 0.5;
+float distance_thresh_far = 5.0;
+
 // List of semantic entities available in the real environment (filled using JSON)
 std::vector<ORB_SLAM3::Room *> env_rooms;
 std::vector<ORB_SLAM3::Door *> env_doors;
@@ -985,4 +989,5 @@ void setSystemParams(ORB_SLAM3::SystemParams &sysParams)
     sysParams.pointCloudSize_GeoSeg = geo_pointcloud_size;
     sysParams.pointCloudSize_SemSeg = sem_pointcloud_size;
     sysParams.probabilityThreshold_SemSeg = sem_prob_thresh;
+    sysParams.distFilterThreshold = std::make_pair(distance_thresh_near, distance_thresh_far);
 }

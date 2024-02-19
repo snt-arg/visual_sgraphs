@@ -24,12 +24,13 @@ namespace ORB_SLAM3
         int mMinCloudSize;
         std::mutex mMutexNewKFs;
         double mSegProbThreshold;
+        std::pair<float, float> mDistFilterThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
         const uint8_t bytesPerClassProb = 4; // 4 bytes per class probability - refer to scene_segment_ros
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize);
+        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize, std::pair<float, float> distFilterThreshold);
 
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
         void AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);

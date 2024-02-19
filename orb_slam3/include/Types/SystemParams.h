@@ -15,6 +15,9 @@ namespace ORB_SLAM3
         // Semantic Segmentation
         int pointCloudSize_SemSeg;
         double probabilityThreshold_SemSeg;
+
+        // Point Cloud Filtering params
+        std::pair<float, float> distFilterThreshold; // in meters
     };
 }
 

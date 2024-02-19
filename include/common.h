@@ -79,6 +79,9 @@ extern int geo_pointcloud_size; // Number of points in the pointcloud to detect 
 extern double sem_prob_thresh;  // The threshold for the semantic segmentation process
 extern int sem_pointcloud_size; // Number of points in the pointcloud to detect semantic objects
 
+// Point Cloud Filtering params
+extern float distance_thresh_near, distance_thresh_far; // Distance thresholds for the point cloud filtering 
+
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 

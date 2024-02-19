@@ -2,11 +2,12 @@
 
 namespace ORB_SLAM3
 {
-    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize)
+    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize, std::pair<float, float> distFilterThreshold)
     {
         mpAtlas = pAtlas;
         mMinCloudSize = minCloudSize;
         mSegProbThreshold = segProbThreshold;
+        mDistFilterThreshold = distFilterThreshold;
     }
 
     void SemanticSegmentation::Run()
@@ -113,10 +114,8 @@ namespace ORB_SLAM3
         {
             for (int j = 0; j < clsCloudPtrs[i]->width; j++)
             {
-                const int pointIndex = clsCloudPtrs[i]->points[j].y * thisKFPointCloud->width + clsCloudPtrs[i]->points[j].x;
-                
-                // copy complete point since the segmented pointcloud has x, y in pixel coordinates
-                clsCloudPtrs[i]->points[j] = thisKFPointCloud->points[pointIndex];
+                const pcl::PointXYZRGB point = thisKFPointCloud->at(clsCloudPtrs[i]->points[j].x, clsCloudPtrs[i]->points[j].y);
+                clsCloudPtrs[i]->points[j] = pcl::PointXYZRGB(point);
             }
         }
     }
@@ -135,7 +134,7 @@ namespace ORB_SLAM3
             // pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(clsCloudPtrs[i]);
 
             // Filter the pointcloud based on a range of distance
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(clsCloudPtrs[i]);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(clsCloudPtrs[i], mDistFilterThreshold);
             cout << "Downsampled/filtered cloud " << i << " has " << filteredCloud->width << " points." << endl;
 
             std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
@@ -170,7 +169,8 @@ namespace ORB_SLAM3
                     cout << "No matched plane found." << endl;
                 }
                 else{
-                    cout << "Matched a wall! Updating the plane type to " << clsId << endl;
+                    std::string planeType = clsId ? "Wall" : "Floor";
+                    cout << "Matched a plane! Updating the plane type to " << planeType << endl;
                     updateMapPlane(matchedPlaneId, clsId);
                 }
             }
@@ -210,6 +210,6 @@ namespace ORB_SLAM3
 
     void SemanticSegmentation::updateMapPlane(int planeId, int clsId){
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
-        matchedPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));      
+        matchedPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));
     }
 }

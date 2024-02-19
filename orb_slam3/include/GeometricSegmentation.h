@@ -23,13 +23,14 @@ namespace ORB_SLAM3
         Atlas *mpAtlas;
         int mMinCloudSize;
         bool mHasDepthCloud;
+        std::pair<float, float> mDistFilterThreshold;
         std::mutex mMutexNewKFs;
         std::list<KeyFrame *> mvpKeyFrameBuffer;
         std::vector<ORB_SLAM3::Door *> envDoors;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud, int minCloudSize);
+        GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud, int minCloudSize, std::pair<float, float> distFilterThreshold);
 
         void AddKeyFrameToBuffer(KeyFrame *pKF);
         std::list<KeyFrame *> GetKeyFrameBuffer();

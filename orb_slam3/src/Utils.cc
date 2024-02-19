@@ -123,12 +123,11 @@ namespace ORB_SLAM3
     }
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDistanceFilter(
-        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud)
+        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, std::pair<float, float> thresholds)
     {
-        // Define the distance threshold parameters (in meters)
-        // [TODO] should be read from a config file
-        double thresholdNear = 0.3;
-        double thresholdFar = 3.0;
+        const float thresholdNear = thresholds.first;
+        const float thresholdFar = thresholds.second;
+        double distance;
 
         // Define the filtered point cloud object
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
@@ -140,7 +139,7 @@ namespace ORB_SLAM3
                      std::back_inserter(filteredCloud->points),
                      [&](const pcl::PointXYZRGB &p)
                      {
-                         double distance = p.getVector3fMap().norm();
+                         distance = p.getVector3fMap().norm();
                          return distance > thresholdNear && distance < thresholdFar;
                      });
 
