@@ -70,7 +70,7 @@ namespace ORB_SLAM3
         void setMapPoints(MapPoint *value);
         std::set<MapPoint *> getMapPoints();
 
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds();
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds() const;
         void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
 
         g2o::Plane3D getLocalEquation() const;

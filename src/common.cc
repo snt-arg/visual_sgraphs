@@ -15,7 +15,7 @@ bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
-rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
+rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
@@ -38,10 +38,6 @@ std::vector<ORB_SLAM3::Door *> env_doors;
 
 // System parameters set in the launch files
 ORB_SLAM3::SystemParams sysParams;
-
-//////////////////////////////////////////////////
-// Main functions
-//////////////////////////////////////////////////
 
 bool save_map_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
@@ -110,13 +106,13 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
         sensor_type == ORB_SLAM3::System::IMU_RGBD)
         odom_pub = node_handler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
 
-    // Tools for showing planes
-    wall_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-        struct_frame_id, "/rviz_wall_visual_tools");
-    wall_visual_tools->loadMarkerPub();
-    wall_visual_tools->deleteAllMarkers();
-    wall_visual_tools->enableBatchPublishing();
-    wall_visual_tools->setAlpha(0.5);
+    // Showing planes using RViz Visual Tools
+    visualTools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
+        struct_frame_id, "/plane_visuals", node_handler);
+    visualTools->setAlpha(0.5);
+    visualTools->loadMarkerPub();
+    visualTools->deleteAllMarkers();
+    visualTools->enableBatchPublishing();
 
     transform_listener = std::make_shared<tf::TransformListener>();
 }
@@ -140,7 +136,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     // Setup publishers
     publish_doors(pSLAM->GetAllDoors(), msg_time);
     publish_rooms(pSLAM->GetAllRooms(), msg_time);
-    publish_walls(pSLAM->GetAllPlanes(), msg_time);
+    publishPlanes(pSLAM->GetAllPlanes(), msg_time);
     publish_kf_img(pSLAM->GetAllKeyFrames(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
@@ -524,7 +520,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
     doors_pub.publish(doorArray);
 }
 
-void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
+void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
 {
     // Publish the planes, if any
     int numPlanes = planes.size();
@@ -534,125 +530,119 @@ void publish_walls(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msg_time)
     visualization_msgs::MarkerArray planeArray;
     planeArray.markers.resize(numPlanes);
 
-    for (int idx = 0; idx < numPlanes; idx++)
+    for (const ORB_SLAM3::Plane *plane : planes)
     {
-        // If the plane is not a wall, skip it
-        if (planes[idx]->getPlaneType() != ORB_SLAM3::Plane::planeVariant::WALL)
+        // If the plane is undefined, skip it
+        if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
             continue;
 
-        visualization_msgs::Marker wall, wallPoints, wallLines;
-        std::vector<double> color = planes[idx]->getColor();
+        // Visualization markers
+        visualization_msgs::Marker planeVis, planePoints, planeLines;
 
-        // Get the position of the planes from map-points to put it in the middle of the cluster
+        // Common variables
+        double depth = 0.5;
         Eigen::Vector3f centroid(0.0, 0.0, 0.0);
-        // const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr mapClouds = planes[idx]->getMapClouds();
+        pcl::PointXYZRGBNormal pointMin, pointMax;
+        std::vector<double> color = plane->getColor();
+        const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
+        std::string planeType = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? "wall" : "floor";
 
-        // for (const auto &mapCloud : mapClouds->points)
+        // Calculate pose and orientation
+        Eigen::Isometry3d planePose = planePoseCalculator(plane, pointMin, pointMax);
+        double width = fabs(pointMin.x - pointMax.x);
+        double height = fabs(pointMin.z - pointMax.z);
+        if (height > 3.0)
+            height = 3.0;
+
+        // Set thw pose based on Eigen::Isometry3d pose
+        planeVis.pose.position.x = planePose.translation().x();
+        planeVis.pose.position.y = planePose.translation().y();
+        planeVis.pose.position.z = planePose.translation().z();
+
+        Eigen::Quaterniond quat(planePose.rotation());
+        planeVis.pose.orientation.x = quat.x();
+        planeVis.pose.orientation.y = quat.y();
+        planeVis.pose.orientation.z = quat.z();
+        planeVis.pose.orientation.w = quat.w();
+
+        // Rotation and displacement for better visualization
+        // Sophus::SE3d planeOrient(planePose.rotation(), planePose.translation());
+        // planeOrient *= Sophus::SE3d::rotX(-M_PI_2);
+
+        // planeVis.pose.position.x = centroid.x();
+        // planeVis.pose.position.y = centroid.y();
+        // planeVis.pose.position.z = centroid.z();
+        // planeVis.pose.orientation.x = planeOrient.unit_quaternion().x();
+        // planeVis.pose.orientation.y = planeOrient.unit_quaternion().y();
+        // planeVis.pose.orientation.z = planeOrient.unit_quaternion().z();
+        // planeVis.pose.orientation.w = planeOrient.unit_quaternion().w();
+
+        // Plane visual values
+        planeVis.color.a = 0.5;
+        planeVis.scale.z = 0.03;
+        planeVis.ns = planeType;
+        planeVis.scale.x = width;
+        planeVis.scale.y = height;
+        planeVis.action = planeVis.ADD;
+        planeVis.color.r = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? 1.0 : 0.0; // color[0] / 255;
+        planeVis.color.g = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? 0.0 : 1.0; // color[1] / 255;
+        planeVis.color.b = 0.0;                                                                       // color[2] / 255;
+        planeVis.lifetime = ros::Duration();
+        planeVis.id = planeArray.markers.size();
+        planeVis.header.stamp = ros::Time::now();
+        planeVis.header.frame_id = struct_frame_id;
+        planeVis.type = visualization_msgs::Marker::CUBE;
+
+        planeArray.markers.push_back(planeVis);
+
+        // Plane points
+        planePoints.color.a = 1;
+        planePoints.scale.x = 0.03;
+        planePoints.scale.y = 0.03;
+        planePoints.scale.z = 0.03;
+        planePoints.ns = "planePoints";
+        planePoints.action = planePoints.ADD;
+        planePoints.color.r = color[0] / 255;
+        planePoints.color.g = color[1] / 255;
+        planePoints.color.b = color[2] / 255;
+        planePoints.lifetime = ros::Duration();
+        planePoints.id = planeArray.markers.size();
+        planePoints.header.stamp = ros::Time::now();
+        planePoints.header.frame_id = struct_frame_id;
+        planePoints.type = visualization_msgs::Marker::CUBE_LIST;
+
+        planeArray.markers.push_back(planePoints);
+
+        // planeLines.color.a = 0.5;
+        // planeLines.color.r = 0.0;
+        // planeLines.color.g = 0.0;
+        // planeLines.color.b = 0.0;
+        // planeLines.scale.x = 0.005;
+        // planeLines.scale.y = 0.005;
+        // planeLines.scale.z = 0.005;
+        // planeLines.ns = "planeLines";
+        // planeLines.action = planeLines.ADD;
+        // planeLines.lifetime = ros::Duration();
+        // planeLines.id = planeArray.markers.size();
+        // planeLines.header.stamp = ros::Time().now();
+        // planeLines.header.frame_id = struct_frame_id;
+        // planeLines.type = visualization_msgs::Marker::LINE_LIST;
+
+        // for (const auto &planeMarker : plane->getMarkers())
         // {
-        //     // Plane plane
-        //     Eigen::Vector3f mPosition(mapCloud.x, mapCloud.y, mapCloud.z);
-        //     centroid += mPosition;
-        //     // Plane rooms
-        //     geometry_msgs::Point point;
-        //     point.x = mPosition.x();
-        //     point.y = mPosition.y();
-        //     point.z = mPosition.z();
-        //     wallPoints.points.push_back(point);
+        //     geometry_msgs::Point point1;
+        //     point1.x = planeMarker->getGlobalPose().translation().x();
+        //     point1.y = planeMarker->getGlobalPose().translation().y();
+        //     point1.z = planeMarker->getGlobalPose().translation().z();
+        //     wallLines.points.push_back(point1);
+
+        //     geometry_msgs::Point point2;
+        //     point2.x = centroid.x();
+        //     point2.y = centroid.y();
+        //     point2.z = centroid.z();
+        //     wallLines.points.push_back(point2);
         // }
-
-        // // Calculate the centroid
-        // if (mapClouds->points.size() > 0)
-        //     centroid /= static_cast<float>(mapClouds->points.size());
-        // planes[idx]->setCentroid(centroid);
-
-        // Get the orientation of the plane
-        if (planes[idx]->getMarkers().size() > 0)
-        {
-            // If the plane has markers, use the orientation of the marker
-            Sophus::SE3f wallOrient = planes[idx]->getMarkers().front()->getGlobalPose();
-
-            // Plane values
-            wall.ns = "wall";
-            wall.scale.x = 0.5;
-            wall.scale.y = 0.5;
-            wall.scale.z = 0.5;
-            wall.color.a = 0.5;
-            wall.action = wall.ADD;
-            wall.color.r = color[0] / 255;
-            wall.color.g = color[1] / 255;
-            wall.color.b = color[2] / 255;
-            wall.lifetime = ros::Duration();
-            wall.id = planeArray.markers.size();
-            wall.header.stamp = ros::Time::now();
-            wall.header.frame_id = struct_frame_id;
-            wall.mesh_use_embedded_materials = true;
-            wall.type = visualization_msgs::Marker::MESH_RESOURCE;
-            wall.mesh_resource =
-                "package://orb_slam3_ros/config/Visualization/plane.dae";
-
-            // Rotation and displacement for better visualization
-            wallOrient *= Sophus::SE3f::rotX(-M_PI_2);
-
-            wall.pose.position.x = centroid.x();
-            wall.pose.position.y = centroid.y();
-            wall.pose.position.z = centroid.z();
-            wall.pose.orientation.x = wallOrient.unit_quaternion().x();
-            wall.pose.orientation.y = wallOrient.unit_quaternion().y();
-            wall.pose.orientation.z = wallOrient.unit_quaternion().z();
-            wall.pose.orientation.w = wallOrient.unit_quaternion().w();
-            planeArray.markers.push_back(wall);
-        }
-        else
-        {
-            // Otherwise, calculate the orientation of the plane using the map-points [TODO]
-        }
-
-        wallPoints.color.a = 1;
-        wallPoints.scale.x = 0.03;
-        wallPoints.scale.y = 0.03;
-        wallPoints.scale.z = 0.03;
-        wallPoints.ns = "wallPoints";
-        wallPoints.action = wallPoints.ADD;
-        wallPoints.color.r = color[0] / 255;
-        wallPoints.color.g = color[1] / 255;
-        wallPoints.color.b = color[2] / 255;
-        wallPoints.lifetime = ros::Duration();
-        wallPoints.id = planeArray.markers.size();
-        wallPoints.header.stamp = ros::Time::now();
-        wallPoints.header.frame_id = struct_frame_id;
-        wallPoints.type = visualization_msgs::Marker::CUBE_LIST;
-        planeArray.markers.push_back(wallPoints);
-
-        wallLines.color.a = 0.5;
-        wallLines.color.r = 0.0;
-        wallLines.color.g = 0.0;
-        wallLines.color.b = 0.0;
-        wallLines.scale.x = 0.005;
-        wallLines.scale.y = 0.005;
-        wallLines.scale.z = 0.005;
-        wallLines.ns = "wallLines";
-        wallLines.action = wallLines.ADD;
-        wallLines.lifetime = ros::Duration();
-        wallLines.id = planeArray.markers.size();
-        wallLines.header.stamp = ros::Time().now();
-        wallLines.header.frame_id = struct_frame_id;
-        wallLines.type = visualization_msgs::Marker::LINE_LIST;
-
-        for (const auto &planeMarker : planes[idx]->getMarkers())
-        {
-            geometry_msgs::Point point1;
-            point1.x = planeMarker->getGlobalPose().translation().x();
-            point1.y = planeMarker->getGlobalPose().translation().y();
-            point1.z = planeMarker->getGlobalPose().translation().z();
-            wallLines.points.push_back(point1);
-
-            geometry_msgs::Point point2;
-            point2.x = centroid.x();
-            point2.y = centroid.y();
-            point2.z = centroid.z();
-            wallLines.points.push_back(point2);
-        }
-        planeArray.markers.push_back(wallLines);
+        // planeArray.markers.push_back(wallLines);
     }
 
     planes_pub.publish(planeArray);
@@ -906,6 +896,36 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
         t_vec(2));
 
     return tf::Transform(R_tf, t_tf);
+}
+
+Eigen::Isometry3d planePoseCalculator(const ORB_SLAM3::Plane *plane,
+                                      pcl::PointXYZRGBNormal &pointMin,
+                                      pcl::PointXYZRGBNormal &pointMax)
+{
+    // Variables
+    double roll = 0.0;
+    Eigen::Isometry3d visPlanePose;
+
+    // Get the length of the plane
+    pcl::getMaxSegment(*plane->getMapClouds(), pointMin, pointMax);
+
+    // Set the pose of the plane
+    visPlanePose.linear().setIdentity();
+    visPlanePose.translation() = Eigen::Vector3d((pointMin.x - pointMax.x) / 2.0 + pointMax.x,
+                                                 (pointMin.y - pointMax.y) / 2.0 + pointMax.y,
+                                                 (pointMin.z - pointMax.z) / 2.0 + pointMax.z);
+
+    // Get the orientation of the plane
+    double yaw = std::atan2(plane->getGlobalEquation().coeffs()(1),
+                            plane->getGlobalEquation().coeffs()(0));
+    double pitch = std::atan2(plane->getGlobalEquation().coeffs()(2),
+                              plane->getGlobalEquation().coeffs().head<2>().norm());
+    Eigen::Quaterniond q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
+                           Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+                           Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+
+    visPlanePose.linear() = q.toRotationMatrix();
+    return visPlanePose;
 }
 
 /**

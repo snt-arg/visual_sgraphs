@@ -21,7 +21,9 @@
 #include <std_msgs/UInt64.h>
 #include <sensor_msgs/Imu.h>
 #include <nav_msgs/Odometry.h>
+#include <pcl/common/common.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/common/distances.h>
 #include <pcl/filters/voxel_grid.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <visualization_msgs/Marker.h>
@@ -80,7 +82,7 @@ extern double sem_prob_thresh;  // The threshold for the semantic segmentation p
 extern int sem_pointcloud_size; // Number of points in the pointcloud to detect semantic objects
 
 // Point Cloud Filtering params
-extern float distance_thresh_near, distance_thresh_far; // Distance thresholds for the point cloud filtering 
+extern float distance_thresh_near, distance_thresh_far; // Distance thresholds for the point cloud filtering
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
@@ -114,7 +116,7 @@ void publish_static_tf_transform(string, string, ros::Time);
 void publish_kf_markers(std::vector<Sophus::SE3f>, ros::Time);
 void publish_doors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publish_rooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
-void publish_walls(std::vector<ORB_SLAM3::Plane *>, ros::Time);
+void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
 void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
 void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
@@ -132,6 +134,16 @@ sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint 
 // Markers
 void add_markers_to_buffer(const aruco_msgs::MarkerArray &marker_array);
 std::pair<double, std::vector<ORB_SLAM3::Marker *>> find_nearest_marker(double frame_timestamp);
+
+/**
+ * @brief Prepares the plane for visualization
+ * @param plane The plane to be visualized
+ * @param pointMin The minimum point of the plane
+ * @param pointMax The maximum point of the plane
+ */
+Eigen::Isometry3d planePoseCalculator(const ORB_SLAM3::Plane *plane,
+                                      pcl::PointXYZRGBNormal &pointMin,
+                                      pcl::PointXYZRGBNormal &pointMax);
 
 /**
  * @brief Parses JSON values (database) and loads them into

@@ -86,9 +86,8 @@ namespace ORB_SLAM3
         map_points.insert(value);
     }
 
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Plane::getMapClouds()
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Plane::getMapClouds() const
     {
-        unique_lock<mutex> lock(mMutexPoint);
         return plane_cloud;
     }
 

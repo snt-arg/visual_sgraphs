@@ -42,7 +42,7 @@ namespace ORB_SLAM3
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
 
             // get all planes for each class specific point cloud using RANSAC
-            std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes = 
+            std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
                 getPlanesFromClassClouds(clsCloudPtrs, mMinCloudSize);
 
             cout << "Floor planes detected: " << clsPlanes[0].size() << endl;
@@ -131,11 +131,10 @@ namespace ORB_SLAM3
             // [TODO] decide when to downsample and/or distance filter
 
             // Downsample the given pointcloud
-            // pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(clsCloudPtrs[i]);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(clsCloudPtrs[i]);
 
             // Filter the pointcloud based on a range of distance
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(clsCloudPtrs[i], mDistFilterThreshold);
-            cout << "Downsampled/filtered cloud " << i << " has " << filteredCloud->width << " points." << endl;
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud, mDistFilterThreshold);
 
             std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
             if (filteredCloud->points.size() > minCloudSize)
@@ -150,25 +149,29 @@ namespace ORB_SLAM3
     void SemanticSegmentation::addPlanesToAtlas(KeyFrame *pKF,
                                                 std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes)
     {
-        for (int clsId = 0; clsId < clsPlanes.size(); clsId++){
-            for (auto planePoint : clsPlanes[clsId]){
+        for (int clsId = 0; clsId < clsPlanes.size(); clsId++)
+        {
+            for (auto planePoint : clsPlanes[clsId])
+            {
                 // Get the plane equation from the points
                 Eigen::Vector4d planeEstimate(planePoint->back().normal_x, planePoint->back().normal_y,
-                                            planePoint->back().normal_z, planePoint->back().curvature);
+                                              planePoint->back().normal_z, planePoint->back().curvature);
                 g2o::Plane3D detectedPlane(planeEstimate);
                 // Convert the given plane to global coordinates
                 g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
-                                                                            detectedPlane);
+                                                                             detectedPlane);
 
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
-                
-                // [TODO] - Add flags to decide whether SemSeg can add planes or it just updates 
-                if (matchedPlaneId == -1){
+
+                // [TODO] - Add flags to decide whether SemSeg can add planes or it just updates
+                if (matchedPlaneId == -1)
+                {
                     // [TODO] - Add a flag to decide whether SemSeg runs indepedently or with GeoSeg
                     cout << "No matched plane found." << endl;
                 }
-                else{
+                else
+                {
                     std::string planeType = clsId ? "Wall" : "Floor";
                     cout << "Matched a plane! Updating the plane type to " << planeType << endl;
                     updateMapPlane(matchedPlaneId, clsId);
@@ -178,7 +181,7 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
-                                               const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
+                                              const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
@@ -208,7 +211,8 @@ namespace ORB_SLAM3
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void SemanticSegmentation::updateMapPlane(int planeId, int clsId){
+    void SemanticSegmentation::updateMapPlane(int planeId, int clsId)
+    {
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
         matchedPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));
     }

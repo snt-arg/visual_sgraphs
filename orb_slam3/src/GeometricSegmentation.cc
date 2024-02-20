@@ -99,19 +99,17 @@ namespace ORB_SLAM3
         // [TODO] decide when to downsample and/or distance filter
 
         // // Downsample the given pointcloud
-        // pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(pointcloud);
 
         // Filter the pointcloud based on a range of distance
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(pointcloud, mDistFilterThreshold);
-        cout << "Filtered cloud size for geometric: " << filteredCloud->points.size() << endl;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud, mDistFilterThreshold);
 
         if (filteredCloud->points.size() > minCloudSize)
         {
             //  Estimate the plane equation
             extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
         }
-        
-        cout << "Planes detected geometric: " << extractedPlanes.size() << endl;
+
         return extractedPlanes;
     }
 
@@ -182,7 +180,6 @@ namespace ORB_SLAM3
         if (visitedMarker != NULL)
         {
             currentPlane->setMarkers(visitedMarker);
-            currentPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::WALL);
             currentPlane->addObservation(pKF, estimatedPlane);
             // std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
             //           << visitedMarker->getId() << std::endl;
