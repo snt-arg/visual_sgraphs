@@ -290,6 +290,8 @@ Host unitree
 | `sem_pointcloud_size`                                        | min number of points in the pointcloud to detect semantic objects                                              |
 | `sem_prob_thresh`                                            | probability threshold to detect semantic objects                                                               |
 | `marker_impact`                                              | how much to trust markers                                                                                      |
+| `distance_thresh_near`                                       | Minimum distance (in meters) for point cloud filtering, points closer are discarded                            |
+| `distance_thresh_far`                                        | Maximum distance (in meters) for point cloud filtering, points farther are discarded                           |
 | `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
 | `settings_file`                                              | path to settings file                                                                                          |
 | `enable_pangolin`                                            | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
