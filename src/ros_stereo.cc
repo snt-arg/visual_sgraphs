@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Read environment data containing markers attached to rooms and corridors
-    load_json_values(json_path);
+    parseJsonDatabase(json_path);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImageGrabber igb;
@@ -135,10 +135,10 @@ void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr &msgLeft, const s
     publish_topics(msg_time);
 }
 
-void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
+void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &markerArray)
 {
     // Pass the visited markers to a buffer to be processed later
-    add_markers_to_buffer(marker_array);
+    addMarkersToBuffer(markerArray);
 }
 
 void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage)

@@ -17,7 +17,7 @@ image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transform_listener;
-std::vector<std::vector<ORB_SLAM3::Marker *>> markers_buff;
+std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
 
@@ -934,7 +934,7 @@ Eigen::Isometry3d planePoseCalculator(const ORB_SLAM3::Plane *plane,
  * @brief Adds the markers from the received marker array into the common buffer
  * @param markerArray The marker array received from the camera
  */
-void add_markers_to_buffer(const aruco_msgs::MarkerArray &markerArray)
+void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray)
 {
     // The list of markers observed in the current frame
     std::vector<ORB_SLAM3::Marker *> currentMarkers;
@@ -969,32 +969,29 @@ void add_markers_to_buffer(const aruco_msgs::MarkerArray &markerArray)
 
     // Add the new markers to the list of markers in buffer
     if (currentMarkers.size() > 0)
-        markers_buff.push_back(currentMarkers);
+        markersBuffer.push_back(currentMarkers);
 }
 
-/**
- * Processes the common marker buffer to get the one closest to the current marker
- */
-std::pair<double, std::vector<ORB_SLAM3::Marker *>> find_nearest_marker(double frame_timestamp)
+std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double frameTimestamp)
 {
-    double min_time_diff = 100;
-    std::vector<ORB_SLAM3::Marker *> matched_markers;
+    double minTimeDifference = 100;
+    std::vector<ORB_SLAM3::Marker *> matchedMarkers;
 
-    // Loop through the markers_buff
-    for (const auto &markers : markers_buff)
+    // Loop through the markersBuffer
+    for (const auto &markers : markersBuffer)
     {
-        double time_diff = markers[0]->getTime() - frame_timestamp;
-        if (time_diff < min_time_diff)
+        double timeDifference = markers[0]->getTime() - frameTimestamp;
+        if (timeDifference < minTimeDifference)
         {
-            min_time_diff = time_diff;
-            matched_markers = markers;
+            minTimeDifference = timeDifference;
+            matchedMarkers = markers;
         }
     }
 
-    return std::make_pair(min_time_diff, matched_markers);
+    return std::make_pair(minTimeDifference, matchedMarkers);
 }
 
-void load_json_values(string jsonFilePath)
+void parseJsonDatabase(string jsonFilePath)
 {
     // Creating an object of the database loader
     ORB_SLAM3::DBParser parser;
@@ -1009,9 +1006,9 @@ void setSystemParams(ORB_SLAM3::SystemParams &sysParams)
 {
     sysParams.markerImpact = marker_impact;
     sysParams.pointCloudSize_GeoSeg = geo_pointcloud_size;
-    sysParams.downsampleLeafSize_GeoSeg = geo_downsample_leaf_size;
     sysParams.pointCloudSize_SemSeg = sem_pointcloud_size;
-    sysParams.downsampleLeafSize_SemSeg = sem_downsample_leaf_size;
     sysParams.probabilityThreshold_SemSeg = sem_prob_thresh;
+    sysParams.downsampleLeafSize_GeoSeg = geo_downsample_leaf_size;
+    sysParams.downsampleLeafSize_SemSeg = sem_downsample_leaf_size;
     sysParams.distFilterThreshold = std::make_pair(distance_thresh_near, distance_thresh_far);
 }

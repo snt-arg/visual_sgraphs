@@ -91,7 +91,7 @@ int main(int argc, char **argv)
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Read environment data containing markers attached to rooms and corridors
-    load_json_values(json_path);
+    parseJsonDatabase(json_path);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImuGrabber imugb;
@@ -157,7 +157,7 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
 
     // Find the marker with the minimum time difference compared to the current frame
     std::pair<double, std::vector<ORB_SLAM3::Marker *>> result =
-        find_nearest_marker(cv_ptr->header.stamp.toSec());
+        findNearestMarker(cv_ptr->header.stamp.toSec());
     min_time_diff = result.first;
     matched_markers = result.second;
 
@@ -215,7 +215,7 @@ void ImageGrabber::SyncWithImu()
             {
                 Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tIm, vImuMeas,
                                                          "", matched_markers, env_doors, env_rooms);
-                markers_buff.clear();
+                markersBuffer.clear();
             }
             else
                 Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tIm, vImuMeas);
@@ -237,10 +237,10 @@ void ImuGrabber::GrabImu(const sensor_msgs::ImuConstPtr &imu_msg)
     return;
 }
 
-void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &marker_array)
+void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &markerArray)
 {
     // Pass the visited markers to a buffer to be processed later
-    add_markers_to_buffer(marker_array);
+    addMarkersToBuffer(markerArray);
 }
 
 void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage)
