@@ -2,12 +2,14 @@
 
 namespace ORB_SLAM3
 {
-    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize, std::pair<float, float> distFilterThreshold)
+    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize,
+                                               std::pair<float, float> distFilterThreshold, float downsampleLeafSize)
     {
         mpAtlas = pAtlas;
         mMinCloudSize = minCloudSize;
         mSegProbThreshold = segProbThreshold;
         mDistFilterThreshold = distFilterThreshold;
+        mDownsampleLeafSize = downsampleLeafSize;
     }
 
     void SemanticSegmentation::Run()
@@ -117,6 +119,7 @@ namespace ORB_SLAM3
                 const pcl::PointXYZRGB point = thisKFPointCloud->at(clsCloudPtrs[i]->points[j].x, clsCloudPtrs[i]->points[j].y);
                 clsCloudPtrs[i]->points[j] = pcl::PointXYZRGB(point);
             }
+            clsCloudPtrs[i]->header = thisKFPointCloud->header;
         }
     }
 
@@ -131,7 +134,7 @@ namespace ORB_SLAM3
             // [TODO] decide when to downsample and/or distance filter
 
             // Downsample the given pointcloud
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample(clsCloudPtrs[i]);
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample<pcl::PointXYZRGB>(clsCloudPtrs[i], mDownsampleLeafSize);
 
             // Filter the pointcloud based on a range of distance
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud, mDistFilterThreshold);
@@ -174,7 +177,7 @@ namespace ORB_SLAM3
                 {
                     std::string planeType = clsId ? "Wall" : "Floor";
                     cout << "Matched a plane! Updating the plane type to " << planeType << endl;
-                    updateMapPlane(matchedPlaneId, clsId);
+                    updateMapPlane(matchedPlaneId, clsId, planePoint);
                 }
             }
         }
@@ -211,9 +214,15 @@ namespace ORB_SLAM3
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void SemanticSegmentation::updateMapPlane(int planeId, int clsId)
+    void SemanticSegmentation::updateMapPlane(int planeId, int clsId, 
+                                              const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
     {
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
         matchedPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));
+
+        // // augment the plane cloud with the new points
+        // if (!planeCloud->points.empty())
+        //     matchedPlane->setMapClouds(planeCloud);
+
     }
 }

@@ -23,10 +23,12 @@ ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, d
 
 // Geomentric objects detection
 int geo_pointcloud_size = 200;
+float geo_downsample_leaf_size = 0.05;
 
 // Semantic objects detection
 double sem_prob_thresh = 0.8;
 int sem_pointcloud_size = 200;
+float sem_downsample_leaf_size = 0.05;
 
 // Distance filtering
 float distance_thresh_near = 0.5;
@@ -1007,7 +1009,9 @@ void setSystemParams(ORB_SLAM3::SystemParams &sysParams)
 {
     sysParams.markerImpact = marker_impact;
     sysParams.pointCloudSize_GeoSeg = geo_pointcloud_size;
+    sysParams.downsampleLeafSize_GeoSeg = geo_downsample_leaf_size;
     sysParams.pointCloudSize_SemSeg = sem_pointcloud_size;
+    sysParams.downsampleLeafSize_SemSeg = sem_downsample_leaf_size;
     sysParams.probabilityThreshold_SemSeg = sem_prob_thresh;
     sysParams.distFilterThreshold = std::make_pair(distance_thresh_near, distance_thresh_far);
 }

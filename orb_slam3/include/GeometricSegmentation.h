@@ -23,6 +23,7 @@ namespace ORB_SLAM3
         Atlas *mpAtlas;
         int mMinCloudSize;
         bool mHasDepthCloud;
+        float mDownsampleLeafSize;
         std::pair<float, float> mDistFilterThreshold;
         std::mutex mMutexNewKFs;
         std::list<KeyFrame *> mvpKeyFrameBuffer;
@@ -30,7 +31,8 @@ namespace ORB_SLAM3
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud, int minCloudSize, std::pair<float, float> distFilterThreshold);
+        GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud, int minCloudSize,
+                              std::pair<float, float> distFilterThreshold, float downsampleLeafSize);
 
         void AddKeyFrameToBuffer(KeyFrame *pKF);
         std::list<KeyFrame *> GetKeyFrameBuffer();

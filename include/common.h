@@ -75,11 +75,13 @@ extern ORB_SLAM3::SystemParams sysParams; // System parameters set in the launch
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 
 // Geomentric objects detection
-extern int geo_pointcloud_size; // Number of points in the pointcloud to detect geometric objects
+extern int geo_pointcloud_size;           // Number of points in the pointcloud to detect geometric objects
+extern float geo_downsample_leaf_size;    // Leaf size for downsampling during the geometric segmentation process
 
 // Semantic objects detection
-extern double sem_prob_thresh;  // The threshold for the semantic segmentation process
-extern int sem_pointcloud_size; // Number of points in the pointcloud to detect semantic objects
+extern double sem_prob_thresh;            // The threshold for the semantic segmentation process
+extern int sem_pointcloud_size;           // Number of points in the pointcloud to detect semantic objects
+extern float sem_downsample_leaf_size;    // Leaf size for downsampling during the semantic segmentation process
 
 // Point Cloud Filtering params
 extern float distance_thresh_near, distance_thresh_far; // Distance thresholds for the point cloud filtering

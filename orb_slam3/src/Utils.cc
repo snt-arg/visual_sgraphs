@@ -102,17 +102,18 @@ namespace ORB_SLAM3
         return std::make_pair(isDoor, name);
     }
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDownsample(
-        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud)
+    template<typename PointT>
+    typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDownsample(
+        const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize)
     {
         // The filtered point cloud object
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered(new pcl::PointCloud<pcl::PointXYZRGB>());
+        typename pcl::PointCloud<PointT>::Ptr filtered(new pcl::PointCloud<PointT>());
 
         // Define the downsampling filter
-        pcl::VoxelGrid<pcl::PointXYZRGB>::Ptr downsampleFilter(new pcl::VoxelGrid<pcl::PointXYZRGB>());
+        typename pcl::VoxelGrid<PointT>::Ptr downsampleFilter(new pcl::VoxelGrid<PointT>());
 
         // Set the parameters of the downsampling filter
-        downsampleFilter->setLeafSize(0.1f, 0.1f, 0.1f);
+        downsampleFilter->setLeafSize(leafSize, leafSize, leafSize);
         downsampleFilter->setInputCloud(cloud);
 
         // Apply the downsampling filter
@@ -121,6 +122,8 @@ namespace ORB_SLAM3
 
         return filtered;
     }
+    template pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGB>(
+        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, const float);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDistanceFilter(
         const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, std::pair<float, float> thresholds)

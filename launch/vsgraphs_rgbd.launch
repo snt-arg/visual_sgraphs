@@ -19,12 +19,16 @@
     <!-- ****** Geometric Segmentation Arguments ****** -->
     <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
     <arg name="pointcloud_size_geo" default="300" />
+    <!-- What is the leaf size for the pointcloud downsampling -->
+    <arg name="geo_downsample_leaf_size" default="0.075" />
 
     <!-- ****** Semantic Segmentation Arguments ****** -->
     <!-- What is the the threshold for semantic segmentation probability validation (rejects values below x) -->
-    <arg name="prob_sem_thresh" default="0.5" />
+    <arg name="prob_sem_thresh" default="0.55" />
     <!-- How many pointclouds (after downsampling) needed to detect semantic objects (e.g., planes) -->
     <arg name="pointcloud_size_sem" default="300" />
+    <!-- What is the leaf size for the pointcloud downsampling -->
+    <arg name="sem_downsample_leaf_size" default="0.035" />
 
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
@@ -52,6 +56,8 @@
         <param name="markers_impact" type="double" value="$(arg marker_impact)"/>
         <param name="distance_thresh_near" type="double" value="$(arg distance_thresh_near)"/>
         <param name="distance_thresh_far" type="double" value="$(arg distance_thresh_far)"/>
+        <param name="geo_downsample_leaf_size" type="double" value="$(arg geo_downsample_leaf_size)"/>
+        <param name="sem_downsample_leaf_size" type="double" value="$(arg sem_downsample_leaf_size)"/>
         <param name="sem_prob_thresh" type="double" value="$(arg prob_sem_thresh)"/>
         <param name="sem_pointclouds_thresh" type="int" value="$(arg pointcloud_size_sem)"/>
         <param name="geo_pointclouds_thresh" type="int" value="$(arg pointcloud_size_geo)"/>

@@ -197,17 +197,22 @@ namespace ORB_SLAM3
 
         // 🚀 [vS-Graphs v.2.0] Common parameters for GeoSeg and SemSeg
         std::pair<float, float> distFilterThreshold = sysParams.distFilterThreshold;
+        float downsampleLeafSize = 0.05;
 
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
         int minCloudSize_GeoSeg = sysParams.pointCloudSize_GeoSeg;
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
-        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, minCloudSize_GeoSeg, distFilterThreshold);
+        downsampleLeafSize = sysParams.downsampleLeafSize_GeoSeg;
+        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, minCloudSize_GeoSeg,
+                                                            distFilterThreshold, downsampleLeafSize);
         mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
         int minCloudSize_SemSeg = sysParams.pointCloudSize_SemSeg;
         double segProbThreshold = sysParams.probabilityThreshold_SemSeg;
-        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold, minCloudSize_SemSeg, distFilterThreshold);
+        downsampleLeafSize = sysParams.downsampleLeafSize_SemSeg;
+        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold, minCloudSize_SemSeg, 
+                                                          distFilterThreshold, downsampleLeafSize);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
         // Set pointers between threads

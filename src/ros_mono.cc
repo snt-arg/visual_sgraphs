@@ -53,6 +53,8 @@ int main(int argc, char **argv)
     node_handler.param<double>(node_name + "/markers_impact", marker_impact, 1e10);
     node_handler.param<float>(node_name + "/distance_thresh_near", distance_thresh_near, 0.5);
     node_handler.param<float>(node_name + "/distance_thresh_far", distance_thresh_far, 5.0);
+    node_handler.param<float>(node_name + "/sem_downsample_leaf_size", sem_downsample_leaf_size, 0.05);
+    node_handler.param<float>(node_name + "/geo_downsample_leaf_size", geo_downsample_leaf_size, 0.05);
     node_handler.param<double>(node_name + "/sem_prob_thresh", sem_prob_thresh, 0.8);
     node_handler.param<int>(node_name + "/sem_pointclouds_thresh", sem_pointcloud_size, 200);
     node_handler.param<int>(node_name + "/geo_pointclouds_thresh", geo_pointcloud_size, 200);

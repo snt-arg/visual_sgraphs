@@ -83,8 +83,9 @@ namespace ORB_SLAM3
          * Downsamples the pointclouds based on the given leaf size
          * @param cloud the pointcloud to be downsampled
          */
-        static pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDownsample(
-            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud);
+        template<typename PointT>
+        static typename pcl::PointCloud<PointT>::Ptr pointcloudDownsample(
+            const typename pcl::PointCloud<PointT>::Ptr &cloud, float leafSize);
 
         /**
          * @brief Performs PCL ransac to get the plane equations from the a given point cloud
