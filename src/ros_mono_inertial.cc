@@ -31,8 +31,8 @@ public:
 
 private:
     // Marker detection
-    double min_time_diff;
-    std::vector<ORB_SLAM3::Marker *> matched_markers;
+    double minMarkerTimeDiff;
+    std::vector<ORB_SLAM3::Marker *> matchedMarkers;
 };
 
 int main(int argc, char **argv)
@@ -74,13 +74,13 @@ int main(int argc, char **argv)
     node_handler.param<double>(node_name + "/roll", roll, 0.0);
     node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
     node_handler.param<double>(node_name + "/markers_impact", marker_impact, 1e10);
-    node_handler.param<float>(node_name + "/distance_thresh_near", distance_thresh_near, 0.5);
-    node_handler.param<float>(node_name + "/distance_thresh_far", distance_thresh_far, 5.0);
-    node_handler.param<float>(node_name + "/sem_downsample_leaf_size", sem_downsample_leaf_size, 0.05);
-    node_handler.param<float>(node_name + "/geo_downsample_leaf_size", geo_downsample_leaf_size, 0.05);
     node_handler.param<double>(node_name + "/sem_prob_thresh", sem_prob_thresh, 0.8);
+    node_handler.param<float>(node_name + "/distance_thresh_far", distance_thresh_far, 5.0);
     node_handler.param<int>(node_name + "/sem_pointclouds_thresh", sem_pointcloud_size, 200);
     node_handler.param<int>(node_name + "/geo_pointclouds_thresh", geo_pointcloud_size, 200);
+    node_handler.param<float>(node_name + "/distance_thresh_near", distance_thresh_near, 0.5);
+    node_handler.param<float>(node_name + "/sem_downsample_leaf_size", sem_downsample_leaf_size, 0.05);
+    node_handler.param<float>(node_name + "/geo_downsample_leaf_size", geo_downsample_leaf_size, 0.05);
 
     node_handler.param<std::string>(node_name + "/imu_frame_id", imu_frame_id, "imu");
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
@@ -158,8 +158,8 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
     // Find the marker with the minimum time difference compared to the current frame
     std::pair<double, std::vector<ORB_SLAM3::Marker *>> result =
         findNearestMarker(cv_ptr->header.stamp.toSec());
-    min_time_diff = result.first;
-    matched_markers = result.second;
+    minMarkerTimeDiff = result.first;
+    matchedMarkers = result.second;
 
     if (cv_ptr->image.type() == 0)
     {
@@ -211,10 +211,10 @@ void ImageGrabber::SyncWithImu()
             mpImuGb->mBufMutex.unlock();
 
             // ORB-SLAM3 runs in TrackMonocular()
-            if (min_time_diff < 0.05)
+            if (minMarkerTimeDiff < 0.05)
             {
                 Sophus::SE3f Tcw = pSLAM->TrackMonocular(im, tIm, vImuMeas,
-                                                         "", matched_markers, env_doors, env_rooms);
+                                                         "", matchedMarkers, env_doors, env_rooms);
                 markersBuffer.clear();
             }
             else
