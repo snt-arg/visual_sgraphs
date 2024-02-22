@@ -43,22 +43,21 @@ namespace ORB_SLAM3
             // Fill the room entity
             envRoom->setOpId(-1);
             envRoom->setOpIdG(-1);
-            envRoom->setAllSeenMarkers(false);
             envRoom->setId(stoi(envDatum.key()));
             envRoom->setName(envDatum.value()["name"]);
             envRoom->setIsCorridor(envDatum.value()["isCorridor"]);
             envRoom->setMetaMarkerId(envDatum.value()["metaMarker"]);
 
             // Fill the set of walls (marker-pairs attached to walls) of a room
-            for (int idx = 0; idx < envDatum.value()["markers"].size(); idx++)
-            {
-                // Get the marker IDs of a wall
-                std::vector<int> markerIds;
-                for (const auto &marker : envDatum.value()["markers"][idx].items())
-                    markerIds.push_back(marker.value());
-                // Add the marker IDs to the set of walls
-                envRoom->setWallMarkerIds(markerIds);
-            }
+            // for (int idx = 0; idx < envDatum.value()["markers"].size(); idx++)
+            // {
+            //     // Get the marker IDs of a wall
+            //     std::vector<int> markerIds;
+            //     for (const auto &marker : envDatum.value()["markers"][idx].items())
+            //         markerIds.push_back(marker.value());
+            //     // Add the marker IDs to the set of walls
+            //     envRoom->setWallMarkerIds(markerIds);
+            // }
 
             // Fill the set of doors (markers attached to doors) of a room
             for (const auto &marker : envDatum.value()["doorMarkers"].items())

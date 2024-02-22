@@ -150,13 +150,13 @@ namespace ORB_SLAM3
                                                                      estimatedPlane);
         newMapPlane->setGlobalEquation(globalEquation);
 
-        std::string planeStr = "(" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(0)) + ")x + (" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(1)) + ")y + (" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(2)) + ")z + (" +
-                               std::to_string(newMapPlane->getGlobalEquation().coeffs()(3)) + ") = 0";
-        std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
-                  << planeStr << std::endl;
+        // std::string planeStr = "(" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(0)) + ")x + (" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(1)) + ")y + (" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(2)) + ")z + (" +
+        //                        std::to_string(newMapPlane->getGlobalEquation().coeffs()(3)) + ") = 0";
+        // std::cout << "- New plane detected: Plane#" << newMapPlane->getId() << ", Eq: "
+        //           << planeStr << std::endl;
 
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
@@ -179,13 +179,13 @@ namespace ORB_SLAM3
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
 
         // If there is a marker attached to a plane, set it as 'wall' and store the marker
-        if (visitedMarker != NULL)
-        {
-            currentPlane->setMarkers(visitedMarker);
-            currentPlane->addObservation(pKF, estimatedPlane);
-            // std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
-            //           << visitedMarker->getId() << std::endl;
-        }
+        // if (visitedMarker != NULL)
+        // {
+        //     currentPlane->setMarkers(visitedMarker);
+        //     currentPlane->addObservation(pKF, estimatedPlane);
+        //     std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
+        //               << visitedMarker->getId() << std::endl;
+        // }
 
         // Update the pointcloud of the plane
         if (!planeCloud->points.empty())

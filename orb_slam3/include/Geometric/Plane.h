@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Planes Entity
  */
 
 #ifndef PLANE_H
@@ -32,18 +29,18 @@ namespace ORB_SLAM3
         };
 
     private:
-        int id;                                                   // The plane's identifier
-        int opId;                                                 // The plane's identifier in the local optimizer
-        int opIdG;                                                // The plane's identifier in the global optimizer
-        planeVariant planeType;                                   // The plane's semantic type (e.g., wall, floor, etc.)
-        Eigen::Vector3f centroid;                                 // The centroid of the plane
-        std::vector<double> color;                                // A color devoted for visualization
-        g2o::Plane3D local_equation;                              // The plane equation in the local map
-        g2o::Plane3D global_equation;                             // The plane equation in the global map
-        std::vector<Marker *> markers;                            // The list of markers lying on the plane
-        std::set<MapPoint *> map_points;                          // The unique set of map points lying on the plane
-        std::map<KeyFrame *, g2o::Plane3D> observations;          // Plane's observations in keyFrames
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr plane_cloud; // The point cloud of the plane
+        int id;                                                  // The plane's identifier
+        int opId;                                                // The plane's identifier in the local optimizer
+        int opIdG;                                               // The plane's identifier in the global optimizer
+        planeVariant planeType;                                  // The plane's semantic type (e.g., wall, floor, etc.)
+        Eigen::Vector3f centroid;                                // The centroid of the plane
+        std::vector<double> color;                               // A color devoted for visualization
+        g2o::Plane3D localEquation;                              // The plane equation in the local map
+        g2o::Plane3D globalEquation;                             // The plane equation in the global map
+        std::vector<Marker *> markers;                           // The list of markers lying on the plane
+        std::set<MapPoint *> mapPoints;                          // The unique set of map points lying on the plane
+        std::map<KeyFrame *, g2o::Plane3D> observations;         // Plane's observations in keyFrames
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud; // The point cloud of the plane
 
     public:
         Plane();
@@ -70,8 +67,8 @@ namespace ORB_SLAM3
         void setMapPoints(MapPoint *value);
         std::set<MapPoint *> getMapPoints();
 
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds() const;
-        void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
+        Eigen::Vector3f getCentroid() const;
+        void setCentroid(const Eigen::Vector3f &value);
 
         g2o::Plane3D getLocalEquation() const;
         void setLocalEquation(const g2o::Plane3D &value);
@@ -82,8 +79,8 @@ namespace ORB_SLAM3
         void addObservation(KeyFrame *pKF, g2o::Plane3D localEquation);
         const std::map<KeyFrame *, g2o::Plane3D> &getObservations() const;
 
-        Eigen::Vector3f getCentroid() const;
-        void setCentroid(const Eigen::Vector3f &value);
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds() const;
+        void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
 
         Map *GetMap();
         void SetMap(Map *pMap);

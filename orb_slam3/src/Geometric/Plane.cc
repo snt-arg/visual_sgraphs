@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Planes Entity
  */
 
 #include "Geometric/Plane.h"
@@ -11,7 +8,7 @@ namespace ORB_SLAM3
 {
     Plane::Plane()
     {
-        plane_cloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>();
+        planeCloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>();
     }
     Plane::~Plane() {}
 
@@ -60,12 +57,12 @@ namespace ORB_SLAM3
         }
     }
 
-    std::vector<Marker *> Plane::getMarkers() const
+    [[deprecated]] std::vector<Marker *> Plane::getMarkers() const
     {
         return markers;
     }
 
-    void Plane::setMarkers(Marker *value)
+    [[deprecated]] void Plane::setMarkers(Marker *value)
     {
         // Check if the marker is not already added in the list of plane markers
         if (std::find(markers.begin(), markers.end(), value) == markers.end())
@@ -77,25 +74,25 @@ namespace ORB_SLAM3
     std::set<MapPoint *> Plane::getMapPoints()
     {
         unique_lock<mutex> lock(mMutexPoint);
-        return map_points;
+        return mapPoints;
     }
 
     void Plane::setMapPoints(MapPoint *value)
     {
         unique_lock<mutex> lock(mMutexPoint);
-        map_points.insert(value);
+        mapPoints.insert(value);
     }
 
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Plane::getMapClouds() const
     {
-        return plane_cloud;
+        return planeCloud;
     }
 
     void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexPoint);
         for (const auto &point : value->points)
-            plane_cloud->points.push_back(point);
+            planeCloud->points.push_back(point);
     }
 
     Plane::planeVariant Plane::getPlaneType() const
@@ -110,22 +107,22 @@ namespace ORB_SLAM3
 
     g2o::Plane3D Plane::getLocalEquation() const
     {
-        return local_equation;
+        return localEquation;
     }
 
     void Plane::setLocalEquation(const g2o::Plane3D &value)
     {
-        local_equation = value;
+        localEquation = value;
     }
 
     g2o::Plane3D Plane::getGlobalEquation() const
     {
-        return global_equation;
+        return globalEquation;
     }
 
     void Plane::setGlobalEquation(const g2o::Plane3D &value)
     {
-        global_equation = value;
+        globalEquation = value;
     }
 
     Eigen::Vector3f Plane::getCentroid() const

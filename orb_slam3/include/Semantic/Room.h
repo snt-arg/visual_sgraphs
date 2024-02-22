@@ -23,7 +23,6 @@ namespace ORB_SLAM3
         bool isCorridor;                             // Checks if the room is a corridor or not
         int metaMarkerId;                            // The identifier of the room's meta-marker (containing information about the room)
         std::string name;                            // The name devoted for each room (optional)
-        bool allSeenMarkers;                         // Checks if the room markers are already detected
         std::vector<Door *> doors;                   // The vector of detected doors of a room
         std::vector<Plane *> walls;                  // The vector of detected walls of a room
         Eigen::Vector3d roomCenter;                  // The center of the room as a 3D vector
@@ -53,9 +52,6 @@ namespace ORB_SLAM3
 
         std::string getName() const;
         void setName(std::string value);
-
-        bool getAllSeenMarkers() const;
-        void setAllSeenMarkers(bool value);
 
         void setDoors(Door *value);
         std::vector<Door *> getDoors() const;

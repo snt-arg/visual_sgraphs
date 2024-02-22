@@ -180,7 +180,7 @@ namespace ORB_SLAM3
                 else
                 {
                     std::string planeType = clsId ? "Wall" : "Floor";
-                    cout << "Matched a plane! Updating the plane type to " << planeType << endl;
+                    // cout << "Matched a plane! Updating the plane type to " << planeType << endl;
                     updateMapPlane(matchedPlaneId, clsId, planePoint);
                 }
             }
@@ -218,7 +218,7 @@ namespace ORB_SLAM3
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void SemanticSegmentation::updateMapPlane(int planeId, int clsId, 
+    void SemanticSegmentation::updateMapPlane(int planeId, int clsId,
                                               const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
     {
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
@@ -227,6 +227,5 @@ namespace ORB_SLAM3
         // // augment the plane cloud with the new points
         // if (!planeCloud->points.empty())
         //     matchedPlane->setMapClouds(planeCloud);
-
     }
 }

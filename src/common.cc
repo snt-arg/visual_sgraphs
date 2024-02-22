@@ -359,7 +359,6 @@ void publish_all_points(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time
     all_mappoints_pub.publish(cloud);
 }
 
-// More details: http://docs.ros.org/en/api/visualization_msgs/html/msg/Marker.html
 void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
 {
     int numKFs = vKFposes.size();
@@ -1041,8 +1040,8 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double fra
         double timeDifference = markers[0]->getTime() - frameTimestamp;
         if (timeDifference < minTimeDifference)
         {
-            minTimeDifference = timeDifference;
             matchedMarkers = markers;
+            minTimeDifference = timeDifference;
         }
     }
 

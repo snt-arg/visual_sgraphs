@@ -3403,7 +3403,7 @@ namespace ORB_SLAM3
         // Add the current KeyFrame to the buffer in GeometrySegmentation
         AddKeyFrameToKFBuffer(pKF);
 
-        // Early creation of a room as soon as all elements of at least one of its pairs has been seen
+        // Early creation of a room as soon as the meta-marker is detected
         currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
 
         mpLocalMapper->InsertKeyFrame(pKF);
@@ -4208,20 +4208,24 @@ namespace ORB_SLAM3
         return closePoints;
     }
 
-    ORB_SLAM3::Room *Tracking::roomAssociation(const ORB_SLAM3::Room *detectedRoom)
+    ORB_SLAM3::Room *Tracking::roomAssociation(const ORB_SLAM3::Room *givenRoom)
     {
+        // Variables
+        double minDistance = 100;
         ORB_SLAM3::Room *foundMappedRoom = nullptr;
-        double min_dist = 100;
-        Eigen::Vector3d detetedRoomCenter = detectedRoom->getRoomCenter();
 
+        // Get the given room center
+        Eigen::Vector3d detetedRoomCenter = givenRoom->getRoomCenter();
+
+        // Check to find the room with the minimum distance from the center
         for (const auto &mapRoom : mpAtlas->GetAllRooms())
         {
             Eigen::Vector3d mapRoomCenter = mapRoom->getRoomCenter();
-            double dist = (detetedRoomCenter - mapRoomCenter).norm();
+            double distance = (detetedRoomCenter - mapRoomCenter).norm();
 
-            if (dist < min_dist)
+            if (distance < minDistance)
             {
-                min_dist = dist;
+                minDistance = distance;
                 foundMappedRoom = mapRoom;
             }
         }
@@ -4229,25 +4233,21 @@ namespace ORB_SLAM3
         return foundMappedRoom;
     }
 
-    void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, std::vector<int> markerIds)
+    void Tracking::createMapRoom(ORB_SLAM3::Room *detectedRoom, Eigen::Vector3d centroid)
     {
-        // Find attached walls and add them to the room
-        std::string detectedWalls("");
-        std::string detectedMarkers("");
-        for (auto wall : mpAtlas->GetAllPlanes())
-        {
-            std::vector<ORB_SLAM3::Marker *> markers = wall->getMarkers();
-            for (auto marker : markers)
-            {
-                if (std::find(markerIds.begin(), markerIds.end(), marker->getId()) != markerIds.end())
-                {
-                    detectedRoom->setWalls(wall);
-                    detectedWalls += to_string(wall->getId()) + " ";
-                    detectedMarkers += to_string(marker->getId()) + " ";
-                }
-            }
-        }
+        // Update the room values
+        detectedRoom->setRoomCenter(centroid);
+        detectedRoom->SetMap(mpAtlas->GetCurrentMap());
+        detectedRoom->setId(mpAtlas->GetAllRooms().size());
 
+        std::cout << "- New room detected: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
+                  << "), augmented by Marker-ID #" << detectedRoom->getMetaMarkerId() << "!" << std::endl;
+
+        mpAtlas->AddMapRoom(detectedRoom);
+    }
+
+    void Tracking::updateMapRoom(ORB_SLAM3::Room *detectedRoom)
+    {
         // Find attached doors and add them to the room
         std::string detectedDoors("");
         for (auto door : mpAtlas->GetAllDoors())
@@ -4260,59 +4260,54 @@ namespace ORB_SLAM3
                 {
                     detectedRoom->setDoors(door);
                     detectedDoors += to_string(door->getId()) + " ";
-                    detectedMarkers += to_string(marker->getId()) + " ";
                 }
             }
         }
 
-        // Set room center
-        Eigen::Vector3d roomCenter;
+        // [TODO] Detect walls close to the room center
+
+        // Set the new room center
+        Eigen::Vector3d updatedCentroid = Eigen::Vector3d::Zero();
         std::vector<Plane *> roomWalls = detectedRoom->getWalls();
-        if (detectedRoom->getIsCorridor())
+        if (roomWalls.size() > 0)
         {
-            // Calculate the marker position placed on a wall
-            Eigen::Vector3d markerPosition =
-                roomWalls.front()->getMarkers().front()->getGlobalPose().translation().cast<double>();
-            // If it is a corridor
-            Eigen::Vector4d wall1(Utils::correctPlaneDirection(
-                roomWalls.front()->getGlobalEquation().coeffs()));
-            Eigen::Vector4d wall2(Utils::correctPlaneDirection(
-                roomWalls.front()->getGlobalEquation().coeffs()));
-            // Find the room center and add its vertex
-            roomCenter = Utils::getRoomCenter(markerPosition, wall1, wall2);
-        }
-        else
-        {
-            reorganizeRoomWalls(detectedRoom);
-            // If it is a four-wall room
-            Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
-                detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
-                detectedRoom->getWalls()[1]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
-                detectedRoom->getWalls()[2]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
-                detectedRoom->getWalls()[3]->getGlobalEquation().coeffs());
-            // Find the room center and add its vertex
-            roomCenter = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
-        }
+            if (detectedRoom->getIsCorridor())
+            {
+                // Calculate the marker position placed on a wall
+                Eigen::Vector3d markerPosition =
+                    roomWalls.front()->getMarkers().front()->getGlobalPose().translation().cast<double>();
+                // If it is a corridor
+                Eigen::Vector4d wall1(Utils::correctPlaneDirection(
+                    roomWalls.front()->getGlobalEquation().coeffs()));
+                Eigen::Vector4d wall2(Utils::correctPlaneDirection(
+                    roomWalls.front()->getGlobalEquation().coeffs()));
+                // Find the room center and add its vertex
+                updatedCentroid = Utils::getRoomCenter(markerPosition, wall1, wall2);
+            }
+            else
+            {
+                reorganizeRoomWalls(detectedRoom);
+                // If it is a four-wall room
+                Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
+                    detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
+                Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
+                    detectedRoom->getWalls()[1]->getGlobalEquation().coeffs());
+                Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
+                    detectedRoom->getWalls()[2]->getGlobalEquation().coeffs());
+                Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
+                    detectedRoom->getWalls()[3]->getGlobalEquation().coeffs());
+                // Find the room center and add its vertex
+                updatedCentroid = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
+            }
 
-        ORB_SLAM3::Room *foundMappedRoom = roomAssociation(detectedRoom);
-
-        if (foundMappedRoom == nullptr)
-        {
             // Update the room values
-            detectedRoom->setAllSeenMarkers(true);
-            detectedRoom->setRoomCenter(roomCenter);
-            detectedRoom->SetMap(mpAtlas->GetCurrentMap());
-            detectedRoom->setId(mpAtlas->GetAllRooms().size());
-
-            std::cout << "- New room detected: Room#" << detectedRoom->getId() << " (" << detectedRoom->getName()
-                      << "), with walls [ " << detectedWalls << "], connected doors [ " << detectedDoors
-                      << "], and attached markers [ " << detectedMarkers << "]!" << std::endl;
-
-            mpAtlas->AddMapRoom(detectedRoom);
+            detectedRoom->setRoomCenter(updatedCentroid);
         }
+
+        std::cout << "- Room#" << detectedRoom->getId() << " updated (" << detectedRoom->getName()
+                  << "), augmented by Marker-ID #" << detectedRoom->getMetaMarkerId() << ", with #"
+                  << " walls and doors [" << detectedDoors << "]!"
+                  << std::endl;
     }
 
     void Tracking::reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom)
@@ -4382,53 +4377,37 @@ namespace ORB_SLAM3
 
     std::vector<Room *> Tracking::earlyRoomDetection(const std::vector<Marker *> &mvpMapMarkers)
     {
-        std::vector<Room *> currentFoundRooms;
-        // Loop over all real rooms in the map
-        for (Room *envRoom : env_rooms)
+        // Variables
+        std::vector<Room *> foundRooms;
+
+        // Loop over all detected markers
+        for (const auto &mapMarker : mvpMapMarkers)
         {
-            // Check if a room has not been created for it before
-            if (!envRoom->getAllSeenMarkers())
+            int metaMarkerId = mapMarker->getId();
+
+            // Loop over all real rooms in the map (extracted from the database)
+            for (Room *envRoom : env_rooms)
             {
-                // Get all detected walls' marker IDs
-                std::vector<int> detectedMarkerIds = mpAtlas->visitedPlanesMarkerIds;
-                // Get all marker IDs of an actual room
-                std::vector<std::vector<int>> realMarkerIds = envRoom->getWallMarkerIds();
-                // Loop over all the markers of the room, i.e., [[],[],...]
-                for (int idx = 0; idx < realMarkerIds.size(); idx++)
+                // Check if the current detected marker belongs to this room
+                if (metaMarkerId == envRoom->getMetaMarkerId())
                 {
-                    // Check to see if all of the markers have been seen
-                    bool allFound = std::all_of(begin(realMarkerIds[idx]), end(realMarkerIds[idx]), [&](int x)
-                                                {
-                                    bool found = std::find(begin(detectedMarkerIds), end(detectedMarkerIds), x) != end(detectedMarkerIds);
-                                    return found; });
+                    // Check to see if the room is already in the map
+                    ORB_SLAM3::Room *foundMappedRoom = roomAssociation(envRoom);
 
-                    // check if current detected marker belong to this rooms otherwise continue
-                    bool detMarkerinRoom = false;
-                    for (const auto &detMarker : mvpMapMarkers)
+                    if (foundMappedRoom == nullptr)
                     {
-                        for (const auto &realMarker : realMarkerIds[idx])
-                        {
-                            if (detMarker->getId() == realMarker)
-                            {
-                                detMarkerinRoom = true;
-                                break;
-                            }
-                        }
-                        if (detMarkerinRoom)
-                            break;
+                        foundRooms.push_back(envRoom);
+                        Eigen::Vector3f centroidFloat = mapMarker->getGlobalPose().translation();
+                        Eigen::Vector3d centroid = centroidFloat.cast<double>();
+                        createMapRoom(envRoom, centroid);
                     }
-
-                    // Create a new room
-                    if (allFound && detMarkerinRoom)
-                    {
-                        createMapRoom(envRoom, realMarkerIds[idx]);
-                        currentFoundRooms.push_back(envRoom);
-                    }
+                    else
+                        updateMapRoom(envRoom);
                 }
             }
         }
 
-        return currentFoundRooms;
+        return foundRooms;
     }
 
     double Tracking::GetMarkerImpact() const

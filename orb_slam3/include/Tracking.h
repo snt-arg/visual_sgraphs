@@ -160,19 +160,25 @@ namespace ORB_SLAM3
         /**
          * @brief Creates a new room object (corridor or room) to be added to the map
          * @param detectedRoom the address of the detected room
-         * @param markerIds the list of the detected marker-ids belong to the plane
+         * @param centroid the centroid of the detected room
          */
-        void createMapRoom(Room *detectedRoom, std::vector<int> markerIds);
+        void createMapRoom(Room *detectedRoom, Eigen::Vector3d centroid = Eigen::Vector3d::Zero());
+
+        /**
+         * @brief Updates an existing room object (corridor or room) to be added to the map
+         * @param detectedRoom the address of the detected room
+         */
+        void updateMapRoom(Room *detectedRoom);
 
         /**
          * @brief Extracts all the walls related to a room
          * @param detectedRoom the address of the detected room
          */
-        void reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom);
+        void reorganizeRoomWalls(Room *detectedRoom);
 
         /**
-         * @brief Early creation of a room as soon as all elements of at least one of its pairs has been seen
-         * (e.g., if all elements of [[1,2,3,4]] or both 1 & 2 in [[1,2][3,4]] visited)
+         * @brief Early creation of a room as soon as its meta-marker is detected
+         * @param mvpMapMarkers the list of the detected markers
          */
         std::vector<Room *> earlyRoomDetection(const std::vector<Marker *> &mvpMapMarkers);
 
@@ -180,7 +186,7 @@ namespace ORB_SLAM3
          * @brief Checks for the association of a given room
          * @param detectedRoom the address of the detected room
          */
-        ORB_SLAM3::Room *roomAssociation(const ORB_SLAM3::Room *detectedRoom);
+        Room *roomAssociation(const Room *detectedRoom);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

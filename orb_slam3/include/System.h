@@ -113,13 +113,23 @@ namespace ORB_SLAM3
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
         System(const string &strVocFile, const string &strSettingsFile, const SystemParams &params, const eSensor sensor,
                const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
 
-        // Proccess the given stereo frame. Images must be synchronized and rectified.
-        // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
-        // Returns the camera pose (empty if tracking fails).
+        /**
+         * @brief Process the given stereo frame for tracking. Images must be synchronized and rectified.
+         * @param imLeft the input RGB image (CV_8UC3) or grayscale (CV_8U) from the left camera
+         * @param imRight the input RGB image (CV_8UC3) or grayscale (CV_8U) from the right camera
+         * @param timestamp the timestamp of the frame
+         * @param vImuMeas the vector of IMU measurements
+         * @param filename the name of the file
+         * @param markers the vector of fiducial markers
+         * @param envDoors the vector of doors
+         * @param envRooms the vector of rooms
+         * @return the camera pose (empty if tracking fails)
+         */
         Sophus::SE3f TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
                                  const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
                                  const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
@@ -145,9 +155,17 @@ namespace ORB_SLAM3
                                const vector<Door *> envDoors = vector<Door *>{},
                                const vector<Room *> envRooms = vector<Room *>{});
 
-        // Proccess the given monocular frame and optionally imu data
-        // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
-        // Returns the camera pose (empty if tracking fails).
+        /**
+         * @brief Process the given stereo frame for tracking. Images must be synchronized and rectified.
+         * @param im the input RGB image (CV_8UC3) or grayscale (CV_8U) from the left camera
+         * @param timestamp the timestamp of the frame
+         * @param vImuMeas the vector of IMU measurements
+         * @param filename the name of the file
+         * @param markers the vector of fiducial markers
+         * @param envDoors the vector of doors
+         * @param envRooms the vector of rooms
+         * @return the camera pose (empty if tracking fails)
+         */
         Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp,
                                     const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
                                     const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
@@ -155,6 +173,7 @@ namespace ORB_SLAM3
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();
+
         // This resumes local mapping thread and performs SLAM again.
         void DeactivateLocalizationMode();
 

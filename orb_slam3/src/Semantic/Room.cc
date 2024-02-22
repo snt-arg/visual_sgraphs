@@ -59,16 +59,6 @@ namespace ORB_SLAM3
         name = value;
     }
 
-    bool Room::getAllSeenMarkers() const
-    {
-        return allSeenMarkers;
-    }
-
-    void Room::setAllSeenMarkers(bool value)
-    {
-        allSeenMarkers = value;
-    }
-
     bool Room::getIsCorridor() const
     {
         return isCorridor;
