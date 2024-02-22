@@ -64,13 +64,13 @@ namespace ORB_SLAM3
             template <class Archive>
             void serialize(Archive &ar, const unsigned int version)
             {
-                ar &bax;
-                ar &bay;
-                ar &baz;
+                ar & bax;
+                ar & bay;
+                ar & baz;
 
-                ar &bwx;
-                ar &bwy;
-                ar &bwz;
+                ar & bwx;
+                ar & bwy;
+                ar & bwz;
             }
 
         public:
@@ -99,7 +99,7 @@ namespace ORB_SLAM3
                 ar &boost::serialization::make_array(Cov.diagonal().data(), Cov.diagonal().size());
                 ar &boost::serialization::make_array(CovWalk.diagonal().data(), CovWalk.diagonal().size());
 
-                ar &mbIsSet;
+                ar & mbIsSet;
             }
 
         public:
@@ -143,12 +143,12 @@ namespace ORB_SLAM3
             template <class Archive>
             void serialize(Archive &ar, const unsigned int version)
             {
-                ar &dT;
+                ar & dT;
                 ar &boost::serialization::make_array(C.data(), C.size());
                 ar &boost::serialization::make_array(Info.data(), Info.size());
                 ar &boost::serialization::make_array(Nga.diagonal().data(), Nga.diagonal().size());
                 ar &boost::serialization::make_array(NgaWalk.diagonal().data(), NgaWalk.diagonal().size());
-                ar &b;
+                ar & b;
                 ar &boost::serialization::make_array(dR.data(), dR.size());
                 ar &boost::serialization::make_array(dV.data(), dV.size());
                 ar &boost::serialization::make_array(dP.data(), dP.size());
@@ -160,9 +160,9 @@ namespace ORB_SLAM3
                 ar &boost::serialization::make_array(avgA.data(), avgA.size());
                 ar &boost::serialization::make_array(avgW.data(), avgW.size());
 
-                ar &bu;
+                ar & bu;
                 ar &boost::serialization::make_array(db.data(), db.size());
-                ar &mvMeasurements;
+                ar & mvMeasurements;
             }
 
         public:
@@ -198,12 +198,10 @@ namespace ORB_SLAM3
 
             void printMeasurements() const
             {
-                std::cout << "pint meas:\n";
-                for (int i = 0; i < mvMeasurements.size(); i++)
-                {
-                    std::cout << "meas " << mvMeasurements[i].t << std::endl;
-                }
-                std::cout << "end pint meas:\n";
+                std::cout << "\nIMU measures: \n";
+                for (long unsigned int i = 0; i < mvMeasurements.size(); i++)
+                    std::cout << "- Measurement " << mvMeasurements[i].t << std::endl;
+                std::cout << "Finished printing IMU measures ...\n";
             }
 
         public:
@@ -233,7 +231,7 @@ namespace ORB_SLAM3
                 {
                     ar &boost::serialization::make_array(a.data(), a.size());
                     ar &boost::serialization::make_array(w.data(), w.size());
-                    ar &t;
+                    ar & t;
                 }
 
                 EIGEN_MAKE_ALIGNED_OPERATOR_NEW

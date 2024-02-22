@@ -2485,7 +2485,7 @@ namespace ORB_SLAM3
             }
 
             // Add the current KeyFrame to the buffer in GeometrySegmentation
-            AddKeyFrameToKFBuffer(pKFini);
+            AddKeyFrameToGeoSegKFBuffer(pKFini);
 
             Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
                                    to_string(mpAtlas->MarkersInMap()) + " markers, and " + to_string(mpAtlas->GetAllPlanes().size()) + " walls, and " +
@@ -2632,7 +2632,7 @@ namespace ORB_SLAM3
         }
 
         // Add the current KeyFrame to the buffer in GeometrySegmentation
-        AddKeyFrameToKFBuffer(pKFini);
+        AddKeyFrameToGeoSegKFBuffer(pKFini);
 
         // Update Connections
         pKFini->UpdateConnections();
@@ -3282,7 +3282,6 @@ namespace ORB_SLAM3
 
     void Tracking::CreateNewKeyFrame()
     {
-        std::vector<Room *> currentFoundRooms;
         if (mpLocalMapper->IsInitializing() && !mpAtlas->isImuInitialized())
             return;
 
@@ -3401,24 +3400,25 @@ namespace ORB_SLAM3
         }
 
         // Add the current KeyFrame to the buffer in GeometrySegmentation
-        AddKeyFrameToKFBuffer(pKF);
-
-        // Early creation of a room as soon as the meta-marker is detected
-        currentFoundRooms = earlyRoomDetection(mCurrentFrame.mvpMapMarkers);
+        AddKeyFrameToGeoSegKFBuffer(pKF);
 
         mpLocalMapper->InsertKeyFrame(pKF);
 
-        for (const auto &currentRoom : currentFoundRooms)
-            mpLocalMapper->InsertRoom(currentRoom);
+        // Check for the creation of a room as soon as the meta-marker is detected
+        std::vector<Room *> initializedRooms = metaMarkerChecker(mCurrentFrame.mvpMapMarkers);
+
+        // Add the rooms to the local mapper
+        for (const auto &room : initializedRooms)
+            mpLocalMapper->InsertRoom(room);
 
         mpLocalMapper->SetNotStop(false);
 
         mnLastKeyFrameId = mCurrentFrame.mnId;
         mpLastKeyFrame = pKF;
-        currentFoundRooms.clear();
+        initializedRooms.clear();
     }
 
-    void Tracking::AddKeyFrameToKFBuffer(KeyFrame *pKF)
+    void Tracking::AddKeyFrameToGeoSegKFBuffer(KeyFrame *pKF)
     {
         // Add the current KeyFrame to the buffer in GeometrySegmentation
         mpGeometricSegmentation->AddKeyFrameToBuffer(pKF);
@@ -4375,7 +4375,7 @@ namespace ORB_SLAM3
         detectedRoom->setWalls(wall4);
     }
 
-    std::vector<Room *> Tracking::earlyRoomDetection(const std::vector<Marker *> &mvpMapMarkers)
+    std::vector<Room *> Tracking::metaMarkerChecker(const std::vector<Marker *> &mvpMapMarkers)
     {
         // Variables
         std::vector<Room *> foundRooms;
@@ -4397,8 +4397,8 @@ namespace ORB_SLAM3
                     if (foundMappedRoom == nullptr)
                     {
                         foundRooms.push_back(envRoom);
-                        Eigen::Vector3f centroidFloat = mapMarker->getGlobalPose().translation();
-                        Eigen::Vector3d centroid = centroidFloat.cast<double>();
+                        // [TODO] Bug: the centroid is always zero, as the global pose is not set yet
+                        Eigen::Vector3d centroid = mapMarker->getGlobalPose().translation().cast<double>();
                         createMapRoom(envRoom, centroid);
                     }
                     else

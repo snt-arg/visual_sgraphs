@@ -180,7 +180,7 @@ namespace ORB_SLAM3
          * @brief Early creation of a room as soon as its meta-marker is detected
          * @param mvpMapMarkers the list of the detected markers
          */
-        std::vector<Room *> earlyRoomDetection(const std::vector<Marker *> &mvpMapMarkers);
+        std::vector<Room *> metaMarkerChecker(const std::vector<Marker *> &mvpMapMarkers);
 
         /**
          * @brief Checks for the association of a given room
@@ -311,7 +311,7 @@ namespace ORB_SLAM3
          * @brief Adds a newly created KeyFrame to the buffer in the GeometricSegmentation thread
          * @param pKF the address of the newly created KeyFrame
          */
-        void AddKeyFrameToKFBuffer(KeyFrame *pKF);
+        void AddKeyFrameToGeoSegKFBuffer(KeyFrame *pKF);
 
         // Perform preintegration from last frame
         void PreintegrateIMU();

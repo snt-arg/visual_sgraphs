@@ -282,7 +282,8 @@ void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time m
     }
 }
 
-void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time){
+void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
+{
     // get the latest processed keyframe
     ORB_SLAM3::KeyFrame *thisKF = nullptr;
     for (int i = keyframe_vec.size() - 1; i >= 0; i--)
@@ -301,23 +302,24 @@ void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ro
 
     // create a new pointcloud with aggregated points from all classes but with class-specific colors
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    for (int i = 0; i < clsCloudPtrs.size(); i++)
+    for (long unsigned int i = 0; i < clsCloudPtrs.size(); i++)
     {
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr clsCloud = clsCloudPtrs[i];
-        for (int j = 0; j < clsCloud->points.size(); j++)
+        for (long unsigned int j = 0; j < clsCloud->points.size(); j++)
         {
             pcl::PointXYZRGB point = clsCloud->points[j];
-            switch(i){
-                case 0: // Floor is green
-                    point.r = 0;
-                    point.g = 255;
-                    point.b = 0;
-                    break;
-                case 1: // Wall is red
-                    point.r = 255;
-                    point.g = 0;
-                    point.b = 0;
-                    break;
+            switch (i)
+            {
+            case 0: // Floor is green
+                point.r = 0;
+                point.g = 255;
+                point.b = 0;
+                break;
+            case 1: // Wall is red
+                point.r = 255;
+                point.g = 0;
+                point.b = 0;
+                break;
             }
             aggregatedCloud->push_back(point);
         }
@@ -604,9 +606,9 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         pcl::PointXYZRGBNormal pointMin, pointMax;
         std::vector<double> color = plane->getColor();
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
-        std::string planeType = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? "wall" : "floor";        
+        std::string planeType = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? "wall" : "floor";
 
-// Calculate pose and orientation
+        // Calculate pose and orientation
         Eigen::Isometry3d planePose = planePoseCalculator(plane, pointMin, pointMax);
         double width = fabs(pointMin.x - pointMax.x);
         double height = fabs(pointMin.z - pointMax.z);
