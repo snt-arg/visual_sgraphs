@@ -19,7 +19,7 @@ rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
-ros::Publisher tracked_mappoints_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
+ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
 
 // Geomentric objects detection
 int geo_pointcloud_size = 200;
@@ -96,6 +96,7 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 1);
     kf_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/kf_markers", 1000);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
+    segmented_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
 
     // Semantic
     doors_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
@@ -138,13 +139,14 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     // Setup publishers
     publish_doors(pSLAM->GetAllDoors(), msg_time);
     publish_rooms(pSLAM->GetAllRooms(), msg_time);
-    publishPlanes(pSLAM->GetAllPlanes(), msg_time);
+    // publishPlanes(pSLAM->GetAllPlanes(), msg_time);
     publish_kf_img(pSLAM->GetAllKeyFrames(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
     publish_fiducial_markers(pSLAM->GetAllMarkers(), msg_time);
     publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
+    publish_segmented_cloud(pSLAM->GetAllKeyFrames(), msg_time);
 
     // IMU-specific topics
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
@@ -278,6 +280,62 @@ void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time m
         kf_img_pub.publish(vsGraphPublisher);
         keyframe->isPublished = true;
     }
+}
+
+void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time){
+    // get the latest processed keyframe
+    ORB_SLAM3::KeyFrame *thisKF = nullptr;
+    for (int i = keyframe_vec.size() - 1; i >= 0; i--)
+    {
+        if (keyframe_vec[i]->getCurrentClsCloudPtrs().size() > 0)
+        {
+            thisKF = keyframe_vec[i];
+            break;
+        }
+    }
+    if (thisKF == nullptr)
+        return;
+
+    // get the class specific pointclouds from this keyframe
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clsCloudPtrs = thisKF->getCurrentClsCloudPtrs();
+
+    // create a new pointcloud with aggregated points from all classes but with class-specific colors
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    for (int i = 0; i < clsCloudPtrs.size(); i++)
+    {
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr clsCloud = clsCloudPtrs[i];
+        for (int j = 0; j < clsCloud->points.size(); j++)
+        {
+            pcl::PointXYZRGB point = clsCloud->points[j];
+            switch(i){
+                case 0: // Floor is green
+                    point.r = 0;
+                    point.g = 255;
+                    point.b = 0;
+                    break;
+                case 1: // Wall is red
+                    point.r = 255;
+                    point.g = 0;
+                    point.b = 0;
+                    break;
+            }
+            aggregatedCloud->push_back(point);
+        }
+    }
+    aggregatedCloud->header = clsCloudPtrs[0]->header;
+
+    // create a new pointcloud2 message from the transformed and aggregated pointcloud
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(*aggregatedCloud, cloud_msg);
+
+    // apply transform to show the pointcloud in the plane frame
+    cloud_msg.header.frame_id = aggregatedCloud->header.frame_id;
+    cloud_msg.header.stamp = msg_time;
+    pcl_ros::transformPointCloud(world_frame_id, cloud_msg, cloud_msg, *transform_listener);
+
+    // publish the pointcloud to be seen at the plane frame
+    cloud_msg.header.frame_id = struct_frame_id;
+    segmented_cloud_pub.publish(cloud_msg);
 }
 
 void publish_tracking_img(cv::Mat image, ros::Time msg_time)
@@ -547,9 +605,9 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         pcl::PointXYZRGBNormal pointMin, pointMax;
         std::vector<double> color = plane->getColor();
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
-        std::string planeType = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? "wall" : "floor";
+        std::string planeType = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? "wall" : "floor";        
 
-        // Calculate pose and orientation
+// Calculate pose and orientation
         Eigen::Isometry3d planePose = planePoseCalculator(plane, pointMin, pointMax);
         double width = fabs(pointMin.x - pointMax.x);
         double height = fabs(pointMin.z - pointMax.z);

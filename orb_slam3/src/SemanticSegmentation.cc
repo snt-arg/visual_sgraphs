@@ -47,8 +47,8 @@ namespace ORB_SLAM3
             std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
                 getPlanesFromClassClouds(clsCloudPtrs, mMinCloudSize);
 
-            cout << "Floor planes detected: " << clsPlanes[0].size() << endl;
-            cout << "Wall planes detected: " << clsPlanes[1].size() << endl;
+            // set the class specific point clouds to the keyframe
+            thisKF->setCurrentClsCloudPtrs(clsCloudPtrs);
 
             // Add the planes to Atlas
             addPlanesToAtlas(thisKF, clsPlanes);
@@ -106,6 +106,7 @@ namespace ORB_SLAM3
         for (int i = 0; i < numClasses; i++)
         {
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
+            clsCloudPtrs[i]->header = pclPc2SegPrb->header;
         }
     }
 
@@ -119,7 +120,7 @@ namespace ORB_SLAM3
                 const pcl::PointXYZRGB point = thisKFPointCloud->at(clsCloudPtrs[i]->points[j].x, clsCloudPtrs[i]->points[j].y);
                 clsCloudPtrs[i]->points[j] = pcl::PointXYZRGB(point);
             }
-            clsCloudPtrs[i]->header = thisKFPointCloud->header;
+            clsCloudPtrs[i]->header.frame_id = thisKFPointCloud->header.frame_id;
         }
     }
 
@@ -138,6 +139,9 @@ namespace ORB_SLAM3
 
             // Filter the pointcloud based on a range of distance
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud, mDistFilterThreshold);
+
+            // copy the filtered cloud for later storing into the keyframe
+            pcl::copyPointCloud(*filteredCloud, *clsCloudPtrs[i]);
 
             std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
             if (filteredCloud->points.size() > minCloudSize)

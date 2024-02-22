@@ -41,6 +41,7 @@
 #include <orb_slam3_ros/SaveMap.h>
 
 // Transformation process
+#include <pcl_ros/transforms.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
@@ -96,7 +97,7 @@ extern std::vector<ORB_SLAM3::Door *> env_doors;
 extern ros::Publisher kf_img_pub;
 extern image_transport::Publisher tracking_img_pub;
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
-extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub;
+extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub, segmented_pointclouds_pub;
 
 extern rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
 
@@ -124,7 +125,8 @@ void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
 void publish_body_odom(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
-void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time);
+void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 
 bool save_map_srv(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool save_traj_srv(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);

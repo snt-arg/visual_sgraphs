@@ -13,8 +13,8 @@
 
     <!-- ****** Point Cloud Filtering Arguments ****** -->
     <!-- The threshold (in meters for points in cloud to be considered - <near, far>) -->
-    <arg name="distance_thresh_near" default="0.3" />
-    <arg name="distance_thresh_far" default="3.0" />
+    <arg name="distance_thresh_near" default="0.2" />
+    <arg name="distance_thresh_far" default="4.0" />
 
     <!-- ****** Geometric Segmentation Arguments ****** -->
     <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
@@ -24,11 +24,11 @@
 
     <!-- ****** Semantic Segmentation Arguments ****** -->
     <!-- What is the the threshold for semantic segmentation probability validation (rejects values below x) -->
-    <arg name="prob_sem_thresh" default="0.55" />
+    <arg name="prob_sem_thresh" default="0.50" />
     <!-- How many pointclouds (after downsampling) needed to detect semantic objects (e.g., planes) -->
     <arg name="pointcloud_size_sem" default="300" />
     <!-- What is the leaf size for the pointcloud downsampling -->
-    <arg name="sem_downsample_leaf_size" default="0.035" />
+    <arg name="sem_downsample_leaf_size" default="0.025" />
 
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
