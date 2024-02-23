@@ -201,8 +201,6 @@ namespace ORB_SLAM3
             Eigen::Vector2d obs(_measurement);
             _error = obs - v1->pCamera1->project(v1->estimate().map(v2->estimate()));
         }
-
-        // virtual void linearizeOplus();
     };
 
     class EdgeInverseSim3ProjectXYZ : public g2o::BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSBAPointXYZ, VertexSim3Expmap>
@@ -221,12 +219,10 @@ namespace ORB_SLAM3
             Eigen::Vector2d obs(_measurement);
             _error = obs - v1->pCamera2->project((v1->estimate().inverse().map(v2->estimate())));
         }
-
-        // virtual void linearizeOplus();
     };
 
     /**
-     * 🚀 [vS-Graphs] Edges for geometric and semantic constraints
+     * 🚀 [vS-Graphs] Edges for Adding Geometric and Semantic Constraints
      */
 
     /**
@@ -372,7 +368,7 @@ namespace ORB_SLAM3
     };
 
     /**
-     * The edge used to connect a two-wall Room's center (SE3) to wall vertices (VertexPlane)
+     * The edge used to connect a Two-wall Room's center (SE3) to Wall vertices (VertexPlane)
      * [Note]: it creates constraint for three measurements, i.e., (x, y, z)
      */
     class EdgeVertex2PlaneProjectSE3Room : public g2o::BaseMultiEdge<3, Eigen::Vector3d>
@@ -428,7 +424,7 @@ namespace ORB_SLAM3
     };
 
     /**
-     * The edge used to connect a four-wall Room's center (SE3) to wall vertices (VertexPlane)
+     * The edge used to connect a Four-wall Room's center (SE3) to Wall vertices (VertexPlane)
      * [Note]: it creates constraint for three measurements, i.e., (x, y, z)
      */
     class EdgeVertex4PlaneProjectSE3Room : public g2o::BaseMultiEdge<3, Eigen::Vector3d>
@@ -481,6 +477,38 @@ namespace ORB_SLAM3
                 plane *= -1;
         }
     };
+
+    /**
+     * The edge used to connect a Room's center (SE3) to a Marker vertex (SE3)
+     * [Note]: it creates constraint for four measurements, i.e., (x, y, z, d)
+     */
+    class EdgeVertexSE3RoomProjectSE3Marker : public g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        EdgeVertexSE3RoomProjectSE3Marker();
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
+
+        void computeError()
+        {
+            // Marker's global pose
+            const g2o::VertexSE3Expmap *vMarkerGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            // Room's center point in global pose
+            const g2o::VertexSE3Expmap *vRoomCenterGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[1]);
+
+            // Calculating poses (in global frame)
+            g2o::Isometry3D markerPose = vMarkerGP->estimate();
+            Eigen::Vector3d roomPose = vRoomCenterGP->estimate().translation();
+
+            // Calculating the error
+            _error[0] = markerPose.translation()(0) - roomPose(0);
+            _error[1] = markerPose.translation()(1) - roomPose(1);
+            _error[2] = markerPose.translation()(2) - roomPose(2);
+            _error[3] = markerPose.translation().norm();
+        }
+    };
 }
 
-#endif // ORB_SLAM3_OPTIMIZABLETYPES_H
+#endif

@@ -49,6 +49,16 @@ namespace ORB_SLAM3
         metaMarkerId = value;
     }
 
+    Marker *Room::getMetaMarker() const
+    {
+        return metaMarker;
+    }
+
+    void Room::setMetaMarker(Marker *value)
+    {
+        metaMarker = value;
+    }
+
     std::string Room::getName() const
     {
         return name;

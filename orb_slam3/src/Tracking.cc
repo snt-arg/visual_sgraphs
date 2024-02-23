@@ -4248,6 +4248,14 @@ namespace ORB_SLAM3
 
     void Tracking::updateMapRoom(ORB_SLAM3::Room *detectedRoom)
     {
+        // Find MetaMarker and add it to the room
+        if (!detectedRoom->getMetaMarker())
+        {
+            Marker *foundMetaMarker = mpAtlas->GetMarkerById(detectedRoom->getMetaMarkerId());
+            if (foundMetaMarker)
+                detectedRoom->setMetaMarker(foundMetaMarker);
+        }
+
         // Find attached doors and add them to the room
         std::string detectedDoors("");
         for (auto door : mpAtlas->GetAllDoors())
@@ -4304,10 +4312,10 @@ namespace ORB_SLAM3
             detectedRoom->setRoomCenter(updatedCentroid);
         }
 
-        std::cout << "- Room#" << detectedRoom->getId() << " updated (" << detectedRoom->getName()
-                  << "), augmented by Marker-ID #" << detectedRoom->getMetaMarkerId() << ", with #"
-                  << " walls and doors [" << detectedDoors << "]!"
-                  << std::endl;
+        // std::cout << "- Room#" << detectedRoom->getId() << " updated (" << detectedRoom->getName()
+        //           << "), augmented by Marker-ID #" << detectedRoom->getMetaMarkerId() << ", with #"
+        //           << " walls and doors [" << detectedDoors << "]!"
+        //           << std::endl;
     }
 
     void Tracking::reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom)

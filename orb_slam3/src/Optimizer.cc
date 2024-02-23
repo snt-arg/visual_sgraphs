@@ -323,21 +323,22 @@ namespace ORB_SLAM3
             // Setting the global optimization ID for the plane
             vpPlane->setOpIdG(opIdG);
 
-            // Get list of Markers attached to the plane
-            vector<Marker *> attachedMarkers = vpPlane->getMarkers();
-            for (const auto &planeMarker : attachedMarkers)
-            {
-                // Adding an edge between the Plane and the Marker
-                ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
-                e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
-                e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpIdG())));
-                e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
+            // 🚧 [vS-Graphs v.2.0] in contrast with the first version of visual S-Graphs, where there was an edge between
+            // Markers and Planes, in this version we removed that edge
+            // vector<Marker *> attachedMarkers = vpPlane->getMarkers();
+            // for (const auto &planeMarker : attachedMarkers)
+            // {
+            //     // Adding an edge between the Plane and the Marker
+            //     ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
+            //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+            //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpIdG())));
+            //     e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
 
-                g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                e->setRobustKernel(rk);
-                rk->setDelta(thHuber2D);
-                optimizer.addEdge(e);
-            }
+            //     g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+            //     e->setRobustKernel(rk);
+            //     rk->setDelta(thHuber2D);
+            //     optimizer.addEdge(e);
+            // }
         }
 
         maxOpId += nPlanes;
@@ -1769,24 +1770,25 @@ namespace ORB_SLAM3
                 }
             }
 
-            // Get list of Markers attached to the plane
-            vector<Marker *> attachedMarkers = pMapPlane->getMarkers();
-            for (const auto &planeMarker : attachedMarkers)
-            {
-                if (optimizer.vertex(opId) && optimizer.vertex(planeMarker->getOpId()))
-                {
-                    // Adding an edge between the Plane and the Marker
-                    ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
-                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpId())));
-                    e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
+            // 🚧 [vS-Graphs v.2.0] in contrast with the first version of visual S-Graphs, where there was an edge between
+            // Markers and Planes, in this version we removed that edge
+            // vector<Marker *> attachedMarkers = pMapPlane->getMarkers();
+            // for (const auto &planeMarker : attachedMarkers)
+            // {
+            //     if (optimizer.vertex(opId) && optimizer.vertex(planeMarker->getOpId()))
+            //     {
+            //         // Adding an edge between the Plane and the Marker
+            //         ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
+            //         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+            //         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpId())));
+            //         e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
 
-                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                    e->setRobustKernel(rk);
-                    rk->setDelta(thHuberMono);
-                    optimizer.addEdge(e);
-                }
-            }
+            //         g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+            //         e->setRobustKernel(rk);
+            //         rk->setDelta(thHuberMono);
+            //         optimizer.addEdge(e);
+            //     }
+            // }
         }
 
         maxOpId += nPlanes;
@@ -1849,6 +1851,22 @@ namespace ORB_SLAM3
                     }
                 }
             }
+
+            // [TODO] Adding an edge between the Room and the Meta-marker
+            // Marker *metaMarker = pMapRoom->getMetaMarker();
+            // if (optimizer.vertex(opId) && optimizer.vertex(metaMarker->getOpId()))
+            // {
+            //     // Adding an edge between the Plane and the Marker
+            //     ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker *e = new ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker();
+            //     // e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+            //     // e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(metaMarker->getOpId())));
+            //     // e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
+
+            //     // g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+            //     // e->setRobustKernel(rk);
+            //     // rk->setDelta(thHuberMono);
+            //     // optimizer.addEdge(e);
+            // }
         }
         maxOpId += nRooms;
 

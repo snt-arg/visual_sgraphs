@@ -38,7 +38,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             os << measurement()[i] << " ";
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
                 os << " " << information()(i, j);
@@ -80,7 +79,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             os << measurement()[i] << " ";
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
                 os << " " << information()(i, j);
@@ -114,7 +112,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             is >> _measurement[i];
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
             {
@@ -129,7 +126,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             os << measurement()[i] << " ";
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
                 os << " " << information()(i, j);
@@ -168,7 +164,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             is >> _measurement[i];
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
             {
@@ -183,11 +178,9 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             os << measurement()[i] << " ";
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
                 os << " " << information()(i, j);
-
         return os.good();
     }
 
@@ -252,13 +245,11 @@ namespace ORB_SLAM3
         g2o::Vector7d lv = cam2world.log();
         for (int i = 0; i < 7; i++)
             os << lv[i] << " ";
-
         for (size_t i = 0; i < pCamera1->size(); i++)
             os << pCamera1->getParameter(i) << " ";
 
         for (size_t i = 0; i < pCamera2->size(); i++)
             os << pCamera2->getParameter(i) << " ";
-
         return os.good();
     }
 
@@ -270,7 +261,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             is >> _measurement[i];
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
             {
@@ -285,7 +275,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             os << _measurement[i] << " ";
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
             {
@@ -302,7 +291,6 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < 2; i++)
             is >> _measurement[i];
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
             {
@@ -316,20 +304,15 @@ namespace ORB_SLAM3
     bool EdgeInverseSim3ProjectXYZ::write(std::ostream &os) const
     {
         for (int i = 0; i < 2; i++)
-        {
             os << _measurement[i] << " ";
-        }
-
         for (int i = 0; i < 2; i++)
             for (int j = i; j < 2; j++)
-            {
                 os << " " << information()(i, j);
-            }
         return os.good();
     }
 
     /**
-     * 🚀 [vS-Graphs] Edges for geometric and semantic constraints
+     * 🚀 [vS-Graphs] Edges for Geometric and Semantic Constraints
      */
 
     EdgeSE3ProjectSE3::EdgeSE3ProjectSE3() : g2o::BaseBinaryEdge<6, g2o::Isometry3D, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>() {}
@@ -415,7 +398,6 @@ namespace ORB_SLAM3
                 if (i != j)
                     information()(j, i) = information()(i, j);
             }
-
         return true;
     }
 
@@ -424,7 +406,6 @@ namespace ORB_SLAM3
         for (int i = 0; i < information().rows(); i++)
             for (int j = i; j < information().cols(); j++)
                 os << " " << information()(i, j);
-
         return os.good();
     }
 
@@ -442,7 +423,6 @@ namespace ORB_SLAM3
                 if (i != j)
                     information()(j, i) = information()(i, j);
             }
-
         return true;
     }
 
@@ -451,7 +431,28 @@ namespace ORB_SLAM3
         for (int i = 0; i < information().rows(); i++)
             for (int j = i; j < information().cols(); j++)
                 os << " " << information()(i, j);
+        return os.good();
+    }
 
+    EdgeVertexSE3RoomProjectSE3Marker::EdgeVertexSE3RoomProjectSE3Marker() : g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexSE3Expmap>() {}
+
+    bool EdgeVertexSE3RoomProjectSE3Marker::read(std::istream &is)
+    {
+        for (int i = 0; i < 4; i++)
+            for (int j = i; j < 4; j++)
+            {
+                is >> information()(i, j);
+                if (i != j)
+                    information()(j, i) = information()(i, j);
+            }
+        return true;
+    }
+
+    bool EdgeVertexSE3RoomProjectSE3Marker::write(std::ostream &os) const
+    {
+        for (int i = 0; i < 4; i++)
+            for (int j = i; j < 4; j++)
+                os << " " << information()(i, j);
         return os.good();
     }
 }
