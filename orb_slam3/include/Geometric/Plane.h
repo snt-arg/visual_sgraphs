@@ -11,6 +11,8 @@
 #include "Semantic/Marker.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
 
+#include <pcl/common/io.h>
+
 namespace ORB_SLAM3
 {
     class Map;
@@ -81,6 +83,7 @@ namespace ORB_SLAM3
 
         pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds() const;
         void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
+        void replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
 
         Map *GetMap();
         void SetMap(Map *pMap);

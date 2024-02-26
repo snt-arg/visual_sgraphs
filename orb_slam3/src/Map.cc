@@ -263,6 +263,19 @@ namespace ORB_SLAM3
         return vector<Plane *>(mspPlanes.begin(), mspPlanes.end());
     }
 
+    void Map::setFloorPlaneId(int floorPlaneId)
+    {
+        mFloorPlaneId = floorPlaneId;
+    }
+
+    Plane *Map::GetFloorPlane()
+    {
+        // return null pointer if the floor plane id is not set
+        if (mFloorPlaneId == -1)
+            return nullptr;
+        return mPlaneIndex[mFloorPlaneId];
+    }
+
     vector<Door *> Map::GetAllDoors()
     {
         unique_lock<mutex> lock(mMutexMap);

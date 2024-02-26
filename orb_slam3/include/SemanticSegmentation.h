@@ -12,6 +12,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/PCLPointCloud2.h>
+#include <pcl/common/transforms.h>
 
 namespace ORB_SLAM3
 {
@@ -28,6 +29,7 @@ namespace ORB_SLAM3
         std::pair<float, float> mDistFilterThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
         const uint8_t bytesPerClassProb = 4; // 4 bytes per class probability - refer to scene_segment_ros
+        Eigen::Matrix4f mPlanePoseMat;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -83,7 +85,7 @@ namespace ORB_SLAM3
          * @param planeId the plane id
          * @param clsId the class id
          */
-        void updateMapPlane(int planeId, int clsId, const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud);
+        void updateMapPlane(int planeId, int clsId);
 
 
         // Running the thread

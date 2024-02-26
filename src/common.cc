@@ -19,7 +19,7 @@ rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
-ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
+ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
 
 // Geomentric objects detection
 int geo_pointcloud_size = 200;
@@ -68,7 +68,7 @@ bool save_traj_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap:
     {
         std::cerr << e.what() << std::endl;
         res.success = false;
-    }
+}
     catch (...)
     {
         std::cerr << "Unknows exeption" << std::endl;
@@ -97,6 +97,7 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     kf_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/kf_markers", 1000);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
     segmented_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
+    plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
 
     // Semantic
     doors_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
@@ -139,7 +140,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     // Setup publishers
     publish_doors(pSLAM->GetAllDoors(), msg_time);
     publishRooms(pSLAM->GetAllRooms(), msg_time);
-    // publishPlanes(pSLAM->GetAllPlanes(), msg_time);
+    publishPlanes(pSLAM->GetAllPlanes(), msg_time);
     publish_kf_img(pSLAM->GetAllKeyFrames(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
@@ -196,7 +197,7 @@ void publish_body_odom(Sophus::SE3f Twb_SE3f, Eigen::Vector3f Vwb_E3f, Eigen::Ve
 void publish_camera_pose(Sophus::SE3f Tcw_SE3f, ros::Time msg_time)
 {
     geometry_msgs::PoseStamped pose_msg;
-    pose_msg.header.frame_id = world_frame_id;
+    pose_msg.header.frame_id = cam_frame_id;
     pose_msg.header.stamp = msg_time;
 
     pose_msg.pose.position.x = Tcw_SE3f.translation().x();
@@ -329,14 +330,9 @@ void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ro
     // create a new pointcloud2 message from the transformed and aggregated pointcloud
     sensor_msgs::PointCloud2 cloud_msg;
     pcl::toROSMsg(*aggregatedCloud, cloud_msg);
-
-    // apply transform to show the pointcloud in the plane frame
-    cloud_msg.header.frame_id = aggregatedCloud->header.frame_id;
-    cloud_msg.header.stamp = msg_time;
-    pcl_ros::transformPointCloud(world_frame_id, cloud_msg, cloud_msg, *transform_listener);
-
+    
     // publish the pointcloud to be seen at the plane frame
-    cloud_msg.header.frame_id = struct_frame_id;
+    cloud_msg.header.frame_id = cam_frame_id;
     segmented_cloud_pub.publish(cloud_msg);
 }
 
@@ -591,88 +587,61 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     visualization_msgs::MarkerArray planeArray;
     planeArray.markers.resize(numPlanes);
 
+    // aggregate pointcloud XYZRGB for all planes 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+
     for (const ORB_SLAM3::Plane *plane : planes)
     {
         // If the plane is undefined, skip it
         if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
             continue;
 
-        // Visualization markers
-        visualization_msgs::Marker planeVis, planePoints, planeLines;
+        // get the color of the plane - set to black for floor 
+        // [TODO] - introduce coloring methods in Plane class
+        std::vector<double> color;
+        if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
+            color = {0, 0, 0};
+        else
+            color = plane->getColor();
 
-        // Common variables
-        double depth = 0.5;
-        Eigen::Vector3f centroid(0.0, 0.0, 0.0);
-        pcl::PointXYZRGBNormal pointMin, pointMax;
-        std::vector<double> color = plane->getColor();
+        // get the pointcloud of the plane 
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
-        std::string planeType = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? "wall" : "floor";
+        for (const auto &point : planeClouds->points)
+        {
+            pcl::PointXYZRGB newPoint;
+            newPoint.x = point.x;
+            newPoint.y = point.y;
+            // newPoint.z = point.z;
+            
+            // calculate the z value of the point based on the plane equation
+            Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
+            newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
-        // Calculate pose and orientation
-        Eigen::Isometry3d planePose = planePoseCalculator(plane, pointMin, pointMax);
-        double width = fabs(pointMin.x - pointMax.x);
-        double height = fabs(pointMin.z - pointMax.z);
-        if (height > 3.0)
-            height = 3.0;
+            newPoint.r = color[0];
+            newPoint.g = color[1];
+            newPoint.b = color[2];
+            aggregatedCloud->push_back(newPoint);
+        }
 
-        // Set thw pose based on Eigen::Isometry3d pose
-        planeVis.pose.position.x = planePose.translation().x();
-        planeVis.pose.position.y = planePose.translation().y();
-        planeVis.pose.position.z = planePose.translation().z();
+        // // Visualization markers
 
-        Eigen::Quaterniond quat(planePose.rotation());
-        planeVis.pose.orientation.x = quat.x();
-        planeVis.pose.orientation.y = quat.y();
-        planeVis.pose.orientation.z = quat.z();
-        planeVis.pose.orientation.w = quat.w();
+        // // Plane points
+        // planePoints.color.a = 1;
+        // planePoints.scale.x = 0.03;
+        // planePoints.scale.y = 0.03;
+        // planePoints.scale.z = 0.03;
+        // planePoints.ns = "planePoints";
+        // planePoints.action = planePoints.ADD;
+        // planePoints.color.r = color[0] / 255;
+        // planePoints.color.g = color[1] / 255;
+        // planePoints.color.b = color[2] / 255;
+        // planePoints.lifetime = ros::Duration();
+        // planePoints.id = planeArray.markers.size();
+        // planePoints.header.stamp = ros::Time::now();
+        // planePoints.header.frame_id = struct_frame_id;
+        // planePoints.type = visualization_msgs::Marker::CUBE_LIST;
 
-        // Rotation and displacement for better visualization
-        // Sophus::SE3d planeOrient(planePose.rotation(), planePose.translation());
-        // planeOrient *= Sophus::SE3d::rotX(-M_PI_2);
-
-        // planeVis.pose.position.x = centroid.x();
-        // planeVis.pose.position.y = centroid.y();
-        // planeVis.pose.position.z = centroid.z();
-        // planeVis.pose.orientation.x = planeOrient.unit_quaternion().x();
-        // planeVis.pose.orientation.y = planeOrient.unit_quaternion().y();
-        // planeVis.pose.orientation.z = planeOrient.unit_quaternion().z();
-        // planeVis.pose.orientation.w = planeOrient.unit_quaternion().w();
-
-        // Plane visual values
-        planeVis.color.a = 0.5;
-        planeVis.scale.z = 0.03;
-        planeVis.ns = planeType;
-        planeVis.scale.x = width;
-        planeVis.scale.y = height;
-        planeVis.action = planeVis.ADD;
-        planeVis.color.r = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? 1.0 : 0.0; // color[0] / 255;
-        planeVis.color.g = plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL ? 0.0 : 1.0; // color[1] / 255;
-        planeVis.color.b = 0.0;                                                                       // color[2] / 255;
-        planeVis.lifetime = ros::Duration();
-        planeVis.id = planeArray.markers.size();
-        planeVis.header.stamp = ros::Time::now();
-        planeVis.header.frame_id = struct_frame_id;
-        planeVis.type = visualization_msgs::Marker::CUBE;
-
-        planeArray.markers.push_back(planeVis);
-
-        // Plane points
-        planePoints.color.a = 1;
-        planePoints.scale.x = 0.03;
-        planePoints.scale.y = 0.03;
-        planePoints.scale.z = 0.03;
-        planePoints.ns = "planePoints";
-        planePoints.action = planePoints.ADD;
-        planePoints.color.r = color[0] / 255;
-        planePoints.color.g = color[1] / 255;
-        planePoints.color.b = color[2] / 255;
-        planePoints.lifetime = ros::Duration();
-        planePoints.id = planeArray.markers.size();
-        planePoints.header.stamp = ros::Time::now();
-        planePoints.header.frame_id = struct_frame_id;
-        planePoints.type = visualization_msgs::Marker::CUBE_LIST;
-
-        planeArray.markers.push_back(planePoints);
+        // planeArray.markers.push_back(planePoints);
 
         // planeLines.color.a = 0.5;
         // planeLines.color.r = 0.0;
@@ -706,7 +675,16 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         // planeArray.markers.push_back(wallLines);
     }
 
-    planes_pub.publish(planeArray);
+    // convert the aggregated pointcloud to a pointcloud2 message
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(*aggregatedCloud, cloud_msg);
+    
+    // publish the pointcloud
+    cloud_msg.header.stamp = msgTime;
+    cloud_msg.header.frame_id = struct_frame_id;
+    plane_cloud_pub.publish(cloud_msg);
+
+    // planes_pub.publish(planeArray);
 }
 
 void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
