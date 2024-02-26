@@ -1351,7 +1351,7 @@ namespace ORB_SLAM3
             for (vector<Plane *>::iterator idx = vpPlanes.begin(), vend = vpPlanes.end(); idx != vend; idx++)
             {
                 Plane *plane = *idx;
-                // If the plane is not wall, do not add it to the local map
+                // If the plane is not known, do not add it to the local map
                 if (plane->getPlaneType() == Plane::planeVariant::UNDEFINED)
                     continue;
                 lLocalMapPlanes.push_back(plane);

@@ -911,10 +911,6 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
     rooms_pub.publish(roomArray);
 }
 
-//////////////////////////////////////////////////
-// Miscellaneous functions
-//////////////////////////////////////////////////
-
 sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
 {
     const int num_channels = 3; // x y z
@@ -1022,10 +1018,6 @@ Eigen::Isometry3d planePoseCalculator(const ORB_SLAM3::Plane *plane,
     return visPlanePose;
 }
 
-/**
- * @brief Adds the markers from the received marker array into the common buffer
- * @param markerArray The marker array received from the camera
- */
 void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray)
 {
     // The list of markers observed in the current frame

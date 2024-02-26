@@ -4408,11 +4408,18 @@ namespace ORB_SLAM3
                         // [TODO] Bug: the centroid is always zero, as the global pose is not set yet
                         Eigen::Vector3d centroid = mapMarker->getGlobalPose().translation().cast<double>();
                         createMapRoom(envRoom, centroid);
+                        // Update the marker type if it is a room
+                        mapMarker->setMarkerType(ORB_SLAM3::Marker::markerVariant::ON_ROOM_CENTER);
                     }
                     else
                         updateMapRoom(envRoom);
                 }
             }
+
+            // Also, update the marker type if it is a door
+            for (Door *envDoor : env_doors)
+                if (metaMarkerId == envDoor->getMarkerId())
+                    mapMarker->setMarkerType(ORB_SLAM3::Marker::markerVariant::ON_DOOR);
         }
 
         return foundRooms;
