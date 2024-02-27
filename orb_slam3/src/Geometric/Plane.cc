@@ -95,6 +95,12 @@ namespace ORB_SLAM3
             planeCloud->points.push_back(point);
     }
 
+    void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
+    {
+        unique_lock<mutex> lock(mMutexPoint);
+        pcl::copyPointCloud(*value, *planeCloud);
+    }
+
     Plane::planeVariant Plane::getPlaneType() const
     {
         return planeType;

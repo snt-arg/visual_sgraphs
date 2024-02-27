@@ -12,6 +12,7 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/common/transforms.h>
 
 namespace ORB_SLAM3
 {

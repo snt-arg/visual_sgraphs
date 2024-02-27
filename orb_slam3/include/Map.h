@@ -119,6 +119,9 @@ namespace ORB_SLAM3
         Marker *GetMarkerById(int markerId);
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
 
+        void setFloorPlaneId(int value);
+        Plane *GetFloorPlane();
+
         void SetCurrentMap();
         void SetStoredMap();
 
@@ -180,6 +183,9 @@ namespace ORB_SLAM3
 
     protected:
         long unsigned int mnId;
+        
+        // floor plane information
+        int mFloorPlaneId = -1;
 
         std::set<Door *> mspDoors;
         std::set<Room *> mspRooms;

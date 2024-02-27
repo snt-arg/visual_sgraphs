@@ -18,17 +18,17 @@
 
     <!-- ****** Geometric Segmentation Arguments ****** -->
     <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
-    <arg name="pointcloud_size_geo" default="300" />
+    <arg name="pointcloud_size_geo" default="250" />
     <!-- What is the leaf size for the pointcloud downsampling -->
-    <arg name="geo_downsample_leaf_size" default="0.075" />
+    <arg name="geo_downsample_leaf_size" default="0.08" />
 
     <!-- ****** Semantic Segmentation Arguments ****** -->
     <!-- What is the the threshold for semantic segmentation probability validation (rejects values below x) -->
-    <arg name="prob_sem_thresh" default="0.50" />
+    <arg name="prob_sem_thresh" default="0.7" />
     <!-- How many pointclouds (after downsampling) needed to detect semantic objects (e.g., planes) -->
-    <arg name="pointcloud_size_sem" default="300" />
+    <arg name="pointcloud_size_sem" default="250" />
     <!-- What is the leaf size for the pointcloud downsampling -->
-    <arg name="sem_downsample_leaf_size" default="0.025" />
+    <arg name="sem_downsample_leaf_size" default="0.04" />
 
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />

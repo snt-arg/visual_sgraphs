@@ -66,14 +66,18 @@ namespace ORB_SLAM3
             g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                          detectedPlane);
 
+            // convert planePoint to global coordinates
+            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+            pcl::transformPointCloud(*planePoint, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
+
             // Check if we need to add the wall to the map or not
             int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
-                createMapPlane(pKF, detectedPlane, planePoint);
+                createMapPlane(pKF, detectedPlane, globalPlaneCloud);
             else
                 // The wall already exists in the map, fetching that one
-                updateMapPlane(pKF, detectedPlane, planePoint, matchedPlaneId);
+                updateMapPlane(pKF, detectedPlane, globalPlaneCloud, matchedPlaneId);
 
             // Add Markers while progressing in KFs
             markerSemanticDetectionAndMapping(pKF, pKF->getCurrentFrameMarkers(), planePoint);

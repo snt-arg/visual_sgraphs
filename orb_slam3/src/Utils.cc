@@ -124,6 +124,8 @@ namespace ORB_SLAM3
     }
     template pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGB>(
         const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, const float);
+    template pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGBNormal>(
+        const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr &, const float);
 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDistanceFilter(
         const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, std::pair<float, float> thresholds)
@@ -163,6 +165,8 @@ namespace ORB_SLAM3
         // Loop over cloud points as long as the cloud is large enough
         // [TODO] Temporary disabling sequential ransac
         // while (cloud->points.size() > minSegmentationPoints)
+        const uint8_t maxRansacIterations = 2;
+        for (uint8_t i = 0; i < maxRansacIterations && cloud->points.size() > minSegmentationPoints; i++)
         {
             try
             {
@@ -275,7 +279,7 @@ namespace ORB_SLAM3
         // Initialize difference value
         double minDiff = 100.0;
         // Fixed threshold for comparing two planes
-        double diffThreshold = 0.3;
+        double diffThreshold = 0.4;
 
         // Check if mappedPlanes is empty
         if (mappedPlanes.empty())

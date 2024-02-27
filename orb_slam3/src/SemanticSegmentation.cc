@@ -10,6 +10,7 @@ namespace ORB_SLAM3
         mSegProbThreshold = segProbThreshold;
         mDistFilterThreshold = distFilterThreshold;
         mDownsampleLeafSize = downsampleLeafSize;
+        mPlanePoseMat = Eigen::Matrix4f::Identity();
     }
 
     void SemanticSegmentation::Run()
@@ -175,13 +176,14 @@ namespace ORB_SLAM3
                 if (matchedPlaneId == -1)
                 {
                     // [TODO] - Add a flag to decide whether SemSeg runs indepedently or with GeoSeg
-                    cout << "No matched plane found." << endl;
+                    // cout << "No matched plane found." << endl;
+                    continue;
                 }
                 else
                 {
                     std::string planeType = clsId ? "Wall" : "Floor";
                     // cout << "Matched a plane! Updating the plane type to " << planeType << endl;
-                    updateMapPlane(matchedPlaneId, clsId, planePoint);
+                    updateMapPlane(matchedPlaneId, clsId);
                 }
             }
         }
@@ -218,14 +220,127 @@ namespace ORB_SLAM3
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void SemanticSegmentation::updateMapPlane(int planeId, int clsId,
-                                              const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
+    void SemanticSegmentation::updateMapPlane(int planeId, int clsId)
     {
+        // retrieve the plane from the map
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
-        matchedPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));
 
-        // // augment the plane cloud with the new points
-        // if (!planeCloud->points.empty())
-        //     matchedPlane->setMapClouds(planeCloud);
+        // plane type compatible with the Plane class
+        ORB_SLAM3::Plane::planeVariant planeType = Utils::getPlaneTypeFromClassId(clsId);
+
+        // get the floor plane from the atlas
+        Plane *floorPlane = mpAtlas->GetFloorPlane();
+        
+        // filter the floor pointcloud maintaining only one floor plane
+        // [TODO] - Add check whether the floor plane was updated or not? to skip repeating this process
+        if (floorPlane != nullptr)
+        {
+            // transform the planeCloud according to the planePose
+            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = floorPlane->getMapClouds();
+            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr transformedCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+            pcl::transformPointCloud(*planeCloud, *transformedCloud, mPlanePoseMat);
+
+            // print the standard deviation across the x and y axes of the transformedCloud
+            std::vector<float> yVals;
+            for (const auto &point : transformedCloud->points)
+            {
+                yVals.push_back(point.y);
+            }
+
+            // get an estimate of the numPoint-th lower point - sort descending
+            uint8_t percentile = 10;
+            int numPoint = (percentile * yVals.size()) / 100;
+            std::partial_sort(yVals.begin(), yVals.begin() + numPoint, yVals.end(), std::greater<float>());
+            float maxY = yVals[numPoint - 1];
+
+            // define the threshold for the floor plane
+            // [TODO] - Parameterize threshold
+            const float threshY = maxY - 0.30;
+
+            // filter the cloud based on threshold
+            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+
+            std::copy_if(transformedCloud->begin(),
+                transformedCloud->end(),
+                std::back_inserter(filteredCloud->points),
+                [&](const pcl::PointXYZRGBNormal &p)
+                {
+                return p.y > threshY;
+                });
+            filteredCloud->height = 1;
+            filteredCloud->is_dense = false;                    
+
+            if (filteredCloud->points.size() > 0)
+            {
+                // replace the planeCloud with the filteredCloud after performing inverse transformation
+                pcl::transformPointCloud(*filteredCloud, *transformedCloud, mPlanePoseMat.inverse());
+                floorPlane->replaceMapClouds(transformedCloud);
+            }
+            // cout << "Points in floor plane: " << filteredCloud->points.size() << endl;
+        }
+
+        // recompute the transformation from floor to horizontal
+        if (planeType == ORB_SLAM3::Plane::planeVariant::FLOOR)
+        {
+            // when the floor is found for the first time
+            if (floorPlane == nullptr)
+            {
+                matchedPlane->setPlaneType(planeType);
+                mpAtlas->setFloorPlaneId(planeId);
+            }
+            
+            // get the floor plane from atlas
+            Plane *plane = mpAtlas->GetFloorPlane();
+
+            // update the mPlanePoseMat
+            // initialize the transformation with translation set to a zero vector
+            Eigen::Isometry3d planePose;
+            planePose.translation() = Eigen::Vector3d(0, 0, 0);
+
+            // normalize the normal vector
+            Eigen::Vector3d normal = plane->getGlobalEquation().coeffs().head<3>();
+            normal.normalize();
+
+            // get the rotation from the floor plane to the plane with y-facing vertical downwards
+            Eigen::Vector3d verticalAxis = Eigen::Vector3d(0, -1, 0);
+            Eigen::Quaterniond q;
+            q.setFromTwoVectors(normal, verticalAxis);
+            planePose.linear() = q.toRotationMatrix();
+
+            // form homogenous transformation matrix
+            Eigen::Matrix4f planePoseMat = planePose.matrix().cast<float>();
+            planePoseMat(3, 3) = 1.0;
+            mPlanePoseMat = planePoseMat;
+        }
+
+        // add semantic information to a wall plane if the plane orientation is good
+        if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
+        {
+            // transform the matchedCloud according to the planePose
+            // only works if the floor plane is set, needs the correction matrix: mPlanePoseMat
+            if (floorPlane != nullptr)
+            {
+                // calculate the transformed equation
+                Eigen::Matrix3f rotationMatrix = mPlanePoseMat.block<3, 3>(0, 0);
+
+                // Compute the inverse transpose of the rotation matrix
+                Eigen::Matrix3f inverseTransposeRotationMatrix = rotationMatrix.inverse().transpose();
+
+                // Extract the coefficients of the original plane equation
+                Eigen::Vector4d originalPlaneCoefficients = matchedPlane->getGlobalEquation().coeffs();
+
+                // Transform the coefficients of the plane equation
+                Eigen::Vector3f transformedPlaneCoefficients;
+                transformedPlaneCoefficients.head<3>() = inverseTransposeRotationMatrix * originalPlaneCoefficients.head<3>().cast<float>();
+
+                // normalize the transformed coefficients
+                transformedPlaneCoefficients.normalize();
+
+                // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
+                // [TODO] - Parameterize threshold
+                if (abs(transformedPlaneCoefficients(1)) < 0.18)
+                    matchedPlane->setPlaneType(planeType);
+            }
+        }
     }
 }

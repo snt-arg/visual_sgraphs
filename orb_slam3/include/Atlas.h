@@ -125,6 +125,9 @@ namespace ORB_SLAM3
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetReferenceMapPoints();
 
+        void setFloorPlaneId(int floorPlaneId);
+        Plane *GetFloorPlane();
+
         vector<Map *> GetAllMaps();
 
         int CountMaps();
