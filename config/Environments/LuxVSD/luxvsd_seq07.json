@@ -1,0 +1,26 @@
+{
+    "rooms": [
+        {
+            "name": "Lobby Room",
+            "isCorridor": false,
+            "metaMarker": 9,
+            "doorMarkers": [
+                0,4,6
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Corr. Door",
+            "marker": 0
+        },
+        {
+            "name": "Entrance Door",
+            "marker": 4
+        },
+        {
+            "name": "Elevator Door",
+            "marker": 6
+        }
+    ]
+}

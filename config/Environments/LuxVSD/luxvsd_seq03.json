@@ -3,23 +3,15 @@
         {
             "name": "ARG Corr.",
             "isCorridor": true,
-            "metaMarker": 250,
+            "metaMarker": 2,
             "doorMarkers": [
-                0,
-                5,
-                11,
-                14,
-                23,
-                29,
-                38,
-                39,
-                41
+                0,3,6,7,8,9
             ]
         },
         {
             "name": "Office-421",
             "isCorridor": false,
-            "metaMarker": 1,
+            "metaMarker": 5,
             "doorMarkers": [
                 0
             ]
@@ -27,33 +19,33 @@
         {
             "name": "Office-422",
             "isCorridor": false,
-            "metaMarker": 250,
+            "metaMarker": 19,
             "doorMarkers": [
-                11
+                7
             ]
         },
         {
             "name": "Office-423",
             "isCorridor": false,
-            "metaMarker": 250,
+            "metaMarker": 18,
             "doorMarkers": [
-                41
+                9
             ]
         },
         {
             "name": "Office-424",
             "isCorridor": false,
-            "metaMarker": 250,
+            "metaMarker": 14,
             "doorMarkers": [
-                14
+                6
             ]
         },
         {
-            "name": "Office-427",
+            "name": "Office-425",
             "isCorridor": false,
-            "metaMarker": 250,
+            "metaMarker": 20,
             "doorMarkers": [
-                29
+                8
             ]
         }
     ],
@@ -64,35 +56,23 @@
         },
         {
             "name": "Office-422 Door",
-            "marker": 11
+            "marker": 9
         },
         {
             "name": "Office-423 Door",
-            "marker": 41
+            "marker": 7
         },
         {
             "name": "Office-424 Door",
-            "marker": 14
+            "marker": 6
         },
         {
             "name": "Office-425 Door",
-            "marker": 23
-        },
-        {
-            "name": "Office-426 Door",
-            "marker": 5
+            "marker": 9
         },
         {
             "name": "Office-427 Door",
-            "marker": 29
-        },
-        {
-            "name": "Emergency Exit Door",
-            "marker": 38
-        },
-        {
-            "name": "ARG Exit Door",
-            "marker": 39
+            "marker": 3
         }
     ]
 }

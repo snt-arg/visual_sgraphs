@@ -1,0 +1,71 @@
+{
+    "rooms": [
+        {
+            "name": "Lobby Room",
+            "isCorridor": false,
+            "metaMarker": 7,
+            "doorMarkers": [
+                0
+            ]
+        },
+        {
+            "name": "Corr. A",
+            "isCorridor": true,
+            "metaMarker": 17,
+            "doorMarkers": [
+                0
+            ]
+        },
+        {
+            "name": "Corr. B",
+            "isCorridor": true,
+            "metaMarker": 10,
+            "doorMarkers": [
+                6
+            ]
+        },
+        {
+            "name": "Corr. C",
+            "isCorridor": true,
+            "metaMarker": 15,
+            "doorMarkers": []
+        },
+        {
+            "name": "Corr. D",
+            "isCorridor": true,
+            "metaMarker": 1,
+            "doorMarkers": []
+        },
+        {
+            "name": "Corr. E",
+            "isCorridor": true,
+            "metaMarker": 8,
+            "doorMarkers": [
+                6,
+                4
+            ]
+        },
+        {
+            "name": "Corr. F",
+            "isCorridor": true,
+            "metaMarker": 9,
+            "doorMarkers": [
+                4
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Entrance Door",
+            "marker": 0
+        },
+        {
+            "name": "Corr. Door II",
+            "marker": 4
+        },
+        {
+            "name": "Corr. Door I",
+            "marker": 6
+        }
+    ]
+}

@@ -5,7 +5,7 @@
     
     <!-- ****** Dataset Arguments ****** -->
     <!-- Which semantic data file should be loaded? -->
-    <arg name="env_database" default="ULMD/ulmd_seq01_jfk_e04_ofc.json" />
+    <arg name="env_database" default="LuxVSD/luxvsd_seq01.json" />
     
     <!-- ****** Marker Arguments ****** -->
     <!-- How much the framework should trust the markers (0.1 default, higher for mono setups) -->
@@ -50,7 +50,7 @@
 
         <!-- Parameters for loading setting files -->
         <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
-        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D/UniLu_RealSense_D435i_640.yaml"/>
+        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D/LuxVSD_RS_D435i_640.yaml"/>
 
         <!-- Parameters for semantic/geometric objects detection -->
         <param name="markers_impact" type="double" value="$(arg marker_impact)"/>

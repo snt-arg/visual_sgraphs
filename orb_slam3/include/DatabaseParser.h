@@ -1,8 +1,5 @@
 /**
- * This file is added to ORB-SLAM3 to augment semantic data.
- *
- * Copyright (C) 2022 A. Tourani, H. Bavle, J. L. Sanchez-Lopez, and H. Voos - SnT University of Luxembourg.
- *
+ * 🚀 [vS-Graphs] Database Parse for JSON Files
  */
 
 #ifndef DBPARSER_H
@@ -41,14 +38,14 @@ namespace ORB_SLAM3
         /**
          * @brief Parses the dictionary containing rooms data in the real environment
          * and returns a list of rooms.
-         * @param jsonFilePath the path of the dictionary
+         * @param envData the JSON file containing the rooms data
          */
         std::vector<Room *> getEnvRooms(json envData);
 
         /**
          * @brief Parses the dictionary containing doors data in the real environment
          * and returns a list of doors.
-         * @param jsonFilePath the path of the dictionary
+         * @param envData the JSON file containing the rooms data
          */
         std::vector<Door *> getEnvDoors(json envData);
     };

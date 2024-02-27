@@ -1,0 +1,38 @@
+{
+    "rooms": [
+        {
+            "name": "ARG Corr.",
+            "isCorridor": true,
+            "metaMarker": 1,
+            "doorMarkers": [
+                0,3,6,7,8,9
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Office-421 Door",
+            "marker": 0
+        },
+        {
+            "name": "Office-422 Door",
+            "marker": 9
+        },
+        {
+            "name": "Office-423 Door",
+            "marker": 7
+        },
+        {
+            "name": "Office-424 Door",
+            "marker": 6
+        },
+        {
+            "name": "Office-425 Door",
+            "marker": 9
+        },
+        {
+            "name": "Office-427 Door",
+            "marker": 3
+        }
+    ]
+}

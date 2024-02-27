@@ -1,0 +1,26 @@
+{
+    "rooms": [
+        {
+            "name": "Coffee Area",
+            "isCorridor": false,
+            "metaMarker": 8,
+            "doorMarkers": [
+                6
+            ]
+        },
+        {
+            "name": "Lobby",
+            "isCorridor": false,
+            "metaMarker": 0,
+            "doorMarkers": [
+                6
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Kitchen Door",
+            "marker": 6
+        }
+    ]
+}

@@ -1,0 +1,11 @@
+{
+    "rooms": [
+        {
+            "name": "Office-421",
+            "isCorridor": false,
+            "metaMarker": 5,
+            "doorMarkers": []
+        }
+    ],
+    "doors": []
+}

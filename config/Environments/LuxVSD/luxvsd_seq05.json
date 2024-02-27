@@ -1,0 +1,32 @@
+{
+    "rooms": [
+        {
+            "name": "Nancy/Metz",
+            "isCorridor": false,
+            "metaMarker": 7,
+            "doorMarkers": [
+                6,
+                4
+            ]
+        },
+        {
+            "name": "Nancy/Metz Corr.",
+            "isCorridor": true,
+            "metaMarker": 8,
+            "doorMarkers": [
+                6,
+                4
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "Entrance Door 1",
+            "marker": 6
+        },
+        {
+            "name": "Entrance Door 2",
+            "marker": 4
+        }
+    ]
+}
