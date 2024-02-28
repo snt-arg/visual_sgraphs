@@ -286,9 +286,11 @@ Host unitree
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `offline`                                                    | live or reading rosbag file (offline)?                                                                         |
 | `env_database`                                               | semantic map data file to be loaded                                                                            |
-| `geo_pointcloud_size`                                        | min number of points in the pointcloud to detect geometric objects                                             |
-| `sem_pointcloud_size`                                        | min number of points in the pointcloud to detect semantic objects                                              |
+| `pointcloud_size_geo`                                        | min number of points in the pointcloud to detect geometric objects                                             |
+| `geo_downsample_leaf_size`                                   | leaf size to use when downsampling pointcloud before using RANSAC in geometric segmentation                    |
+| `pointcloud_size_sem`                                        | min number of points in the pointcloud to detect semantic objects                                              |
 | `sem_prob_thresh`                                            | probability threshold to detect semantic objects                                                               |
+| `sem_downsample_leaf_size`                                   | leaf size to use when downsampling pointcloud before using RANSAC in geometric segmentation                    |
 | `marker_impact`                                              | how much to trust markers                                                                                      |
 | `distance_thresh_near`                                       | Minimum distance (in meters) for point cloud filtering, points closer are discarded                            |
 | `distance_thresh_far`                                        | Maximum distance (in meters) for point cloud filtering, points farther are discarded                           |
