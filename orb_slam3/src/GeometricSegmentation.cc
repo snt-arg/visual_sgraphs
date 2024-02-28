@@ -270,7 +270,20 @@ namespace ORB_SLAM3
     {
         for (Marker *mCurrentMarker : mvpMapMarkers)
         {
+            // Variables
             ORB_SLAM3::Marker *currentMapMarker;
+
+            // Check the type of the marker
+            std::pair<bool, std::string> result = Utils::isMarkerAttachedToDoor(mCurrentMarker->getId(), envDoors);
+            bool markerIsDoor = result.first;
+            std::string doorName = result.second;
+
+            // Change the marker type
+            mCurrentMarker->setMarkerType(markerIsDoor
+                                              ? ORB_SLAM3::Marker::markerVariant::ON_DOOR
+                                              : ORB_SLAM3::Marker::markerVariant::ON_ROOM_CENTER);
+
+            // If the marker is not in the map, add it
             if (!mCurrentMarker->isMarkerInGMap())
             {
                 mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
@@ -281,45 +294,49 @@ namespace ORB_SLAM3
                 currentMapMarker = createMapMarker(mCurrentMarker, pKF);
             }
             else
-            {
-                for (auto currentMapMarkerAtlas : mpAtlas->GetAllMarkers())
-                {
-                    if (currentMapMarkerAtlas->getId() == mCurrentMarker->getId())
+                for (auto mappedMarker : mpAtlas->GetAllMarkers())
+                    if (mappedMarker->getId() == mCurrentMarker->getId())
                     {
-                        currentMapMarker = currentMapMarkerAtlas;
+                        currentMapMarker = mappedMarker;
                         currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
                     }
-                }
-            }
 
-            // Check the current marker if it is attached to a door or a wall
-            std::pair<bool, std::string> result = Utils::isMarkerAttachedToDoor(currentMapMarker->getId(), envDoors);
-            bool markerIsDoor = result.first;
-            if (!markerIsDoor)
-            {
-                // Calculate the plane (wall) equation on which the marker is attached
-                Eigen::Vector4d planeEstimate =
-                    getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
-                                             currentMapMarker->getGlobalPose().translation());
-
-                // Get the plane based on the equation
-                g2o::Plane3D detectedPlane(planeEstimate);
-
-                // Convert the given plane to global coordinates
-                g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
-                                                                             detectedPlane);
-
-                // Check if we need to add the wall to the map or not
-                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
-                if (matchedPlaneId != -1)
-                    // The wall already exists in the map, fetching that one
-                    updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId, currentMapMarker);
-            }
+            // Decide based on the marker type
+            if (markerIsDoor)
+                // The current marker is placed on a door
+                createMapDoor(mCurrentMarker, pKF, doorName);
             else
             {
-                // The current marker is placed on a door
-                std::string doorName = result.second;
-                createMapDoor(mCurrentMarker, pKF, doorName);
+                // The current marker is a room meta-marker
+                // for (const auto &mapRoom : mpAtlas->GetAllRooms())
+                // {
+                //     Eigen::Vector3d mapRoomCenter = mapRoom->getRoomCenter();
+                //     double distance = (detetedRoomCenter - mapRoomCenter).norm();
+
+                //     if (distance < minDistance)
+                //     {
+                //         minDistance = distance;
+                //         foundMappedRoom = mapRoom;
+                //     }
+                // }
+
+                // Calculate the plane (wall) equation on which the marker is attached
+                // Eigen::Vector4d planeEstimate =
+                //     getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
+                //                              currentMapMarker->getGlobalPose().translation());
+
+                // // Get the plane based on the equation
+                // g2o::Plane3D detectedPlane(planeEstimate);
+
+                // // Convert the given plane to global coordinates
+                // g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
+                //                                                              detectedPlane);
+
+                // // Check if we need to add the wall to the map or not
+                // int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+                // if (matchedPlaneId != -1)
+                //     // The wall already exists in the map, fetching that one
+                //     updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId, currentMapMarker);
             }
         }
     }
