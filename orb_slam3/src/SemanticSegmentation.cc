@@ -32,8 +32,9 @@ namespace ORB_SLAM3
 
             // separate point clouds while applying threshold
             pcl::PCLPointCloud2::Ptr pclPc2SegPrb = std::get<2>(segImgTuple);
+            cv::Mat segImgUncertainity = std::get<1>(segImgTuple);
             std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clsCloudPtrs;
-            threshSeparatePointCloud(pclPc2SegPrb, clsCloudPtrs);
+            std::vector<double> clsConfs = threshSeparatePointCloud(pclPc2SegPrb, segImgUncertainity, clsCloudPtrs);
 
             // get the point cloud from the respective keyframe via the atlas - ignore it if KF doesn't exist
             KeyFrame *thisKF = mpAtlas->GetKeyFrameById(std::get<0>(segImgTuple));
@@ -45,14 +46,14 @@ namespace ORB_SLAM3
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
 
             // get all planes for each class specific point cloud using RANSAC
-            std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
+            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
                 getPlanesFromClassClouds(clsCloudPtrs, mMinCloudSize);
 
             // set the class specific point clouds to the keyframe
             thisKF->setCurrentClsCloudPtrs(clsCloudPtrs);
 
             // Add the planes to Atlas
-            addPlanesToAtlas(thisKF, clsPlanes);
+            updatePlaneData(thisKF, clsPlanes, clsConfs);
         }
     }
 
@@ -67,9 +68,11 @@ namespace ORB_SLAM3
         return segmentedImageBuffer;
     }
 
-    void SemanticSegmentation::threshSeparatePointCloud(
-        pcl::PCLPointCloud2::Ptr &pclPc2SegPrb, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs)
+    std::vector<double> SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb, 
+        cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs)
+ 
     {
+        // parse the PointCloud2 message
         const int width = pclPc2SegPrb->width;
         const int numPoints = width * pclPc2SegPrb->height;
         const int pointStep = pclPc2SegPrb->point_step;
@@ -83,11 +86,13 @@ namespace ORB_SLAM3
             clsCloudPtrs.push_back(pointCloud);
         }
 
-        // parse the point cloud message and apply thresholding
+        // apply thresholding and track confidence (complement of uncertainty)
+        std::vector<double> clsConfs(numClasses, 0.0);
         const uint8_t *data = pclPc2SegPrb->data.data();
-        for (int i = 0; i < numPoints; i++)
+        for (int j = 0; j < numClasses; j++)
         {
-            for (int j = 0; j < numClasses; j++)
+            std::vector<double> thisClsConfs;
+            for (int i = 0; i < numPoints; i++)    
             {
                 float value;
                 memcpy(&value, data + pointStep * i + bytesPerClassProb * j + pclPc2SegPrb->fields[0].offset, bytesPerClassProb);
@@ -99,8 +104,21 @@ namespace ORB_SLAM3
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
                     clsCloudPtrs[j]->push_back(point);
+
+                    // get the point from the uncertatinty image to be inserted into confidence vector
+                    const int uncertainty = segImgUncertainity.at<uchar>(point.y, point.x);
+                    thisClsConfs.push_back(1.0 - uncertainty/255.0);
                 }
             }
+
+            // calculate soft-min
+            // [TODO] - Move to Utils
+            if (thisClsConfs.empty())
+            {
+                clsConfs[j] = 0.0;
+                continue;
+            }
+            clsConfs[j] = Utils::calcSoftMin(thisClsConfs);
         }
 
         // specify size/width and log statistics
@@ -109,6 +127,7 @@ namespace ORB_SLAM3
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
             clsCloudPtrs[i]->header = pclPc2SegPrb->header;
         }
+        return clsConfs;
     }
 
     void SemanticSegmentation::enrichClassSpecificPointClouds(
@@ -116,7 +135,7 @@ namespace ORB_SLAM3
     {
         for (int i = 0; i < clsCloudPtrs.size(); i++)
         {
-            for (int j = 0; j < clsCloudPtrs[i]->width; j++)
+            for (unsigned int j = 0; j < clsCloudPtrs[i]->width; j++)
             {
                 const pcl::PointXYZRGB point = thisKFPointCloud->at(clsCloudPtrs[i]->points[j].x, clsCloudPtrs[i]->points[j].y);
                 clsCloudPtrs[i]->points[j] = pcl::PointXYZRGB(point);
@@ -125,13 +144,13 @@ namespace ORB_SLAM3
         }
     }
 
-    std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> SemanticSegmentation::getPlanesFromClassClouds(
+    std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> SemanticSegmentation::getPlanesFromClassClouds(
         std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, int minCloudSize)
     {
-        std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes;
+        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes;
 
         // downsample/filter the pointcloud and extract planes
-        for (int i = 0; i < clsCloudPtrs.size(); i++)
+        for (unsigned long int i = 0; i < clsCloudPtrs.size(); i++)
         {
             // [TODO] decide when to downsample and/or distance filter
 
@@ -149,15 +168,15 @@ namespace ORB_SLAM3
             {
                 extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
             }
-            clsPlanes[i] = extractedPlanes;
+            clsPlanes.push_back(extractedPlanes);
         }
         return clsPlanes;
     }
 
-    void SemanticSegmentation::addPlanesToAtlas(KeyFrame *pKF,
-                                                std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes)
+    void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
+        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes, std::vector<double> &clsConfs)
     {
-        for (int clsId = 0; clsId < clsPlanes.size(); clsId++)
+        for (unsigned int clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
             for (auto planePoint : clsPlanes[clsId])
             {
@@ -176,14 +195,12 @@ namespace ORB_SLAM3
                 if (matchedPlaneId == -1)
                 {
                     // [TODO] - Add a flag to decide whether SemSeg runs indepedently or with GeoSeg
-                    // cout << "No matched plane found." << endl;
                     continue;
                 }
                 else
                 {
                     std::string planeType = clsId ? "Wall" : "Floor";
-                    // cout << "Matched a plane! Updating the plane type to " << planeType << endl;
-                    updateMapPlane(matchedPlaneId, clsId);
+                    updateMapPlane(matchedPlaneId, clsId, clsConfs[clsId]);
                 }
             }
         }
@@ -220,11 +237,11 @@ namespace ORB_SLAM3
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void SemanticSegmentation::updateMapPlane(int planeId, int clsId)
+    void SemanticSegmentation::updateMapPlane(int planeId, int clsId, double confidence)
     {
         // retrieve the plane from the map
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
-
+        
         // plane type compatible with the Plane class
         ORB_SLAM3::Plane::planeVariant planeType = Utils::getPlaneTypeFromClassId(clsId);
 
@@ -255,7 +272,7 @@ namespace ORB_SLAM3
 
             // define the threshold for the floor plane
             // [TODO] - Parameterize threshold
-            const float threshY = maxY - 0.30;
+            const float threshY = maxY - 0.35;
 
             // filter the cloud based on threshold
             pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
@@ -276,7 +293,6 @@ namespace ORB_SLAM3
                 pcl::transformPointCloud(*filteredCloud, *transformedCloud, mPlanePoseMat.inverse());
                 floorPlane->replaceMapClouds(transformedCloud);
             }
-            // cout << "Points in floor plane: " << filteredCloud->points.size() << endl;
         }
 
         // recompute the transformation from floor to horizontal
@@ -285,32 +301,35 @@ namespace ORB_SLAM3
             // when the floor is found for the first time
             if (floorPlane == nullptr)
             {
-                matchedPlane->setPlaneType(planeType);
-                mpAtlas->setFloorPlaneId(planeId);
+                matchedPlane->castWeightedVote(planeType, confidence);
+                if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
+                    mpAtlas->setFloorPlaneId(planeId);
             }
-            
-            // get the floor plane from atlas
-            Plane *plane = mpAtlas->GetFloorPlane();
+            else
+            {
+                // get the floor plane from atlas
+                Plane *plane = mpAtlas->GetFloorPlane();
 
-            // update the mPlanePoseMat
-            // initialize the transformation with translation set to a zero vector
-            Eigen::Isometry3d planePose;
-            planePose.translation() = Eigen::Vector3d(0, 0, 0);
+                // update the mPlanePoseMat
+                // initialize the transformation with translation set to a zero vector
+                Eigen::Isometry3d planePose;
+                planePose.translation() = Eigen::Vector3d(0, 0, 0);
 
-            // normalize the normal vector
-            Eigen::Vector3d normal = plane->getGlobalEquation().coeffs().head<3>();
-            normal.normalize();
+                // normalize the normal vector
+                Eigen::Vector3d normal = plane->getGlobalEquation().coeffs().head<3>();
+                normal.normalize();
 
-            // get the rotation from the floor plane to the plane with y-facing vertical downwards
-            Eigen::Vector3d verticalAxis = Eigen::Vector3d(0, -1, 0);
-            Eigen::Quaterniond q;
-            q.setFromTwoVectors(normal, verticalAxis);
-            planePose.linear() = q.toRotationMatrix();
+                // get the rotation from the floor plane to the plane with y-facing vertical downwards
+                Eigen::Vector3d verticalAxis = Eigen::Vector3d(0, -1, 0);
+                Eigen::Quaterniond q;
+                q.setFromTwoVectors(normal, verticalAxis);
+                planePose.linear() = q.toRotationMatrix();
 
-            // form homogenous transformation matrix
-            Eigen::Matrix4f planePoseMat = planePose.matrix().cast<float>();
-            planePoseMat(3, 3) = 1.0;
-            mPlanePoseMat = planePoseMat;
+                // form homogenous transformation matrix
+                Eigen::Matrix4f planePoseMat = planePose.matrix().cast<float>();
+                planePoseMat(3, 3) = 1.0;
+                mPlanePoseMat = planePoseMat;
+            }
         }
 
         // add semantic information to a wall plane if the plane orientation is good
@@ -339,7 +358,7 @@ namespace ORB_SLAM3
                 // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
                 // [TODO] - Parameterize threshold
                 if (abs(transformedPlaneCoefficients(1)) < 0.18)
-                    matchedPlane->setPlaneType(planeType);
+                    matchedPlane->castWeightedVote(planeType, confidence);
             }
         }
     }

@@ -106,6 +106,38 @@ namespace ORB_SLAM3
         return planeType;
     }
 
+    void Plane::castWeightedVote(Plane::planeVariant semanticType, double voteWeight)
+    {
+        // check if semantic type is already in the semanticVotes map
+        if (semanticVotes.find(semanticType) == semanticVotes.end())
+            semanticVotes[semanticType] = voteWeight;
+        else
+            semanticVotes[semanticType] += voteWeight;
+
+        // update based on new vote rankings
+        updatePlaneType();
+    }
+
+    void Plane::updatePlaneType()
+    {
+        // find the semantic type with the maximum votes
+        double maxVotes = 0;
+        planeVariant maxType = planeVariant::UNDEFINED;
+        for (const auto &vote : semanticVotes)
+        {
+            if (vote.second > maxVotes)
+            {
+                maxVotes = vote.second;
+                maxType = vote.first;
+            }
+        }
+
+        // set the plane type if votes above a certain threshold
+        // [TODO] parameterize the maxVotes threshold
+        if (maxVotes >= 2)
+            planeType = maxType;
+    }
+
     void Plane::setPlaneType(Plane::planeVariant newType)
     {
         planeType = newType;

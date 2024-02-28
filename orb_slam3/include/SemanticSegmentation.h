@@ -29,7 +29,7 @@ namespace ORB_SLAM3
         std::pair<float, float> mDistFilterThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
         const uint8_t bytesPerClassProb = 4; // 4 bytes per class probability - refer to scene_segment_ros
-        Eigen::Matrix4f mPlanePoseMat;
+        Eigen::Matrix4f mPlanePoseMat; // the transformation matrix from floor plane to horizontal
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -42,10 +42,12 @@ namespace ORB_SLAM3
         /**
          * @brief Segments the point cloud into class specific point clouds
          * @param pclPc2SegPrb the point cloud to be segmented
+         * @param segImgUncertainity the segmentation image uncertainty
          * @param clsCloudPtrs the class specific point clouds
+         * @return a vector of confidence for each class
          */
-        void threshSeparatePointCloud(
-            pcl::PCLPointCloud2::Ptr &pclPc2SegPrb, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
+        std::vector<double> threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb, 
+            cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
 
         /**
          * @brief Enriches the class-specific point clouds (with XYZ and RGB) with the current keyframe point cloud
@@ -61,14 +63,16 @@ namespace ORB_SLAM3
          * @param minCloudSize the minimum size of the point cloud to be segmented
          * @return a vector of vector of point clouds
          */
-        std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> getPlanesFromClassClouds(
+        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> getPlanesFromClassClouds(
             std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, int minCloudSize);
 
         /**
          * @brief Adds the planes to the Atlas
          * @param clsPlanes the planes to be added
+         * @param clsConfs the confidence of the class predictions
          */
-        void addPlanesToAtlas(KeyFrame *pKF, std::unordered_map<int, std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes);
+        void updatePlaneData(KeyFrame *pKF, 
+            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes, std::vector<double> &clsConfs);
 
         /**
          * @brief Creates a map plane from the estimated plane
@@ -84,8 +88,9 @@ namespace ORB_SLAM3
          * @brief Updates the map plane
          * @param planeId the plane id
          * @param clsId the class id
+         * @param confidence the confidence of the class predictions
          */
-        void updateMapPlane(int planeId, int clsId);
+        void updateMapPlane(int planeId, int clsId, double confidence);
 
 
         // Running the thread

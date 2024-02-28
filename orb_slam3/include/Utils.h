@@ -116,6 +116,14 @@ namespace ORB_SLAM3
          * @return the planeVariant type
          */
         static ORB_SLAM3::Plane::planeVariant getPlaneTypeFromClassId(int clsId);
+
+        /**
+         * @brief Calculates the soft-min approximation of the given values
+         * soft-min is an estimate of the quality of the segment based on per-pixel uncertainities
+         * @param values the input values
+         * @return the soft-min value
+         */
+        static double calcSoftMin(vector<double> &values);
     };
 }
 

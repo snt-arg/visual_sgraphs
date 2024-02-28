@@ -188,7 +188,7 @@ void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSe
 
     try
     {
-        cv_imgSeg = cv_bridge::toCvCopy(msgSegImage.segmentedImage, sensor_msgs::image_encodings::BGR8);
+        cv_imgSeg = cv_bridge::toCvCopy(msgSegImage.segmentedImageUncertainty, sensor_msgs::image_encodings::BGR8);
     }
     catch (cv_bridge::Exception &e)
     {

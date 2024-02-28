@@ -279,7 +279,7 @@ namespace ORB_SLAM3
         // Initialize difference value
         double minDiff = 100.0;
         // Fixed threshold for comparing two planes
-        double diffThreshold = 0.4;
+        double diffThreshold = 0.5;
 
         // Check if mappedPlanes is empty
         if (mappedPlanes.empty())
@@ -312,5 +312,16 @@ namespace ORB_SLAM3
 
         // Otherwise, return -1 so that the the plane gets added to the map
         return -1;
+    }
+
+    double Utils::calcSoftMin(vector<double> &values)
+    {
+        // parameter controlling the softness/sharpness of the soft-min
+        const double tau = 0.1;
+
+        // soft-min = sum(exp(-value/tau) * value) / sum(exp(-value/tau))
+        Eigen::Map<Eigen::VectorXd> confs(values.data(), values.size());
+        Eigen::VectorXd term = ((1.0 - confs.array())/tau).exp();
+        return ((term / term.sum()).array() * confs.array()).sum();
     }
 }
