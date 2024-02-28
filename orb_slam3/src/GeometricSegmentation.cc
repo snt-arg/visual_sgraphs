@@ -181,12 +181,12 @@ namespace ORB_SLAM3
     {
         // Find the matched plane among all planes of the map
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
+        currentPlane->addObservation(pKF, estimatedPlane);
 
         // If there is a marker attached to a plane, set it as 'wall' and store the marker
         // if (visitedMarker != NULL)
         // {
         //     currentPlane->setMarkers(visitedMarker);
-        //     currentPlane->addObservation(pKF, estimatedPlane);
         //     std::cout << "- Wall found: Plane#" << currentPlane->getId() << ", with Marker#"
         //               << visitedMarker->getId() << std::endl;
         // }
