@@ -118,13 +118,13 @@ void publish_camera_pose(Sophus::SE3f, ros::Time);
 void publish_static_tf_transform(string, string, ros::Time);
 void publishRooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
 void publish_kf_markers(std::vector<Sophus::SE3f>, ros::Time);
-void publish_doors(std::vector<ORB_SLAM3::Door *>, ros::Time);
+void publishDoors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
 void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publish_tf_transform(Sophus::SE3f, string, string, ros::Time);
 void publish_all_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
-void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
+void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
 void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publish_body_odom(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 

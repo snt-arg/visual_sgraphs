@@ -19,7 +19,7 @@ rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
-ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, all_mappoints_pub, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
+ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, all_mappoints_pub, fiducial_markers_pub, doorsPub, planes_pub, rooms_pub;
 
 // Geomentric objects detection
 int geo_pointcloud_size = 200;
@@ -68,7 +68,7 @@ bool save_traj_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap:
     {
         std::cerr << e.what() << std::endl;
         res.success = false;
-}
+    }
     catch (...)
     {
         std::cerr << "Unknows exeption" << std::endl;
@@ -100,7 +100,7 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
 
     // Semantic
-    doors_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
+    doorsPub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
     rooms_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
     planes_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/planes", 1);
     fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
@@ -138,14 +138,14 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
         publish_static_tf_transform(world_frame_id, map_frame_id, msg_time);
 
     // Setup publishers
-    publish_doors(pSLAM->GetAllDoors(), msg_time);
+    publishDoors(pSLAM->GetAllDoors(), msg_time);
     publishRooms(pSLAM->GetAllRooms(), msg_time);
     publishPlanes(pSLAM->GetAllPlanes(), msg_time);
     publish_kf_img(pSLAM->GetAllKeyFrames(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
     publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
-    publish_fiducial_markers(pSLAM->GetAllMarkers(), msg_time);
+    publishFiducialMarkers(pSLAM->GetAllMarkers(), msg_time);
     publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
     publish_segmented_cloud(pSLAM->GetAllKeyFrames(), msg_time);
 
@@ -330,7 +330,7 @@ void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ro
     // create a new pointcloud2 message from the transformed and aggregated pointcloud
     sensor_msgs::PointCloud2 cloud_msg;
     pcl::toROSMsg(*aggregatedCloud, cloud_msg);
-    
+
     // publish the pointcloud to be seen at the plane frame
     cloud_msg.header.frame_id = cam_frame_id;
     segmented_cloud_pub.publish(cloud_msg);
@@ -390,7 +390,7 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
     kf_markers_pub.publish(kf_markers);
 }
 
-void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msg_time)
+void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msg_time)
 {
     int numMarkers = markers.size();
     if (numMarkers == 0)
@@ -482,8 +482,9 @@ void publish_fiducial_markers(std::vector<ORB_SLAM3::Marker *> markers, ros::Tim
     fiducial_markers_pub.publish(markerArray);
 }
 
-void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
+void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
 {
+    // If there are no doors, return
     int numDoors = doors.size();
     if (numDoors == 0)
         return;
@@ -574,7 +575,7 @@ void publish_doors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         doorArray.markers.push_back(doorLines);
     }
 
-    doors_pub.publish(doorArray);
+    doorsPub.publish(doorArray);
 }
 
 void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
@@ -587,7 +588,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     visualization_msgs::MarkerArray planeArray;
     planeArray.markers.resize(numPlanes);
 
-    // aggregate pointcloud XYZRGB for all planes 
+    // aggregate pointcloud XYZRGB for all planes
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     for (const ORB_SLAM3::Plane *plane : planes)
@@ -596,7 +597,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
             continue;
 
-        // get the color of the plane - set to black for floor 
+        // get the color of the plane - set to black for floor
         // [TODO] - introduce coloring methods in Plane class
         std::vector<double> color;
         if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
@@ -604,7 +605,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         else
             color = plane->getColor();
 
-        // get the pointcloud of the plane 
+        // get the pointcloud of the plane
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
         for (const auto &point : planeClouds->points)
         {
@@ -612,7 +613,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.x = point.x;
             newPoint.y = point.y;
             // newPoint.z = point.z;
-            
+
             // calculate the z value of the point based on the plane equation
             Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
             newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
@@ -678,7 +679,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     // convert the aggregated pointcloud to a pointcloud2 message
     sensor_msgs::PointCloud2 cloud_msg;
     pcl::toROSMsg(*aggregatedCloud, cloud_msg);
-    
+
     // publish the pointcloud
     cloud_msg.header.stamp = msgTime;
     cloud_msg.header.frame_id = struct_frame_id;

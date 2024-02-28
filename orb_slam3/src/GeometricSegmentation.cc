@@ -220,14 +220,15 @@ namespace ORB_SLAM3
                                                               ORB_SLAM3::KeyFrame *pKF)
     {
         ORB_SLAM3::Marker *newMapMarker = new ORB_SLAM3::Marker();
-        newMapMarker->setOpId(visitedMarker->getOpId());
+
         newMapMarker->setId(visitedMarker->getId());
-        newMapMarker->setTime(visitedMarker->getTime());
-        newMapMarker->setMarkerInGMap(visitedMarker->isMarkerInGMap());
-        newMapMarker->setLocalPose(visitedMarker->getLocalPose());
         newMapMarker->SetMap(mpAtlas->GetCurrentMap());
+        newMapMarker->setOpId(visitedMarker->getOpId());
+        newMapMarker->setTime(visitedMarker->getTime());
+        newMapMarker->setLocalPose(visitedMarker->getLocalPose());
         newMapMarker->setGlobalPose(visitedMarker->getGlobalPose());
         newMapMarker->setMarkerType(visitedMarker->getMarkerType());
+        newMapMarker->setMarkerInGMap(visitedMarker->isMarkerInGMap());
         newMapMarker->addObservation(pKF, visitedMarker->getLocalPose());
 
         pKF->AddMapMarker(newMapMarker);
@@ -241,17 +242,14 @@ namespace ORB_SLAM3
         // Check if the door has not been created before
         bool doorAlreadyInMap = false;
         for (auto door : mpAtlas->GetAllDoors())
-        {
             if (door->getMarker()->getId() == attachedMarker->getId())
-            {
                 doorAlreadyInMap = true;
-            }
-        }
 
         if (doorAlreadyInMap)
             return;
 
         ORB_SLAM3::Door *newMapDoor = new ORB_SLAM3::Door();
+
         newMapDoor->setName(name);
         newMapDoor->setMarker(attachedMarker);
         newMapDoor->SetMap(mpAtlas->GetCurrentMap());

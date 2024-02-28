@@ -1386,20 +1386,20 @@ namespace ORB_SLAM3
         }
 
         // Loop through the recently added planes, get all the markers and add them
-        list<Marker *> lRecentLocalMapMarkers;
-        for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
-        {
-            vector<Marker *> planeMarkers = (*idx)->getMarkers();
-            for (const auto &planeMarker : planeMarkers)
-            {
-                auto foundMarker = std::find_if(lLocalMapMarkers.begin(), lLocalMapMarkers.end(), boost::bind(&Marker::getId, _1) == planeMarker->getId());
-                if (foundMarker == lLocalMapMarkers.end())
-                {
-                    lLocalMapMarkers.push_back(planeMarker);
-                    lRecentLocalMapMarkers.push_back(planeMarker);
-                }
-            }
-        }
+        // list<Marker *> lRecentLocalMapMarkers;
+        // for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
+        // {
+        //     vector<Marker *> planeMarkers = (*idx)->getMarkers();
+        //     for (const auto &planeMarker : planeMarkers)
+        //     {
+        //         auto foundMarker = std::find_if(lLocalMapMarkers.begin(), lLocalMapMarkers.end(), boost::bind(&Marker::getId, _1) == planeMarker->getId());
+        //         if (foundMarker == lLocalMapMarkers.end())
+        //         {
+        //             lLocalMapMarkers.push_back(planeMarker);
+        //             lRecentLocalMapMarkers.push_back(planeMarker);
+        //         }
+        //     }
+        // }
 
         // Loop through the recently added planes, get all the map points and add them
         list<MapPoint *> lRecentLocalMapPoints;
