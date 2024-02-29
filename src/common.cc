@@ -19,7 +19,7 @@ rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transform_listener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
-ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, all_mappoints_pub, fiducial_markers_pub, doorsPub, planes_pub, rooms_pub;
+ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, doorsPub, all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
 
 // Geomentric objects detection
 int geo_pointcloud_size = 200;
@@ -94,7 +94,7 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     pose_pub = node_handler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
     all_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 1);
-    kf_markers_pub = node_handler.advertise<visualization_msgs::Marker>(node_name + "/kf_markers", 1000);
+    kf_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
     segmented_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
     plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
@@ -102,7 +102,6 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     // Semantic
     doorsPub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
     rooms_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
-    planes_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/planes", 1);
     fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Get body odometry if IMU data is also available
@@ -144,7 +143,7 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
     publish_kf_img(pSLAM->GetAllKeyFrames(), msg_time);
     publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
     publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
-    publish_kf_markers(pSLAM->GetAllKeyframePoses(), msg_time);
+    publish_kf_markers(pSLAM->GetAllKeyFrames(), msg_time);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msg_time);
     publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
     publish_segmented_cloud(pSLAM->GetAllKeyFrames(), msg_time);
@@ -357,11 +356,13 @@ void publish_all_points(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time
     all_mappoints_pub.publish(cloud);
 }
 
-void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
+void publish_kf_markers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
 {
-    int numKFs = vKFposes.size();
-    if (numKFs == 0)
+    sort(keyframe_vec.begin(), keyframe_vec.end(), ORB_SLAM3::KeyFrame::lId);
+    if (keyframe_vec.size() == 0)
         return;
+
+    visualization_msgs::MarkerArray markerArray;
 
     visualization_msgs::Marker kf_markers;
     kf_markers.header.frame_id = world_frame_id;
@@ -370,7 +371,6 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
     kf_markers.action = visualization_msgs::Marker::ADD;
     kf_markers.pose.orientation.w = 1.0;
     kf_markers.lifetime = ros::Duration();
-
     kf_markers.id = 0;
     kf_markers.scale.x = 0.05;
     kf_markers.scale.y = 0.05;
@@ -378,16 +378,70 @@ void publish_kf_markers(std::vector<Sophus::SE3f> vKFposes, ros::Time msg_time)
     kf_markers.color.g = 1.0;
     kf_markers.color.a = 1.0;
 
-    for (int i = 0; i <= numKFs; i++)
+    visualization_msgs::Marker kf_lines;
+    kf_lines.color.a = 0.2;
+    kf_lines.color.r = 0.0;
+    kf_lines.color.g = 0.0;
+    kf_lines.color.b = 0.0;
+    kf_lines.scale.x = 0.005;
+    kf_lines.scale.y = 0.005;
+    kf_lines.scale.z = 0.005;
+    kf_lines.action = kf_lines.ADD;
+    kf_lines.ns = "kf_lines";
+    kf_lines.lifetime = ros::Duration();
+    kf_lines.id = 1;
+    kf_lines.header.stamp = ros::Time().now();
+    kf_lines.header.frame_id = world_frame_id;
+    kf_lines.type = visualization_msgs::Marker::LINE_LIST;
+
+
+    for (auto &keyframe : keyframe_vec)
     {
         geometry_msgs::Point kf_marker;
-        kf_marker.x = vKFposes[i].translation().x();
-        kf_marker.y = vKFposes[i].translation().y();
-        kf_marker.z = vKFposes[i].translation().z();
-        kf_markers.points.push_back(kf_marker);
-    }
 
-    kf_markers_pub.publish(kf_markers);
+        Sophus::SE3f kf_pose = pSLAM->GetKeyFramePose(keyframe);
+        kf_marker.x = kf_pose.translation().x();
+        kf_marker.y = kf_pose.translation().y();
+        kf_marker.z = kf_pose.translation().z();
+        kf_markers.points.push_back(kf_marker);
+
+        // get all planes from the keyframe
+        std::vector<ORB_SLAM3::Plane *> planes = keyframe->GetMapPlanes();
+
+        // attach lines to centroids of planes
+        for (auto &plane : planes)
+        {
+            // show only connections of planes with semantic types
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
+                continue;
+
+            // compute centroid of the plane from it's point cloud - point cloud already in world frame
+            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = plane->getMapClouds();
+            Eigen::Vector4f centroid;
+            pcl::compute3DCentroid(*planeCloud, centroid);
+
+            tf::Stamped<tf::Point> planePoint;
+            planePoint.setX(centroid[0]);
+            planePoint.setY(centroid[1]);
+            planePoint.setZ(centroid[2]);
+            planePoint.frame_id_ = struct_frame_id;
+
+            tf::Stamped<tf::Point> planePointTransformed;
+            transform_listener->transformPoint(world_frame_id, ros::Time(0), planePoint,
+                                               struct_frame_id, planePointTransformed);
+
+            geometry_msgs::Point point1;
+            point1.x = planePointTransformed.x();
+            point1.y = planePointTransformed.y();
+            point1.z = planePointTransformed.z();
+            kf_lines.points.push_back(point1);
+         
+            kf_lines.points.push_back(kf_marker);
+        }
+    }
+    markerArray.markers.push_back(kf_markers);
+    markerArray.markers.push_back(kf_lines);
+    kf_markers_pub.publish(markerArray);
 }
 
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msg_time)
@@ -428,55 +482,6 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time 
         fiducial_marker.pose.orientation.w = markerPose.unit_quaternion().w();
 
         markerArray.markers.push_back(fiducial_marker);
-
-        visualization_msgs::Marker fiducial_marker_lines;
-        fiducial_marker_lines.color.a = 0.2;
-        fiducial_marker_lines.color.r = 0.0;
-        fiducial_marker_lines.color.g = 0.0;
-        fiducial_marker_lines.color.b = 0.0;
-        fiducial_marker_lines.scale.x = 0.005;
-        fiducial_marker_lines.scale.y = 0.005;
-        fiducial_marker_lines.scale.z = 0.005;
-        fiducial_marker_lines.action = fiducial_marker.ADD;
-        fiducial_marker_lines.ns = "fiducial_marker_lines";
-        fiducial_marker_lines.lifetime = ros::Duration();
-        fiducial_marker_lines.id = markerArray.markers.size();
-        fiducial_marker_lines.header.stamp = ros::Time().now();
-        fiducial_marker_lines.header.frame_id = world_frame_id;
-        fiducial_marker_lines.type = visualization_msgs::Marker::LINE_LIST;
-
-        const map<ORB_SLAM3::KeyFrame *, Sophus::SE3f> observations = markers[idx]->getObservations();
-        for (map<ORB_SLAM3::KeyFrame *, Sophus::SE3f>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
-        {
-            tf::Stamped<tf::Point> marker_point;
-            marker_point.frame_id_ = struct_frame_id;
-            marker_point.setX(markerPose.translation().x());
-            marker_point.setY(markerPose.translation().y());
-            marker_point.setZ(markerPose.translation().z());
-
-            tf::Stamped<tf::Point> marker_point_transformed;
-            transform_listener->transformPoint(world_frame_id, ros::Time(0), marker_point, struct_frame_id, marker_point_transformed);
-
-            geometry_msgs::Point point1;
-            point1.x = marker_point_transformed.x();
-            point1.y = marker_point_transformed.y();
-            point1.z = marker_point_transformed.z();
-            fiducial_marker_lines.points.push_back(point1);
-
-            ORB_SLAM3::KeyFrame *pKFi = obsId->first;
-            tf::Stamped<tf::Point> keyframe_point;
-            keyframe_point.setX(pKFi->GetPoseInverse().translation().x());
-            keyframe_point.setY(pKFi->GetPoseInverse().translation().y());
-            keyframe_point.setZ(pKFi->GetPoseInverse().translation().z());
-
-            tf::Stamped<tf::Point> keyframe_point_transformed;
-            geometry_msgs::Point point2;
-            point2.x = pKFi->GetPoseInverse().translation().x();
-            point2.y = pKFi->GetPoseInverse().translation().y();
-            point2.z = pKFi->GetPoseInverse().translation().z();
-            fiducial_marker_lines.points.push_back(point2);
-        }
-        markerArray.markers.push_back(fiducial_marker_lines);
     }
 
     fiducial_markers_pub.publish(markerArray);
@@ -585,10 +590,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     if (numPlanes == 0)
         return;
 
-    visualization_msgs::MarkerArray planeArray;
-    planeArray.markers.resize(numPlanes);
-
-    // aggregate pointcloud XYZRGB for all planes
+    // aggregate pointcloud XYZRGB for all planes 
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     for (const ORB_SLAM3::Plane *plane : planes)
@@ -609,71 +611,28 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
         for (const auto &point : planeClouds->points)
         {
+
+            // skip some points to reduce the size of the pointcloud
+            if (rand() % 4 != 0)
+                continue;
+
             pcl::PointXYZRGB newPoint;
             newPoint.x = point.x;
             newPoint.y = point.y;
-            // newPoint.z = point.z;
-
-            // calculate the z value of the point based on the plane equation
+            newPoint.z = point.z;
+            
             Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
-            newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
+            // compute from plane equation - y for floor, z for wall
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
+                newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
+            else if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
             newPoint.r = color[0];
             newPoint.g = color[1];
             newPoint.b = color[2];
             aggregatedCloud->push_back(newPoint);
         }
-
-        // // Visualization markers
-
-        // // Plane points
-        // planePoints.color.a = 1;
-        // planePoints.scale.x = 0.03;
-        // planePoints.scale.y = 0.03;
-        // planePoints.scale.z = 0.03;
-        // planePoints.ns = "planePoints";
-        // planePoints.action = planePoints.ADD;
-        // planePoints.color.r = color[0] / 255;
-        // planePoints.color.g = color[1] / 255;
-        // planePoints.color.b = color[2] / 255;
-        // planePoints.lifetime = ros::Duration();
-        // planePoints.id = planeArray.markers.size();
-        // planePoints.header.stamp = ros::Time::now();
-        // planePoints.header.frame_id = struct_frame_id;
-        // planePoints.type = visualization_msgs::Marker::CUBE_LIST;
-
-        // planeArray.markers.push_back(planePoints);
-
-        // planeLines.color.a = 0.5;
-        // planeLines.color.r = 0.0;
-        // planeLines.color.g = 0.0;
-        // planeLines.color.b = 0.0;
-        // planeLines.scale.x = 0.005;
-        // planeLines.scale.y = 0.005;
-        // planeLines.scale.z = 0.005;
-        // planeLines.ns = "planeLines";
-        // planeLines.action = planeLines.ADD;
-        // planeLines.lifetime = ros::Duration();
-        // planeLines.id = planeArray.markers.size();
-        // planeLines.header.stamp = ros::Time().now();
-        // planeLines.header.frame_id = struct_frame_id;
-        // planeLines.type = visualization_msgs::Marker::LINE_LIST;
-
-        // for (const auto &planeMarker : plane->getMarkers())
-        // {
-        //     geometry_msgs::Point point1;
-        //     point1.x = planeMarker->getGlobalPose().translation().x();
-        //     point1.y = planeMarker->getGlobalPose().translation().y();
-        //     point1.z = planeMarker->getGlobalPose().translation().z();
-        //     wallLines.points.push_back(point1);
-
-        //     geometry_msgs::Point point2;
-        //     point2.x = centroid.x();
-        //     point2.y = centroid.y();
-        //     point2.z = centroid.z();
-        //     wallLines.points.push_back(point2);
-        // }
-        // planeArray.markers.push_back(wallLines);
     }
 
     // convert the aggregated pointcloud to a pointcloud2 message

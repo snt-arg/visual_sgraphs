@@ -236,6 +236,9 @@ namespace ORB_SLAM3
         std::vector<Sophus::SE3f> GetAllKeyframePoses();
         std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
+        // singular version of GetAllKeyFrames
+        Sophus::SE3f GetKeyFramePose(KeyFrame *pKF);
+
         Sophus::SE3f GetCamTwc();
         Sophus::SE3f GetImuTwb();
         Eigen::Vector3f GetImuVwb();
