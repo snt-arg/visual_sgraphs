@@ -24,11 +24,11 @@ namespace ORB_SLAM3
         Atlas *mpAtlas;
         int mMinCloudSize;
         bool mHasDepthCloud;
-        float mDownsampleLeafSize;
-        std::pair<float, float> mDistFilterThreshold;
         std::mutex mMutexNewKFs;
+        float mDownsampleLeafSize;
         std::list<KeyFrame *> mvpKeyFrameBuffer;
         std::vector<ORB_SLAM3::Door *> envDoors;
+        std::pair<float, float> mDistFilterThreshold;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -73,27 +73,12 @@ namespace ORB_SLAM3
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCloudFromSparsePoints(const std::vector<MapPoint *> &points);
 
         /**
-         * @brief Associates a detected plane into the planes found in the map and returns
-         * if it needs to be added to the plane or not.
-         * @param mappedPlanes an array of planes with their IDs and equations
-         * @param givenPlane the detected 3D plane
-         */
-        int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane);
-
-        /**
          * @brief Calculation of the equation of the plane from marker pose
          * @param rotationMatrix the rotation matrix
          * @param translation the translation matrix
          */
         Eigen::Vector4d getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
                                                  const Eigen::Vector3f &translation);
-
-        /**
-         * @brief Finds the point lying on plane
-         * @param planeEquation equation of a given plane
-         * @param mapPoint current map point
-         */
-        bool pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint);
 
         /**
          * @brief Creates a new marker object to be added to the map

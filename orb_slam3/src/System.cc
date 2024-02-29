@@ -166,8 +166,6 @@ namespace ORB_SLAM3
         mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
 
         // Initialize the Tracking thread
-        //(it will live in the main thread of execution, the one that called this constructor)
-        cout << "Seq. Name: " << strSequence << endl;
         mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                                  mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
@@ -211,7 +209,7 @@ namespace ORB_SLAM3
         int minCloudSize_SemSeg = sysParams.pointCloudSize_SemSeg;
         double segProbThreshold = sysParams.probabilityThreshold_SemSeg;
         downsampleLeafSize = sysParams.downsampleLeafSize_SemSeg;
-        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold, minCloudSize_SemSeg, 
+        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold, minCloudSize_SemSeg,
                                                           distFilterThreshold, downsampleLeafSize);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 

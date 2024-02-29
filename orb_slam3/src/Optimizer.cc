@@ -282,7 +282,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Set Marker vertices (Global Optimization)
+        // Markers (Global Optimization)
         for (const auto &vpMarker : vpMarkers)
         {
             // Adding a vertex for each marker
@@ -306,7 +306,7 @@ namespace ORB_SLAM3
 
         maxOpId += nMarkers;
 
-        // Set Plane vertices (Global Optimization)
+        // Planes (Global Optimization)
         for (const auto &vpPlane : vpPlanes)
         {
             // Skip undefined planes (if not wall for now)
@@ -322,6 +322,28 @@ namespace ORB_SLAM3
 
             // Setting the global optimization ID for the plane
             vpPlane->setOpIdG(opIdG);
+
+            // Adding an edge between the plane and the keyframes
+            const map<KeyFrame *, g2o::Plane3D> observations = vpPlane->getObservations();
+            for (map<KeyFrame *, g2o::Plane3D>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            {
+                KeyFrame *pKFi = obsId->first;
+                g2o::Plane3D planeLocalEquation = obsId->second;
+                ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+
+                if (optimizer.vertex(opIdG) && optimizer.vertex(pKFi->mnId))
+                {
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+                    e->setMeasurement(planeLocalEquation);
+
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuber2D);
+                    optimizer.addEdge(e);
+                }
+            }
 
             // 🚧 [vS-Graphs v.2.0] in contrast with the first version of visual S-Graphs, where there was an edge between
             // Markers and Planes, in this version we removed that edge

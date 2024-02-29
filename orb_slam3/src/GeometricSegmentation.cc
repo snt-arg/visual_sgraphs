@@ -183,6 +183,9 @@ namespace ORB_SLAM3
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
         currentPlane->addObservation(pKF, estimatedPlane);
 
+        // Add the plane to the list of planes in the current KeyFrame
+        pKF->AddMapPlane(currentPlane);
+
         // If there is a marker attached to a plane, set it as 'wall' and store the marker
         // if (visitedMarker != NULL)
         // {
