@@ -238,9 +238,9 @@ namespace ORB_SLAM3
         Verbose::SetTh(Verbose::VERBOSITY_QUIET);
     }
 
-    void System::setEnvDoors(std::vector<Door *> envDoors)
+    void System::setEnvFetchedValues(std::vector<Door *> envDoors, std::vector<Room *> envRooms)
     {
-        mpGeometricSegmentation->setEnvDoors(envDoors);
+        mpGeometricSegmentation->setEnvFetchedValues(envDoors, envRooms);
     }
 
     void System::addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple)

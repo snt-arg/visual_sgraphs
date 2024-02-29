@@ -158,35 +158,10 @@ namespace ORB_SLAM3
                                                           double distanceThreshold);
 
         /**
-         * @brief Creates a new room object (corridor or room) to be added to the map
-         * @param detectedRoom the address of the detected room
-         * @param centroid the centroid of the detected room
-         */
-        void createMapRoom(Room *detectedRoom, Eigen::Vector3d centroid = Eigen::Vector3d::Zero());
-
-        /**
-         * @brief Updates an existing room object (corridor or room) to be added to the map
-         * @param detectedRoom the address of the detected room
-         */
-        void updateMapRoom(Room *detectedRoom);
-
-        /**
          * @brief Extracts all the walls related to a room
          * @param detectedRoom the address of the detected room
          */
         void reorganizeRoomWalls(Room *detectedRoom);
-
-        /**
-         * @brief Early creation of a room as soon as its meta-marker is detected
-         * @param mvpMapMarkers the list of the detected markers
-         */
-        std::vector<Room *> metaMarkerChecker(const std::vector<Marker *> &mvpMapMarkers);
-
-        /**
-         * @brief Checks for the association of a given room
-         * @param detectedRoom the address of the detected room
-         */
-        Room *roomAssociation(const Room *detectedRoom);
 
 #ifdef REGISTER_LOOP
         void RequestStop();

@@ -21,6 +21,7 @@ namespace ORB_SLAM3
         int opId;                                    // The room's identifier in the local optimizer
         int opIdG;                                   // The room's identifier in the global optimizer
         bool isCorridor;                             // Checks if the room is a corridor or not
+        bool isCandidate;                            // Checks if it is a candidate room (meta-marker detected) or not
         int metaMarkerId;                            // The identifier of the room's meta-marker (containing information about the room)
         std::string name;                            // The name devoted for each room (optional)
         Marker *metaMarker;                          // The meta-marker assigned for the room
@@ -47,6 +48,9 @@ namespace ORB_SLAM3
 
         bool getIsCorridor() const;
         void setIsCorridor(bool value);
+
+        bool getIsCandidate() const;
+        void setIsCandidate(bool value);
 
         int getMetaMarkerId() const;
         void setMetaMarkerId(int value);

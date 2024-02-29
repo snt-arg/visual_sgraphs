@@ -79,6 +79,16 @@ namespace ORB_SLAM3
         isCorridor = value;
     }
 
+    bool Room::getIsCandidate() const
+    {
+        return isCandidate;
+    }
+
+    void Room::setIsCandidate(bool value)
+    {
+        isCandidate = value;
+    }
+
     std::vector<Plane *> Room::getWalls() const
     {
         return walls;

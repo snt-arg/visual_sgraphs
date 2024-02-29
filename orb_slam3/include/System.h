@@ -254,10 +254,11 @@ namespace ORB_SLAM3
         float GetImageScale();
 
         /**
-         * @brief Set the vector of doors fetched from the database for GeometricSegmentation
+         * @brief Set the vector of doors and rooms fetched from the database for GeometricSegmentation
          * @param envDoors the vector of doors fetched from the database
+         * @param envRooms the vector of rooms fetched from the database
          */
-        void setEnvDoors(std::vector<Door *> envDoors);
+        void setEnvFetchedValues(std::vector<Door *> envDoors, std::vector<Room *> envRooms);
 
         /**
          * @brief Add the segmented image to the buffer in the SemanticSegmentation

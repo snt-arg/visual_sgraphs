@@ -78,8 +78,8 @@ int main(int argc, char **argv)
 
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sysParams, sensor_type, enable_pangolin);
 
-    // Set the environment data (doors) for the GeometricSegmentation thread
-    pSLAM->setEnvDoors(env_doors);
+    // Set the environment data for the GeometricSegmentation thread
+    pSLAM->setEnvFetchedValues(env_doors, env_rooms);
 
     // Subscribe to get raw images
     ros::Subscriber sub_img = node_handler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage, &igb);
