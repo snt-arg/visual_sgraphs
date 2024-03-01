@@ -120,8 +120,8 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexMap);
         mspRooms.insert(pRoom);
-        // [TODO] Add the room to the hashmap
-        // mRoomIndex[pRoom->getId()] = pRoom;
+        // Add the room to the hashmap
+        mRoomIndex[pRoom->getId()] = pRoom;
     }
 
     KeyFrame *Map::GetKeyFrameById(long unsigned int mnId)

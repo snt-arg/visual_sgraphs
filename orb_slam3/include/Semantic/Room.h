@@ -6,13 +6,11 @@
 #define ROOM_H
 
 #include "Door.h"
-#include "../Geometric/Plane.h"
+#include "Geometric/Plane.h"
 #include "Thirdparty/g2o/g2o/types/vertex_plane.h"
 
 namespace ORB_SLAM3
 {
-    class Door;
-    class Plane;
 
     class Room
     {

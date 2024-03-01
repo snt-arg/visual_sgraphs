@@ -29,11 +29,11 @@ namespace ORB_SLAM3
         std::pair<float, float> mDistFilterThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
         const uint8_t bytesPerClassProb = 4; // 4 bytes per class probability - refer to scene_segment_ros
-        Eigen::Matrix4f mPlanePoseMat; // the transformation matrix from floor plane to horizontal
+        Eigen::Matrix4f mPlanePoseMat;       // the transformation matrix from floor plane to horizontal
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize, 
+        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize,
                              std::pair<float, float> distFilterThreshold, float downsampleLeafSize);
 
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
@@ -46,8 +46,8 @@ namespace ORB_SLAM3
          * @param clsCloudPtrs the class specific point clouds
          * @return a vector of confidence for each class
          */
-        std::vector<double> threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb, 
-            cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
+        std::vector<double> threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
+                                                     cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
 
         /**
          * @brief Enriches the class-specific point clouds (with XYZ and RGB) with the current keyframe point cloud
@@ -71,8 +71,8 @@ namespace ORB_SLAM3
          * @param clsPlanes the planes to be added
          * @param clsConfs the confidence of the class predictions
          */
-        void updatePlaneData(KeyFrame *pKF, 
-            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes, std::vector<double> &clsConfs);
+        void updatePlaneData(KeyFrame *pKF,
+                             std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes, std::vector<double> &clsConfs);
 
         /**
          * @brief Creates a map plane from the estimated plane
@@ -92,6 +92,15 @@ namespace ORB_SLAM3
          */
         void updateMapPlane(int planeId, int clsId, double confidence);
 
+        /**
+         * @brief Associates mapped room candidates and creates rooms from the voxmap
+         */
+        void createRoomFromVoxbloxMap();
+
+        /**
+         * @brief Associates mapped room candidates and creates rooms from the GNN
+         */
+        void createRoomFromGNN();
 
         // Running the thread
         void Run();

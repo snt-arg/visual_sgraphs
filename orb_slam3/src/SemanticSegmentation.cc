@@ -68,9 +68,9 @@ namespace ORB_SLAM3
         return segmentedImageBuffer;
     }
 
-    std::vector<double> SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb, 
-        cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs)
- 
+    std::vector<double> SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
+                                                                       cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs)
+
     {
         // parse the PointCloud2 message
         const int width = pclPc2SegPrb->width;
@@ -92,7 +92,7 @@ namespace ORB_SLAM3
         for (int j = 0; j < numClasses; j++)
         {
             std::vector<double> thisClsConfs;
-            for (int i = 0; i < numPoints; i++)    
+            for (int i = 0; i < numPoints; i++)
             {
                 float value;
                 memcpy(&value, data + pointStep * i + bytesPerClassProb * j + pclPc2SegPrb->fields[0].offset, bytesPerClassProb);
@@ -107,7 +107,7 @@ namespace ORB_SLAM3
 
                     // get the point from the uncertatinty image to be inserted into confidence vector
                     const int uncertainty = segImgUncertainity.at<uchar>(point.y, point.x);
-                    thisClsConfs.push_back(1.0 - uncertainty/255.0);
+                    thisClsConfs.push_back(1.0 - uncertainty / 255.0);
                 }
             }
 
@@ -174,7 +174,7 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
-        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes, std::vector<double> &clsConfs)
+                                               std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes, std::vector<double> &clsConfs)
     {
         for (unsigned int clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
@@ -241,13 +241,13 @@ namespace ORB_SLAM3
     {
         // retrieve the plane from the map
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
-        
+
         // plane type compatible with the Plane class
         ORB_SLAM3::Plane::planeVariant planeType = Utils::getPlaneTypeFromClassId(clsId);
 
         // get the floor plane from the atlas
         Plane *floorPlane = mpAtlas->GetFloorPlane();
-        
+
         // filter the floor pointcloud maintaining only one floor plane
         // [TODO] - Add check whether the floor plane was updated or not? to skip repeating this process
         if (floorPlane != nullptr)
@@ -278,14 +278,14 @@ namespace ORB_SLAM3
             pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
 
             std::copy_if(transformedCloud->begin(),
-                transformedCloud->end(),
-                std::back_inserter(filteredCloud->points),
-                [&](const pcl::PointXYZRGBNormal &p)
-                {
-                return p.y > threshY;
-                });
+                         transformedCloud->end(),
+                         std::back_inserter(filteredCloud->points),
+                         [&](const pcl::PointXYZRGBNormal &p)
+                         {
+                             return p.y > threshY;
+                         });
             filteredCloud->height = 1;
-            filteredCloud->is_dense = false;                    
+            filteredCloud->is_dense = false;
 
             if (filteredCloud->points.size() > 0)
             {
@@ -361,5 +361,15 @@ namespace ORB_SLAM3
                     matchedPlane->castWeightedVote(planeType, confidence);
             }
         }
+    }
+
+    void SemanticSegmentation::createRoomFromVoxbloxMap()
+    {
+        // [TODO] Needs to be implemented
+    }
+
+    void SemanticSegmentation::createRoomFromGNN()
+    {
+        // [TODO] Needs to be implemented
     }
 }

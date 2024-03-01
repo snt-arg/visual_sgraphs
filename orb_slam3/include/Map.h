@@ -21,6 +21,7 @@
 
 #include "MapPoint.h"
 #include "KeyFrame.h"
+#include "Semantic/Room.h"
 #include "Semantic/Marker.h"
 
 #include <set>
@@ -31,7 +32,6 @@
 
 namespace ORB_SLAM3
 {
-
     class MapPoint;
     class KeyFrame;
     class Atlas;
@@ -183,7 +183,7 @@ namespace ORB_SLAM3
 
     protected:
         long unsigned int mnId;
-        
+
         // floor plane information
         int mFloorPlaneId = -1;
 
