@@ -108,13 +108,15 @@ namespace ORB_SLAM3
 
         /**
          * @brief Associates mapped room candidates and creates rooms from the voxmap
+         * @param roomCandidate the address of the candidate room
          */
-        void createRoomFromVoxbloxMap();
+        void updateMapRoomCandidateToRoom_Voxblox(Room *roomCandidate);
 
         /**
          * @brief Associates mapped room candidates and creates rooms from the GNN
+         * @param roomCandidate the address of the candidate room
          */
-        void createRoomFromGNN();
+        void updateMapRoomCandidateToRoom_GNN(Room *roomCandidate);
 
         // Running the thread
         void Run();

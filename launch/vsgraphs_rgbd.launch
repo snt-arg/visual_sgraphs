@@ -5,7 +5,7 @@
     
     <!-- ****** Dataset Arguments ****** -->
     <!-- Which semantic data file should be loaded? -->
-    <arg name="env_database" default="LuxVSD/luxvsd_seq02.json" />
+    <arg name="env_database" default="LuxVSD/luxvsd_seq01.json" />
     
     <!-- ****** Marker Arguments ****** -->
     <!-- How much the framework should trust the markers (0.1 default, higher for mono setups) -->

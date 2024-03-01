@@ -124,12 +124,6 @@ namespace ORB_SLAM3
         void createMapRoomCandidate(ORB_SLAM3::Room *matchedRoom, ORB_SLAM3::Marker *attachedMarker);
 
         /**
-         * @brief Updates an existing room object (corridor or room) to be added to the map
-         * @param roomCandidate the address of the candidate room
-         */
-        void updateMapRoomCandidate(Room *roomCandidate);
-
-        /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
          * @param pKF the current keyframe in which the detection took place
          * @param mvpMapMarkers the address of the detected markers

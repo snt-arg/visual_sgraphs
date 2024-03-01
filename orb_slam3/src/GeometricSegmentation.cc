@@ -269,6 +269,16 @@ namespace ORB_SLAM3
 
     void GeometricSegmentation::createMapRoomCandidate(ORB_SLAM3::Room *matchedRoom, ORB_SLAM3::Marker *attachedMarker)
     {
+        // Check if the room has not been created before
+        bool roomAlreadyInMap = false;
+        for (auto room : mpAtlas->GetAllRooms())
+            if (room->getMetaMarkerId() == attachedMarker->getId())
+                roomAlreadyInMap = true;
+
+        if (roomAlreadyInMap)
+            return;
+
+        // Variables
         ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
 
         // Fill the room entity
@@ -289,71 +299,6 @@ namespace ORB_SLAM3
             << "), augmented by Marker-ID #" << newMapRoomCandidate->getMetaMarkerId() << "!" << std::endl;
 
         mpAtlas->AddMapRoom(newMapRoomCandidate);
-    }
-
-    void GeometricSegmentation::updateMapRoomCandidate(ORB_SLAM3::Room *detectedRoom)
-    {
-        // Update the room center based on the meta-marker position, if it is a candidate
-        // if (detectedRoom->getIsCandidate())
-        //     // Update the room center
-        //     detectedRoom->setRoomCenter(detectedRoom->getMetaMarker()->getGlobalPose().translation().cast<double>());
-
-        // Find attached doors and add them to the room
-        for (auto mapDoor : mpAtlas->GetAllDoors())
-        {
-            ORB_SLAM3::Marker *marker = mapDoor->getMarker();
-            std::vector<int> roomDoorMarkerIds = detectedRoom->getDoorMarkerIds();
-
-            // Loop over the door markers of the room
-            for (auto doorMarkerId : roomDoorMarkerIds)
-                if (doorMarkerId == marker->getId())
-                    detectedRoom->setDoors(mapDoor);
-        }
-
-        // [TODO] Detect walls close to the room center (setWalls in SemSeg)
-
-        // Set the new room center
-        // Eigen::Vector3d updatedCentroid = Eigen::Vector3d::Zero();
-        // std::vector<Plane *> roomWalls = detectedRoom->getWalls();
-        // if (roomWalls.size() > 0)
-        // {
-        //     if (detectedRoom->getIsCorridor())
-        //     {
-        //         // Calculate the marker position placed on a wall
-        //         Eigen::Vector3d markerPosition =
-        //             roomWalls.front()->getMarkers().front()->getGlobalPose().translation().cast<double>();
-        //         // If it is a corridor
-        //         Eigen::Vector4d wall1(Utils::correctPlaneDirection(
-        //             roomWalls.front()->getGlobalEquation().coeffs()));
-        //         Eigen::Vector4d wall2(Utils::correctPlaneDirection(
-        //             roomWalls.front()->getGlobalEquation().coeffs()));
-        //         // Find the room center and add its vertex
-        //         updatedCentroid = Utils::getRoomCenter(markerPosition, wall1, wall2);
-        //     }
-        //     else
-        //     {
-        //         reorganizeRoomWalls(detectedRoom);
-        //         // If it is a four-wall room
-        //         Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
-        //         Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[1]->getGlobalEquation().coeffs());
-        //         Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[2]->getGlobalEquation().coeffs());
-        //         Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[3]->getGlobalEquation().coeffs());
-        //         // Find the room center and add its vertex
-        //         updatedCentroid = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
-        //     }
-
-        //     // Update the room values
-        //     detectedRoom->setRoomCenter(updatedCentroid);
-        // }
-
-        // std::cout << "- Room#" << detectedRoom->getId() << " updated (" << detectedRoom->getName()
-        //           << "), augmented by Marker-ID #" << detectedRoom->getMetaMarkerId() << ", with #"
-        //           << " walls and doors [" << detectedDoors << "]!"
-        //           << std::endl;
     }
 
     void GeometricSegmentation::markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF,
@@ -392,7 +337,6 @@ namespace ORB_SLAM3
                         currentMapMarker = mappedMarker;
                         currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
                     }
-
             // Decide based on the marker type
             if (markerIsDoor)
                 // The current marker is placed on a door
@@ -406,34 +350,10 @@ namespace ORB_SLAM3
                 for (Room *envRoom : envRooms)
                     // Check if the current detected marker belongs to this room
                     if (mCurrentMarker->getId() == envRoom->getMetaMarkerId())
-                    {
-                        // Check to see if the room is already in the map
-                        mappedRoom = roomAssociation(envRoom);
-
-                        // Check if the room is already in the map
-                        if (mappedRoom == nullptr)
-                            createMapRoomCandidate(envRoom, mCurrentMarker);
-                        else
-                            updateMapRoomCandidate(envRoom);
-                    }
-
-                // Calculate the plane (wall) equation on which the marker is attached
-                // Eigen::Vector4d planeEstimate =
-                //     getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
-                //                              currentMapMarker->getGlobalPose().translation());
-
-                // // Get the plane based on the equation
-                // g2o::Plane3D detectedPlane(planeEstimate);
-
-                // // Convert the given plane to global coordinates
-                // g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
-                //                                                              detectedPlane);
-
-                // // Check if we need to add the wall to the map or not
-                // int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
-                // if (matchedPlaneId != -1)
-                //     // The wall already exists in the map, fetching that one
-                //     updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId, currentMapMarker);
+                        // Create a room candidate if does not exist in the map
+                        // [💡hint] Creation of room candidates happens here and updating (changing to real candidates)
+                        // happens in the Semantic Segmentation module
+                        createMapRoomCandidate(envRoom, mCurrentMarker);
             }
         }
     }
