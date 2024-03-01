@@ -16,10 +16,11 @@ double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
-std::shared_ptr<tf::TransformListener> transform_listener;
+std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
-ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, doorsPub, all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
+ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, doorsPub,
+    all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
 
 // Geomentric objects detection
 int geo_pointcloud_size = 200;
@@ -41,7 +42,7 @@ std::vector<ORB_SLAM3::Door *> env_doors;
 // System parameters set in the launch files
 ORB_SLAM3::SystemParams sysParams;
 
-bool save_map_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
+bool saveMapService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
     res.success = pSLAM->SaveMap(req.name);
 
@@ -53,15 +54,15 @@ bool save_map_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::
     return res.success;
 }
 
-bool save_traj_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
+bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
-    const string cam_traj_file = req.name + "_cam_traj.txt";
-    const string kf_traj_file = req.name + "_kf_traj.txt";
+    const string cameraTrajectoryFile = req.name + "_cam_traj.txt";
+    const string keyframeTrajectoryFile = req.name + "_kf_traj.txt";
 
     try
     {
-        pSLAM->SaveTrajectoryEuRoC(cam_traj_file);
-        pSLAM->SaveKeyFrameTrajectoryEuRoC(kf_traj_file);
+        pSLAM->SaveTrajectoryEuRoC(cameraTrajectoryFile);
+        pSLAM->SaveKeyFrameTrajectoryEuRoC(keyframeTrajectoryFile);
         res.success = true;
     }
     catch (const std::exception &e)
@@ -81,13 +82,13 @@ bool save_traj_srv(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap:
     return res.success;
 }
 
-void setup_services(ros::NodeHandle &node_handler, std::string node_name)
+void setupServices(ros::NodeHandle &node_handler, std::string node_name)
 {
-    static ros::ServiceServer save_map_service = node_handler.advertiseService(node_name + "/save_map", save_map_srv);
-    static ros::ServiceServer save_traj_service = node_handler.advertiseService(node_name + "/save_traj", save_traj_srv);
+    static ros::ServiceServer save_map_service = node_handler.advertiseService(node_name + "/save_map", saveMapService);
+    static ros::ServiceServer save_traj_service = node_handler.advertiseService(node_name + "/save_traj", saveTrajectoryService);
 }
 
-void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTransport &image_transport, std::string node_name)
+void setupPublishers(ros::NodeHandle &node_handler, image_transport::ImageTransport &image_transport, std::string node_name)
 {
     // Basic
     tracking_img_pub = image_transport.advertise(node_name + "/tracking_image", 1);
@@ -117,10 +118,10 @@ void setup_publishers(ros::NodeHandle &node_handler, image_transport::ImageTrans
     visualTools->deleteAllMarkers();
     visualTools->enableBatchPublishing();
 
-    transform_listener = std::make_shared<tf::TransformListener>();
+    transformListener = std::make_shared<tf::TransformListener>();
 }
 
-void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
+void publishTopics(ros::Time msg_time, Eigen::Vector3f Wbb)
 {
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
 
@@ -129,24 +130,24 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
         return;
 
     // Common topics
-    publish_camera_pose(Twc, msg_time);
-    publish_tf_transform(Twc, world_frame_id, cam_frame_id, msg_time);
+    publishCameraPose(Twc, msg_time);
+    publishTfTransform(Twc, world_frame_id, cam_frame_id, msg_time);
 
     // If the boolean was set to True in the launch file, perform a transform
     if (publish_static_transform)
-        publish_static_tf_transform(world_frame_id, map_frame_id, msg_time);
+        publishStaticTfTransform(world_frame_id, map_frame_id, msg_time);
 
     // Setup publishers
     publishDoors(pSLAM->GetAllDoors(), msg_time);
     publishRooms(pSLAM->GetAllRooms(), msg_time);
     publishPlanes(pSLAM->GetAllPlanes(), msg_time);
-    publish_kf_img(pSLAM->GetAllKeyFrames(), msg_time);
-    publish_all_points(pSLAM->GetAllMapPoints(), msg_time);
-    publish_tracking_img(pSLAM->GetCurrentFrame(), msg_time);
-    publish_kf_markers(pSLAM->GetAllKeyFrames(), msg_time);
+    publishKeyframeImages(pSLAM->GetAllKeyFrames(), msg_time);
+    publishAllPoints(pSLAM->GetAllMapPoints(), msg_time);
+    publishTrackingImage(pSLAM->GetCurrentFrame(), msg_time);
+    publishKeyframeMarkers(pSLAM->GetAllKeyFrames(), msg_time);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msg_time);
-    publish_tracked_points(pSLAM->GetTrackedMapPoints(), msg_time);
-    publish_segmented_cloud(pSLAM->GetAllKeyFrames(), msg_time);
+    publishTrackedPoints(pSLAM->GetTrackedMapPoints(), msg_time);
+    publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msg_time);
 
     // IMU-specific topics
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
@@ -159,14 +160,14 @@ void publish_topics(ros::Time msg_time, Eigen::Vector3f Wbb)
         Sophus::Matrix3f Rwb = Twb.rotationMatrix();
         Eigen::Vector3f Wwb = Rwb * Wbb;
 
-        publish_tf_transform(Twb, world_frame_id, imu_frame_id, msg_time);
+        publishTfTransform(Twb, world_frame_id, imu_frame_id, msg_time);
         if (publish_static_transform)
-            publish_static_tf_transform(world_frame_id, map_frame_id, msg_time);
-        publish_body_odom(Twb, Vwb, Wwb, msg_time);
+            publishStaticTfTransform(world_frame_id, map_frame_id, msg_time);
+        publishBodyOdometry(Twb, Vwb, Wwb, msg_time);
     }
 }
 
-void publish_body_odom(Sophus::SE3f Twb_SE3f, Eigen::Vector3f Vwb_E3f, Eigen::Vector3f ang_vel_body, ros::Time msg_time)
+void publishBodyOdometry(Sophus::SE3f Twb_SE3f, Eigen::Vector3f Vwb_E3f, Eigen::Vector3f ang_vel_body, ros::Time msg_time)
 {
     nav_msgs::Odometry odom_msg;
     odom_msg.child_frame_id = imu_frame_id;
@@ -193,7 +194,7 @@ void publish_body_odom(Sophus::SE3f Twb_SE3f, Eigen::Vector3f Vwb_E3f, Eigen::Ve
     odom_pub.publish(odom_msg);
 }
 
-void publish_camera_pose(Sophus::SE3f Tcw_SE3f, ros::Time msg_time)
+void publishCameraPose(Sophus::SE3f Tcw_SE3f, ros::Time msg_time)
 {
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.frame_id = cam_frame_id;
@@ -211,7 +212,7 @@ void publish_camera_pose(Sophus::SE3f Tcw_SE3f, ros::Time msg_time)
     pose_pub.publish(pose_msg);
 }
 
-void publish_tf_transform(Sophus::SE3f T_SE3f, string frame_id, string child_frame_id, ros::Time msg_time)
+void publishTfTransform(Sophus::SE3f T_SE3f, string frame_id, string child_frame_id, ros::Time msg_time)
 {
     tf::Transform tf_transform = SE3f_to_tfTransform(T_SE3f);
     static tf::TransformBroadcaster tf_broadcaster;
@@ -225,7 +226,7 @@ void publish_tf_transform(Sophus::SE3f T_SE3f, string frame_id, string child_fra
  * @param child_frame_id The child frame ID for the static transformation
  * @param msg_time The timestamp for the transformation message
  */
-void publish_static_tf_transform(string frame_id, string child_frame_id, ros::Time msg_time)
+void publishStaticTfTransform(string frame_id, string child_frame_id, ros::Time msg_time)
 {
     // Create a static transform broadcaster
     static tf2_ros::StaticTransformBroadcaster static_broadcaster;
@@ -254,7 +255,7 @@ void publish_static_tf_transform(string frame_id, string child_frame_id, ros::Ti
     static_broadcaster.sendTransform(static_stamped);
 }
 
-void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
+void publishKeyframeImages(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
 {
     // Check all keyframes and publish the ones that have not been published for Semantic Segmentation yet
     for (auto &keyframe : keyframe_vec)
@@ -282,7 +283,7 @@ void publish_kf_img(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time m
     }
 }
 
-void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
+void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
 {
     // get the latest processed keyframe
     ORB_SLAM3::KeyFrame *thisKF = nullptr;
@@ -335,7 +336,7 @@ void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ro
     segmented_cloud_pub.publish(cloud_msg);
 }
 
-void publish_tracking_img(cv::Mat image, ros::Time msg_time)
+void publishTrackingImage(cv::Mat image, ros::Time msg_time)
 {
     std_msgs::Header header;
     header.stamp = msg_time;
@@ -344,19 +345,19 @@ void publish_tracking_img(cv::Mat image, ros::Time msg_time)
     tracking_img_pub.publish(rendered_image_msg);
 }
 
-void publish_tracked_points(std::vector<ORB_SLAM3::MapPoint *> tracked_points, ros::Time msg_time)
+void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *> tracked_points, ros::Time msg_time)
 {
-    sensor_msgs::PointCloud2 cloud = mappoint_to_pointcloud(tracked_points, msg_time);
+    sensor_msgs::PointCloud2 cloud = mapPointToPointcloud(tracked_points, msg_time);
     tracked_mappoints_pub.publish(cloud);
 }
 
-void publish_all_points(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
+void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
 {
-    sensor_msgs::PointCloud2 cloud = mappoint_to_pointcloud(map_points, msg_time);
+    sensor_msgs::PointCloud2 cloud = mapPointToPointcloud(map_points, msg_time);
     all_mappoints_pub.publish(cloud);
 }
 
-void publish_kf_markers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
+void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
 {
     sort(keyframe_vec.begin(), keyframe_vec.end(), ORB_SLAM3::KeyFrame::lId);
     if (keyframe_vec.size() == 0)
@@ -394,7 +395,6 @@ void publish_kf_markers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Ti
     kf_lines.header.frame_id = world_frame_id;
     kf_lines.type = visualization_msgs::Marker::LINE_LIST;
 
-
     for (auto &keyframe : keyframe_vec)
     {
         geometry_msgs::Point kf_marker;
@@ -427,15 +427,15 @@ void publish_kf_markers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Ti
             planePoint.frame_id_ = struct_frame_id;
 
             tf::Stamped<tf::Point> planePointTransformed;
-            transform_listener->transformPoint(world_frame_id, ros::Time(0), planePoint,
-                                               struct_frame_id, planePointTransformed);
+            transformListener->transformPoint(world_frame_id, ros::Time(0), planePoint,
+                                              struct_frame_id, planePointTransformed);
 
             geometry_msgs::Point point1;
             point1.x = planePointTransformed.x();
             point1.y = planePointTransformed.y();
             point1.z = planePointTransformed.z();
             kf_lines.points.push_back(point1);
-         
+
             kf_lines.points.push_back(kf_marker);
         }
     }
@@ -590,7 +590,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     if (numPlanes == 0)
         return;
 
-    // aggregate pointcloud XYZRGB for all planes 
+    // aggregate pointcloud XYZRGB for all planes
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     for (const ORB_SLAM3::Plane *plane : planes)
@@ -620,7 +620,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.x = point.x;
             newPoint.y = point.y;
             newPoint.z = point.z;
-            
+
             Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
             // compute from plane equation - y for floor, z for wall
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
@@ -718,13 +718,13 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         roomArray.markers.push_back(roomLabel);
 
         // Room to Plane (Wall) connection line
-        roomWallLine.color.a = 0.8;
-        roomWallLine.scale.x = 0.01;
-        roomWallLine.scale.y = 0.01;
-        roomWallLine.scale.z = 0.01;
-        roomWallLine.color.r = color[0];
-        roomWallLine.color.g = color[1];
-        roomWallLine.color.b = color[2];
+        roomWallLine.color.a = 0.5;
+        roomWallLine.color.r = 0.0;
+        roomWallLine.color.g = 0.0;
+        roomWallLine.color.b = 0.0;
+        roomWallLine.scale.x = 0.005;
+        roomWallLine.scale.y = 0.005;
+        roomWallLine.scale.z = 0.005;
         roomWallLine.ns = "room_wall_lines";
         roomWallLine.action = roomWallLine.ADD;
         roomWallLine.lifetime = ros::Duration();
@@ -734,13 +734,13 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         roomWallLine.type = visualization_msgs::Marker::LINE_LIST;
 
         // Room to Door connection line
-        roomDoorLine.color.a = 0.8;
-        roomDoorLine.scale.x = 0.01;
-        roomDoorLine.scale.y = 0.01;
-        roomDoorLine.scale.z = 0.01;
-        roomDoorLine.color.r = color[0];
-        roomDoorLine.color.g = color[1];
-        roomDoorLine.color.b = color[2];
+        roomDoorLine.color.a = 0.5;
+        roomDoorLine.color.r = 0.0;
+        roomDoorLine.color.g = 0.0;
+        roomDoorLine.color.b = 0.0;
+        roomDoorLine.scale.x = 0.005;
+        roomDoorLine.scale.y = 0.005;
+        roomDoorLine.scale.z = 0.005;
         roomDoorLine.ns = "room_door_lines";
         roomDoorLine.action = roomDoorLine.ADD;
         roomDoorLine.lifetime = ros::Duration();
@@ -750,13 +750,13 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         roomDoorLine.type = visualization_msgs::Marker::LINE_LIST;
 
         // Room to Marker connection line
-        roomMarkerLine.color.a = 0.8;
-        roomMarkerLine.scale.x = 0.01;
-        roomMarkerLine.scale.y = 0.01;
-        roomMarkerLine.scale.z = 0.01;
-        roomMarkerLine.color.r = color[0];
-        roomMarkerLine.color.g = color[1];
-        roomMarkerLine.color.b = color[2];
+        roomMarkerLine.color.a = 0.5;
+        roomMarkerLine.color.r = 0.0;
+        roomMarkerLine.color.g = 0.0;
+        roomMarkerLine.color.b = 0.0;
+        roomMarkerLine.scale.x = 0.005;
+        roomMarkerLine.scale.y = 0.005;
+        roomMarkerLine.scale.z = 0.005;
         roomMarkerLine.ns = "room_marker_lines";
         roomMarkerLine.lifetime = ros::Duration();
         roomMarkerLine.action = roomMarkerLine.ADD;
@@ -765,91 +765,96 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         roomMarkerLine.id = roomArray.markers.size() + 1;
         roomMarkerLine.type = visualization_msgs::Marker::LINE_LIST;
 
-        tf::Stamped<tf::Point> roomPoint;
+        // Get the room center in the world frame
+        tf::Stamped<tf::Point> roomPoint, roomPointTransformed;
+
         roomPoint.setX(roomCenter.x());
         roomPoint.setY(roomCenter.y());
         roomPoint.setZ(roomCenter.z());
         roomPoint.frame_id_ = room_frame_id;
-
-        tf::Stamped<tf::Point> roomPointTransformed;
-        transform_listener->transformPoint(world_frame_id, ros::Time(0), roomPoint,
-                                           room_frame_id, roomPointTransformed);
+        transformListener->transformPoint(world_frame_id, ros::Time(0), roomPoint,
+                                          room_frame_id, roomPointTransformed);
 
         // Room to Plane (Wall) connection line
         for (const auto wall : rooms[idx]->getWalls())
         {
-            geometry_msgs::Point point1;
-            point1.x = roomPointTransformed.x();
-            point1.y = roomPointTransformed.y();
-            point1.z = roomPointTransformed.z();
-            roomWallLine.points.push_back(point1);
+            geometry_msgs::Point pointRoom, pointWall;
+            tf::Stamped<tf::Point> pointWallInit, pointWallTransform;
 
-            tf::Stamped<tf::Point> wall_point;
-            wall_point.frame_id_ = struct_frame_id;
-            wall_point.setX(wall->getCentroid().x());
-            wall_point.setY(wall->getCentroid().y());
-            wall_point.setZ(wall->getCentroid().z());
-            tf::Stamped<tf::Point> wall_point_transformed;
-            transform_listener->transformPoint(world_frame_id, ros::Time(0), wall_point,
-                                               struct_frame_id, wall_point_transformed);
+            pointRoom.x = roomPointTransformed.x();
+            pointRoom.y = roomPointTransformed.y();
+            pointRoom.z = roomPointTransformed.z();
+            roomWallLine.points.push_back(pointRoom);
 
-            geometry_msgs::Point point2;
-            point2.x = wall_point_transformed.x();
-            point2.y = wall_point_transformed.y();
-            point2.z = wall_point_transformed.z();
+            pointWallInit.frame_id_ = struct_frame_id;
+            pointWallInit.setX(wall->getCentroid().x());
+            pointWallInit.setY(wall->getCentroid().y());
+            pointWallInit.setZ(wall->getCentroid().z());
+            transformListener->transformPoint(world_frame_id, ros::Time(0), pointWallInit,
+                                              struct_frame_id, pointWallTransform);
 
-            roomWallLine.points.push_back(point2);
+            pointWall.x = pointWallTransform.x();
+            pointWall.y = pointWallTransform.y();
+            pointWall.z = pointWallTransform.z();
+            roomWallLine.points.push_back(pointWall);
         }
 
         // Room to Door connection line
         for (const auto door : rooms[idx]->getDoors())
         {
-            geometry_msgs::Point point1;
-            point1.x = roomPointTransformed.x();
-            point1.y = roomPointTransformed.y();
-            point1.z = roomPointTransformed.z();
-            roomDoorLine.points.push_back(point1);
+            geometry_msgs::Point pointRoom, pointDoor;
+            tf::Stamped<tf::Point> pointDoorInit, pointDoorTransform;
 
-            tf::Stamped<tf::Point> door_point;
-            door_point.frame_id_ = struct_frame_id;
-            tf::Stamped<tf::Point> door_point_transformed;
-            door_point.setX(door->getGlobalPose().translation()(0));
-            door_point.setY(door->getGlobalPose().translation()(1));
-            door_point.setZ(door->getGlobalPose().translation()(2));
-            transform_listener->transformPoint(world_frame_id, ros::Time(0), door_point,
-                                               struct_frame_id, door_point_transformed);
+            pointRoom.x = roomPointTransformed.x();
+            pointRoom.y = roomPointTransformed.y();
+            pointRoom.z = roomPointTransformed.z();
+            roomDoorLine.points.push_back(pointRoom);
 
-            geometry_msgs::Point point2;
-            point2.x = door_point_transformed.x();
-            point2.z = door_point_transformed.z();
-            point2.y = door_point_transformed.y() - 2.0;
+            pointDoorInit.frame_id_ = struct_frame_id;
+            pointDoorInit.setX(door->getGlobalPose().translation()(0));
+            pointDoorInit.setY(door->getGlobalPose().translation()(1));
+            pointDoorInit.setZ(door->getGlobalPose().translation()(2));
+            transformListener->transformPoint(world_frame_id, ros::Time(0), pointDoorInit,
+                                              struct_frame_id, pointDoorTransform);
 
-            roomDoorLine.points.push_back(point2);
+            pointDoor.x = pointDoorTransform.x();
+            pointDoor.z = pointDoorTransform.z();
+            pointDoor.y = pointDoorTransform.y() - 2.0;
+            roomDoorLine.points.push_back(pointDoor);
         }
 
         // Room to Marker connection line
-        // geometry_msgs::Point pointRoom, pointMarker;
-        // ORB_SLAM3::Marker *metaMarker = rooms[idx]->getMetaMarker();
+        geometry_msgs::Point pointRoom, pointMarker;
+        tf::Stamped<tf::Point> pointMarkerInit, pointMarkerTransform;
+        ORB_SLAM3::Marker *metaMarker = rooms[idx]->getMetaMarker();
 
-        // pointRoom.x = roomPointTransformed.x();
-        // pointRoom.y = roomPointTransformed.y();
-        // pointRoom.z = roomPointTransformed.z();
-        // roomMarkerLine.points.push_back(pointRoom);
+        pointRoom.x = roomPointTransformed.x();
+        pointRoom.y = roomPointTransformed.y();
+        pointRoom.z = roomPointTransformed.z();
+        roomMarkerLine.points.push_back(pointRoom);
 
-        // pointMarker.x = metaMarker->getGlobalPose().translation().x();
-        // pointMarker.z = metaMarker->getGlobalPose().translation().z();
-        // pointMarker.y = metaMarker->getGlobalPose().translation().y();
-        // roomMarkerLine.points.push_back(pointMarker);
+        pointMarkerInit.frame_id_ = struct_frame_id;
+        pointMarkerInit.setX(metaMarker->getGlobalPose().translation()(0));
+        pointMarkerInit.setY(metaMarker->getGlobalPose().translation()(1));
+        pointMarkerInit.setZ(metaMarker->getGlobalPose().translation()(2));
+        transformListener->transformPoint(world_frame_id, ros::Time(0), pointMarkerInit,
+                                          struct_frame_id, pointMarkerTransform);
 
+        pointMarker.x = pointMarkerTransform.x();
+        pointMarker.z = pointMarkerTransform.z();
+        pointMarker.y = pointMarkerTransform.y();
+        roomMarkerLine.points.push_back(pointMarker);
+
+        // Add items to the roomArray
         roomArray.markers.push_back(roomWallLine);
         roomArray.markers.push_back(roomDoorLine);
-        // roomArray.markers.push_back(roomMarkerLine);
+        roomArray.markers.push_back(roomMarkerLine);
     }
 
     rooms_pub.publish(roomArray);
 }
 
-sensor_msgs::PointCloud2 mappoint_to_pointcloud(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
+sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *> map_points, ros::Time msg_time)
 {
     const int num_channels = 3; // x y z
 
