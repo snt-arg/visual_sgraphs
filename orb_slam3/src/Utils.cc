@@ -165,7 +165,7 @@ namespace ORB_SLAM3
         // Loop over cloud points as long as the cloud is large enough
         // [TODO] Temporary disabling sequential ransac
         // while (cloud->points.size() > minSegmentationPoints)
-        const uint8_t maxRansacIterations = 2;
+        const uint8_t maxRansacIterations = 1;
         for (uint8_t i = 0; i < maxRansacIterations && cloud->points.size() > minSegmentationPoints; i++)
         {
             try

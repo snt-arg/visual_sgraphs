@@ -93,6 +93,20 @@ namespace ORB_SLAM3
         void updateMapPlane(int planeId, int clsId, double confidence);
 
         /**
+         * @brief Filters the floor plane to remove points that are too far from the plane
+         * @param floorPlane the floor plane
+         * @param threshY the threshold for the vertical distance from the plane
+         */
+        void filterFloorPlane(Plane *floorPlane, float threshY);
+
+        /**
+         * @brief Computes the transformation matrix from the floor plane to the horizontal (y-inverted)
+         * @param plane the plane
+         * @return the transformation matrix
+         */
+        Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
+
+        /**
          * @brief Associates mapped room candidates and creates rooms from the voxmap
          */
         void createRoomFromVoxbloxMap();

@@ -1385,6 +1385,21 @@ namespace ORB_SLAM3
         return vKFposes;
     }
 
+    Sophus::SE3f System::GetKeyFramePose(KeyFrame *pKF)
+    {
+        if (pKF->isBad())
+            return Sophus::SE3f();
+
+        // Twb can be world frame to cam0 frame (without IMU) or body in world frame (with IMU)
+        Sophus::SE3f Twb;
+        if (mSensor == IMU_MONOCULAR || mSensor == IMU_STEREO || mSensor == IMU_RGBD) // with IMU
+            Twb = pKF->GetImuPose();
+        else // without IMU
+            Twb = pKF->GetPoseInverse();
+
+        return Twb;
+    }
+
     vector<Marker *> System::GetAllMarkers()
     {
         Map *pActiveMap = mpAtlas->GetCurrentMap();

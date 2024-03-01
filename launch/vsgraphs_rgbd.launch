@@ -5,7 +5,7 @@
     
     <!-- ****** Dataset Arguments ****** -->
     <!-- Which semantic data file should be loaded? -->
-    <arg name="env_database" default="LuxVSD/luxvsd_seq01.json" />
+    <arg name="env_database" default="LuxVSD/luxvsd_seq02.json" />
     
     <!-- ****** Marker Arguments ****** -->
     <!-- How much the framework should trust the markers (0.1 default, higher for mono setups) -->
@@ -13,12 +13,12 @@
 
     <!-- ****** Point Cloud Filtering Arguments ****** -->
     <!-- The threshold (in meters for points in cloud to be considered - <near, far>) -->
-    <arg name="distance_thresh_near" default="0.2" />
-    <arg name="distance_thresh_far" default="4.0" />
+    <arg name="distance_thresh_near" default="0.3" />
+    <arg name="distance_thresh_far" default="3.0" />
 
     <!-- ****** Geometric Segmentation Arguments ****** -->
     <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
-    <arg name="pointcloud_size_geo" default="250" />
+    <arg name="pointcloud_size_geo" default="300" />
     <!-- What is the leaf size for the pointcloud downsampling -->
     <arg name="geo_downsample_leaf_size" default="0.08" />
 
@@ -26,7 +26,7 @@
     <!-- What is the the threshold for semantic segmentation probability validation (rejects values below x) -->
     <arg name="prob_sem_thresh" default="0.7" />
     <!-- How many pointclouds (after downsampling) needed to detect semantic objects (e.g., planes) -->
-    <arg name="pointcloud_size_sem" default="250" />
+    <arg name="pointcloud_size_sem" default="300" />
     <!-- What is the leaf size for the pointcloud downsampling -->
     <arg name="sem_downsample_leaf_size" default="0.04" />
 
