@@ -10,7 +10,6 @@ namespace ORB_SLAM3
         mSegProbThreshold = segProbThreshold;
         mDistFilterThreshold = distFilterThreshold;
         mDownsampleLeafSize = downsampleLeafSize;
-        mPlanePoseMat = Eigen::Matrix4f::Identity();
     }
 
     void SemanticSegmentation::Run()
@@ -44,6 +43,7 @@ namespace ORB_SLAM3
 
             // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
+            thisKF->clearPointCloud();
 
             // get all planes for each class specific point cloud using RANSAC
             std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
@@ -200,19 +200,29 @@ namespace ORB_SLAM3
                 {
                     std::string planeType = clsId ? "Wall" : "Floor";
                     updateMapPlane(matchedPlaneId, clsId, clsConfs[clsId]);
+                    
+                    Plane *floorPlane = mpAtlas->GetFloorPlane(); 
+                    if (floorPlane != nullptr)
+                    {
+                        // recompute the transformation from floor to horizontal - maybe global eq. changed
+                        mPlanePoseMat = computePlaneToHorizontal(floorPlane);
+                        
+                        // filter the floor plane
+                        filterFloorPlane(floorPlane, 0.40);
+                    }
                 }
             }
         }
-
-        // keep running to update the floor plane and the transformation matrix related to it
-        Plane *floorPlane = mpAtlas->GetFloorPlane();
+        
+        // update the floor plane, GeoSeg might have updated the floor plane
+        Plane *floorPlane = mpAtlas->GetFloorPlane(); 
         if (floorPlane != nullptr)
         {
-            // filter the floor plane
-            filterFloorPlane(floorPlane, 0.40);
-
             // recompute the transformation from floor to horizontal - maybe global eq. changed
             mPlanePoseMat = computePlaneToHorizontal(floorPlane);
+            
+            // filter the floor plane
+            filterFloorPlane(floorPlane, 0.40);
         }
     }
 
@@ -265,25 +275,23 @@ namespace ORB_SLAM3
             {
                 matchedPlane->castWeightedVote(planeType, confidence);
                 if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
+                {
                     mpAtlas->setFloorPlaneId(planeId);
+                    mPlanePoseMat = computePlaneToHorizontal(matchedPlane);
+                }
+                    
             }
-            else
-            {
-                // update the floor plane with the matched plane if the matched plane is new
-                if (matchedPlane->getMapClouds()->points.size() > 0 && planeId != floorPlane->getId())
+            else if (matchedPlane->getMapClouds()->points.size() > 0 && planeId != floorPlane->getId())
+                    // if the plane is not the floor plane and has a pointcloud, then update the floor plane
                     floorPlane->setMapClouds(matchedPlane->getMapClouds());
-            }
         }
-        else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
+        else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL && floorPlane != nullptr)
         {
-            // wall filtering
-
+            // wall filtering based on the mPlanePoseMat          
             // only works if the floor plane is set, needs the correction matrix: mPlanePoseMat
             // [TODO] - Maybe initialize mPlanePoseMat with the identity matrix or other way
-            if (floorPlane == nullptr)
-                return;
-
-            // calculate the transformed equation
+  
+            // extract the rotation matrix from the transformation matrix
             Eigen::Matrix3f rotationMatrix = mPlanePoseMat.block<3, 3>(0, 0);
 
             // Compute the inverse transpose of the rotation matrix

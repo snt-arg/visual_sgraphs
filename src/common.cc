@@ -307,6 +307,11 @@ void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ro
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr clsCloud = clsCloudPtrs[i];
         for (long unsigned int j = 0; j < clsCloud->points.size(); j++)
         {
+
+            // skip some points randomnly
+            if (rand() % 6 != 0)
+                continue;
+
             pcl::PointXYZRGB point = clsCloud->points[j];
             switch (i)
             {
@@ -325,6 +330,7 @@ void publish_segmented_cloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ro
         }
     }
     aggregatedCloud->header = clsCloudPtrs[0]->header;
+    thisKF->clearClsClouds();
 
     // create a new pointcloud2 message from the transformed and aggregated pointcloud
     sensor_msgs::PointCloud2 cloud_msg;
@@ -394,7 +400,6 @@ void publish_kf_markers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Ti
     kf_lines.header.frame_id = world_frame_id;
     kf_lines.type = visualization_msgs::Marker::LINE_LIST;
 
-
     for (auto &keyframe : keyframe_vec)
     {
         geometry_msgs::Point kf_marker;
@@ -405,42 +410,42 @@ void publish_kf_markers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Ti
         kf_marker.z = kf_pose.translation().z();
         kf_markers.points.push_back(kf_marker);
 
-        // get all planes from the keyframe
-        std::vector<ORB_SLAM3::Plane *> planes = keyframe->GetMapPlanes();
+        // // get all planes from the keyframe
+        // std::vector<ORB_SLAM3::Plane *> planes = keyframe->GetMapPlanes();
 
-        // attach lines to centroids of planes
-        for (auto &plane : planes)
-        {
-            // show only connections of planes with semantic types
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
-                continue;
+        // // attach lines to centroids of planes
+        // for (auto &plane : planes)
+        // {
+        //     // show only connections of planes with semantic types
+        //     if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
+        //         continue;
 
-            // compute centroid of the plane from it's point cloud - point cloud already in world frame
-            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = plane->getMapClouds();
-            Eigen::Vector4f centroid;
-            pcl::compute3DCentroid(*planeCloud, centroid);
+        //     // compute centroid of the plane from it's point cloud - point cloud already in world frame
+        //     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = plane->getMapClouds();
+        //     Eigen::Vector4f centroid;
+        //     pcl::compute3DCentroid(*planeCloud, centroid);
 
-            tf::Stamped<tf::Point> planePoint;
-            planePoint.setX(centroid[0]);
-            planePoint.setY(centroid[1]);
-            planePoint.setZ(centroid[2]);
-            planePoint.frame_id_ = struct_frame_id;
+        //     tf::Stamped<tf::Point> planePoint;
+        //     planePoint.setX(centroid[0]);
+        //     planePoint.setY(centroid[1]);
+        //     planePoint.setZ(centroid[2]);
+        //     planePoint.frame_id_ = struct_frame_id;
 
-            tf::Stamped<tf::Point> planePointTransformed;
-            transform_listener->transformPoint(world_frame_id, ros::Time(0), planePoint,
-                                               struct_frame_id, planePointTransformed);
+        //     tf::Stamped<tf::Point> planePointTransformed;
+        //     transform_listener->transformPoint(world_frame_id, ros::Time(0), planePoint,
+        //                                        struct_frame_id, planePointTransformed);
 
-            geometry_msgs::Point point1;
-            point1.x = planePointTransformed.x();
-            point1.y = planePointTransformed.y();
-            point1.z = planePointTransformed.z();
-            kf_lines.points.push_back(point1);
+        //     geometry_msgs::Point point1;
+        //     point1.x = planePointTransformed.x();
+        //     point1.y = planePointTransformed.y();
+        //     point1.z = planePointTransformed.z();
+        //     kf_lines.points.push_back(point1);
          
-            kf_lines.points.push_back(kf_marker);
-        }
+        //     kf_lines.points.push_back(kf_marker);
+        // }
     }
     markerArray.markers.push_back(kf_markers);
-    markerArray.markers.push_back(kf_lines);
+    // markerArray.markers.push_back(kf_lines);
     kf_markers_pub.publish(markerArray);
 }
 
@@ -607,13 +612,15 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         else
             color = plane->getColor();
 
-        // get the pointcloud of the plane
+        // preprocess the pointcloud before adding to the aggregated pointcloud
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
+        if (planeClouds == nullptr || planeClouds->size() == 0)
+            continue;
+        Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
         for (const auto &point : planeClouds->points)
         {
-
-            // skip some points to reduce the size of the pointcloud
-            if (rand() % 4 != 0)
+            // skip some points randomnly
+            if (rand() % 6 != 0)
                 continue;
 
             pcl::PointXYZRGB newPoint;
@@ -621,7 +628,6 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.y = point.y;
             newPoint.z = point.z;
             
-            Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
             // compute from plane equation - y for floor, z for wall
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
                 newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
@@ -634,6 +640,8 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             aggregatedCloud->push_back(newPoint);
         }
     }
+    if (aggregatedCloud->size() == 0)
+        return;
 
     // convert the aggregated pointcloud to a pointcloud2 message
     sensor_msgs::PointCloud2 cloud_msg;
@@ -643,8 +651,6 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     cloud_msg.header.stamp = msgTime;
     cloud_msg.header.frame_id = struct_frame_id;
     plane_cloud_pub.publish(cloud_msg);
-
-    // planes_pub.publish(planeArray);
 }
 
 void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
