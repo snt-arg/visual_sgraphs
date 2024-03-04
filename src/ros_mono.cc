@@ -92,8 +92,8 @@ int main(int argc, char **argv)
     ros::Subscriber sub_segmented_img = node_handler.subscribe("/camera/color/image_segment", 10,
                                                                &ImageGrabber::GrabSegmentation, &igb);
 
-    setup_publishers(node_handler, image_transport, node_name);
-    setup_services(node_handler, node_name);
+    setupPublishers(node_handler, image_transport, node_name);
+    setupServices(node_handler, node_name);
 
     ros::spin();
 
@@ -134,7 +134,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
         Sophus::SE3f Tcw = pSLAM->TrackMonocular(cv_ptr->image, cv_ptr->header.stamp.toSec());
 
     ros::Time msg_time = msg->header.stamp;
-    publish_topics(msg_time);
+    publishTopics(msg_time);
 }
 
 void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &markerArray)
