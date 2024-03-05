@@ -93,6 +93,18 @@ namespace ORB_SLAM3
         void updateMapPlane(int planeId, int clsId, double confidence);
 
         /**
+         * @brief Checks whether a plane can be a valid wall plane
+         * @param plane the plane
+         */
+        bool canBeValidWallPlane(Plane *plane);
+        
+        /**
+         * @brief Reassociates the wall planes if they get closer after optimization
+         * @param planes the planes (can be all planes - walls checked within the function)
+         */
+        void reAssociateWallPlanes(const std::vector<Plane *> &planes);
+
+        /**
          * @brief Filters the floor plane to remove points that are too far from the plane
          * @param floorPlane the floor plane
          * @param threshY the threshold for the vertical distance from the plane

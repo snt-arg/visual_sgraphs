@@ -9,6 +9,7 @@ namespace ORB_SLAM3
     Plane::Plane()
     {
         planeCloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>();
+        excludedFromAssoc = false;
     }
     Plane::~Plane() {}
 
@@ -42,7 +43,7 @@ namespace ORB_SLAM3
         opIdG = value;
     }
 
-    std::vector<double> Plane::getColor() const
+    std::vector<uint8_t> Plane::getColor() const
     {
         return color;
     }
@@ -90,14 +91,14 @@ namespace ORB_SLAM3
 
     void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
     {
-        unique_lock<mutex> lock(mMutexPoint);
+        unique_lock<mutex> lock(mMutexCloud);
         for (const auto &point : value->points)
             planeCloud->points.push_back(point);
     }
 
     void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
     {
-        unique_lock<mutex> lock(mMutexPoint);
+        unique_lock<mutex> lock(mMutexCloud);
         pcl::copyPointCloud(*value, *planeCloud);
     }
 
@@ -108,6 +109,8 @@ namespace ORB_SLAM3
 
     void Plane::castWeightedVote(Plane::planeVariant semanticType, double voteWeight)
     {
+        unique_lock<mutex> lock(mMutexCloud);
+        
         // check if semantic type is already in the semanticVotes map
         if (semanticVotes.find(semanticType) == semanticVotes.end())
             semanticVotes[semanticType] = voteWeight;
@@ -140,7 +143,15 @@ namespace ORB_SLAM3
 
     void Plane::setPlaneType(Plane::planeVariant newType)
     {
+        unique_lock<mutex> lock(mMutexCloud);
         planeType = newType;
+    }
+
+    void Plane::resetPlaneSemantics()
+    {
+        unique_lock<mutex> lock(mMutexCloud);
+        semanticVotes.clear();
+        planeType = planeVariant::UNDEFINED;
     }
 
     g2o::Plane3D Plane::getLocalEquation() const

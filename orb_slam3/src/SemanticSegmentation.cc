@@ -43,6 +43,8 @@ namespace ORB_SLAM3
 
             // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
+            
+            // clear cloud as it is no longer needed and consumes significant memory
             thisKF->clearPointCloud();
 
             // get all planes for each class specific point cloud using RANSAC
@@ -224,6 +226,17 @@ namespace ORB_SLAM3
             // filter the floor plane
             filterFloorPlane(floorPlane, 0.40);
         }
+
+        // recheck if all wall planes are still valid, once the floor plane is defined
+        if (floorPlane != nullptr)
+        {
+            for (const auto &plane : mpAtlas->GetAllPlanes())
+                if (!canBeValidWallPlane(plane) && plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                    plane->resetPlaneSemantics();
+        }
+        
+        // reassociate wall planes if they get close to each other :)) after optimization
+        reAssociateWallPlanes(mpAtlas->GetAllPlanes());
     }
 
     void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
@@ -234,6 +247,8 @@ namespace ORB_SLAM3
         newMapPlane->setLocalEquation(estimatedPlane);
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->addObservation(pKF, estimatedPlane);
+
+        // [TODO] - move this logic inside Atlas (or Map) for atomic IDs if multiple threads are running
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
 
         // Set the plane type to the semantic class
@@ -279,38 +294,88 @@ namespace ORB_SLAM3
                     mpAtlas->setFloorPlaneId(planeId);
                     mPlanePoseMat = computePlaneToHorizontal(matchedPlane);
                 }
-                    
             }
             else if (matchedPlane->getMapClouds()->points.size() > 0 && planeId != floorPlane->getId())
-                    // if the plane is not the floor plane and has a pointcloud, then update the floor plane
-                    floorPlane->setMapClouds(matchedPlane->getMapClouds());
+                // if the plane is not the floor plane and has a pointcloud, then update the floor plane
+                floorPlane->setMapClouds(matchedPlane->getMapClouds());
         }
-        else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL && floorPlane != nullptr)
+        else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
+            matchedPlane->castWeightedVote(planeType, confidence);
+    }
+
+    bool SemanticSegmentation::canBeValidWallPlane(Plane *plane)
+    {
+        // wall validation based on the mPlanePoseMat          
+        // only works if the floor plane is set, needs the correction matrix: mPlanePoseMat
+        // [TODO] - Maybe initialize mPlanePoseMat with the identity matrix or other way
+
+        // extract the rotation matrix from the transformation matrix
+        Eigen::Matrix3f rotationMatrix = mPlanePoseMat.block<3, 3>(0, 0);
+
+        // Compute the inverse transpose of the rotation matrix
+        Eigen::Matrix3f inverseTransposeRotationMatrix = rotationMatrix.inverse().transpose();
+
+        // Extract the coefficients of the original plane equation
+        Eigen::Vector4d originalPlaneCoefficients = plane->getGlobalEquation().coeffs();
+
+        // Transform the coefficients of the plane equation
+        Eigen::Vector3f transformedPlaneCoefficients;
+        transformedPlaneCoefficients.head<3>() = inverseTransposeRotationMatrix * originalPlaneCoefficients.head<3>().cast<float>();
+
+        // normalize the transformed coefficients
+        transformedPlaneCoefficients.normalize();
+
+        // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
+        // threshold should be leniently set
+        // [TODO] - Parameterize threshold
+        if (abs(transformedPlaneCoefficients(1)) < 0.20)
+            return true;
+        return false;
+    }
+
+    void SemanticSegmentation::reAssociateWallPlanes(const std::vector<Plane *> &planes)
+    {
+        // loop through all the planes to look for associations after possible update by the optimization
+        for (const auto &plane : planes)
         {
-            // wall filtering based on the mPlanePoseMat          
-            // only works if the floor plane is set, needs the correction matrix: mPlanePoseMat
-            // [TODO] - Maybe initialize mPlanePoseMat with the identity matrix or other way
-  
-            // extract the rotation matrix from the transformation matrix
-            Eigen::Matrix3f rotationMatrix = mPlanePoseMat.block<3, 3>(0, 0);
+            // only consider wall planes
+            if (plane->getPlaneType() != ORB_SLAM3::Plane::planeVariant::WALL)
+                continue;
 
-            // Compute the inverse transpose of the rotation matrix
-            Eigen::Matrix3f inverseTransposeRotationMatrix = rotationMatrix.inverse().transpose();
+            // get plane information
+            g2o::Plane3D globalEquation = plane->getGlobalEquation();
+            int planeId = plane->getId();
 
-            // Extract the coefficients of the original plane equation
-            Eigen::Vector4d originalPlaneCoefficients = matchedPlane->getGlobalEquation().coeffs();
+            // get the vector of all wall planes except the current one
+            std::vector<Plane *> otherPlanes;
+            for (const auto &otherPlane : planes)
+                if (otherPlane->getId() != planeId && otherPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                    otherPlanes.push_back(otherPlane);
+            if (otherPlanes.empty())
+                // there is at most one wall, so no need to check re-association
+                return;
 
-            // Transform the coefficients of the plane equation
-            Eigen::Vector3f transformedPlaneCoefficients;
-            transformedPlaneCoefficients.head<3>() = inverseTransposeRotationMatrix * originalPlaneCoefficients.head<3>().cast<float>();
+            // check if the plane is associated with any other plane
+            int matchedPlaneId = Utils::associatePlanes(otherPlanes, globalEquation);
 
-            // normalize the transformed coefficients
-            transformedPlaneCoefficients.normalize();
-
-            // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
-            // [TODO] - Parameterize threshold
-            if (abs(transformedPlaneCoefficients(1)) < 0.18)
-                matchedPlane->castWeightedVote(planeType, confidence);
+            // if a match is found, then add the smaller planecloud to the larger plane
+            // set the smaller plane type to undefined
+            if (matchedPlaneId != -1)
+            {
+                Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
+                if (plane->getMapClouds()->points.size() < matchedPlane->getMapClouds()->points.size())
+                {
+                    matchedPlane->setMapClouds(plane->getMapClouds());
+                    plane->resetPlaneSemantics();
+                    plane->excludedFromAssoc = true;
+                }
+                else
+                {
+                    plane->setMapClouds(matchedPlane->getMapClouds());
+                    matchedPlane->resetPlaneSemantics();
+                    matchedPlane->excludedFromAssoc = true;
+                }
+            }
         }
     }
 

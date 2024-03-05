@@ -596,32 +596,25 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     if (numPlanes == 0)
         return;
 
-    // aggregate pointcloud XYZRGB for all planes
+    // Aggregate pointcloud XYZRGB for all planes
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-
     for (const ORB_SLAM3::Plane *plane : planes)
     {
         // If the plane is undefined, skip it
+        ORB_SLAM3::Plane::planeVariant planeType = plane->getPlaneType();
         if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
             continue;
 
-        // get the color of the plane - set to black for floor
-        // [TODO] - introduce coloring methods in Plane class
-        std::vector<double> color;
-        if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
-            color = {0, 0, 0};
-        else
-            color = plane->getColor();
-
-        // preprocess the pointcloud before adding to the aggregated pointcloud
+        // Get the point clouds for the plane
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
-        if (planeClouds == nullptr || planeClouds->size() == 0)
+        if (planeClouds == nullptr || planeClouds->empty())
             continue;
+
         Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
         for (const auto &point : planeClouds->points)
         {
-            // skip some points randomnly
-            if (rand() % 6 != 0)
+            // Skip some points randomly
+            if (rand() % 10 != 0)
                 continue;
 
             pcl::PointXYZRGB newPoint;
@@ -629,30 +622,36 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.y = point.y;
             newPoint.z = point.z;
 
-            // compute from plane equation - y for floor, z for wall
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
+            // Compute from plane equation - y for floor, z for wall
+            if (planeType == ORB_SLAM3::Plane::planeVariant::FLOOR)
                 newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
-            else if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+            else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
                 newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
+            // Set color according to type of plane
+            std::vector<uint8_t> color = (planeType == ORB_SLAM3::Plane::planeVariant::FLOOR) ? std::vector<uint8_t>{0, 0, 0} : plane->getColor();
             newPoint.r = color[0];
             newPoint.g = color[1];
             newPoint.b = color[2];
             aggregatedCloud->push_back(newPoint);
         }
     }
-    if (aggregatedCloud->size() == 0)
+
+    if (aggregatedCloud->empty())
         return;
 
     // convert the aggregated pointcloud to a pointcloud2 message
     sensor_msgs::PointCloud2 cloud_msg;
     pcl::toROSMsg(*aggregatedCloud, cloud_msg);
 
-    // publish the pointcloud
+    // Set message header
     cloud_msg.header.stamp = msgTime;
     cloud_msg.header.frame_id = struct_frame_id;
+
+    // Publish the point cloud
     plane_cloud_pub.publish(cloud_msg);
 }
+
 
 void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
 {

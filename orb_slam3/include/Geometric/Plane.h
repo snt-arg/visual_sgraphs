@@ -29,6 +29,7 @@ namespace ORB_SLAM3
             FLOOR = 1,
             WINDOW = 2
         };
+        bool excludedFromAssoc;                                  // The plane's exclusion from association (once excluded, can't be associated again)
 
     private:
         int id;                                                  // The plane's identifier
@@ -36,7 +37,7 @@ namespace ORB_SLAM3
         int opIdG;                                               // The plane's identifier in the global optimizer
         planeVariant planeType;                                  // The plane's semantic type (e.g., wall, floor, etc.)
         Eigen::Vector3f centroid;                                // The centroid of the plane
-        std::vector<double> color;                               // A color devoted for visualization
+        std::vector<uint8_t> color;                              // A color devoted for visualization
         g2o::Plane3D localEquation;                              // The plane equation in the local map
         g2o::Plane3D globalEquation;                             // The plane equation in the global map
         std::vector<Marker *> markers;                           // The list of markers lying on the plane
@@ -59,7 +60,7 @@ namespace ORB_SLAM3
         void setOpIdG(int value);
 
         void setColor();
-        std::vector<double> getColor() const;
+        std::vector<uint8_t> getColor() const;
 
         void setMarkers(Marker *value);
         std::vector<Marker *> getMarkers() const;
@@ -88,13 +89,14 @@ namespace ORB_SLAM3
 
         void updatePlaneType();
         void castWeightedVote(planeVariant semanticType, double voteWeight);
+        void resetPlaneSemantics();
 
         Map *GetMap();
         void SetMap(Map *pMap);
 
     protected:
         Map *mpMap;
-        std::mutex mMutexMap, mMutexPoint;
+        std::mutex mMutexMap, mMutexPoint, mMutexCloud;
     };
 }
 

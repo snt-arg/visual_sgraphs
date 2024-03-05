@@ -288,6 +288,10 @@ namespace ORB_SLAM3
         // Loop over all walls
         for (const auto &mPlane : mappedPlanes)
         {
+            // Skip the plane if it's excluded from association
+            if (mPlane->excludedFromAssoc)
+                continue;
+
             // Preparing a plane for feeding the detector
             g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
 
