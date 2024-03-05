@@ -441,7 +441,7 @@ void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         //     point1.y = planePointTransformed.y();
         //     point1.z = planePointTransformed.z();
         //     kf_lines.points.push_back(point1);
-         
+
         //     kf_lines.points.push_back(kf_marker);
         // }
     }
@@ -628,7 +628,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.x = point.x;
             newPoint.y = point.y;
             newPoint.z = point.z;
-            
+
             // compute from plane equation - y for floor, z for wall
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
                 newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
@@ -667,10 +667,24 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
 
     for (int idx = 0; idx < numRooms; idx++)
     {
-        // Create color for room (magenta or violet based on room type)
-        std::vector<double> color = {0.5, 0.1, 1.0};
-        if (rooms[idx]->getIsCorridor())
-            color = {0.6, 0.0, 0.3};
+        // Variables
+        string definedRoom = "package://orb_slam3_ros/config/Visualization/room.dae";
+        string undefinedRoom = "package://orb_slam3_ros/config/Visualization/qmark.dae";
+        string roomMesh = rooms[idx]->getIsCandidate() ? undefinedRoom : definedRoom;
+
+        // Define proper room name
+        string roomName = rooms[idx]->getName();
+        if (rooms[idx]->getIsCandidate())
+            roomName += " (Candidate)";
+
+        // Create color for room (orange for candidate, magenta for corridor, violet for normal room)
+        std::vector<double>
+            color = {1.0, 0.5, 0.0};
+        if (!rooms[idx]->getIsCandidate())
+            if (rooms[idx]->getIsCorridor())
+                color = {0.6, 0.0, 0.3};
+            else
+                color = {0.5, 0.1, 1.0};
 
         Eigen::Vector3d roomCenter = rooms[idx]->getRoomCenter();
         visualization_msgs::Marker room, roomWallLine, roomDoorLine, roomMarkerLine, roomLabel;
@@ -686,14 +700,13 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         room.color.r = color[0];
         room.color.g = color[1];
         room.color.b = color[2];
+        room.mesh_resource = roomMesh;
         room.lifetime = ros::Duration();
         room.id = roomArray.markers.size();
         room.header.frame_id = room_frame_id;
         room.header.stamp = ros::Time().now();
         room.mesh_use_embedded_materials = true;
         room.type = visualization_msgs::Marker::MESH_RESOURCE;
-        room.mesh_resource =
-            "package://orb_slam3_ros/config/Visualization/room.dae";
 
         // Rotation and displacement of the room for better visualization
         room.pose.orientation.x = 0.0;
@@ -711,10 +724,10 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         roomLabel.color.g = 0;
         roomLabel.color.b = 0;
         roomLabel.scale.z = 0.2;
+        roomLabel.text = roomName;
         roomLabel.ns = "roomLabel";
         roomLabel.action = roomLabel.ADD;
         roomLabel.lifetime = ros::Duration();
-        roomLabel.text = rooms[idx]->getName();
         roomLabel.id = roomArray.markers.size();
         roomLabel.header.frame_id = room_frame_id;
         roomLabel.header.stamp = ros::Time().now();

@@ -85,6 +85,10 @@ roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
 
 Install `Voxblox` based on the installation guide introduced [here](https://voxblox.readthedocs.io/en/latest/pages/Installation.html), and to make sure if it works fine, try [running it](https://voxblox.readthedocs.io/en/latest/pages/Running-Voxblox.html) on a simple dataset, such as the `basement dataset`.
 
+### 🎨 Kimera-Semantics (optional) <a id="kimera"></a>
+
+Install `Kimera-Semantics` based on the installation guide introduced [here](https://github.com/MIT-SPARK/Kimera-Semantics/tree/master). In case you have `Ros Noetic`, you may face some errors related to `pcl` library and the build fails. In this case, you should apply `catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=14` to be able to build it ([issue](https://github.com/MIT-SPARK/Kimera-Semantics/issues/67)).
+
 ### `hector-trajectory-server` (optional)
 
 Using this library you can visualize the real-time trajectory of `camera/IMU`.
