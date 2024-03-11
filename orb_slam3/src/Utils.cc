@@ -10,6 +10,25 @@ namespace ORB_SLAM3
         return std::sqrt(dx * dx + dy * dy + dz * dz);
     }
 
+    bool Utils::arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2)
+    {
+        // Variables
+        float threshold = -0.9f;
+
+        // Get the normal vectors of the planes
+        Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
+        Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
+
+        // Calculate the dot product of the normals
+        float dotProduct = normal1.dot(normal2);
+
+        // Check if the dot product is close to -1
+        if (dotProduct < threshold)
+            return true;
+        else
+            return false;
+    }
+
     Eigen::Vector4d Utils::correctPlaneDirection(const Eigen::Vector4d &plane)
     {
         // Check if the transformation is needed
@@ -102,7 +121,7 @@ namespace ORB_SLAM3
         return std::make_pair(isDoor, name);
     }
 
-    template<typename PointT>
+    template <typename PointT>
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDownsample(
         const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize)
     {
@@ -241,7 +260,8 @@ namespace ORB_SLAM3
         return extractedPlanes;
     }
 
-    ORB_SLAM3::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId){
+    ORB_SLAM3::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId)
+    {
         switch (clsId)
         {
         case 0:
@@ -252,7 +272,7 @@ namespace ORB_SLAM3
             return ORB_SLAM3::Plane::planeVariant::UNDEFINED;
         }
     }
-    
+
     bool Utils::pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint)
     {
         if (mapPoint->isBad())
@@ -301,7 +321,7 @@ namespace ORB_SLAM3
             // Create a single number determining the difference vector
             // [before] double planeDiff = diffVector.transpose() * Eigen::Matrix3d::Identity() * diffVector;
             double planeDiff = diffVector.norm();
-            
+
             // Comparing the with minimum acceptable value
             if (planeDiff < minDiff)
             {
@@ -325,7 +345,7 @@ namespace ORB_SLAM3
 
         // soft-min = sum(exp(-value/tau) * value) / sum(exp(-value/tau))
         Eigen::Map<Eigen::VectorXd> confs(values.data(), values.size());
-        Eigen::VectorXd term = ((1.0 - confs.array())/tau).exp();
+        Eigen::VectorXd term = ((1.0 - confs.array()) / tau).exp();
         return ((term / term.sum()).array() * confs.array()).sum();
     }
 }

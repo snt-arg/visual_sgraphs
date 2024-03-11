@@ -32,6 +32,13 @@ namespace ORB_SLAM3
         static double calculateEuclideanDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2);
 
         /**
+         * @brief Checks to see if two planes are facing each other or not
+         * @param plane1 first plane
+         * @param plane2 second plane
+         */
+        static bool arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2);
+
+        /**
          * @brief Corrects the given plane equations to apply calculations
          * @param plane the input plane
          */
@@ -83,7 +90,7 @@ namespace ORB_SLAM3
          * Downsamples the pointclouds based on the given leaf size
          * @param cloud the pointcloud to be downsampled
          */
-        template<typename PointT>
+        template <typename PointT>
         static typename pcl::PointCloud<PointT>::Ptr pointcloudDownsample(
             const typename pcl::PointCloud<PointT>::Ptr &cloud, float leafSize);
 
@@ -101,7 +108,7 @@ namespace ORB_SLAM3
          * @param mapPoint the point to be checked
          */
         static bool pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint);
-        
+
         /**
          * @brief associates given planes with the mapped planes
          * @param mappedPlanes the mapped planes

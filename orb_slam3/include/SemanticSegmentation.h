@@ -97,7 +97,7 @@ namespace ORB_SLAM3
          * @param plane the plane
          */
         bool canBeValidWallPlane(Plane *plane);
-        
+
         /**
          * @brief Reassociates the wall planes if they get closer after optimization
          * @param planes the planes (can be all planes - walls checked within the function)
@@ -119,13 +119,18 @@ namespace ORB_SLAM3
         Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
 
         /**
-         * @brief Associates mapped room candidates and creates rooms from the voxmap
+         * @brief Converts mapped room candidates to rooms using geometric constraints
+         */
+        void updateMapRoomCandidateToRoom_Geo();
+
+        /**
+         * @brief Converts mapped room candidates to rooms using voxmap and freespace clusters
          * @param roomCandidate the address of the candidate room
          */
         void updateMapRoomCandidateToRoom_Voxblox(Room *roomCandidate);
 
         /**
-         * @brief Associates mapped room candidates and creates rooms from the GNN
+         * @brief Converts mapped room candidates to rooms using a GNN
          * @param roomCandidate the address of the candidate room
          */
         void updateMapRoomCandidateToRoom_GNN(Room *roomCandidate);

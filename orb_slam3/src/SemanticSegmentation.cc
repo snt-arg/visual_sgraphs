@@ -43,7 +43,7 @@ namespace ORB_SLAM3
 
             // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
-            
+
             // clear cloud as it is no longer needed and consumes significant memory
             thisKF->clearPointCloud();
 
@@ -56,6 +56,11 @@ namespace ORB_SLAM3
 
             // Add the planes to Atlas
             updatePlaneData(thisKF, clsPlanes, clsConfs);
+
+            // Check for possible room candidates
+            bool useGeo = true; // [TODO] Replace it with a flag
+            if (useGeo)
+                updateMapRoomCandidateToRoom_Geo();
         }
     }
 
@@ -202,27 +207,27 @@ namespace ORB_SLAM3
                 {
                     std::string planeType = clsId ? "Wall" : "Floor";
                     updateMapPlane(matchedPlaneId, clsId, clsConfs[clsId]);
-                    
-                    Plane *floorPlane = mpAtlas->GetFloorPlane(); 
+
+                    Plane *floorPlane = mpAtlas->GetFloorPlane();
                     if (floorPlane != nullptr)
                     {
                         // recompute the transformation from floor to horizontal - maybe global eq. changed
                         mPlanePoseMat = computePlaneToHorizontal(floorPlane);
-                        
+
                         // filter the floor plane
                         filterFloorPlane(floorPlane, 0.40);
                     }
                 }
             }
         }
-        
+
         // update the floor plane, GeoSeg might have updated the floor plane
-        Plane *floorPlane = mpAtlas->GetFloorPlane(); 
+        Plane *floorPlane = mpAtlas->GetFloorPlane();
         if (floorPlane != nullptr)
         {
             // recompute the transformation from floor to horizontal - maybe global eq. changed
             mPlanePoseMat = computePlaneToHorizontal(floorPlane);
-            
+
             // filter the floor plane
             filterFloorPlane(floorPlane, 0.40);
         }
@@ -234,7 +239,7 @@ namespace ORB_SLAM3
                 if (!canBeValidWallPlane(plane) && plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
                     plane->resetPlaneSemantics();
         }
-        
+
         // reassociate wall planes if they get close to each other :)) after optimization
         reAssociateWallPlanes(mpAtlas->GetAllPlanes());
     }
@@ -305,7 +310,7 @@ namespace ORB_SLAM3
 
     bool SemanticSegmentation::canBeValidWallPlane(Plane *plane)
     {
-        // wall validation based on the mPlanePoseMat          
+        // wall validation based on the mPlanePoseMat
         // only works if the floor plane is set, needs the correction matrix: mPlanePoseMat
         // [TODO] - Maybe initialize mPlanePoseMat with the identity matrix or other way
 
@@ -448,6 +453,93 @@ namespace ORB_SLAM3
         planePoseMat(3, 3) = 1.0;
 
         return planePoseMat;
+    }
+
+    void SemanticSegmentation::updateMapRoomCandidateToRoom_Geo()
+    {
+        // Get all the mapped planes and rooms
+        std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
+        std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
+
+        // Filter the planes to get only the walls
+        std::vector<Plane *> allWalls;
+        for (auto plane : allPlanes)
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                allWalls.push_back(plane);
+
+        // Get all the facing walls
+        std::vector<std::pair<Plane *, Plane *>> facingWalls;
+        for (auto wall1 : allWalls)
+            for (auto wall2 : allWalls)
+            {
+                // Skip the same wall
+                if (wall1->getId() == wall2->getId())
+                    continue;
+
+                // Check if the planes are facing each other
+                bool isFacing = Utils::arePlanesFacingEachOther(wall1, wall2);
+                if (isFacing)
+                    facingWalls.push_back(std::make_pair(wall1, wall2));
+            }
+
+        // If there is at least one pair of facing wall
+        if (facingWalls.size() > 0)
+            // Loop over all the rooms
+            for (auto roomCandidate : allRooms)
+            {
+                // If the room is already verified, then skip it
+                // [TODO] Should be removed due to partially filling the 4-wall room
+                if (!roomCandidate->getIsCandidate())
+                    continue;
+
+                // Get the room's candidate marker's pose
+                Sophus::SE3f metaMarkerPose = roomCandidate->getMetaMarker()->getGlobalPose();
+
+                // Find the closest facing walls to the room center
+                std::pair<Plane *, Plane *> closestPair1, closestPair2;
+                float minDistance1 = std::numeric_limits<float>::max();
+                float minDistance2 = std::numeric_limits<float>::max();
+
+                for (auto facingWallsPair : facingWalls)
+                {
+                    // Calculate distance between wall centroids and metaMarkerPose
+                    float distance1 = Utils::calculateEuclideanDistance(facingWallsPair.first->getCentroid(), metaMarkerPose.translation());
+                    float distance2 = Utils::calculateEuclideanDistance(facingWallsPair.second->getCentroid(), metaMarkerPose.translation());
+
+                    // Update closestPair1 if distance1 is smaller
+                    if (distance1 < minDistance1)
+                    {
+                        minDistance1 = distance1;
+                        closestPair1 = facingWallsPair;
+                    }
+
+                    // Update closestPair2 if distance2 is smaller and it's not the same facingWallsPair as closestPair1
+                    if (distance2 < minDistance2 && facingWallsPair != closestPair1)
+                    {
+                        minDistance2 = distance2;
+                        closestPair2 = facingWallsPair;
+                    }
+                }
+
+                // If the room is a corridor
+                if (roomCandidate->getIsCorridor())
+                {
+                    // Update the room walls
+                    roomCandidate->setWalls(closestPair1.first);
+                    roomCandidate->setWalls(closestPair1.second);
+                }
+                else
+                {
+                    // Update the room walls
+                    roomCandidate->setWalls(closestPair1.first);
+                    roomCandidate->setWalls(closestPair1.second);
+                    roomCandidate->setWalls(closestPair2.first);
+                    roomCandidate->setWalls(closestPair2.second);
+                }
+
+                // Finally, update the room candidate to a room
+                roomCandidate->setIsCandidate(false);
+            }
     }
 
     void SemanticSegmentation::updateMapRoomCandidateToRoom_Voxblox(Room *roomCandidate)
