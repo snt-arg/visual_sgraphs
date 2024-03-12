@@ -10,6 +10,14 @@ namespace ORB_SLAM3
         return std::sqrt(dx * dx + dy * dy + dz * dz);
     }
 
+    double Utils::calculateDistancePointToPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &point)
+    {
+        // Get a point on the plane
+        Eigen::Vector3d pointOnPlane = plane.head<3>() * plane(3);
+        // Calculate the distance |(P - A) . N|
+        return fabs((point - pointOnPlane).dot(plane.head<3>()));
+    }
+
     bool Utils::arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2)
     {
         // Variables

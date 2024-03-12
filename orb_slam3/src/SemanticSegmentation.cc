@@ -497,14 +497,14 @@ namespace ORB_SLAM3
 
                 // Find the closest facing walls to the room center
                 std::pair<Plane *, Plane *> closestPair1, closestPair2;
-                float minDistance1 = std::numeric_limits<float>::max();
-                float minDistance2 = std::numeric_limits<float>::max();
+                double minDistance1 = std::numeric_limits<double>::max();
+                double minDistance2 = std::numeric_limits<double>::max();
 
                 for (auto facingWallsPair : facingWalls)
                 {
                     // Calculate distance between wall centroids and metaMarkerPose
-                    float distance1 = Utils::calculateEuclideanDistance(facingWallsPair.first->getCentroid(), metaMarkerPose.translation());
-                    float distance2 = Utils::calculateEuclideanDistance(facingWallsPair.second->getCentroid(), metaMarkerPose.translation());
+                    double distance1 = Utils::calculateDistancePointToPlane(facingWallsPair.first->getGlobalEquation().coeffs(), metaMarkerPose.translation().cast<double>());
+                    double distance2 = Utils::calculateDistancePointToPlane(facingWallsPair.second->getGlobalEquation().coeffs(), metaMarkerPose.translation().cast<double>());
 
                     // Update closestPair1 if distance1 is smaller
                     if (distance1 < minDistance1)

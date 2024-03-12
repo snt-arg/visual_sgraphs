@@ -32,6 +32,13 @@ namespace ORB_SLAM3
         static double calculateEuclideanDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2);
 
         /**
+         * @brief Calculate the distance between a point and a plane
+         * @param plane the plane equation
+         * @param point the given point
+         */
+        static double calculateDistancePointToPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &point);
+
+        /**
          * @brief Checks to see if two planes are facing each other or not
          * @param plane1 first plane
          * @param plane2 second plane
