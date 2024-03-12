@@ -148,16 +148,6 @@ void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray);
 std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double frameTimestamp);
 
 /**
- * @brief Prepares the plane for visualization
- * @param plane The plane to be visualized
- * @param pointMin The minimum point of the plane
- * @param pointMax The maximum point of the plane
- */
-Eigen::Isometry3d planePoseCalculator(const ORB_SLAM3::Plane *plane,
-                                      pcl::PointXYZRGBNormal &pointMin,
-                                      pcl::PointXYZRGBNormal &pointMax);
-
-/**
  * @brief Parses JSON values (database) and loads them into
  * @param jsonFilePath The path to the JSON file containing the environment data
  */

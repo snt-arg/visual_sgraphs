@@ -12,6 +12,7 @@
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
 
 #include <pcl/common/io.h>
+#include <pcl/common/centroid.h>
 
 namespace ORB_SLAM3
 {
@@ -65,7 +66,7 @@ namespace ORB_SLAM3
         void setMarkers(Marker *value);
         std::vector<Marker *> getMarkers() const;
 
-        planeVariant getPlaneType() const;
+        planeVariant getPlaneType();
         void setPlaneType(planeVariant newType);
 
         void setMapPoints(MapPoint *value);
@@ -83,11 +84,10 @@ namespace ORB_SLAM3
         void addObservation(KeyFrame *pKF, g2o::Plane3D localEquation);
         const std::map<KeyFrame *, g2o::Plane3D> &getObservations() const;
 
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds() const;
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds();
         void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
         void replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
 
-        void updatePlaneType();
         void castWeightedVote(planeVariant semanticType, double voteWeight);
         void resetPlaneSemantics();
 
@@ -96,7 +96,7 @@ namespace ORB_SLAM3
 
     protected:
         Map *mpMap;
-        std::mutex mMutexMap, mMutexPoint, mMutexCloud;
+        std::mutex mMutexMap, mMutexPoint, mMutexCloud, mMutexType;
     };
 }
 

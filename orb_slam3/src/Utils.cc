@@ -12,10 +12,8 @@ namespace ORB_SLAM3
 
     double Utils::calculateDistancePointToPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &point)
     {
-        // Get a point on the plane
-        Eigen::Vector3d pointOnPlane = plane.head<3>() * plane(3);
-        // Calculate the distance |(P - A) . N|
-        return fabs((point - pointOnPlane).dot(plane.head<3>()));
+        // Find the distance of the point from a given plane
+        return fabs(plane.head<3>().dot(point) + plane(3));
     }
 
     bool Utils::arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2)
@@ -192,7 +190,7 @@ namespace ORB_SLAM3
         // Loop over cloud points as long as the cloud is large enough
         // [TODO] Temporary disabling sequential ransac
         // while (cloud->points.size() > minSegmentationPoints)
-        const uint8_t maxRansacIterations = 1;
+        const uint8_t maxRansacIterations = 2;
         for (uint8_t i = 0; i < maxRansacIterations && cloud->points.size() > minSegmentationPoints; i++)
         {
             try
@@ -207,8 +205,8 @@ namespace ORB_SLAM3
                 // Fill the values of the segmentation object
                 seg.setInputCloud(cloud);
                 seg.setNumberOfThreads(8);
-                seg.setMaxIterations(200);
-                seg.setDistanceThreshold(0.1);
+                seg.setMaxIterations(500);
+                seg.setDistanceThreshold(0.05);
                 seg.setOptimizeCoefficients(true);
                 seg.setMethodType(pcl::SAC_RANSAC);
                 seg.setModelType(pcl::SACMODEL_PLANE);
@@ -287,14 +285,10 @@ namespace ORB_SLAM3
             return false;
 
         // Find the distance of the point from a given plane
-        double pointPlaneDist =
-            planeEquation(0) * mapPoint->GetWorldPos()(0) +
-            planeEquation(1) * mapPoint->GetWorldPos()(1) +
-            planeEquation(2) * mapPoint->GetWorldPos()(2) +
-            planeEquation(3);
+        double pointPlaneDist = calculateDistancePointToPlane(planeEquation, mapPoint->GetWorldPos().cast<double>());
 
         // Apply a threshold
-        if (fabs(pointPlaneDist) < 0.1)
+        if (pointPlaneDist < 0.1)
             return true;
 
         return false;
@@ -307,7 +301,7 @@ namespace ORB_SLAM3
         // Initialize difference value
         double minDiff = 100.0;
         // Fixed threshold for comparing two planes
-        double diffThreshold = 0.5;
+        double diffThreshold = 0.2;
 
         // Check if mappedPlanes is empty
         if (mappedPlanes.empty())

@@ -208,6 +208,10 @@ namespace ORB_SLAM3
     {
         mCurrentFramePointClouds->clear();
         mCurrentFramePointClouds = nullptr;
+
+        // clear images
+        mImage.release();
+        
     }
 
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> KeyFrame::getCurrentClsCloudPtrs() const

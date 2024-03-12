@@ -126,30 +126,35 @@ namespace ORB_SLAM3
 
     KeyFrame *Map::GetKeyFrameById(long unsigned int mnId)
     {
+        unique_lock<mutex> lock(mMutexMap);
         KeyFrame *retrievedKF = mKFIndex[mnId];
         return retrievedKF;
     }
 
     Door *Map::GetDoorById(int doorId)
     {
+        unique_lock<mutex> lock(mMutexMap);
         Door *fetchedDoor = mDoorIndex[doorId];
         return fetchedDoor;
     }
 
     Room *Map::GetRoomById(int roomId)
     {
+        unique_lock<mutex> lock(mMutexMap);
         Room *fetchedRoom = mRoomIndex[roomId];
         return fetchedRoom;
     }
 
     Plane *Map::GetPlaneById(int planeId)
     {
+        unique_lock<mutex> lock(mMutexMap);
         Plane *fetchedPlane = mPlaneIndex[planeId];
         return fetchedPlane;
     }
 
     Marker *Map::GetMarkerById(int markerId)
     {
+        unique_lock<mutex> lock(mMutexMap);
         Marker *fetchedMarker = mMarkerIndex[markerId];
         return fetchedMarker;
     }
@@ -265,11 +270,13 @@ namespace ORB_SLAM3
 
     void Map::setFloorPlaneId(int floorPlaneId)
     {
+        unique_lock<mutex> lock(mMutexMap);
         mFloorPlaneId = floorPlaneId;
     }
 
     Plane *Map::GetFloorPlane()
     {
+        unique_lock<mutex> lock(mMutexMap);
         // return null pointer if the floor plane id is not set
         if (mFloorPlaneId == -1)
             return nullptr;

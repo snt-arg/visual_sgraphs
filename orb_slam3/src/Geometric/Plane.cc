@@ -84,8 +84,9 @@ namespace ORB_SLAM3
         mapPoints.insert(value);
     }
 
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Plane::getMapClouds() const
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Plane::getMapClouds()
     {
+        unique_lock<mutex> lock(mMutexCloud);
         return planeCloud;
     }
 
@@ -94,6 +95,11 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexCloud);
         for (const auto &point : value->points)
             planeCloud->points.push_back(point);
+
+        // update the plane centroid
+        Eigen::Vector4f centroid;
+        pcl::compute3DCentroid(*planeCloud, centroid);
+        setCentroid(centroid.head<3>());
     }
 
     void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
@@ -102,14 +108,15 @@ namespace ORB_SLAM3
         pcl::copyPointCloud(*value, *planeCloud);
     }
 
-    Plane::planeVariant Plane::getPlaneType() const
+    Plane::planeVariant Plane::getPlaneType()
     {
+        unique_lock<mutex> lock(mMutexType);
         return planeType;
     }
 
     void Plane::castWeightedVote(Plane::planeVariant semanticType, double voteWeight)
     {
-        unique_lock<mutex> lock(mMutexCloud);
+        unique_lock<mutex> lock(mMutexType);
         
         // check if semantic type is already in the semanticVotes map
         if (semanticVotes.find(semanticType) == semanticVotes.end())
@@ -118,11 +125,6 @@ namespace ORB_SLAM3
             semanticVotes[semanticType] += voteWeight;
 
         // update based on new vote rankings
-        updatePlaneType();
-    }
-
-    void Plane::updatePlaneType()
-    {
         // find the semantic type with the maximum votes
         double maxVotes = 0;
         planeVariant maxType = planeVariant::UNDEFINED;
@@ -143,13 +145,13 @@ namespace ORB_SLAM3
 
     void Plane::setPlaneType(Plane::planeVariant newType)
     {
-        unique_lock<mutex> lock(mMutexCloud);
+        unique_lock<mutex> lock(mMutexType);
         planeType = newType;
     }
 
     void Plane::resetPlaneSemantics()
     {
-        unique_lock<mutex> lock(mMutexCloud);
+        unique_lock<mutex> lock(mMutexType);
         semanticVotes.clear();
         planeType = planeVariant::UNDEFINED;
     }

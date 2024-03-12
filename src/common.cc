@@ -292,6 +292,9 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         if (keyframe_vec[i]->getCurrentClsCloudPtrs().size() > 0)
         {
             thisKF = keyframe_vec[i];
+            // clear all clsClouds from the keyframes prior to the index i
+            for (int j = 0; j < i; j++)
+                keyframe_vec[j]->clearClsClouds();
             break;
         }
     }
@@ -308,11 +311,6 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr clsCloud = clsCloudPtrs[i];
         for (long unsigned int j = 0; j < clsCloud->points.size(); j++)
         {
-
-            // skip some points randomnly
-            if (rand() % 6 != 0)
-                continue;
-
             pcl::PointXYZRGB point = clsCloud->points[j];
             switch (i)
             {
@@ -598,7 +596,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
 
     // Aggregate pointcloud XYZRGB for all planes
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    for (const ORB_SLAM3::Plane *plane : planes)
+    for (ORB_SLAM3::Plane *plane : planes)
     {
         // If the plane is undefined, skip it
         ORB_SLAM3::Plane::planeVariant planeType = plane->getPlaneType();
@@ -948,36 +946,6 @@ tf::Transform SE3f_to_tfTransform(Sophus::SE3f T_SE3f)
         t_vec(2));
 
     return tf::Transform(R_tf, t_tf);
-}
-
-Eigen::Isometry3d planePoseCalculator(const ORB_SLAM3::Plane *plane,
-                                      pcl::PointXYZRGBNormal &pointMin,
-                                      pcl::PointXYZRGBNormal &pointMax)
-{
-    // Variables
-    double roll = 0.0;
-    Eigen::Isometry3d visPlanePose;
-
-    // Get the length of the plane
-    pcl::getMaxSegment(*plane->getMapClouds(), pointMin, pointMax);
-
-    // Set the pose of the plane
-    visPlanePose.linear().setIdentity();
-    visPlanePose.translation() = Eigen::Vector3d((pointMin.x - pointMax.x) / 2.0 + pointMax.x,
-                                                 (pointMin.y - pointMax.y) / 2.0 + pointMax.y,
-                                                 (pointMin.z - pointMax.z) / 2.0 + pointMax.z);
-
-    // Get the orientation of the plane
-    double yaw = std::atan2(plane->getGlobalEquation().coeffs()(1),
-                            plane->getGlobalEquation().coeffs()(0));
-    double pitch = std::atan2(plane->getGlobalEquation().coeffs()(2),
-                              plane->getGlobalEquation().coeffs().head<2>().norm());
-    Eigen::Quaterniond q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
-                           Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
-                           Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
-
-    visPlanePose.linear() = q.toRotationMatrix();
-    return visPlanePose;
 }
 
 void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray)
