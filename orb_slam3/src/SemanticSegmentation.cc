@@ -487,9 +487,10 @@ namespace ORB_SLAM3
             // Loop over all the rooms
             for (auto roomCandidate : allRooms)
             {
-                // If the room is already verified, then skip it
-                // [TODO] Should be removed due to partially filling the 4-wall room
-                if (!roomCandidate->getIsCandidate())
+                // If all the walls of the room candidate are detected, skip it
+                int wallsNeeded = roomCandidate->getIsCorridor() ? 2 : 4;
+                int wallsDetectedSoFar = roomCandidate->getWalls().size();
+                if (wallsDetectedSoFar == wallsNeeded)
                     continue;
 
                 // Get the room's candidate marker's pose
@@ -524,17 +525,25 @@ namespace ORB_SLAM3
                 // If the room is a corridor
                 if (roomCandidate->getIsCorridor())
                 {
-                    // Update the room walls
-                    roomCandidate->setWalls(closestPair1.first);
-                    roomCandidate->setWalls(closestPair1.second);
+                    if (closestPair1.first != nullptr && closestPair1.second != nullptr)
+                    { // Update the room walls
+                        roomCandidate->setWalls(closestPair1.first);
+                        roomCandidate->setWalls(closestPair1.second);
+                    }
                 }
                 else
                 {
                     // Update the room walls
-                    roomCandidate->setWalls(closestPair1.first);
-                    roomCandidate->setWalls(closestPair1.second);
-                    roomCandidate->setWalls(closestPair2.first);
-                    roomCandidate->setWalls(closestPair2.second);
+                    if (closestPair1.first != nullptr && closestPair1.second != nullptr)
+                    {
+                        roomCandidate->setWalls(closestPair1.first);
+                        roomCandidate->setWalls(closestPair1.second);
+                    }
+                    if (closestPair2.first != nullptr && closestPair2.second != nullptr)
+                    {
+                        roomCandidate->setWalls(closestPair2.first);
+                        roomCandidate->setWalls(closestPair2.second);
+                    }
                 }
 
                 // Finally, update the room candidate to a room
