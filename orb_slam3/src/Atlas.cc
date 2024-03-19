@@ -294,16 +294,16 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllRooms();
     }
 
-    void Atlas::setFloorPlaneId(int value)
+    void Atlas::setGroundPlaneId(int value)
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        mpCurrentMap->setFloorPlaneId(value);
+        mpCurrentMap->setGroundPlaneId(value);
     }
 
-    Plane *Atlas::GetFloorPlane()
+    Plane *Atlas::GetGroundPlane()
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        return mpCurrentMap->GetFloorPlane();
+        return mpCurrentMap->GetGroundPlane();
     }
 
     std::vector<MapPoint *> Atlas::GetReferenceMapPoints()

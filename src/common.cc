@@ -314,7 +314,7 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
             pcl::PointXYZRGB point = clsCloud->points[j];
             switch (i)
             {
-            case 0: // Floor is green
+            case 0: // Ground is green
                 point.r = 0;
                 point.g = 255;
                 point.b = 0;
@@ -620,14 +620,14 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.y = point.y;
             newPoint.z = point.z;
 
-            // Compute from plane equation - y for floor, z for wall
-            if (planeType == ORB_SLAM3::Plane::planeVariant::FLOOR)
+            // Compute from plane equation - y for ground, z for wall
+            if (planeType == ORB_SLAM3::Plane::planeVariant::GROUND)
                 newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
             else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
                 newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
             // Set color according to type of plane
-            std::vector<uint8_t> color = (planeType == ORB_SLAM3::Plane::planeVariant::FLOOR) ? std::vector<uint8_t>{0, 0, 0} : plane->getColor();
+            std::vector<uint8_t> color = (planeType == ORB_SLAM3::Plane::planeVariant::GROUND) ? std::vector<uint8_t>{0, 0, 0} : plane->getColor();
             newPoint.r = color[0];
             newPoint.g = color[1];
             newPoint.b = color[2];
@@ -649,7 +649,6 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     // Publish the point cloud
     plane_cloud_pub.publish(cloud_msg);
 }
-
 
 void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
 {

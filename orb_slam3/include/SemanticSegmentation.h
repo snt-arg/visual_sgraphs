@@ -26,10 +26,10 @@ namespace ORB_SLAM3
         std::mutex mMutexNewKFs;
         double mSegProbThreshold;
         float mDownsampleLeafSize;
+        Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
+        const uint8_t bytesPerClassProb = 4; // Four bytes per class probability - refer to scene_segment_ros
         std::pair<float, float> mDistFilterThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
-        const uint8_t bytesPerClassProb = 4; // 4 bytes per class probability - refer to scene_segment_ros
-        Eigen::Matrix4f mPlanePoseMat;       // the transformation matrix from floor plane to horizontal
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -105,14 +105,14 @@ namespace ORB_SLAM3
         void reAssociateWallPlanes(const std::vector<Plane *> &planes);
 
         /**
-         * @brief Filters the floor plane to remove points that are too far from the plane
-         * @param floorPlane the floor plane
+         * @brief Filters the ground plane to remove points that are too far from the plane
+         * @param groundPlane the ground plane
          * @param threshY the threshold for the vertical distance from the plane
          */
-        void filterFloorPlane(Plane *floorPlane, float threshY);
+        void filterGroundPlane(Plane *groundPlane, float threshY);
 
         /**
-         * @brief Computes the transformation matrix from the floor plane to the horizontal (y-inverted)
+         * @brief Computes the transformation matrix from the ground plane to the horizontal (y-inverted)
          * @param plane the plane
          * @return the transformation matrix
          */

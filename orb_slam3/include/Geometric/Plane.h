@@ -27,16 +27,17 @@ namespace ORB_SLAM3
         {
             UNDEFINED = -1,
             WALL = 0,
-            FLOOR = 1,
+            GROUND = 1,
             WINDOW = 2
         };
-        bool excludedFromAssoc;                                  // The plane's exclusion from association (once excluded, can't be associated again)
+        // The plane's exclusion from association (once excluded, can't be associated again)
+        bool excludedFromAssoc;
 
     private:
         int id;                                                  // The plane's identifier
         int opId;                                                // The plane's identifier in the local optimizer
         int opIdG;                                               // The plane's identifier in the global optimizer
-        planeVariant planeType;                                  // The plane's semantic type (e.g., wall, floor, etc.)
+        planeVariant planeType;                                  // The plane's semantic type (e.g., wall, ground, etc.)
         Eigen::Vector3f centroid;                                // The centroid of the plane
         std::vector<uint8_t> color;                              // A color devoted for visualization
         g2o::Plane3D localEquation;                              // The plane equation in the local map

@@ -271,7 +271,7 @@ namespace ORB_SLAM3
         switch (clsId)
         {
         case 0:
-            return ORB_SLAM3::Plane::planeVariant::FLOOR;
+            return ORB_SLAM3::Plane::planeVariant::GROUND;
         case 1:
             return ORB_SLAM3::Plane::planeVariant::WALL;
         default:

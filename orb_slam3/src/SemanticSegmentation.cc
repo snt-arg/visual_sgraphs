@@ -205,35 +205,35 @@ namespace ORB_SLAM3
                 }
                 else
                 {
-                    std::string planeType = clsId ? "Wall" : "Floor";
+                    std::string planeType = clsId ? "Wall" : "Ground";
                     updateMapPlane(matchedPlaneId, clsId, clsConfs[clsId]);
 
-                    Plane *floorPlane = mpAtlas->GetFloorPlane();
-                    if (floorPlane != nullptr)
+                    Plane *groundPlane = mpAtlas->GetGroundPlane();
+                    if (groundPlane != nullptr)
                     {
-                        // recompute the transformation from floor to horizontal - maybe global eq. changed
-                        mPlanePoseMat = computePlaneToHorizontal(floorPlane);
+                        // Re-compute the transformation from ground to horizontal - maybe global eq. changed
+                        mPlanePoseMat = computePlaneToHorizontal(groundPlane);
 
-                        // filter the floor plane
-                        filterFloorPlane(floorPlane, 0.40);
+                        // Filter the ground plane
+                        filterGroundPlane(groundPlane, 0.40);
                     }
                 }
             }
         }
 
-        // update the floor plane, GeoSeg might have updated the floor plane
-        Plane *floorPlane = mpAtlas->GetFloorPlane();
-        if (floorPlane != nullptr)
+        // Update the ground plane, GeoSeg might have updated the ground plane
+        Plane *groundPlane = mpAtlas->GetGroundPlane();
+        if (groundPlane != nullptr)
         {
-            // recompute the transformation from floor to horizontal - maybe global eq. changed
-            mPlanePoseMat = computePlaneToHorizontal(floorPlane);
+            // Re-compute the transformation from ground to horizontal - maybe global eq. changed
+            mPlanePoseMat = computePlaneToHorizontal(groundPlane);
 
-            // filter the floor plane
-            filterFloorPlane(floorPlane, 0.40);
+            // Filter the ground plane
+            filterGroundPlane(groundPlane, 0.40);
         }
 
-        // recheck if all wall planes are still valid, once the floor plane is defined
-        if (floorPlane != nullptr)
+        // Re-check if all wall planes are still valid, once the ground plane is defined
+        if (groundPlane != nullptr)
         {
             for (const auto &plane : mpAtlas->GetAllPlanes())
                 if (!canBeValidWallPlane(plane) && plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
@@ -284,25 +284,25 @@ namespace ORB_SLAM3
         // plane type compatible with the Plane class
         ORB_SLAM3::Plane::planeVariant planeType = Utils::getPlaneTypeFromClassId(clsId);
 
-        // get the floor plane from the atlas
-        Plane *floorPlane = mpAtlas->GetFloorPlane();
+        // get the ground plane from the atlas
+        Plane *groundPlane = mpAtlas->GetGroundPlane();
 
         // update the plane with the class semantics
-        if (planeType == ORB_SLAM3::Plane::planeVariant::FLOOR)
+        if (planeType == ORB_SLAM3::Plane::planeVariant::GROUND)
         {
-            // when the floor is found for the first time
-            if (floorPlane == nullptr)
+            // when the ground is found for the first time
+            if (groundPlane == nullptr)
             {
                 matchedPlane->castWeightedVote(planeType, confidence);
-                if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::FLOOR)
+                if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::GROUND)
                 {
-                    mpAtlas->setFloorPlaneId(planeId);
+                    mpAtlas->setGroundPlaneId(planeId);
                     mPlanePoseMat = computePlaneToHorizontal(matchedPlane);
                 }
             }
-            else if (matchedPlane->getMapClouds()->points.size() > 0 && planeId != floorPlane->getId())
-                // if the plane is not the floor plane and has a pointcloud, then update the floor plane
-                floorPlane->setMapClouds(matchedPlane->getMapClouds());
+            else if (matchedPlane->getMapClouds()->points.size() > 0 && planeId != groundPlane->getId())
+                // if the plane is not the ground plane and has a pointcloud, then update the ground plane
+                groundPlane->setMapClouds(matchedPlane->getMapClouds());
         }
         else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
             matchedPlane->castWeightedVote(planeType, confidence);
@@ -311,7 +311,7 @@ namespace ORB_SLAM3
     bool SemanticSegmentation::canBeValidWallPlane(Plane *plane)
     {
         // wall validation based on the mPlanePoseMat
-        // only works if the floor plane is set, needs the correction matrix: mPlanePoseMat
+        // only works if the ground plane is set, needs the correction matrix: mPlanePoseMat
         // [TODO] - Maybe initialize mPlanePoseMat with the identity matrix or other way
 
         // extract the rotation matrix from the transformation matrix
@@ -384,13 +384,13 @@ namespace ORB_SLAM3
         }
     }
 
-    void SemanticSegmentation::filterFloorPlane(Plane *floorPlane, float threshY)
+    void SemanticSegmentation::filterGroundPlane(Plane *groundPlane, float threshY)
     {
-        // filter the floor pointcloud maintaining only one floor plane
-        // [TODO] - Add check whether the floor plane was updated or not? to skip repeating this process
+        // filter the ground pointcloud maintaining only one ground plane
+        // [TODO] - Add check whether the ground plane was updated or not? to skip repeating this process
 
         // transform the planeCloud according to the planePose
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = floorPlane->getMapClouds();
+        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = groundPlane->getMapClouds();
         pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr transformedCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
         pcl::transformPointCloud(*planeCloud, *transformedCloud, mPlanePoseMat);
 
@@ -408,7 +408,7 @@ namespace ORB_SLAM3
         std::partial_sort(yVals.begin(), yVals.begin() + numPoint, yVals.end(), std::greater<float>());
         float maxY = yVals[numPoint - 1];
 
-        // define the threshold for the floor plane
+        // define the threshold for the ground plane
         // [TODO] - Parameterize threshold
         threshY = maxY - threshY;
 
@@ -429,7 +429,7 @@ namespace ORB_SLAM3
         {
             // replace the planeCloud with the filteredCloud after performing inverse transformation
             pcl::transformPointCloud(*filteredCloud, *transformedCloud, mPlanePoseMat.inverse());
-            floorPlane->replaceMapClouds(transformedCloud);
+            groundPlane->replaceMapClouds(transformedCloud);
         }
     }
 
@@ -442,7 +442,7 @@ namespace ORB_SLAM3
         // normalize the normal vector
         Eigen::Vector3d normal = plane->getGlobalEquation().coeffs().head<3>();
 
-        // get the rotation from the floor plane to the plane with y-facing vertical downwards
+        // get the rotation from the ground plane to the plane with y-facing vertical downwards
         Eigen::Vector3d verticalAxis = Eigen::Vector3d(0, -1, 0);
         Eigen::Quaterniond q;
         q.setFromTwoVectors(normal, verticalAxis);
