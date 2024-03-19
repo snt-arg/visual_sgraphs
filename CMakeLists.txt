@@ -140,6 +140,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/Semantic/Marker.cc
   orb_slam3/src/Semantic/Door.cc
   orb_slam3/src/Semantic/Room.cc
+  orb_slam3/src/Semantic/Floor.cc
   orb_slam3/src/DatabaseParser.cc
   orb_slam3/src/GeometricSegmentation.cc
   orb_slam3/src/SemanticSegmentation.cc
@@ -176,6 +177,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/Settings.h
   orb_slam3/include/Semantic/Door.h
   orb_slam3/include/Semantic/Room.h
+  orb_slam3/include/Semantic/Floor.h
   orb_slam3/include/DatabaseParser.h
   orb_slam3/include/Semantic/Marker.h
   orb_slam3/include/Geometric/Plane.h
