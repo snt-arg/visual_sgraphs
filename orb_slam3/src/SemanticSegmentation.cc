@@ -296,7 +296,7 @@ namespace ORB_SLAM3
                 matchedPlane->castWeightedVote(planeType, confidence);
                 if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::GROUND)
                 {
-                    mpAtlas->setGroundPlaneId(planeId);
+                    mpAtlas->SetGroundPlaneId(planeId);
                     mPlanePoseMat = computePlaneToHorizontal(matchedPlane);
                 }
             }

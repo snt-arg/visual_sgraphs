@@ -20,15 +20,16 @@
 #define ATLAS_H
 
 #include "Map.h"
+#include "Pinhole.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
-#include "GeometricCamera.h"
-#include "Pinhole.h"
-#include "KannalaBrandt8.h"
-#include "Semantic/Marker.h"
 #include "Semantic/Door.h"
-#include "Geometric/Plane.h"
 #include "Semantic/Room.h"
+#include "Semantic/Floor.h"
+#include "KannalaBrandt8.h"
+#include "GeometricCamera.h"
+#include "Semantic/Marker.h"
+#include "Geometric/Plane.h"
 
 #include <set>
 #include <mutex>
@@ -37,21 +38,19 @@
 
 namespace ORB_SLAM3
 {
-    class Viewer;
     class Map;
-    class MapPoint;
-    class KeyFrame;
-    class KeyFrameDatabase;
-    class Frame;
-    class KannalaBrandt8;
-    class Pinhole;
-    class Marker;
-    class Plane;
     class Door;
     class Room;
-
-    // BOOST_CLASS_EXPORT_GUID(Pinhole, "Pinhole")
-    // BOOST_CLASS_EXPORT_GUID(KannalaBrandt8, "KannalaBrandt8")
+    class Frame;
+    class Plane;
+    class Floor;
+    class Viewer;
+    class Marker;
+    class Pinhole;
+    class MapPoint;
+    class KeyFrame;
+    class KannalaBrandt8;
+    class KeyFrameDatabase;
 
     class Atlas
     {
@@ -93,21 +92,19 @@ namespace ORB_SLAM3
         // Method for change components in the current map
         void AddMapDoor(Door *door);
         void AddMapRoom(Room *room);
+        void AddMapFloor(Floor *floor);
         void AddMapPlane(Plane *plane);
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapMarker(Marker *marker);
-        // void EraseMapPoint(MapPoint* pMP);
-        // void EraseKeyFrame(KeyFrame* pKF);
-        // void EraseMapMarker(Marker* marker);
 
-        GeometricCamera *AddCamera(GeometricCamera *pCam);
         std::vector<GeometricCamera *> GetAllCameras();
+        GeometricCamera *AddCamera(GeometricCamera *pCam);
 
         /* All methods without Map pointer work on current map */
-        void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
         void InformNewBigChange();
         int GetLastBigChangeIdx();
+        void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
 
         long unsigned MarkersInMap();
         long unsigned KeyFramesInMap();
@@ -119,14 +116,15 @@ namespace ORB_SLAM3
         // Method for get data in current map
         std::vector<Door *> GetAllDoors();
         std::vector<Room *> GetAllRooms();
+        std::vector<Floor *> GetAllFloors();
         std::vector<Plane *> GetAllPlanes();
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetReferenceMapPoints();
 
-        void setGroundPlaneId(int groundPlaneId);
         Plane *GetGroundPlane();
+        void SetGroundPlaneId(int groundPlaneId);
 
         vector<Map *> GetAllMaps();
 
@@ -156,17 +154,17 @@ namespace ORB_SLAM3
         Door *GetDoorById(int doorId);
         Room *GetRoomById(int roomId);
         Plane *GetPlaneById(int planeId);
+        Floor *GetFloorById(int floorId);
         Marker *GetMarkerById(int markerId);
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
 
-        void SetKeyFrameDababase(KeyFrameDatabase *pKFDB);
         KeyFrameDatabase *GetKeyFrameDatabase();
+        void SetKeyFrameDababase(KeyFrameDatabase *pKFDB);
 
-        void SetORBVocabulary(ORBVocabulary *pORBVoc);
         ORBVocabulary *GetORBVocabulary();
+        void SetORBVocabulary(ORBVocabulary *pORBVoc);
 
         long unsigned int GetNumLivedKF();
-
         long unsigned int GetNumLivedMP();
 
     protected:
@@ -191,8 +189,8 @@ namespace ORB_SLAM3
         // Mutex
         std::mutex mMutexAtlas;
 
-    }; // class Atlas
+    };
 
-} // namespace ORB_SLAM3
+}
 
-#endif // ATLAS_H
+#endif

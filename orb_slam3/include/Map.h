@@ -22,6 +22,7 @@
 #include "MapPoint.h"
 #include "KeyFrame.h"
 #include "Semantic/Room.h"
+#include "Semantic/Floor.h"
 #include "Semantic/Marker.h"
 
 #include <set>
@@ -32,13 +33,14 @@
 
 namespace ORB_SLAM3
 {
-    class MapPoint;
-    class KeyFrame;
-    class Atlas;
-    class Marker;
-    class Plane;
     class Door;
     class Room;
+    class Atlas;
+    class Plane;
+    class Floor;
+    class Marker;
+    class MapPoint;
+    class KeyFrame;
     class KeyFrameDatabase;
 
     class Map
@@ -72,31 +74,35 @@ namespace ORB_SLAM3
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
         Map();
         Map(int initKFid);
         ~Map();
 
-        void AddKeyFrame(KeyFrame *pKF);
-        void AddMapPoint(MapPoint *pMP);
-        void AddMapMarker(Marker *pMarker);
-        void AddMapPlane(Plane *pPlane);
         void AddMapDoor(Door *pDoor);
         void AddMapRoom(Room *pRoom);
+        void AddMapFloor(Floor *pFloor);
+        void AddKeyFrame(KeyFrame *pKF);
+        void AddMapPoint(MapPoint *pMP);
+        void AddMapPlane(Plane *pPlane);
+        void AddMapMarker(Marker *pMarker);
 
-        void EraseMapPoint(MapPoint *pMP);
-        void EraseKeyFrame(KeyFrame *pKF);
-        void EraseMapMarker(Marker *pMarker);
-        void EraseMapPlane(Plane *pPlane);
         void EraseMapDoor(Door *pDoor);
         void EraseMapRoom(Room *pRoom);
+        void EraseMapFloor(Floor *pFloor);
+        void EraseMapPoint(MapPoint *pMP);
+        void EraseKeyFrame(KeyFrame *pKF);
+        void EraseMapPlane(Plane *pPlane);
+        void EraseMapMarker(Marker *pMarker);
 
-        void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
         void InformNewBigChange();
         int GetLastBigChangeIdx();
+        void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
 
-        std::vector<Plane *> GetAllPlanes();
         std::vector<Door *> GetAllDoors();
         std::vector<Room *> GetAllRooms();
+        std::vector<Floor *> GetAllFloors();
+        std::vector<Plane *> GetAllPlanes();
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
@@ -107,48 +113,48 @@ namespace ORB_SLAM3
         long unsigned int MapPointsInMap();
 
         long unsigned int GetId();
-
-        long unsigned int GetInitKFid();
         long unsigned int GetMaxKFid();
+        long unsigned int GetInitKFid();
         void SetInitKFid(long unsigned int initKFif);
 
         KeyFrame *GetOriginKF();
         Door *GetDoorById(int doorId);
         Room *GetRoomById(int roomId);
+        Floor *GetFloorById(int floorId);
         Plane *GetPlaneById(int planeId);
         Marker *GetMarkerById(int markerId);
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
 
-        void setGroundPlaneId(int value);
         Plane *GetGroundPlane();
+        void SetGroundPlaneId(int value);
 
-        void SetCurrentMap();
         void SetStoredMap();
+        void SetCurrentMap();
 
-        bool HasThumbnail();
         bool IsInUse();
+        bool HasThumbnail();
 
-        void SetBad();
         bool IsBad();
+        void SetBad();
 
         void clear();
 
+        int GetLastMapChange();
         int GetMapChangeIndex();
         void IncreaseChangeIndex();
-        int GetLastMapChange();
         void SetLastMapChange(int currentChangeId);
 
-        void SetImuInitialized();
         bool isImuInitialized();
+        void SetImuInitialized();
 
         void ApplyScaledRotation(const Sophus::SE3f &T, const float s, const bool bScaledVel = false);
 
-        void SetInertialSensor();
         bool IsInertial();
         void SetIniertialBA1();
         void SetIniertialBA2();
         bool GetIniertialBA1();
         bool GetIniertialBA2();
+        void SetInertialSensor();
 
         void PrintEssentialGraph();
         bool CheckEssentialGraph();
@@ -159,12 +165,10 @@ namespace ORB_SLAM3
         void PreSave(std::set<GeometricCamera *> &spCams);
         void PostLoad(KeyFrameDatabase *pKFDB, ORBVocabulary *pORBVoc /*, map<long unsigned int, KeyFrame*>& mpKeyFrameId*/, map<unsigned int, GeometricCamera *> &mpCams);
 
-        void printReprojectionError(list<KeyFrame *> &lpLocalWindowKFs, KeyFrame *mpCurrentKF, string &name, string &name_folder);
-
-        vector<KeyFrame *> mvpKeyFrameOrigins;
-        vector<unsigned long int> mvBackupKeyFrameOriginsId;
         KeyFrame *mpFirstRegionKF;
         std::mutex mMutexMapUpdate;
+        vector<KeyFrame *> mvpKeyFrameOrigins;
+        vector<unsigned long int> mvBackupKeyFrameOriginsId;
 
         // This avoid that two points are created simultaneously in separate threads (id conflict)
         std::mutex mMutexPointCreation;
@@ -189,6 +193,7 @@ namespace ORB_SLAM3
 
         std::set<Door *> mspDoors;
         std::set<Room *> mspRooms;
+        std::set<Floor *> mspFloors;
         std::set<Plane *> mspPlanes;
         std::set<Marker *> mspMarkers;
         std::set<MapPoint *> mspMapPoints;
@@ -197,6 +202,7 @@ namespace ORB_SLAM3
         // Hashmaps and indices for fetching elements
         std::unordered_map<int, Door *> mDoorIndex;
         std::unordered_map<int, Room *> mRoomIndex;
+        std::unordered_map<int, Floor *> mFloorIndex;
         std::unordered_map<int, Plane *> mPlaneIndex;
         std::unordered_map<int, Marker *> mMarkerIndex;
         std::unordered_map<long unsigned int, KeyFrame *> mKFIndex;
@@ -208,8 +214,8 @@ namespace ORB_SLAM3
         KeyFrame *mpKFinitial;
         KeyFrame *mpKFlowerID;
 
-        unsigned long int mnBackupKFinitialID;
         unsigned long int mnBackupKFlowerID;
+        unsigned long int mnBackupKFinitialID;
 
         std::vector<MapPoint *> mvpReferenceMapPoints;
 
@@ -240,6 +246,6 @@ namespace ORB_SLAM3
         std::mutex mMutexMap;
     };
 
-} // namespace ORB_SLAM3
+}
 
-#endif // MAP_H
+#endif

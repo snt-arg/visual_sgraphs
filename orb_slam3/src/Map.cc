@@ -52,9 +52,10 @@ namespace ORB_SLAM3
         mspMarkers.clear();
 
         // Erase all semantic entities from memory
-        mspPlanes.clear();
         mspDoors.clear();
         mspRooms.clear();
+        mspFloors.clear();
+        mspPlanes.clear();
 
         if (mThumbnail)
             delete mThumbnail;
@@ -124,6 +125,14 @@ namespace ORB_SLAM3
         mRoomIndex[pRoom->getId()] = pRoom;
     }
 
+    void Map::AddMapFloor(Floor *pFloor)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspFloors.insert(pFloor);
+        // Add the room to the hashmap
+        mFloorIndex[pFloor->getId()] = pFloor;
+    }
+
     KeyFrame *Map::GetKeyFrameById(long unsigned int mnId)
     {
         unique_lock<mutex> lock(mMutexMap);
@@ -157,6 +166,13 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexMap);
         Marker *fetchedMarker = mMarkerIndex[markerId];
         return fetchedMarker;
+    }
+
+    Floor *Map::GetFloorById(int floorId)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        Floor *fetchedFloor = mFloorIndex[floorId];
+        return fetchedFloor;
     }
 
     void Map::SetImuInitialized()
@@ -202,6 +218,12 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexMap);
         mspRooms.erase(pRoom);
+    }
+
+    void Map::EraseMapFloor(Floor *pFloor)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspFloors.erase(pFloor);
     }
 
     void Map::EraseKeyFrame(KeyFrame *pKF)
@@ -268,7 +290,7 @@ namespace ORB_SLAM3
         return vector<Plane *>(mspPlanes.begin(), mspPlanes.end());
     }
 
-    void Map::setGroundPlaneId(int groundPlaneId)
+    void Map::SetGroundPlaneId(int groundPlaneId)
     {
         unique_lock<mutex> lock(mMutexMap);
         mGroundPlaneId = groundPlaneId;
@@ -293,6 +315,12 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexMap);
         return vector<Room *>(mspRooms.begin(), mspRooms.end());
+    }
+
+    vector<Floor *> Map::GetAllFloors()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<Floor *>(mspFloors.begin(), mspFloors.end());
     }
 
     long unsigned int Map::MapPointsInMap()
@@ -323,6 +351,7 @@ namespace ORB_SLAM3
     {
         return mnId;
     }
+
     long unsigned int Map::GetInitKFid()
     {
         unique_lock<mutex> lock(mMutexMap);
@@ -358,14 +387,10 @@ namespace ORB_SLAM3
 
     void Map::clear()
     {
-        //    for(set<MapPoint*>::iterator sit=mspMapPoints.begin(), send=mspMapPoints.end(); sit!=send; sit++)
-        //        delete *sit;
-
         for (set<KeyFrame *>::iterator sit = mspKeyFrames.begin(), send = mspKeyFrames.end(); sit != send; sit++)
         {
             KeyFrame *pKF = *sit;
             pKF->UpdateMap(static_cast<Map *>(NULL));
-            //        delete *sit;
         }
 
         mspDoors.clear();
@@ -650,4 +675,4 @@ namespace ORB_SLAM3
         mvpBackupMapPoints.clear();
     }
 
-} // namespace ORB_SLAM3
+}

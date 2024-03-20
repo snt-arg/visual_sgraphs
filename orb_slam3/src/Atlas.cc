@@ -19,13 +19,12 @@
 #include "Atlas.h"
 #include "Viewer.h"
 
-#include "GeometricCamera.h"
 #include "Pinhole.h"
 #include "KannalaBrandt8.h"
+#include "GeometricCamera.h"
 
 namespace ORB_SLAM3
 {
-
     Atlas::Atlas()
     {
         mpCurrentMap = static_cast<Map *>(NULL);
@@ -66,9 +65,6 @@ namespace ORB_SLAM3
 
             mpCurrentMap->SetStoredMap();
             cout << "Stored map with ID: " << mpCurrentMap->GetId() << endl;
-
-            // if(mHasViewer)
-            //     mpViewer->AddMapToCreateThumbnail(mpCurrentMap);
         }
         cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << endl;
 
@@ -141,6 +137,12 @@ namespace ORB_SLAM3
     {
         Map *pMapMP = room->GetMap();
         pMapMP->AddMapRoom(room);
+    }
+
+    void Atlas::AddMapFloor(Floor *floor)
+    {
+        Map *pMapMP = floor->getMap();
+        pMapMP->AddMapFloor(floor);
     }
 
     GeometricCamera *Atlas::AddCamera(GeometricCamera *pCam)
@@ -252,6 +254,12 @@ namespace ORB_SLAM3
         return fetchedRoom;
     }
 
+    Floor *Atlas::GetFloorById(int roomId)
+    {
+        Floor *fetchedFloor = mpCurrentMap->GetFloorById(roomId);
+        return fetchedFloor;
+    }
+
     Plane *Atlas::GetPlaneById(int planeId)
     {
         Plane *fetchedPlane = mpCurrentMap->GetPlaneById(planeId);
@@ -294,10 +302,16 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllRooms();
     }
 
-    void Atlas::setGroundPlaneId(int value)
+    std::vector<Floor *> Atlas::GetAllFloors()
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        mpCurrentMap->setGroundPlaneId(value);
+        return mpCurrentMap->GetAllFloors();
+    }
+
+    void Atlas::SetGroundPlaneId(int value)
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        mpCurrentMap->SetGroundPlaneId(value);
     }
 
     Plane *Atlas::GetGroundPlane()
@@ -342,11 +356,6 @@ namespace ORB_SLAM3
     void Atlas::clearAtlas()
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        /*for(std::set<Map*>::iterator it=mspMaps.begin(), send=mspMaps.end(); it!=send; it++)
-        {
-            (*it)->clear();
-            delete *it;
-        }*/
         mspMaps.clear();
         mpCurrentMap = static_cast<Map *>(NULL);
         mnLastInitKFidMap = 0;
@@ -373,11 +382,6 @@ namespace ORB_SLAM3
 
     void Atlas::RemoveBadMaps()
     {
-        /*for(Map* pMap : mspBadMaps)
-        {
-            delete pMap;
-            pMap = static_cast<Map*>(NULL);
-        }*/
         mspBadMaps.clear();
     }
 
@@ -520,4 +524,4 @@ namespace ORB_SLAM3
         return mpIdKFs;
     }
 
-} // namespace ORB_SLAM3
+}

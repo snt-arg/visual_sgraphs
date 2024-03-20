@@ -39,13 +39,43 @@ namespace ORB_SLAM3
         opIdG = value;
     }
 
-    Map *Floor::GetMap()
+    std::vector<Door *> Floor::getDoors() const
+    {
+        return doors;
+    }
+
+    void Floor::setDoors(Door *value)
+    {
+        doors.push_back(value);
+    }
+
+    std::vector<Room *> Floor::getRooms() const
+    {
+        return rooms;
+    }
+
+    void Floor::setRooms(Room *value)
+    {
+        rooms.push_back(value);
+    }
+
+    std::vector<Plane *> Floor::getWalls() const
+    {
+        return walls;
+    }
+
+    void Floor::setWalls(Plane *value)
+    {
+        walls.push_back(value);
+    }
+
+    Map *Floor::getMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Floor::SetMap(Map *pMap)
+    void Floor::setMap(Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;
