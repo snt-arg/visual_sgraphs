@@ -56,14 +56,18 @@ namespace ORB_SLAM3
         // Loop through all the planes detected
         for (auto planePoint : planePointVec)
         {
-            g2o::Plane3D detectedPlane(planePoint.second);
+            // Get the plane equation
+            Eigen::Vector4d planeEstimate = planePoint.second;
+            g2o::Plane3D detectedPlane(planeEstimate);
+            
             // Convert the given plane to global coordinates
             g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                          detectedPlane);
 
-            // convert planePoint to global coordinates
+            // convert planeCloud to global coordinates
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
-            pcl::transformPointCloud(*planePoint.first, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
+            pcl::transformPointCloud(*planeCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
             // Check if we need to add the wall to the map or not
             int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
@@ -75,7 +79,7 @@ namespace ORB_SLAM3
                 updateMapPlane(pKF, detectedPlane, globalPlaneCloud, matchedPlaneId);
 
             // Add Markers while progressing in KFs
-            markerSemanticDetectionAndMapping(pKF, pKF->getCurrentFrameMarkers(), planePoint.first);
+            markerSemanticDetectionAndMapping(pKF, pKF->getCurrentFrameMarkers(), planeCloud);
         }
     }
 

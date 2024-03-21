@@ -177,8 +177,9 @@ namespace ORB_SLAM3
         {
             for (auto planePoint : clsPlanes[clsId])
             {
-                // Get the plane equation from the points
-                g2o::Plane3D detectedPlane(planePoint.second);
+                // Get the plane equation
+                Eigen::Vector4d estimatedPlane = planePoint.second;
+                g2o::Plane3D detectedPlane(estimatedPlane);
 
                 // Convert the given plane to global coordinates
                 g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
