@@ -49,26 +49,21 @@ namespace ORB_SLAM3
 
     void GeometricSegmentation::fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud, int minCloudSize)
     {
-        // Variables
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> planePointVec;
-
         // Get the plane equation from the points the camera is seeing
+        std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> planePointVec;
         planePointVec = getPlanesFromPointClouds(pKF, hasDepthCloud, minCloudSize);
 
         // Loop through all the planes detected
         for (auto planePoint : planePointVec)
         {
-            // Get the plane equation from the points
-            Eigen::Vector4d planeEstimate(planePoint->back().normal_x, planePoint->back().normal_y,
-                                          planePoint->back().normal_z, planePoint->back().curvature);
-            g2o::Plane3D detectedPlane(planeEstimate);
+            g2o::Plane3D detectedPlane(planePoint.second);
             // Convert the given plane to global coordinates
             g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                          detectedPlane);
 
             // convert planePoint to global coordinates
-            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-            pcl::transformPointCloud(*planePoint, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+            pcl::transformPointCloud(*planePoint.first, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
             // Check if we need to add the wall to the map or not
             int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
@@ -80,19 +75,18 @@ namespace ORB_SLAM3
                 updateMapPlane(pKF, detectedPlane, globalPlaneCloud, matchedPlaneId);
 
             // Add Markers while progressing in KFs
-            markerSemanticDetectionAndMapping(pKF, pKF->getCurrentFrameMarkers(), planePoint);
+            markerSemanticDetectionAndMapping(pKF, pKF->getCurrentFrameMarkers(), planePoint.first);
         }
     }
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> GeometricSegmentation::getPlanesFromPointClouds(
+    std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> GeometricSegmentation::getPlanesFromPointClouds(
         ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud, int minCloudSize)
     {
         // Variables
         std::vector<g2o::Plane3D> detectedPlanes;
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
+        std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> extractedPlanes;
 
         // Based on the depth information, calculate the plane equation
-        std::vector<Eigen::Vector4d> planeEstimatesFromPoints;
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloud;
 
         if (hasDepthCloud)
@@ -104,18 +98,21 @@ namespace ORB_SLAM3
 
         // [TODO] decide when to downsample and/or distance filter
 
-        // // Downsample the given pointcloud
+        // Downsample the given pointcloud
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample<pcl::PointXYZRGB>(pointcloud, mDownsampleLeafSize);
 
         // Filter the pointcloud based on a range of distance
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGB>(downsampledCloud, mDistFilterThreshold);
 
-        if (filteredCloud->points.size() > minCloudSize)
+        // Convert the pointcloud to one with PointXYZRGBA
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloudRGBA(new pcl::PointCloud<pcl::PointXYZRGBA>);
+        pcl::copyPointCloud(*filteredCloud, *cloudRGBA);
+
+        if (cloudRGBA->points.size() > minCloudSize)
         {
             //  Estimate the plane equation
-            extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGB, pcl::SACSegmentation>(filteredCloud, minCloudSize);
+            extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(cloudRGBA, minCloudSize);
         }
-
         return extractedPlanes;
     }
 
@@ -137,7 +134,7 @@ namespace ORB_SLAM3
     }
 
     void GeometricSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                               const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
+                                               const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
@@ -176,7 +173,7 @@ namespace ORB_SLAM3
     }
 
     void GeometricSegmentation::updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                               pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud,
+                                               pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud,
                                                int planeId, ORB_SLAM3::Marker *visitedMarker)
     {
         // Find the matched plane among all planes of the map
@@ -303,7 +300,7 @@ namespace ORB_SLAM3
 
     void GeometricSegmentation::markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF,
                                                                   const std::vector<Marker *> &mvpMapMarkers,
-                                                                  const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
+                                                                  const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
     {
         for (Marker *mCurrentMarker : mvpMapMarkers)
         {

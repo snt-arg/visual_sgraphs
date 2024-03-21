@@ -46,7 +46,7 @@ namespace ORB_SLAM3
         std::set<MapPoint *> mapPoints;                          // The unique set of map points lying on the plane
         std::map<planeVariant, double> semanticVotes;            // The votes for the semantic type of the plane
         std::map<KeyFrame *, g2o::Plane3D> observations;         // Plane's observations in keyFrames
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud; // The point cloud of the plane
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud;      // The point cloud of the plane
 
     public:
         Plane();
@@ -85,9 +85,9 @@ namespace ORB_SLAM3
         void addObservation(KeyFrame *pKF, g2o::Plane3D localEquation);
         const std::map<KeyFrame *, g2o::Plane3D> &getObservations() const;
 
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr getMapClouds();
-        void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
-        void replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value);
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getMapClouds();
+        void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value);
+        void replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value);
 
         void castWeightedVote(planeVariant semanticType, double voteWeight);
         void resetPlaneSemantics();

@@ -110,7 +110,7 @@ namespace ORB_SLAM3
          * @param minSegmentationPoints the minimum number of points
          */
         template <typename PointT, template<typename> class SegmentationType>
-        static std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
+        static std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> ransacPlaneFitting(
             typename pcl::PointCloud<PointT>::Ptr &cloud, int minSegmentationPoints);
 
         /**

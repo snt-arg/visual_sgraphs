@@ -420,7 +420,7 @@ void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         //         continue;
 
         //     // compute centroid of the plane from it's point cloud - point cloud already in world frame
-        //     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = plane->getMapClouds();
+        //     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = plane->getMapClouds();
         //     Eigen::Vector4f centroid;
         //     pcl::compute3DCentroid(*planeCloud, centroid);
 
@@ -604,7 +604,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             continue;
 
         // Get the point clouds for the plane
-        const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeClouds = plane->getMapClouds();
+        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeClouds = plane->getMapClouds();
         if (planeClouds == nullptr || planeClouds->empty())
             continue;
 

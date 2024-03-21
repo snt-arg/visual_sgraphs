@@ -65,9 +65,8 @@ namespace ORB_SLAM3
          * @param hasDepthCloud a boolean to indicate if the point cloud has depth information
          * @param minCloudSize the minimum size of the point cloud to be segmented
          */
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> getPlanesFromPointClouds(ORB_SLAM3::KeyFrame *pKF,
-                                                                                           bool hasDepthCloud,
-                                                                                           int minCloudSize = 200);
+        std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
+            getPlanesFromPointClouds(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud, int minCloudSize = 200);
 
         /**
          * @brief Get the point cloud from a set of map-points
@@ -96,7 +95,7 @@ namespace ORB_SLAM3
          * @param pKF the address of the current keyframe
          */
         void createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                            const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud);
+                            const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
 
         /**
          * @brief Updates an existing plane object in the map
@@ -105,7 +104,7 @@ namespace ORB_SLAM3
          * @param pKF the address of the current keyframe
          */
         void updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                            pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud, int planeId,
+                            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId,
                             ORB_SLAM3::Marker *visitedMarker = NULL);
 
         /**
@@ -130,7 +129,7 @@ namespace ORB_SLAM3
          */
         void markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF,
                                                const std::vector<Marker *> &mvpMapMarkers,
-                                               const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud);
+                                               const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
 
         /**
          * @brief Checks for the association of a given room

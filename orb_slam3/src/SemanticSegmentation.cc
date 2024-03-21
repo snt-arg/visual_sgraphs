@@ -48,7 +48,7 @@ namespace ORB_SLAM3
             thisKF->clearPointCloud();
 
             // get all planes for each class specific point cloud using RANSAC
-            std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes =
+            std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> clsPlanes =
                 getPlanesFromClassClouds(clsCloudPtrs, mMinCloudSize);
 
             // set the class specific point clouds to the keyframe
@@ -141,10 +141,10 @@ namespace ORB_SLAM3
         }
     }
 
-    std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> SemanticSegmentation::getPlanesFromClassClouds(
+    std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> SemanticSegmentation::getPlanesFromClassClouds(
         std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, int minCloudSize)
     {
-        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> clsPlanes;
+        std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> clsPlanes;
 
         // downsample/filter the pointcloud and extract planes
         for (unsigned long int i = 0; i < clsCloudPtrs.size(); i++)
@@ -157,10 +157,10 @@ namespace ORB_SLAM3
             // Filter the pointcloud based on a range of distance
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(downsampledCloud, mDistFilterThreshold);
 
-            // copy the filtered cloud for later storing into the keyframe
+            // copy the filtered cloud for later storage into the keyframe
             pcl::copyPointCloud(*filteredCloud, *clsCloudPtrs[i]);
 
-            std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
+            std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> extractedPlanes;
             if (filteredCloud->points.size() > minCloudSize)
             {
                 extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(filteredCloud, minCloudSize);
@@ -171,16 +171,15 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
-                                               std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes)
+                                               std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
     {
         for (unsigned int clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
             for (auto planePoint : clsPlanes[clsId])
             {
                 // Get the plane equation from the points
-                Eigen::Vector4d planeEstimate(planePoint->back().normal_x, planePoint->back().normal_y,
-                                              planePoint->back().normal_z, planePoint->back().curvature);
-                g2o::Plane3D detectedPlane(planeEstimate);
+                g2o::Plane3D detectedPlane(planePoint.second);
+
                 // Convert the given plane to global coordinates
                 g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                              detectedPlane);
@@ -236,7 +235,7 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
-                                              const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud)
+                                              const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
@@ -381,8 +380,8 @@ namespace ORB_SLAM3
         // [TODO] - Add check whether the ground plane was updated or not? to skip repeating this process
 
         // transform the planeCloud according to the planePose
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud = groundPlane->getMapClouds();
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr transformedCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = groundPlane->getMapClouds();
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr transformedCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
         pcl::transformPointCloud(*planeCloud, *transformedCloud, mPlanePoseMat);
 
         // print the standard deviation across the x and y axes of the transformedCloud
@@ -404,12 +403,12 @@ namespace ORB_SLAM3
         threshY = maxY - threshY;
 
         // filter the cloud based on threshold
-        pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
 
         std::copy_if(transformedCloud->begin(),
                      transformedCloud->end(),
                      std::back_inserter(filteredCloud->points),
-                     [&](const pcl::PointXYZRGBNormal &p)
+                     [&](const pcl::PointXYZRGBA &p)
                      {
                          return p.y > threshY;
                      });

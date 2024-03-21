@@ -8,7 +8,7 @@ namespace ORB_SLAM3
 {
     Plane::Plane()
     {
-        planeCloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>();
+        planeCloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBA>>();
         excludedFromAssoc = false;
     }
     Plane::~Plane() {}
@@ -84,13 +84,13 @@ namespace ORB_SLAM3
         mapPoints.insert(value);
     }
 
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Plane::getMapClouds()
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Plane::getMapClouds()
     {
         unique_lock<mutex> lock(mMutexCloud);
         return planeCloud;
     }
 
-    void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
+    void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexCloud);
         for (const auto &point : value->points)
@@ -102,7 +102,7 @@ namespace ORB_SLAM3
         setCentroid(centroid.head<3>());
     }
 
-    void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr value)
+    void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexCloud);
         pcl::copyPointCloud(*value, *planeCloud);

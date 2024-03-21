@@ -63,7 +63,7 @@ namespace ORB_SLAM3
          * @param minCloudSize the minimum size of the point cloud to be segmented
          * @return a vector of vector of point clouds
          */
-        std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> getPlanesFromClassClouds(
+        std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> getPlanesFromClassClouds(
             std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, int minCloudSize);
 
         /**
@@ -72,7 +72,7 @@ namespace ORB_SLAM3
          * @param clsConfs the confidence of the class predictions
          */
         void updatePlaneData(KeyFrame *pKF,
-                             std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes);
+                             std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes);
 
         /**
          * @brief Creates a map plane from the estimated plane
@@ -82,7 +82,7 @@ namespace ORB_SLAM3
          * @param planeCloud the plane point cloud
          */
         void createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
-                            const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr planeCloud);
+                            const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
 
         /**
          * @brief Updates the map plane

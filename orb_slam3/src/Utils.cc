@@ -189,11 +189,10 @@ namespace ORB_SLAM3
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, std::pair<float, float>);
 
     template <typename PointT, template<typename> class SegmentationType>
-    std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Utils::ransacPlaneFitting(
+    std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> Utils::ransacPlaneFitting(
         typename pcl::PointCloud<PointT>::Ptr &cloud, int minSegmentationPoints)
     {
-        // Variables
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
+        std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> extractedPlanes;
 
         // Loop over cloud points as long as the cloud is large enough
         // [TODO] Temporary disabling sequential ransac
@@ -234,27 +233,22 @@ namespace ORB_SLAM3
                 plane(3) = closestPoint.norm();
 
                 // Create a new point cloud containing the points of the detected planes
-                pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr extractedCloud(
-                    new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+                typename pcl::PointCloud<PointT>::Ptr extractedCloud(new pcl::PointCloud<PointT>);
                 for (const auto &idx : inliers->indices)
                 {
-                    pcl::PointXYZRGBNormal tmpCloud;
+                    PointT inPoint;
                     
                     // Fill the point cloud
-                    tmpCloud.x = cloud->points[idx].x;
-                    tmpCloud.y = cloud->points[idx].y;
-                    tmpCloud.z = cloud->points[idx].z;
-                    tmpCloud.normal_x = plane(0);
-                    tmpCloud.normal_y = plane(1);
-                    tmpCloud.normal_z = plane(2);
-                    tmpCloud.curvature = plane(3);
+                    inPoint.x = cloud->points[idx].x;
+                    inPoint.y = cloud->points[idx].y;
+                    inPoint.z = cloud->points[idx].z;
                     
                     // Add the point to the cloud
-                    extractedCloud->points.push_back(tmpCloud);
+                    extractedCloud->points.push_back(inPoint);
                 }
 
                 // Add the extracted cloud to the vector
-                extractedPlanes.push_back(extractedCloud);
+                extractedPlanes.push_back(std::make_pair(extractedCloud, plane));
 
                 // Extract the inliers
                 extract.setInputCloud(cloud);
@@ -265,16 +259,14 @@ namespace ORB_SLAM3
             catch (const std::exception &e)
             {
                 std::cout << "RANSAC model error!" << std::endl;
-                // break;
             }
         }
-
         return extractedPlanes;
     }
-    template std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> 
-            Utils::ransacPlaneFitting<pcl::PointXYZRGB, pcl::SACSegmentation>(
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, int);
-    template std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> 
+    template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
+            Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, int);
+    template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
             Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, int);
 
