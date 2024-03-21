@@ -113,7 +113,7 @@ namespace ORB_SLAM3
         if (filteredCloud->points.size() > minCloudSize)
         {
             //  Estimate the plane equation
-            extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
+            extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGB, pcl::SACSegmentation>(filteredCloud, minCloudSize);
         }
 
         return extractedPlanes;

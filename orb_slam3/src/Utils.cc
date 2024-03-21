@@ -188,8 +188,9 @@ namespace ORB_SLAM3
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, std::pair<float, float>);
 
+    template <typename PointT, template<typename> class SegmentationType>
     std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Utils::ransacPlaneFitting(
-        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud, int minSegmentationPoints)
+        typename pcl::PointCloud<PointT>::Ptr &cloud, int minSegmentationPoints)
     {
         // Variables
         std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
@@ -203,11 +204,12 @@ namespace ORB_SLAM3
             try
             {
                 // Create objects for RANSAC plane segmentation
-                pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
+                typename pcl::ExtractIndices<PointT> extract;
                 pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
                 pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
+                
                 // Create the SAC segmentation object
-                pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
+                SegmentationType<PointT> seg;
 
                 // Fill the values of the segmentation object
                 seg.setInputCloud(cloud);
@@ -237,6 +239,7 @@ namespace ORB_SLAM3
                 for (const auto &idx : inliers->indices)
                 {
                     pcl::PointXYZRGBNormal tmpCloud;
+                    
                     // Fill the point cloud
                     tmpCloud.x = cloud->points[idx].x;
                     tmpCloud.y = cloud->points[idx].y;
@@ -245,6 +248,7 @@ namespace ORB_SLAM3
                     tmpCloud.normal_y = plane(1);
                     tmpCloud.normal_z = plane(2);
                     tmpCloud.curvature = plane(3);
+                    
                     // Add the point to the cloud
                     extractedCloud->points.push_back(tmpCloud);
                 }
@@ -267,86 +271,12 @@ namespace ORB_SLAM3
 
         return extractedPlanes;
     }
-
-    std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Utils::ransacPlaneFitting(
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints)
-    {
-        // Variables
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
-
-        // Loop over cloud points as long as the cloud is large enough
-        // [TODO] Temporary disabling sequential ransac
-        // while (cloud->points.size() > minSegmentationPoints)
-        const uint8_t maxRansacIterations = 2;
-        for (uint8_t i = 0; i < maxRansacIterations && cloud->points.size() > minSegmentationPoints; i++)
-        {
-            try
-            {
-                // Create objects for RANSAC plane segmentation
-                pcl::ExtractIndices<pcl::PointXYZRGB> extract;
-                pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-                pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
-                // Create the SAC segmentation object
-                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
-
-                // Fill the values of the segmentation object
-                seg.setInputCloud(cloud);
-                seg.setNumberOfThreads(8);
-                seg.setMaxIterations(500);
-                seg.setDistanceThreshold(0.05);
-                seg.setOptimizeCoefficients(true);
-                seg.setMethodType(pcl::SAC_RANSAC);
-                seg.setModelType(pcl::SACMODEL_PLANE);
-
-                // Apply RANSAC segmentation
-                seg.segment(*inliers, *coeffs);
-
-                // Calculate normal on the plane
-                Eigen::Vector4d planeEquation(coeffs->values[0], coeffs->values[1],
-                                              coeffs->values[2], coeffs->values[3]);
-
-                // Calculate the closest points
-                Eigen::Vector4d plane;
-                Eigen::Vector3d closestPoint = planeEquation.head(3) * planeEquation(3);
-                plane.head(3) = closestPoint / closestPoint.norm();
-                plane(3) = closestPoint.norm();
-
-                // Create a new point cloud containing the points of the detected planes
-                pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr extractedCloud(
-                    new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-                for (const auto &idx : inliers->indices)
-                {
-                    pcl::PointXYZRGBNormal tmpCloud;
-                    // Fill the point cloud
-                    tmpCloud.x = cloud->points[idx].x;
-                    tmpCloud.y = cloud->points[idx].y;
-                    tmpCloud.z = cloud->points[idx].z;
-                    tmpCloud.normal_x = plane(0);
-                    tmpCloud.normal_y = plane(1);
-                    tmpCloud.normal_z = plane(2);
-                    tmpCloud.curvature = plane(3);
-                    // Add the point to the cloud
-                    extractedCloud->points.push_back(tmpCloud);
-                }
-
-                // Add the extracted cloud to the vector
-                extractedPlanes.push_back(extractedCloud);
-
-                // Extract the inliers
-                extract.setInputCloud(cloud);
-                extract.setIndices(inliers);
-                extract.setNegative(true);
-                extract.filter(*cloud);
-            }
-            catch (const std::exception &e)
-            {
-                std::cout << "RANSAC model error!" << std::endl;
-                // break;
-            }
-        }
-
-        return extractedPlanes;
-    }
+    template std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> 
+            Utils::ransacPlaneFitting<pcl::PointXYZRGB, pcl::SACSegmentation>(
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, int);
+    template std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> 
+            Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, int);
 
     ORB_SLAM3::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId)
     {

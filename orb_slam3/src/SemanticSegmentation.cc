@@ -163,7 +163,7 @@ namespace ORB_SLAM3
             std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
             if (filteredCloud->points.size() > minCloudSize)
             {
-                extractedPlanes = Utils::ransacPlaneFitting(filteredCloud, minCloudSize);
+                extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(filteredCloud, minCloudSize);
             }
             clsPlanes.push_back(extractedPlanes);
         }

@@ -6,6 +6,7 @@
 #define UTILS_H
 
 #include "Tracking.h"
+#include "Thirdparty/pcl_custom/WeightedSACSegmentation.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -108,10 +109,9 @@ namespace ORB_SLAM3
          * @param cloud the input point cloud
          * @param minSegmentationPoints the minimum number of points
          */
+        template <typename PointT, template<typename> class SegmentationType>
         static std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud, int minSegmentationPoints);
-        static std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
-            pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints);
+            typename pcl::PointCloud<PointT>::Ptr &cloud, int minSegmentationPoints);
 
         /**
          * @brief Checks to see if the given point is on the plane or not
