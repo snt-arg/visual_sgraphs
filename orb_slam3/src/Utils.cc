@@ -149,25 +149,28 @@ namespace ORB_SLAM3
     }
     template pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGB>(
         const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, const float);
+    template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGBA>(
+        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const float);
     template pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGBNormal>(
         const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr &, const float);
 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDistanceFilter(
-        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, std::pair<float, float> thresholds)
+    template <typename PointT>
+    typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDistanceFilter(
+        const typename pcl::PointCloud<PointT>::Ptr &cloud, std::pair<float, float> thresholds)
     {
         const float thresholdNear = thresholds.first;
         const float thresholdFar = thresholds.second;
         double distance;
 
         // Define the filtered point cloud object
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGB>());
+        typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>());
         filteredCloud->reserve(cloud->size());
 
         // Filter the point cloud
         std::copy_if(cloud->begin(),
                      cloud->end(),
                      std::back_inserter(filteredCloud->points),
-                     [&](const pcl::PointXYZRGB &p)
+                     [&](const PointT &p)
                      {
                          distance = p.getVector3fMap().norm();
                          return distance > thresholdNear && distance < thresholdFar;
@@ -180,9 +183,13 @@ namespace ORB_SLAM3
 
         return filteredCloud;
     }
+    template pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGB>(
+        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, std::pair<float, float>);
+    template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(
+        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, std::pair<float, float>);
 
     std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Utils::ransacPlaneFitting(
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints)
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud, int minSegmentationPoints)
     {
         // Variables
         std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
@@ -196,11 +203,11 @@ namespace ORB_SLAM3
             try
             {
                 // Create objects for RANSAC plane segmentation
-                pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+                pcl::ExtractIndices<pcl::PointXYZRGBA> extract;
                 pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
                 pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
                 // Create the SAC segmentation object
-                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+                pcl::SACSegmentation<pcl::PointXYZRGBA> seg;
 
                 // Fill the values of the segmentation object
                 seg.setInputCloud(cloud);
@@ -213,10 +220,6 @@ namespace ORB_SLAM3
 
                 // Apply RANSAC segmentation
                 seg.segment(*inliers, *coeffs);
-
-                // Check if any model was found while processing the point cloud indices
-                // if (inliers->indices.empty())
-                //     break;
 
                 // Calculate normal on the plane
                 Eigen::Vector4d planeEquation(coeffs->values[0], coeffs->values[1],
@@ -262,7 +265,86 @@ namespace ORB_SLAM3
             }
         }
 
-        // Return the extracted clouds
+        return extractedPlanes;
+    }
+
+    std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> Utils::ransacPlaneFitting(
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints)
+    {
+        // Variables
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> extractedPlanes;
+
+        // Loop over cloud points as long as the cloud is large enough
+        // [TODO] Temporary disabling sequential ransac
+        // while (cloud->points.size() > minSegmentationPoints)
+        const uint8_t maxRansacIterations = 2;
+        for (uint8_t i = 0; i < maxRansacIterations && cloud->points.size() > minSegmentationPoints; i++)
+        {
+            try
+            {
+                // Create objects for RANSAC plane segmentation
+                pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+                pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+                pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
+                // Create the SAC segmentation object
+                pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+
+                // Fill the values of the segmentation object
+                seg.setInputCloud(cloud);
+                seg.setNumberOfThreads(8);
+                seg.setMaxIterations(500);
+                seg.setDistanceThreshold(0.05);
+                seg.setOptimizeCoefficients(true);
+                seg.setMethodType(pcl::SAC_RANSAC);
+                seg.setModelType(pcl::SACMODEL_PLANE);
+
+                // Apply RANSAC segmentation
+                seg.segment(*inliers, *coeffs);
+
+                // Calculate normal on the plane
+                Eigen::Vector4d planeEquation(coeffs->values[0], coeffs->values[1],
+                                              coeffs->values[2], coeffs->values[3]);
+
+                // Calculate the closest points
+                Eigen::Vector4d plane;
+                Eigen::Vector3d closestPoint = planeEquation.head(3) * planeEquation(3);
+                plane.head(3) = closestPoint / closestPoint.norm();
+                plane(3) = closestPoint.norm();
+
+                // Create a new point cloud containing the points of the detected planes
+                pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr extractedCloud(
+                    new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+                for (const auto &idx : inliers->indices)
+                {
+                    pcl::PointXYZRGBNormal tmpCloud;
+                    // Fill the point cloud
+                    tmpCloud.x = cloud->points[idx].x;
+                    tmpCloud.y = cloud->points[idx].y;
+                    tmpCloud.z = cloud->points[idx].z;
+                    tmpCloud.normal_x = plane(0);
+                    tmpCloud.normal_y = plane(1);
+                    tmpCloud.normal_z = plane(2);
+                    tmpCloud.curvature = plane(3);
+                    // Add the point to the cloud
+                    extractedCloud->points.push_back(tmpCloud);
+                }
+
+                // Add the extracted cloud to the vector
+                extractedPlanes.push_back(extractedCloud);
+
+                // Extract the inliers
+                extract.setInputCloud(cloud);
+                extract.setIndices(inliers);
+                extract.setNegative(true);
+                extract.filter(*cloud);
+            }
+            catch (const std::exception &e)
+            {
+                std::cout << "RANSAC model error!" << std::endl;
+                // break;
+            }
+        }
+
         return extractedPlanes;
     }
 

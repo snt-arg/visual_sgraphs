@@ -44,10 +44,10 @@ namespace ORB_SLAM3
          * @param pclPc2SegPrb the point cloud to be segmented
          * @param segImgUncertainity the segmentation image uncertainty
          * @param clsCloudPtrs the class specific point clouds
-         * @return a vector of confidence for each class
          */
-        std::vector<double> threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
-                                                     cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
+        void threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
+                                                     cv::Mat &segImgUncertainity,
+                                                     std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
 
         /**
          * @brief Enriches the class-specific point clouds (with XYZ and RGB) with the current keyframe point cloud
@@ -55,7 +55,7 @@ namespace ORB_SLAM3
          * @param thisKFPointCloud the current keyframe point cloud
          */
         void enrichClassSpecificPointClouds(
-            std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud);
+            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud);
 
         /**
          * @brief Gets all planes for each class specific point cloud using RANSAC
@@ -64,7 +64,7 @@ namespace ORB_SLAM3
          * @return a vector of vector of point clouds
          */
         std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> getPlanesFromClassClouds(
-            std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs, int minCloudSize);
+            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, int minCloudSize);
 
         /**
          * @brief Adds the planes to the Atlas
@@ -72,7 +72,7 @@ namespace ORB_SLAM3
          * @param clsConfs the confidence of the class predictions
          */
         void updatePlaneData(KeyFrame *pKF,
-                             std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes, std::vector<double> &clsConfs);
+                             std::vector<std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr>> &clsPlanes);
 
         /**
          * @brief Creates a map plane from the estimated plane

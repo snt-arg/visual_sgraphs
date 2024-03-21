@@ -108,7 +108,7 @@ namespace ORB_SLAM3
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample<pcl::PointXYZRGB>(pointcloud, mDownsampleLeafSize);
 
         // Filter the pointcloud based on a range of distance
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter(downsampledCloud, mDistFilterThreshold);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGB>(downsampledCloud, mDistFilterThreshold);
 
         if (filteredCloud->points.size() > minCloudSize)
         {

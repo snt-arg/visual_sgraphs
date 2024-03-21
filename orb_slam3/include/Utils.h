@@ -87,13 +87,6 @@ namespace ORB_SLAM3
                                                                    std::vector<ORB_SLAM3::Door *> envDoors);
 
         /**
-         * Filters the pointclouds based on the given min/max distance between the points
-         * @param cloud the pointcloud to be filtered
-         */
-        static pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointcloudDistanceFilter(
-            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, std::pair<float, float> thresholds);
-
-        /**
          * Downsamples the pointclouds based on the given leaf size
          * @param cloud the pointcloud to be downsampled
          */
@@ -102,10 +95,21 @@ namespace ORB_SLAM3
             const typename pcl::PointCloud<PointT>::Ptr &cloud, float leafSize);
 
         /**
+         * Filters the pointclouds based on the given min/max distance acceptable
+         * @param cloud the pointcloud to be filtered
+         * @param thresholds the acceptable min/max distance
+         */
+        template <typename PointT>
+        static typename pcl::PointCloud<PointT>::Ptr pointcloudDistanceFilter(
+            const typename pcl::PointCloud<PointT>::Ptr &cloud, std::pair<float, float> thresholds);
+
+        /**
          * @brief Performs PCL ransac to get the plane equations from the a given point cloud
          * @param cloud the input point cloud
          * @param minSegmentationPoints the minimum number of points
          */
+        static std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud, int minSegmentationPoints);
         static std::vector<pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr> ransacPlaneFitting(
             pcl::PointCloud<pcl::PointXYZRGB>::Ptr &cloud, int minSegmentationPoints);
 

@@ -302,16 +302,16 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         return;
 
     // get the class specific pointclouds from this keyframe
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> clsCloudPtrs = thisKF->getCurrentClsCloudPtrs();
+    std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> clsCloudPtrs = thisKF->getCurrentClsCloudPtrs();
 
     // create a new pointcloud with aggregated points from all classes but with class-specific colors
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
     for (long unsigned int i = 0; i < clsCloudPtrs.size(); i++)
     {
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr clsCloud = clsCloudPtrs[i];
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr clsCloud = clsCloudPtrs[i];
         for (long unsigned int j = 0; j < clsCloud->points.size(); j++)
         {
-            pcl::PointXYZRGB point = clsCloud->points[j];
+            pcl::PointXYZRGBA point = clsCloud->points[j];
             switch (i)
             {
             case 0: // Ground is green

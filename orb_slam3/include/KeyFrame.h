@@ -517,7 +517,7 @@ namespace ORB_SLAM3
         
         // point clouds
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr mCurrentFramePointClouds;
-        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> mCurrentClsCloudPtrs;
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> mCurrentClsCloudPtrs;
 
         Map *mpMap;
 
@@ -567,8 +567,8 @@ namespace ORB_SLAM3
         // getters and setter for point clouds
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCurrentFramePointCloud() const;
         void clearPointCloud();
-        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> getCurrentClsCloudPtrs() const;
-        void setCurrentClsCloudPtrs(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs);
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> getCurrentClsCloudPtrs() const;
+        void setCurrentClsCloudPtrs(std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
         void clearClsClouds();
 
         void PrintPointDistribution()

@@ -214,7 +214,7 @@ namespace ORB_SLAM3
         
     }
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> KeyFrame::getCurrentClsCloudPtrs() const
+    std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> KeyFrame::getCurrentClsCloudPtrs() const
     {
         return mCurrentClsCloudPtrs;
     }
@@ -224,7 +224,7 @@ namespace ORB_SLAM3
         mCurrentClsCloudPtrs.clear();
     }
 
-    void KeyFrame::setCurrentClsCloudPtrs(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &clsCloudPtrs)
+    void KeyFrame::setCurrentClsCloudPtrs(std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs)
     {
         mCurrentClsCloudPtrs = clsCloudPtrs;
     }
