@@ -26,10 +26,12 @@ namespace ORB_SLAM3
         std::mutex mMutexNewKFs;
         double mSegProbThreshold;
         float mDownsampleLeafSize;
+        float mGroundPlaneHeightThreshold;
         Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
         const uint8_t bytesPerClassProb = 4; // Four bytes per class probability - refer to scene_segment_ros
         std::pair<float, float> mDistFilterThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
+        bool mSemRuns, mGeoRuns;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -79,10 +81,11 @@ namespace ORB_SLAM3
          * @param pKF the current keyframe
          * @param estimatedPlane the estimated plane
          * @param clsId the class id
+         * @param conf the confidence of the class prediction
          * @param planeCloud the plane point cloud
          */
         void createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
-                            const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
+                            double conf, const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
 
         /**
          * @brief Updates the map plane
@@ -90,7 +93,17 @@ namespace ORB_SLAM3
          * @param clsId the class id
          * @param confidence the confidence of the class predictions
          */
-        void updateMapPlane(int planeId, int clsId, double confidence);
+        void updatePlaneSemantics(int planeId, int clsId, double confidence);
+
+        /**
+         * @brief Updates the map plane
+         * @param pKF the current keyframe
+         * @param estimatedPlane the estimated plane
+         * @param planeCloud the plane point cloud
+         * @param planeId the plane id
+         */
+        void updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
+                            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId);
 
         /**
          * @brief Checks whether a plane can be a valid wall plane
@@ -102,14 +115,27 @@ namespace ORB_SLAM3
          * @brief Reassociates the wall planes if they get closer after optimization
          * @param planes the planes (can be all planes - walls checked within the function)
          */
-        void reAssociateWallPlanes(const std::vector<Plane *> &planes);
+        void reAssociateSemanticPlanes(const std::vector<Plane *> &planes);
 
         /**
          * @brief Filters the ground plane to remove points that are too far from the plane
          * @param groundPlane the ground plane
-         * @param threshY the threshold for the vertical distance from the plane
          */
-        void filterGroundPlane(Plane *groundPlane, float threshY);
+        void filterGroundPlanes(Plane *groundPlane);
+
+        /**
+         * @brief Transforms the plane equation to the ground reference defined by mPlanePoseMat
+         * @param planeEq the plane equation
+         * @return the transformed plane equation
+         */
+        Eigen::Vector3f transformPlaneEqToGroundReference(const Eigen::Vector4d &planeEq);
+
+        /**
+         * @brief Gets the median height of a ground plane after transformation to referece by mPlanePoseMat
+         * @param groundPlane the ground plane
+         * @return the median height of the ground plane
+         */
+        float computeGroundPlaneHeight(Plane *groundPlane);
 
         /**
          * @brief Computes the transformation matrix from the ground plane to the horizontal (y-inverted)

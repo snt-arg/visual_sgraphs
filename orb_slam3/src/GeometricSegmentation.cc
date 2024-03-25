@@ -100,22 +100,17 @@ namespace ORB_SLAM3
             // the depth from points using Machine Learning to get a better plane estimate.
             pointcloud = getCloudFromSparsePoints(pKF->getCurrentFrameMapPoints()); // mCurrentFrame.mvpMapPoints
 
-        // [TODO] decide when to downsample and/or distance filter
-
-        // Downsample the given pointcloud
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr downsampledCloud = Utils::pointcloudDownsample<pcl::PointXYZRGB>(pointcloud, mDownsampleLeafSize);
-
-        // Filter the pointcloud based on a range of distance
-        pcl::PointCloud<pcl::PointXYZRGB>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGB>(downsampledCloud, mDistFilterThreshold);
-
-        // Convert the pointcloud to one with PointXYZRGBA
+        // Convert the pointcloud to one with PointXYZRGBA for consistency
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloudRGBA(new pcl::PointCloud<pcl::PointXYZRGBA>);
-        pcl::copyPointCloud(*filteredCloud, *cloudRGBA);
+        pcl::copyPointCloud(*pointcloud, *cloudRGBA);
+        
+        // Downsample the given pointcloud after filtering based on distance
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(cloudRGBA, mDistFilterThreshold);
+        filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, mDownsampleLeafSize);
 
-        if (cloudRGBA->points.size() > minCloudSize)
+        if (filteredCloud->points.size() > minCloudSize)
         {
-            //  Estimate the plane equation
-            extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(cloudRGBA, minCloudSize);
+            extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(filteredCloud, minCloudSize);
         }
         return extractedPlanes;
     }

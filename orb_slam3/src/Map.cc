@@ -290,19 +290,25 @@ namespace ORB_SLAM3
         return vector<Plane *>(mspPlanes.begin(), mspPlanes.end());
     }
 
-    void Map::SetGroundPlaneId(int groundPlaneId)
+    Plane *Map::GetBiggestGroundPlane()
     {
         unique_lock<mutex> lock(mMutexMap);
-        mGroundPlaneId = groundPlaneId;
-    }
-
-    Plane *Map::GetGroundPlane()
-    {
-        unique_lock<mutex> lock(mMutexMap);
-        // return null pointer if the ground plane id is not set
-        if (mGroundPlaneId == -1)
-            return nullptr;
-        return mPlaneIndex[mGroundPlaneId];
+        Plane *biggestGroundPlane = nullptr;
+        size_t maxPoints = 0;
+        for (set<Plane *>::iterator sit = mspPlanes.begin(); sit != mspPlanes.end(); sit++)
+        {
+            Plane *pPlane = *sit;
+            if (pPlane->getPlaneType() == Plane::planeVariant::GROUND)
+            {
+                size_t numPoints = pPlane->getMapClouds()->size();
+                if (numPoints > maxPoints)
+                {
+                    maxPoints = numPoints;
+                    biggestGroundPlane = pPlane;
+                }
+            }
+        }
+        return biggestGroundPlane;
     }
 
     vector<Door *> Map::GetAllDoors()

@@ -10,6 +10,16 @@ namespace ORB_SLAM3
         mSegProbThreshold = segProbThreshold;
         mDistFilterThreshold = distFilterThreshold;
         mDownsampleLeafSize = downsampleLeafSize;
+
+        // ground planes having a height greater than this threshold over the (lowest/biggest)? ground plane are filtered
+        mGroundPlaneHeightThreshold = 0.50;
+
+        // flags to indicate what segmentation modules run, modes are:
+        // 1. Semantic segmentation runs independently - mSemRuns = true, mGeoRuns = false
+        // 2. Semantic segmentation runs with Geometric segmentation - mSemRuns = true, mGeoRuns = true
+        // 3. Geometric segmentation runs independently - mSemRuns = false, mGeoRuns = true
+        mSemRuns = true;
+        mGeoRuns = true;
     }
 
     void SemanticSegmentation::Run()
@@ -45,6 +55,7 @@ namespace ORB_SLAM3
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
 
             // clear cloud as it is no longer needed and consumes significant memory
+            // [TODO] - clear even if semantic segmentation is not running
             thisKF->clearPointCloud();
 
             // get all planes for each class specific point cloud using RANSAC
@@ -58,7 +69,9 @@ namespace ORB_SLAM3
             updatePlaneData(thisKF, clsPlanes);
 
             // Check for possible room candidates
-            bool useGeo = true; // [TODO] Replace it with a flag
+            // [TODO] Replace it with a flag
+            // [TODO] Naming conflict with mGeoRuns
+            bool useGeo = true; 
             if (useGeo)
                 updateMapRoomCandidateToRoom_Geo();
         }
@@ -108,7 +121,7 @@ namespace ORB_SLAM3
                     pcl::PointXYZRGBA point;
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
-                    point.a = 255 - segImgUncertainity.at<uchar>(point.y, point.x);
+                    point.a = 255 - segImgUncertainity.at<uint8_t>(point.y, point.x);
                     clsCloudPtrs[j]->push_back(point);
                 }
             }
@@ -149,13 +162,9 @@ namespace ORB_SLAM3
         // downsample/filter the pointcloud and extract planes
         for (unsigned long int i = 0; i < clsCloudPtrs.size(); i++)
         {
-            // [TODO] decide when to downsample and/or distance filter
-
-            // Downsample the given pointcloud
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr downsampledCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(clsCloudPtrs[i], mDownsampleLeafSize);
-
-            // Filter the pointcloud based on a range of distance
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(downsampledCloud, mDistFilterThreshold);
+            // Downsample the given pointcloud after filtering based on distance
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i], mDistFilterThreshold);
+            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, mDownsampleLeafSize);
 
             // copy the filtered cloud for later storage into the keyframe
             pcl::copyPointCloud(*filteredCloud, *clsCloudPtrs[i]);
@@ -173,7 +182,7 @@ namespace ORB_SLAM3
     void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
                                                std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
     {
-        for (unsigned int clsId = 0; clsId < clsPlanes.size(); clsId++)
+        for (size_t clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
             for (auto planePoint : clsPlanes[clsId])
             {
@@ -188,55 +197,70 @@ namespace ORB_SLAM3
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
 
-                // [TODO] - Add flags to decide whether SemSeg can add planes or it just updates
+                // pointcloud processing
+                pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
+                std::vector<double> confidences;
+                for (size_t i = 0; i < planeCloud->size(); i++)
+                    confidences.push_back(static_cast<int>(planeCloud->points[i].a) / 255.0);
+                double conf = Utils::calcSoftMin(confidences);
+
+                // transform the planeCloud to global if semSeg uses plane->setMapClouds(planeCloud)
+                if (!mGeoRuns)
+                    pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
+
                 if (matchedPlaneId == -1)
                 {
-                    // [TODO] - Add a flag to decide whether SemSeg runs indepedently or with GeoSeg
-                    continue;
+                    if (!mGeoRuns)
+                        createMapPlane(pKF, detectedPlane, clsId, conf, planeCloud);
                 }
                 else
                 {
-                    std::string planeType = clsId ? "Wall" : "Ground";
-                    updateMapPlane(matchedPlaneId, clsId, 0.5);
+                    if (!mGeoRuns)
+                        updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId);
 
-                    Plane *groundPlane = mpAtlas->GetGroundPlane();
+                    // cast a vote for the plane semantics    
+                    updatePlaneSemantics(matchedPlaneId, clsId, conf);
+                }
+
+                // re-associations and filters - run them after each ground plane is detected
+                if (clsId == 0)
+                {
+                    Plane *groundPlane = mpAtlas->GetBiggestGroundPlane();
                     if (groundPlane != nullptr)
                     {
                         // Re-compute the transformation from ground to horizontal - maybe global eq. changed
                         mPlanePoseMat = computePlaneToHorizontal(groundPlane);
 
-                        // Filter the ground plane
-                        filterGroundPlane(groundPlane, 0.40);
+                        // Filter the ground planes after the update
+                        filterGroundPlanes(groundPlane);
                     }
                 }
             }
         }
 
-        // Update the ground plane, GeoSeg might have updated the ground plane
-        Plane *groundPlane = mpAtlas->GetGroundPlane();
+        // Update the ground plane, as it might have been updated
+        // even when semantic segmentation did not detect any planes
+        Plane *groundPlane = mpAtlas->GetBiggestGroundPlane();
         if (groundPlane != nullptr)
         {
             // Re-compute the transformation from ground to horizontal - maybe global eq. changed
             mPlanePoseMat = computePlaneToHorizontal(groundPlane);
 
-            // Filter the ground plane
-            filterGroundPlane(groundPlane, 0.40);
-        }
-
-        // Re-check if all wall planes are still valid, once the ground plane is defined
-        if (groundPlane != nullptr)
-        {
+            // Filter the ground planes
+            filterGroundPlanes(groundPlane);
+ 
+            // Re-check if all wall planes are still valid
             for (const auto &plane : mpAtlas->GetAllPlanes())
-                if (!canBeValidWallPlane(plane) && plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL && !canBeValidWallPlane(plane))
                     plane->resetPlaneSemantics();
         }
 
-        // reassociate wall planes if they get close to each other :)) after optimization
-        reAssociateWallPlanes(mpAtlas->GetAllPlanes());
+        // reassociate semantic planes if they get close to each other :)) after optimization
+        reAssociateSemanticPlanes(mpAtlas->GetAllPlanes());
     }
 
     void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
-                                              const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
+                                              double conf, const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
@@ -247,8 +271,9 @@ namespace ORB_SLAM3
         // [TODO] - move this logic inside Atlas (or Map) for atomic IDs if multiple threads are running
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
 
-        // Set the plane type to the semantic class
-        newMapPlane->setPlaneType(Utils::getPlaneTypeFromClassId(clsId));
+        // cast a vote for the plane semantics
+        newMapPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::UNDEFINED);
+        newMapPlane->castWeightedVote(Utils::getPlaneTypeFromClassId(clsId), conf);
 
         // Set the global equation of the plane
         g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
@@ -259,7 +284,7 @@ namespace ORB_SLAM3
         if (!planeCloud->points.empty())
             newMapPlane->setMapClouds(planeCloud);
         else
-            // Loop to find the points lyinupdateMapPlane(pKF, detectedPlane, planePog on wall
+            // Loop to find the points lying on wall
             for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
                 if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
                     newMapPlane->setMapPoints(mapPoint);
@@ -268,94 +293,76 @@ namespace ORB_SLAM3
         mpAtlas->AddMapPlane(newMapPlane);
     }
 
-    void SemanticSegmentation::updateMapPlane(int planeId, int clsId, double confidence)
+    void SemanticSegmentation::updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
+                                               pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId)
+    {
+        // Find the matched plane among all planes of the map
+        Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
+        currentPlane->addObservation(pKF, estimatedPlane);
+
+        // Add the plane to the list of planes in the current KeyFrame
+        pKF->AddMapPlane(currentPlane);
+
+        // Update the pointcloud of the plane
+        if (!planeCloud->points.empty())
+            currentPlane->setMapClouds(planeCloud);
+        else
+            for (const auto &mapPoint : pKF->GetMapPoints())
+                if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
+                    currentPlane->setMapPoints(mapPoint);
+    }
+
+    void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
     {
         // retrieve the plane from the map
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
+
         // plane type compatible with the Plane class
         ORB_SLAM3::Plane::planeVariant planeType = Utils::getPlaneTypeFromClassId(clsId);
 
-        // get the ground plane from the atlas
-        Plane *groundPlane = mpAtlas->GetGroundPlane();
-
-        // update the plane with the class semantics
-        if (planeType == ORB_SLAM3::Plane::planeVariant::GROUND)
-        {
-            // when the ground is found for the first time
-            if (groundPlane == nullptr)
-            {
-                matchedPlane->castWeightedVote(planeType, confidence);
-                if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::GROUND)
-                {
-                    mpAtlas->SetGroundPlaneId(planeId);
-                    mPlanePoseMat = computePlaneToHorizontal(matchedPlane);
-                }
-            }
-            else if (matchedPlane->getMapClouds()->points.size() > 0 && planeId != groundPlane->getId())
-                // if the plane is not the ground plane and has a pointcloud, then update the ground plane
-                groundPlane->setMapClouds(matchedPlane->getMapClouds());
-        }
-        else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
-            matchedPlane->castWeightedVote(planeType, confidence);
+        // cast a vote for the plane semantics
+        matchedPlane->castWeightedVote(planeType, confidence);
     }
 
     bool SemanticSegmentation::canBeValidWallPlane(Plane *plane)
     {
         // wall validation based on the mPlanePoseMat
         // only works if the ground plane is set, needs the correction matrix: mPlanePoseMat
-        // [TODO] - Maybe initialize mPlanePoseMat with the identity matrix or other way
-
-        // extract the rotation matrix from the transformation matrix
-        Eigen::Matrix3f rotationMatrix = mPlanePoseMat.block<3, 3>(0, 0);
-
-        // Compute the inverse transpose of the rotation matrix
-        Eigen::Matrix3f inverseTransposeRotationMatrix = rotationMatrix.inverse().transpose();
-
-        // Extract the coefficients of the original plane equation
-        Eigen::Vector4d originalPlaneCoefficients = plane->getGlobalEquation().coeffs();
-
-        // Transform the coefficients of the plane equation
-        Eigen::Vector3f transformedPlaneCoefficients;
-        transformedPlaneCoefficients.head<3>() = inverseTransposeRotationMatrix * originalPlaneCoefficients.head<3>().cast<float>();
-
-        // normalize the transformed coefficients
-        transformedPlaneCoefficients.normalize();
+        Eigen::Vector3f transformedPlaneCoefficients = transformPlaneEqToGroundReference(plane->getGlobalEquation().coeffs());
 
         // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
-        // threshold should be leniently set
+        // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
         // [TODO] - Parameterize threshold
         if (abs(transformedPlaneCoefficients(1)) < 0.20)
             return true;
         return false;
     }
 
-    void SemanticSegmentation::reAssociateWallPlanes(const std::vector<Plane *> &planes)
+    void SemanticSegmentation::reAssociateSemanticPlanes(const std::vector<Plane *> &planes)
     {
         // loop through all the planes to look for associations after possible update by the optimization
         for (const auto &plane : planes)
         {
-            // only consider wall planes
-            if (plane->getPlaneType() != ORB_SLAM3::Plane::planeVariant::WALL)
+            // consider planes that have a semantic type and are not excluded from association
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED || plane->excludedFromAssoc)
                 continue;
 
             // get plane information
-            g2o::Plane3D globalEquation = plane->getGlobalEquation();
             int planeId = plane->getId();
 
-            // get the vector of all wall planes except the current one
+            // get the vector of all other planes with the same semantic type
             std::vector<Plane *> otherPlanes;
             for (const auto &otherPlane : planes)
-                if (otherPlane->getId() != planeId && otherPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                if (otherPlane->getId() != planeId && otherPlane->getPlaneType() == plane->getPlaneType())
                     otherPlanes.push_back(otherPlane);
             if (otherPlanes.empty())
-                // there is at most one wall, so no need to check re-association
                 return;
 
             // check if the plane is associated with any other plane
-            int matchedPlaneId = Utils::associatePlanes(otherPlanes, globalEquation);
+            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation());
 
             // if a match is found, then add the smaller planecloud to the larger plane
-            // set the smaller plane type to undefined
+            // set the smaller plane type to undefined and remove it from future associations
             if (matchedPlaneId != -1)
             {
                 Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
@@ -375,53 +382,70 @@ namespace ORB_SLAM3
         }
     }
 
-    void SemanticSegmentation::filterGroundPlane(Plane *groundPlane, float threshY)
+    void SemanticSegmentation::filterGroundPlanes(Plane *groundPlane)
     {
-        // filter the ground pointcloud maintaining only one ground plane
-        // [TODO] - Add check whether the ground plane was updated or not? to skip repeating this process
+        // discard ground planes that have height above a threshold from the biggest ground plane
+        // [TODO] - Whether to use biggest ground plane or lowest ground plane?
 
+        // get the median height of the plane to compute the threshold
+        float threshY = computeGroundPlaneHeight(groundPlane) - mGroundPlaneHeightThreshold;        
+
+        // go through all ground planes to check validity
+        int groundPlaneId = groundPlane->getId();
+        for (const auto &plane : mpAtlas->GetAllPlanes())
+        {
+            if (plane->getPlaneType() != ORB_SLAM3::Plane::planeVariant::GROUND || plane->getId() == groundPlaneId)
+                continue;
+
+            // if the plane is above the threshold (inverted y), then reset the plane semantics
+            if (computeGroundPlaneHeight(plane) < threshY)
+            {
+                plane->resetPlaneSemantics();
+                continue;
+            }
+
+            // filter here based on orientation of the plane (needs to be horizontal)
+            Eigen::Vector3f transformedPlaneCoefficients = transformPlaneEqToGroundReference(plane->getGlobalEquation().coeffs());
+
+            // if the transformed plane is horizontal based on absolute value, then assign semantic, otherwise ignore
+            // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
+            // [TODO] - Parameterize threshold
+            if (abs(transformedPlaneCoefficients(0)) > 0.10)
+                plane->resetPlaneSemantics();
+        }
+    }
+
+    Eigen::Vector3f SemanticSegmentation::transformPlaneEqToGroundReference(const Eigen::Vector4d &planeEq)
+    {
+        // extract the rotation matrix from the transformation matrix
+        Eigen::Matrix3f rotationMatrix = mPlanePoseMat.block<3, 3>(0, 0);
+
+        // Compute the inverse transpose of the rotation matrix
+        Eigen::Matrix3f inverseTransposeRotationMatrix = rotationMatrix.inverse().transpose();
+
+        // Transform the coefficients of the plane equation
+        Eigen::Vector3f transformedPlaneCoefficients = inverseTransposeRotationMatrix * planeEq.head<3>().cast<float>();
+        transformedPlaneCoefficients.normalize();
+
+        return transformedPlaneCoefficients;
+    }
+
+    float SemanticSegmentation::computeGroundPlaneHeight(Plane *groundPlane)
+    {
         // transform the planeCloud according to the planePose
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = groundPlane->getMapClouds();
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr transformedCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
         pcl::transformPointCloud(*planeCloud, *transformedCloud, mPlanePoseMat);
 
-        // print the standard deviation across the x and y axes of the transformedCloud
+        // get the median height of the plane
         std::vector<float> yVals;
         for (const auto &point : transformedCloud->points)
         {
             yVals.push_back(point.y);
         }
-
-        // get an estimate of the numPoint-th lower point - sort descending
-        // [TODO] - Parameterize percentile
-        uint8_t percentile = 10;
-        int numPoint = (percentile * yVals.size()) / 100;
+        size_t numPoint = yVals.size() / 2;
         std::partial_sort(yVals.begin(), yVals.begin() + numPoint, yVals.end(), std::greater<float>());
-        float maxY = yVals[numPoint - 1];
-
-        // define the threshold for the ground plane
-        // [TODO] - Parameterize threshold
-        threshY = maxY - threshY;
-
-        // filter the cloud based on threshold
-        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
-
-        std::copy_if(transformedCloud->begin(),
-                     transformedCloud->end(),
-                     std::back_inserter(filteredCloud->points),
-                     [&](const pcl::PointXYZRGBA &p)
-                     {
-                         return p.y > threshY;
-                     });
-        filteredCloud->height = 1;
-        filteredCloud->is_dense = false;
-
-        if (filteredCloud->points.size() > 0)
-        {
-            // replace the planeCloud with the filteredCloud after performing inverse transformation
-            pcl::transformPointCloud(*filteredCloud, *transformedCloud, mPlanePoseMat.inverse());
-            groundPlane->replaceMapClouds(transformedCloud);
-        }
+        return yVals[numPoint - 1];
     }
 
     Eigen::Matrix4f SemanticSegmentation::computePlaneToHorizontal(const Plane *plane)

@@ -139,11 +139,11 @@ namespace ORB_SLAM3
 
         // set the plane type if votes above a certain threshold
         // [TODO] parameterize the maxVotes threshold
-        if (maxVotes >= 2)
+        if (maxVotes >= 2.5)
             planeType = maxType;
     }
 
-    void Plane::setPlaneType(Plane::planeVariant newType)
+    void Plane::setPlaneType(planeVariant newType)
     {
         unique_lock<mutex> lock(mMutexType);
         planeType = newType;

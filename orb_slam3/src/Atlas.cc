@@ -308,16 +308,10 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllFloors();
     }
 
-    void Atlas::SetGroundPlaneId(int value)
+    Plane *Atlas::GetBiggestGroundPlane()
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        mpCurrentMap->SetGroundPlaneId(value);
-    }
-
-    Plane *Atlas::GetGroundPlane()
-    {
-        unique_lock<mutex> lock(mMutexAtlas);
-        return mpCurrentMap->GetGroundPlane();
+        return mpCurrentMap->GetBiggestGroundPlane();
     }
 
     std::vector<MapPoint *> Atlas::GetReferenceMapPoints()

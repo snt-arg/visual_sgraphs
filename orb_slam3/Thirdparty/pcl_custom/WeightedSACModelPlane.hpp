@@ -39,7 +39,7 @@ public:
                                 1.0f);
             if (std::abs (model_coefficients.dot (pt)) < threshold)
             {
-                nr_p += (*this->input_)[(*this->indices_)[i]].a;
+                nr_p += static_cast<int>((*this->input_)[(*this->indices_)[i]].a);
             }
         }
         return nr_p;

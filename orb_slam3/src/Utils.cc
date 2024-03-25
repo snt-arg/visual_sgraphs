@@ -147,12 +147,8 @@ namespace ORB_SLAM3
 
         return filtered;
     }
-    template pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGB>(
-        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, const float);
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const float);
-    template pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGBNormal>(
-        const pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr &, const float);
 
     template <typename PointT>
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDistanceFilter(
@@ -183,8 +179,6 @@ namespace ORB_SLAM3
 
         return filteredCloud;
     }
-    template pcl::PointCloud<pcl::PointXYZRGB>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGB>(
-        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &, std::pair<float, float>);
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, std::pair<float, float>);
 
@@ -197,7 +191,7 @@ namespace ORB_SLAM3
         // Loop over cloud points as long as the cloud is large enough
         // [TODO] Temporary disabling sequential ransac
         // while (cloud->points.size() > minSegmentationPoints)
-        const uint8_t maxRansacIterations = 2;
+        const uint8_t maxRansacIterations = 1;
         for (uint8_t i = 0; i < maxRansacIterations && cloud->points.size() > minSegmentationPoints; i++)
         {
             try
@@ -236,12 +230,12 @@ namespace ORB_SLAM3
                 typename pcl::PointCloud<PointT>::Ptr extractedCloud(new pcl::PointCloud<PointT>);
                 for (const auto &idx : inliers->indices)
                 {
-                    PointT inPoint;
-                    
                     // Fill the point cloud
+                    PointT inPoint;
                     inPoint.x = cloud->points[idx].x;
                     inPoint.y = cloud->points[idx].y;
                     inPoint.z = cloud->points[idx].z;
+                    inPoint.a = cloud->points[idx].a;
                     
                     // Add the point to the cloud
                     extractedCloud->points.push_back(inPoint);

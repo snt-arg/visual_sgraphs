@@ -627,7 +627,8 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
                 newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
             // Set color according to type of plane
-            std::vector<uint8_t> color = (planeType == ORB_SLAM3::Plane::planeVariant::GROUND) ? std::vector<uint8_t>{0, 0, 0} : plane->getColor();
+            // std::vector<uint8_t> color = (planeType == ORB_SLAM3::Plane::planeVariant::GROUND) ? std::vector<uint8_t>{0, 0, 0} : plane->getColor();
+            std::vector<uint8_t> color = plane->getColor();
             newPoint.r = color[0];
             newPoint.g = color[1];
             newPoint.b = color[2];
