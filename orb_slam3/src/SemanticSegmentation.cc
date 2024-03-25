@@ -121,7 +121,11 @@ namespace ORB_SLAM3
                     pcl::PointXYZRGBA point;
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
-                    point.a = 255 - segImgUncertainity.at<uint8_t>(point.y, point.x);
+                    
+                    // convert uncertainity to single value and assign confidence to alpha channel
+                    cv::Vec3b vec = segImgUncertainity.at<cv::Vec3b>(point.y, point.x);
+                    point.a = 255 - static_cast<int>(0.299 * vec[2] + 0.587 * vec[1] + 0.114 * vec[0]);
+
                     clsCloudPtrs[j]->push_back(point);
                 }
             }
