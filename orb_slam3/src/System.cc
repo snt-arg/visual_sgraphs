@@ -36,9 +36,9 @@ namespace ORB_SLAM3
 
     Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
 
-    System::System(const string &strVocFile, const string &strSettingsFile, const SystemParams &sysParams, const eSensor sensor,
+    System::System(const string &strVocFile, const string &strSettingsFile, const string &strSysParamsFile, const eSensor sensor,
                    const bool bUseViewer, const int initFr, const string &strSequence) : mSensor(sensor), mpViewer(static_cast<Viewer *>(NULL)), mbReset(false), mbResetActiveMap(false),
-                                                                                         mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false), sysParams(sysParams)
+                                                                                         mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
     {
         // Output welcome message
         cout << endl
@@ -157,6 +157,13 @@ namespace ORB_SLAM3
             // usleep(10*1000*1000);
         }
 
+        // setup the system parameters
+        SystemParams *sysParams = SystemParams::GetParams();
+        sysParams->SetParams(strSysParamsFile);
+
+        // parse the environment database
+        parseJsonDatabase(sysParams->general.env_database);
+
         // If the sensor is integrated with IMU, initialize the IMU first
         if (mSensor == IMU_STEREO || mSensor == IMU_MONOCULAR || mSensor == IMU_RGBD)
             mpAtlas->SetInertialSensor();
@@ -170,7 +177,7 @@ namespace ORB_SLAM3
                                  mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
         // Set the value of marker impact
-        mpTracker->SetMarkerImpact(sysParams.markerImpact);
+        mpTracker->SetMarkerImpact(sysParams->markers.impact);
 
         // Initialize the Local Mapping thread and launch
         mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor == MONOCULAR || mSensor == IMU_MONOCULAR,
@@ -193,24 +200,14 @@ namespace ORB_SLAM3
         mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR, activeLC);
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
-        // 🚀 [vS-Graphs v.2.0] Common parameters for GeoSeg and SemSeg
-        std::pair<float, float> distFilterThreshold = sysParams.distFilterThreshold;
-        float downsampleLeafSize = 0.05;
-
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
-        int minCloudSize_GeoSeg = sysParams.pointCloudSize_GeoSeg;
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
-        downsampleLeafSize = sysParams.downsampleLeafSize_GeoSeg;
-        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, minCloudSize_GeoSeg,
-                                                            distFilterThreshold, downsampleLeafSize);
+        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud);
         mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
+        mpGeometricSegmentation->setEnvFetchedValues(envDoors, envRooms);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
-        int minCloudSize_SemSeg = sysParams.pointCloudSize_SemSeg;
-        double segProbThreshold = sysParams.probabilityThreshold_SemSeg;
-        downsampleLeafSize = sysParams.downsampleLeafSize_SemSeg;
-        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, segProbThreshold, minCloudSize_SemSeg,
-                                                          distFilterThreshold, downsampleLeafSize);
+        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
         // Set pointers between threads
@@ -238,9 +235,15 @@ namespace ORB_SLAM3
         Verbose::SetTh(Verbose::VERBOSITY_QUIET);
     }
 
-    void System::setEnvFetchedValues(std::vector<Door *> envDoors, std::vector<Room *> envRooms)
+    void System::parseJsonDatabase(string jsonFilePath)
     {
-        mpGeometricSegmentation->setEnvFetchedValues(envDoors, envRooms);
+        // Creating an object of the database loader
+        ORB_SLAM3::DBParser parser;
+        // Load JSON file
+        json envData = parser.jsonParser(jsonFilePath);
+        // Getting semantic entities
+        envRooms = parser.getEnvRooms(envData);
+        envDoors = parser.getEnvDoors(envData);
     }
 
     void System::addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple)
@@ -250,8 +253,7 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
-                                     const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker *> markers,
-                                     const vector<Door *> doors, const vector<Room *> rooms)
+                                     const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker *> markers)
     {
         if (mSensor != STEREO && mSensor != IMU_STEREO)
         {
@@ -327,7 +329,7 @@ namespace ORB_SLAM3
 
         // std::cout << "start GrabImageStereo" << std::endl;
         Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed, imRightToFeed, timestamp, filename,
-                                                      markers, doors, rooms);
+                                                      markers, envDoors, envRooms);
 
         // std::cout << "out grabber" << std::endl;
 
@@ -342,8 +344,7 @@ namespace ORB_SLAM3
     Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap,
                                    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &mainCloud,
                                    const double &timestamp, const vector<IMU::Point> &vImuMeas, string filename,
-                                   const std::vector<Marker *> markers, const vector<Door *> doors,
-                                   const vector<Room *> rooms)
+                                   const std::vector<Marker *> markers)
     {
         // Check if the sensor is RGB-D
         if (mSensor != RGBD && mSensor != IMU_RGBD)
@@ -410,7 +411,7 @@ namespace ORB_SLAM3
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
         Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, mainCloud, timestamp,
-                                                    filename, markers, doors, rooms);
+                                                    filename, markers, envDoors, envRooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
@@ -420,8 +421,7 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas,
-                                        string filename, const std::vector<Marker *> markers,
-                                        const vector<Door *> doors, const vector<Room *> rooms)
+                                        string filename, const std::vector<Marker *> markers)
     {
         // Multi-thread to prevent race conditions
         {
@@ -490,7 +490,7 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename, markers, doors, rooms);
+        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename, markers, envDoors, envRooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
@@ -1422,11 +1422,6 @@ namespace ORB_SLAM3
     {
         Map *pActiveMap = mpAtlas->GetCurrentMap();
         return pActiveMap->GetAllRooms();
-    }
-
-    SystemParams System::GetSystemParameters()
-    {
-        return this->sysParams;
     }
 
     bool System::SaveMap(const string &filename)

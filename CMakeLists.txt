@@ -142,6 +142,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/Semantic/Room.cc
   orb_slam3/src/Semantic/Floor.cc
   orb_slam3/src/DatabaseParser.cc
+  orb_slam3/src/Types/SystemParams.cc
   orb_slam3/src/GeometricSegmentation.cc
   orb_slam3/src/SemanticSegmentation.cc
   orb_slam3/include/System.h

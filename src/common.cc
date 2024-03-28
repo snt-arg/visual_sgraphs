@@ -10,7 +10,6 @@ ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
 ros::Publisher kf_img_pub;
-double marker_impact = 0.1;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
@@ -21,26 +20,6 @@ std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, doorsPub,
     all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
-
-// Geomentric objects detection
-int geo_pointcloud_size = 200;
-float geo_downsample_leaf_size = 0.05;
-
-// Semantic objects detection
-double sem_prob_thresh = 0.8;
-int sem_pointcloud_size = 200;
-float sem_downsample_leaf_size = 0.05;
-
-// Distance filtering
-float distance_thresh_near = 0.5;
-float distance_thresh_far = 5.0;
-
-// List of semantic entities available in the real environment (filled using JSON)
-std::vector<ORB_SLAM3::Room *> env_rooms;
-std::vector<ORB_SLAM3::Door *> env_doors;
-
-// System parameters set in the launch files
-ORB_SLAM3::SystemParams sysParams;
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
@@ -475,7 +454,7 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time 
         fiducial_marker.mesh_use_embedded_materials = true;
         fiducial_marker.type = visualization_msgs::Marker::MESH_RESOURCE;
         fiducial_marker.mesh_resource =
-            "package://orb_slam3_ros/config/Visualization/aruco_marker.dae";
+            "package://orb_slam3_ros/config/Assets/aruco_marker.dae";
 
         fiducial_marker.pose.position.x = markerPose.translation().x();
         fiducial_marker.pose.position.y = markerPose.translation().y();
@@ -520,7 +499,7 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msg_time)
         door.mesh_use_embedded_materials = true;
         door.type = visualization_msgs::Marker::MESH_RESOURCE;
         door.mesh_resource =
-            "package://orb_slam3_ros/config/Visualization/door.dae";
+            "package://orb_slam3_ros/config/Assets/door.dae";
 
         // Rotation and displacement for better visualization
         Sophus::SE3f rotatedDoorPose = doorPose * Sophus::SE3f::rotX(-M_PI_2);
@@ -665,8 +644,8 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
     for (int idx = 0; idx < numRooms; idx++)
     {
         // Variables
-        string definedRoom = "package://orb_slam3_ros/config/Visualization/room.dae";
-        string undefinedRoom = "package://orb_slam3_ros/config/Visualization/qmark.dae";
+        string definedRoom = "package://orb_slam3_ros/config/Assets/room.dae";
+        string undefinedRoom = "package://orb_slam3_ros/config/Assets/qmark.dae";
         string roomMesh = rooms[idx]->getIsCandidate() ? undefinedRoom : definedRoom;
 
         // Define proper room name
@@ -1003,26 +982,4 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double fra
     }
 
     return std::make_pair(minTimeDifference, matchedMarkers);
-}
-
-void parseJsonDatabase(string jsonFilePath)
-{
-    // Creating an object of the database loader
-    ORB_SLAM3::DBParser parser;
-    // Load JSON file
-    json envData = parser.jsonParser(jsonFilePath);
-    // Getting semantic entities
-    env_rooms = parser.getEnvRooms(envData);
-    env_doors = parser.getEnvDoors(envData);
-}
-
-void setSystemParams(ORB_SLAM3::SystemParams &sysParams)
-{
-    sysParams.markerImpact = marker_impact;
-    sysParams.pointCloudSize_GeoSeg = geo_pointcloud_size;
-    sysParams.pointCloudSize_SemSeg = sem_pointcloud_size;
-    sysParams.probabilityThreshold_SemSeg = sem_prob_thresh;
-    sysParams.downsampleLeafSize_GeoSeg = geo_downsample_leaf_size;
-    sysParams.downsampleLeafSize_SemSeg = sem_downsample_leaf_size;
-    sysParams.distFilterThreshold = std::make_pair(distance_thresh_near, distance_thresh_far);
 }

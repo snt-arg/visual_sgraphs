@@ -25,6 +25,7 @@
 #include "Tracking.h"
 #include "KeyFrameDatabase.h"
 #include "Settings.h"
+#include "Types/SystemParams.h"
 
 #include <mutex>
 

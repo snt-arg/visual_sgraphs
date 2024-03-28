@@ -54,13 +54,9 @@
 // ArUco-ROS library
 #include <aruco_msgs/MarkerArray.h>
 
-// JSON library
-#include "Thirdparty/nlohmann/json.hpp"
-
 // Semantics
 #include "Semantic/Door.h"
 #include "Semantic/Room.h"
-#include "DatabaseParser.h"
 #include "Semantic/Marker.h"
 
 using json = nlohmann::json;
@@ -69,30 +65,12 @@ class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
-extern double marker_impact;              // Impact of markers in the optimization process
 extern double roll, pitch, yaw;           // Defining axes for transformation
 extern bool publish_static_transform;     // If true, it should use transformed calculations
-extern ORB_SLAM3::SystemParams sysParams; // System parameters set in the launch files
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
-
-// Geomentric objects detection
-extern int geo_pointcloud_size;        // Number of points in the pointcloud to detect geometric objects
-extern float geo_downsample_leaf_size; // Leaf size for downsampling during the geometric segmentation process
-
-// Semantic objects detection
-extern double sem_prob_thresh;         // The threshold for the semantic segmentation process
-extern int sem_pointcloud_size;        // Number of points in the pointcloud to detect semantic objects
-extern float sem_downsample_leaf_size; // Leaf size for downsampling during the semantic segmentation process
-
-// Point Cloud Filtering params
-extern float distance_thresh_near, distance_thresh_far; // Distance thresholds for the point cloud filtering
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
-
-// List of semantic entities available in the real environment
-extern std::vector<ORB_SLAM3::Room *> env_rooms;
-extern std::vector<ORB_SLAM3::Door *> env_doors;
 
 extern ros::Publisher kf_img_pub;
 extern image_transport::Publisher tracking_img_pub;
@@ -146,16 +124,3 @@ void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray);
  * @param frameTimestamp The timestamp of the frame that captured the marker
  */
 std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double frameTimestamp);
-
-/**
- * @brief Parses JSON values (database) and loads them into
- * @param jsonFilePath The path to the JSON file containing the environment data
- */
-void parseJsonDatabase(string jsonFilePath);
-
-/**
- * @brief Sets the values of the system parameters' struct using the values from
- * the ROS parameter server to be used in other files
- * @param sysParams The struct containing the system parameters
- */
-void setSystemParams(ORB_SLAM3::SystemParams &sysParams);

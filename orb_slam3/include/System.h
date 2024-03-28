@@ -26,6 +26,9 @@
 #include <thread>
 #include <opencv2/core/core.hpp>
 
+// JSON library
+#include "Thirdparty/nlohmann/json.hpp"
+
 #include "Tracking.h"
 #include "FrameDrawer.h"
 #include "MapDrawer.h"
@@ -44,6 +47,7 @@
 #include "Types/SystemParams.h"
 #include "SemanticSegmentation.h"
 #include "GeometricSegmentation.h"
+#include "DatabaseParser.h"
 
 namespace ORB_SLAM3
 {
@@ -108,14 +112,11 @@ namespace ORB_SLAM3
             BINARY_FILE = 1,
         };
 
-        // ROS parameters set in 'common.h' using launch files
-        SystemParams sysParams;
-
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
         // Initialize the SLAM system. It launches the Local Mapping, Loop Closing and Viewer threads.
-        System(const string &strVocFile, const string &strSettingsFile, const SystemParams &params, const eSensor sensor,
+        System(const string &strVocFile, const string &strSettingsFile, const string &strSysParamsFile, const eSensor sensor,
                const bool bUseViewer = true, const int initFr = 0, const string &strSequence = std::string());
 
         /**
@@ -126,14 +127,11 @@ namespace ORB_SLAM3
          * @param vImuMeas the vector of IMU measurements
          * @param filename the name of the file
          * @param markers the vector of fiducial markers
-         * @param envDoors the vector of doors
-         * @param envRooms the vector of rooms
          * @return the camera pose (empty if tracking fails)
          */
         Sophus::SE3f TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
                                  const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                                 const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
-                                 const vector<Room *> envRooms = vector<Room *>{});
+                                 const vector<Marker *> markers = vector<Marker *>{});
 
         /**
          * @brief Process the given rgbd frame for tracking. The DepthMap must be registered to the RGB frame.
@@ -144,16 +142,12 @@ namespace ORB_SLAM3
          * @param vImuMeas the vector of IMU measurements
          * @param filename the name of the file
          * @param markers the vector of fiducial markers
-         * @param envDoors the vector of doors
-         * @param envRooms the vector of rooms
          * @return the camera pose (empty if tracking fails)
          */
         Sophus::SE3f TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap,
                                const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &mainCloud,
                                const double &timestamp, const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(),
-                               string filename = "", const vector<Marker *> markers = vector<Marker *>{},
-                               const vector<Door *> envDoors = vector<Door *>{},
-                               const vector<Room *> envRooms = vector<Room *>{});
+                               string filename = "", const vector<Marker *> markers = vector<Marker *>{});
 
         /**
          * @brief Process the given stereo frame for tracking. Images must be synchronized and rectified.
@@ -162,14 +156,11 @@ namespace ORB_SLAM3
          * @param vImuMeas the vector of IMU measurements
          * @param filename the name of the file
          * @param markers the vector of fiducial markers
-         * @param envDoors the vector of doors
-         * @param envRooms the vector of rooms
          * @return the camera pose (empty if tracking fails)
          */
         Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp,
                                     const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                                    const vector<Marker *> markers = vector<Marker *>{}, const vector<Door *> envDoors = vector<Door *>{},
-                                    const vector<Room *> envRooms = vector<Room *>{});
+                                    const vector<Marker *> markers = vector<Marker *>{});
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();
@@ -244,9 +235,6 @@ namespace ORB_SLAM3
         Eigen::Vector3f GetImuVwb();
         bool isImuPreintegrated();
 
-        // For accessing ROS parameters, set in common.h
-        SystemParams GetSystemParameters();
-
         // For debugging
         double GetTimeFromIMUInit();
         bool isLost();
@@ -257,11 +245,10 @@ namespace ORB_SLAM3
         float GetImageScale();
 
         /**
-         * @brief Set the vector of doors and rooms fetched from the database for GeometricSegmentation
-         * @param envDoors the vector of doors fetched from the database
-         * @param envRooms the vector of rooms fetched from the database
+         * @brief Parse the JSON file containing the environment data
+         * @param jsonFilePath the path to the JSON file
          */
-        void setEnvFetchedValues(std::vector<Door *> envDoors, std::vector<Room *> envRooms);
+        void parseJsonDatabase(string jsonFilePath);
 
         /**
          * @brief Add the segmented image to the buffer in the SemanticSegmentation
@@ -315,6 +302,10 @@ namespace ORB_SLAM3
         // Geometric & Semantic Segmentation
         SemanticSegmentation *mpSemanticSegmentation;
         GeometricSegmentation *mpGeometricSegmentation;
+
+        // List of rooms and doors in the environment
+        std::vector<ORB_SLAM3::Room *> envRooms;
+        std::vector<ORB_SLAM3::Door *> envDoors;
 
         // System threads: Local Mapping, Loop Closing, Viewer.
         // 🚀 [vS-Graphs v.2.0] Two new threads: Geometric Segmentation and Semantic Segmentation

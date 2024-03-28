@@ -18,9 +18,6 @@ namespace ORB_SLAM3
 
     bool Utils::arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2)
     {
-        // Variables
-        float threshold = -0.9f;
-
         // Get the normal vectors of the planes
         Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
         Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
@@ -29,7 +26,7 @@ namespace ORB_SLAM3
         float dotProduct = normal1.dot(normal2);
 
         // Check if the dot product is close to -1
-        if (dotProduct < threshold)
+        if (dotProduct < SystemParams::GetParams()->seg.plane_facing_dot_thresh)
             return true;
         else
             return false;
@@ -152,8 +149,9 @@ namespace ORB_SLAM3
 
     template <typename PointT>
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDistanceFilter(
-        const typename pcl::PointCloud<PointT>::Ptr &cloud, std::pair<float, float> thresholds)
+        const typename pcl::PointCloud<PointT>::Ptr &cloud)
     {
+        const std::pair<float, float> thresholds = SystemParams::GetParams()->pointcloud.distance_thresh;
         const float thresholdNear = thresholds.first;
         const float thresholdFar = thresholds.second;
         double distance;
@@ -180,19 +178,16 @@ namespace ORB_SLAM3
         return filteredCloud;
     }
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(
-        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, std::pair<float, float>);
+        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
 
     template <typename PointT, template<typename> class SegmentationType>
     std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> Utils::ransacPlaneFitting(
-        typename pcl::PointCloud<PointT>::Ptr &cloud, int minSegmentationPoints)
+        typename pcl::PointCloud<PointT>::Ptr &cloud)
     {
         std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> extractedPlanes;
+        SystemParams *sysParams = SystemParams::GetParams();
 
-        // Loop over cloud points as long as the cloud is large enough
-        // [TODO] Temporary disabling sequential ransac
-        // while (cloud->points.size() > minSegmentationPoints)
-        const uint8_t maxRansacIterations = 1;
-        for (uint8_t i = 0; i < maxRansacIterations && cloud->points.size() > minSegmentationPoints; i++)
+        for (unsigned int i = 0; i < sysParams->seg.ransac.max_planes && cloud->points.size() > sysParams->seg.pointclouds_thresh; i++)
         {
             try
             {
@@ -207,8 +202,8 @@ namespace ORB_SLAM3
                 // Fill the values of the segmentation object
                 seg.setInputCloud(cloud);
                 seg.setNumberOfThreads(8);
-                seg.setMaxIterations(500);
-                seg.setDistanceThreshold(0.05);
+                seg.setMaxIterations(sysParams->seg.ransac.max_iterations);
+                seg.setDistanceThreshold(sysParams->seg.ransac.distance_thresh);
                 seg.setOptimizeCoefficients(true);
                 seg.setMethodType(pcl::SAC_RANSAC);
                 seg.setModelType(pcl::SACMODEL_PLANE);
@@ -259,10 +254,10 @@ namespace ORB_SLAM3
     }
     template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
             Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, int);
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
     template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
             Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, int);
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
 
     ORB_SLAM3::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId)
     {
@@ -286,7 +281,7 @@ namespace ORB_SLAM3
         double pointPlaneDist = calculateDistancePointToPlane(planeEquation, mapPoint->GetWorldPos().cast<double>());
 
         // Apply a threshold
-        if (pointPlaneDist < 0.1)
+        if (pointPlaneDist < SystemParams::GetParams()->seg.plane_point_dist_thresh)
             return true;
 
         return false;
@@ -298,8 +293,6 @@ namespace ORB_SLAM3
 
         // Initialize difference value
         double minDiff = 100.0;
-        // Fixed threshold for comparing two planes
-        double diffThreshold = 0.2;
 
         // Check if mappedPlanes is empty
         if (mappedPlanes.empty())
@@ -331,7 +324,7 @@ namespace ORB_SLAM3
         }
 
         // If the difference is not large, no need to add the plane
-        if (minDiff < diffThreshold)
+        if (minDiff < SystemParams::GetParams()->seg.plane_association_thresh)
             return planeId;
 
         // Otherwise, return -1 so that the the plane gets added to the map

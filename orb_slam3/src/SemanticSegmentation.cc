@@ -2,24 +2,15 @@
 
 namespace ORB_SLAM3
 {
-    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize,
-                                               std::pair<float, float> distFilterThreshold, float downsampleLeafSize)
+    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas)
     {
         mpAtlas = pAtlas;
-        mMinCloudSize = minCloudSize;
-        mSegProbThreshold = segProbThreshold;
-        mDistFilterThreshold = distFilterThreshold;
-        mDownsampleLeafSize = downsampleLeafSize;
 
-        // ground planes having a height greater than this threshold over the (lowest/biggest)? ground plane are filtered
-        mGroundPlaneHeightThreshold = 0.50;
+        // Get the system parameters
+        sysParams = SystemParams::GetParams();
 
-        // flags to indicate what segmentation modules run, modes are:
-        // 1. Semantic segmentation runs independently - mSemRuns = true, mGeoRuns = false
-        // 2. Semantic segmentation runs with Geometric segmentation - mSemRuns = true, mGeoRuns = true
-        // 3. Geometric segmentation runs independently - mSemRuns = false, mGeoRuns = true
-        mSemRuns = true;
-        mGeoRuns = true;
+        // Set booleans according to the mode of operation
+        mGeoRuns = !(sysParams->general.mode_of_operation == SystemParams::general::ModeOfOperation::SEM);
     }
 
     void SemanticSegmentation::Run()
@@ -60,7 +51,7 @@ namespace ORB_SLAM3
 
             // get all planes for each class specific point cloud using RANSAC
             std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> clsPlanes =
-                getPlanesFromClassClouds(clsCloudPtrs, mMinCloudSize);
+                getPlanesFromClassClouds(clsCloudPtrs);
 
             // set the class specific point clouds to the keyframe
             thisKF->setCurrentClsCloudPtrs(clsCloudPtrs);
@@ -69,10 +60,7 @@ namespace ORB_SLAM3
             updatePlaneData(thisKF, clsPlanes);
 
             // Check for possible room candidates
-            // [TODO] Replace it with a flag
-            // [TODO] Naming conflict with mGeoRuns
-            bool useGeo = true; 
-            if (useGeo)
+            if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
                 updateMapRoomCandidateToRoom_Geo();
         }
     }
@@ -115,13 +103,13 @@ namespace ORB_SLAM3
                 float value;
                 memcpy(&value, data + pointStep * i + bytesPerClassProb * j + pclPc2SegPrb->fields[0].offset, bytesPerClassProb);
 
-                if (value >= mSegProbThreshold)
+                if (value >= sysParams->sem_seg.prob_thresh)
                 {
                     // inject coordinates as a point to respective point cloud
                     pcl::PointXYZRGBA point;
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
-                    
+
                     // convert uncertainity to single value and assign confidence to alpha channel
                     cv::Vec3b vec = segImgUncertainity.at<cv::Vec3b>(point.y, point.x);
                     point.a = 255 - static_cast<int>(0.299 * vec[2] + 0.587 * vec[1] + 0.114 * vec[0]);
@@ -131,7 +119,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // specify size/width and log statistics
+        // specify size/width and header for each class specific point cloud
         for (int i = 0; i < numClasses; i++)
         {
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
@@ -159,24 +147,25 @@ namespace ORB_SLAM3
     }
 
     std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> SemanticSegmentation::getPlanesFromClassClouds(
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, int minCloudSize)
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs)
     {
         std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> clsPlanes;
 
         // downsample/filter the pointcloud and extract planes
-        for (unsigned long int i = 0; i < clsCloudPtrs.size(); i++)
+        for (size_t i = 0; i < clsCloudPtrs.size(); i++)
         {
+            // [TODO?] - Perhaps consider points in order of confidence instead of downsampling
             // Downsample the given pointcloud after filtering based on distance
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i], mDistFilterThreshold);
-            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, mDownsampleLeafSize);
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i]);
+            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->sem_seg.downsample_leaf_size);
 
             // copy the filtered cloud for later storage into the keyframe
             pcl::copyPointCloud(*filteredCloud, *clsCloudPtrs[i]);
 
             std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> extractedPlanes;
-            if (filteredCloud->points.size() > minCloudSize)
+            if (filteredCloud->points.size() > sysParams->seg.pointclouds_thresh)
             {
-                extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(filteredCloud, minCloudSize);
+                extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(filteredCloud);
             }
             clsPlanes.push_back(extractedPlanes);
         }
@@ -184,7 +173,7 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
-                                               std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
+        std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
     {
         for (size_t clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
@@ -222,7 +211,7 @@ namespace ORB_SLAM3
                     if (!mGeoRuns)
                         updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId);
 
-                    // cast a vote for the plane semantics    
+                    // cast a vote for the plane semantics
                     updatePlaneSemantics(matchedPlaneId, clsId, conf);
                 }
 
@@ -252,7 +241,7 @@ namespace ORB_SLAM3
 
             // Filter the ground planes
             filterGroundPlanes(groundPlane);
- 
+
             // Re-check if all wall planes are still valid
             for (const auto &plane : mpAtlas->GetAllPlanes())
                 if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL && !canBeValidWallPlane(plane))
@@ -298,7 +287,7 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                               pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId)
+                                              pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId)
     {
         // Find the matched plane among all planes of the map
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
@@ -337,7 +326,7 @@ namespace ORB_SLAM3
         // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
         // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
         // [TODO] - Parameterize threshold
-        if (abs(transformedPlaneCoefficients(1)) < 0.20)
+        if (abs(transformedPlaneCoefficients(1)) < sysParams->sem_seg.max_tilt_wall)
             return true;
         return false;
     }
@@ -370,18 +359,29 @@ namespace ORB_SLAM3
             if (matchedPlaneId != -1)
             {
                 Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
+                Plane *smallPlane, *bigPlane;
                 if (plane->getMapClouds()->points.size() < matchedPlane->getMapClouds()->points.size())
                 {
-                    matchedPlane->setMapClouds(plane->getMapClouds());
-                    plane->resetPlaneSemantics();
-                    plane->excludedFromAssoc = true;
+                    smallPlane = plane;
+                    bigPlane = matchedPlane;
                 }
                 else
                 {
-                    plane->setMapClouds(matchedPlane->getMapClouds());
-                    matchedPlane->resetPlaneSemantics();
-                    matchedPlane->excludedFromAssoc = true;
+                    smallPlane = matchedPlane;
+                    bigPlane = plane;
                 }
+
+                // add the smaller planecloud to the bigger plane
+                bigPlane->setMapClouds(smallPlane->getMapClouds());
+
+                // [TODO] - is this fine?
+                // // add all observations of the smaller plane to the bigger plane
+                // for (const auto &obs : smallPlane->getObservations())
+                //     bigPlane->addObservation(obs.first, obs.second);
+
+                // reset the smaller plane semantics
+                smallPlane->resetPlaneSemantics();
+                smallPlane->excludedFromAssoc = true;
             }
         }
     }
@@ -392,7 +392,7 @@ namespace ORB_SLAM3
         // [TODO] - Whether to use biggest ground plane or lowest ground plane?
 
         // get the median height of the plane to compute the threshold
-        float threshY = computeGroundPlaneHeight(groundPlane) - mGroundPlaneHeightThreshold;        
+        float threshY = computeGroundPlaneHeight(groundPlane) - sysParams->sem_seg.max_step_elevation;
 
         // go through all ground planes to check validity
         int groundPlaneId = groundPlane->getId();
@@ -414,7 +414,7 @@ namespace ORB_SLAM3
             // if the transformed plane is horizontal based on absolute value, then assign semantic, otherwise ignore
             // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
             // [TODO] - Parameterize threshold
-            if (abs(transformedPlaneCoefficients(0)) > 0.10)
+            if (abs(transformedPlaneCoefficients(0)) > sysParams->sem_seg.max_tilt_ground)
                 plane->resetPlaneSemantics();
         }
     }

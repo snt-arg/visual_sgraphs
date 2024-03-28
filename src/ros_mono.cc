@@ -25,8 +25,8 @@ int main(int argc, char **argv)
     ros::NodeHandle node_handler;
     image_transport::ImageTransport image_transport(node_handler);
 
-    std::string voc_file, settings_file, json_path;
-    node_handler.param<std::string>(node_name + "/env_file", json_path, "");
+    std::string voc_file, settings_file, sys_params_file;
+    node_handler.param<std::string>(node_name + "/sys_params_file", sys_params_file, "file_not_set");
     node_handler.param<std::string>(node_name + "/voc_file", voc_file, "file_not_set");
     node_handler.param<std::string>(node_name + "/settings_file", settings_file, "file_not_set");
 
@@ -37,9 +37,9 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (json_path == "file_not_set")
+    if (sys_params_file == "file_not_set")
     {
-        ROS_ERROR("Please provide the JSON file containing environment data in the launch file!");
+        ROS_ERROR("Please provide the YAML file containing system parameters in the launch file!");
         ros::shutdown();
         return 1;
     }
@@ -50,14 +50,6 @@ int main(int argc, char **argv)
     node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
     node_handler.param<double>(node_name + "/roll", roll, 0.0);
     node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
-    node_handler.param<double>(node_name + "/markers_impact", marker_impact, 1e10);
-    node_handler.param<double>(node_name + "/sem_prob_thresh", sem_prob_thresh, 0.8);
-    node_handler.param<float>(node_name + "/distance_thresh_far", distance_thresh_far, 5.0);
-    node_handler.param<int>(node_name + "/sem_pointclouds_thresh", sem_pointcloud_size, 200);
-    node_handler.param<int>(node_name + "/geo_pointclouds_thresh", geo_pointcloud_size, 200);
-    node_handler.param<float>(node_name + "/distance_thresh_near", distance_thresh_near, 0.5);
-    node_handler.param<float>(node_name + "/geo_downsample_leaf_size", geo_downsample_leaf_size, 0.05);
-    node_handler.param<float>(node_name + "/sem_downsample_leaf_size", sem_downsample_leaf_size, 0.05);
 
     node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
@@ -66,20 +58,11 @@ int main(int argc, char **argv)
     node_handler.param<std::string>(node_name + "/struct_frame_id", struct_frame_id, "plane");
     node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
-    // Read environment data containing markers attached to rooms and corridors
-    parseJsonDatabase(json_path);
-
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImageGrabber igb;
     sensor_type = ORB_SLAM3::System::MONOCULAR;
 
-    // Setting parameters to be used in 'System.cc'
-    setSystemParams(sysParams);
-
-    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sysParams, sensor_type, enable_pangolin);
-
-    // Set the environment data for the GeometricSegmentation thread
-    pSLAM->setEnvFetchedValues(env_doors, env_rooms);
+    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensor_type, enable_pangolin);
 
     // Subscribe to get raw images
     ros::Subscriber sub_img = node_handler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage, &igb);
@@ -127,7 +110,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
     if (minMarkerTimeDiff < 0.05)
     {
         Sophus::SE3f Tcw = pSLAM->TrackMonocular(cv_ptr->image, cv_ptr->header.stamp.toSec(), {},
-                                                 "", matchedMarkers, env_doors, env_rooms);
+                                                 "", matchedMarkers);
         markersBuffer.clear();
     }
     else

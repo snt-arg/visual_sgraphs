@@ -1,3 +1,5 @@
+#include <yaml-cpp/yaml.h>
+#include <iostream>
 
 #ifndef SYSTEMPARAMS_H
 #define SYSTEMPARAMS_H
@@ -7,19 +9,77 @@ namespace ORB_SLAM3
     class SystemParams
     {
     public:
-        double markerImpact;
-        
-        // Geometric Segmentation
-        int pointCloudSize_GeoSeg;
-        float downsampleLeafSize_GeoSeg;
-        
-        // Semantic Segmentation
-        int pointCloudSize_SemSeg;
-        double probabilityThreshold_SemSeg;
-        float downsampleLeafSize_SemSeg;
+        static SystemParams *GetParams();
+        void SetParams(const std::string &strConfigFile);
 
-        // Point Cloud Filtering params
-        std::pair<float, float> distFilterThreshold; // in meters
+        // structs for different categories of parameters
+        struct general
+        {
+            // enum for mode of operation
+            enum ModeOfOperation
+            {
+                SEM_GEO = 0,
+                SEM = 1,
+                GEO = 2
+            };
+            ModeOfOperation mode_of_operation = SEM_GEO;
+            std::string env_database = "";
+        } general;
+
+        struct markers
+        {
+            float impact = 0.1f;
+        } markers;
+
+        struct pointcloud
+        {
+            std::pair<float, float> distance_thresh = std::make_pair(0.2f, 2.5f);
+        } pointcloud;
+
+        struct seg
+        {
+            unsigned int pointclouds_thresh = 200;
+            float plane_association_thresh = 0.2f;
+            float plane_point_dist_thresh = 0.2f;
+            float plane_facing_dot_thresh = -0.8f;
+            
+            struct ransac
+            {
+                unsigned int max_planes = 2;
+                float distance_thresh = 0.04f;
+                unsigned int max_iterations = 600;
+            } ransac;
+        } seg;
+
+        struct geo_seg
+        {
+            float downsample_leaf_size = 0.09f;
+        } geo_seg;
+
+        struct sem_seg
+        {
+            float downsample_leaf_size = 0.03f;
+            float prob_thresh = 0.5f;
+            float max_step_elevation = 0.2f;
+            float max_tilt_wall = 0.3f;
+            float max_tilt_ground = 0.2f;
+        } sem_seg;
+
+        struct room_seg
+        {
+            enum Method
+            {
+                GEOMETRIC = 0,
+                FREE_SPACE = 1,
+                GNN = 2
+            };
+            Method method = GEOMETRIC;
+        } room_seg;
+
+    private:
+        SystemParams();
+        static SystemParams *mSystemParams;
+        YAML::Node mConfig;
     };
 }
 

@@ -2647,7 +2647,7 @@ namespace ORB_SLAM3
                                to_string(mpAtlas->GetAllDoors().size()) + " doors.",
                            Verbose::VERBOSITY_QUIET);
         Optimizer::GlobalBundleAdjustemnt(mpAtlas->GetCurrentMap(), 20, NULL, 0, true,
-                                          mpSystem->GetSystemParameters().markerImpact);
+                                          SystemParams::GetParams()->markers.impact);
 
         float medianDepth = pKFini->ComputeSceneMedianDepth(2);
         float invMedianDepth;

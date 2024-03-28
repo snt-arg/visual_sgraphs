@@ -146,7 +146,7 @@ namespace ORB_SLAM3
                         {
                             Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(),
                                                              num_FixedKF_BA, num_OptKF_BA, num_MPs_BA, num_edges_BA,
-                                                             mlDetRooms, mpSystem->GetSystemParameters().markerImpact);
+                                                             mlDetRooms, SystemParams::GetParams()->markers.impact);
                             mlDetRooms.clear();
                             b_doneLBA = true;
                         }

@@ -2,39 +2,11 @@
     <!-- ****** System Arguments ****** -->
     <!-- Live or reading a rosbag file (offline) -->
     <arg name="offline" default="true" />
-    
-    <!-- ****** Dataset Arguments ****** -->
-    <!-- Which semantic data file should be loaded? -->
-    <arg name="env_database" default="LuxVSD/luxvsd_seq01.json" />
-    
-    <!-- ****** Marker Arguments ****** -->
-    <!-- How much the framework should trust the markers (0.1 default, higher for mono setups) -->
-    <arg name="marker_impact" default="0.1" />
-
-    <!-- ****** Point Cloud Filtering Arguments ****** -->
-    <!-- The threshold (in meters for points in cloud to be considered - <near, far>) -->
-    <arg name="distance_thresh_near" default="0.3" />
-    <arg name="distance_thresh_far" default="3.0" />
-
-    <!-- ****** Geometric Segmentation Arguments ****** -->
-    <!-- How many pointclouds (after downsampling) needed to detect geometric objects (e.g., planes) -->
-    <arg name="pointcloud_size_geo" default="300" />
-    <!-- What is the leaf size for the pointcloud downsampling -->
-    <arg name="geo_downsample_leaf_size" default="0.07" />
-
-    <!-- ****** Semantic Segmentation Arguments ****** -->
-    <!-- What is the the threshold for semantic segmentation probability validation (rejects values below x) -->
-    <arg name="prob_sem_thresh" default="0.9" />
-    <!-- How many pointclouds (after downsampling) needed to detect semantic objects (e.g., planes) -->
-    <arg name="pointcloud_size_sem" default="300" />
-    <!-- What is the leaf size for the pointcloud downsampling -->
-    <arg name="sem_downsample_leaf_size" default="0.03" />
-
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
 
     <!-- Main node -->
-    <node name="orb_slam3" pkg="orb_slam3_ros" type="ros_rgbd_inertial" output="screen">
+    <node name="orb_slam3" pkg="orb_slam3_ros" cwd="node" type="ros_rgbd_inertial" output="screen">
         <!-- Remap to prepare the inertial data -->
         <remap from="/imu" to="/camera/imu"/>
         
@@ -47,22 +19,10 @@
         <!-- Remap to prepare the pointcloud -->
         <remap from="/camera/pointcloud"    to="/camera/depth/color/points"/>
 
-        <!-- Parameters for loading real semantic data from the environment -->
-        <param name="env_file" type="string" value="$(find orb_slam3_ros)/config/Environments/$(arg env_database)"/>
-
         <!-- Parameters for loading setting files -->
-        <param name="voc_file"      type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
-        <param name="settings_file" type="string" value="$(find orb_slam3_ros)/config/RGB-D-Inertial/LuxVSD_RS_D435i_640.yaml"/>        
-
-        <!-- Parameters for semantic/geometric objects detection -->
-        <param name="markers_impact" type="double" value="$(arg marker_impact)"/>
-        <param name="distance_thresh_near" type="double" value="$(arg distance_thresh_near)"/>
-        <param name="distance_thresh_far" type="double" value="$(arg distance_thresh_far)"/>
-        <param name="geo_downsample_leaf_size" type="double" value="$(arg geo_downsample_leaf_size)"/>
-        <param name="sem_downsample_leaf_size" type="double" value="$(arg sem_downsample_leaf_size)"/>
-        <param name="sem_prob_thresh" type="double" value="$(arg prob_sem_thresh)"/>
-        <param name="sem_pointclouds_thresh" type="int" value="$(arg pointcloud_size_sem)"/>
-        <param name="geo_pointclouds_thresh" type="int" value="$(arg pointcloud_size_geo)"/>
+        <param name="voc_file"        type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
+        <param name="settings_file"   type="string" value="$(find orb_slam3_ros)/config/RGB-D/LuxVSD_RS_D435i_640.yaml"/>
+        <param name="sys_params_file" type="string" value="$(find orb_slam3_ros)/config/common_system_params.yaml"/>
 
         <!-- Parameters for ROS -->
         <param name="roll" type="double" value="0" />
@@ -81,7 +41,7 @@
     <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera camera_color_optical_frame 10" />
     
     <!-- Visualization -->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/vsgraphs_rgbd_imu.rviz" output="screen" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/Visualization/vsgraphs_rgbd_imu.rviz" output="screen" />
     
     <!-- Trajectory path -->
     <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_server_orb_slam3" output="screen" ns="orb_slam3_ros" >

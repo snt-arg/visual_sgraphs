@@ -22,21 +22,18 @@ namespace ORB_SLAM3
     {
     private:
         Atlas *mpAtlas;
-        int mMinCloudSize;
         std::mutex mMutexNewKFs;
-        double mSegProbThreshold;
-        float mDownsampleLeafSize;
-        float mGroundPlaneHeightThreshold;
         Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
         const uint8_t bytesPerClassProb = 4; // Four bytes per class probability - refer to scene_segment_ros
-        std::pair<float, float> mDistFilterThreshold;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
-        bool mSemRuns, mGeoRuns;
+        bool mGeoRuns;
+
+        // system parameters
+        SystemParams *sysParams;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        SemanticSegmentation(Atlas *pAtlas, double segProbThreshold, int minCloudSize,
-                             std::pair<float, float> distFilterThreshold, float downsampleLeafSize);
+        SemanticSegmentation(Atlas *pAtlas);
 
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
         void AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
@@ -66,7 +63,7 @@ namespace ORB_SLAM3
          * @return a vector of vector of point clouds
          */
         std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> getPlanesFromClassClouds(
-            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, int minCloudSize);
+            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
 
         /**
          * @brief Adds the planes to the Atlas

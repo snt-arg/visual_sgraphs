@@ -2,14 +2,13 @@
 
 namespace ORB_SLAM3
 {
-    GeometricSegmentation::GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud, int minCloudSize,
-                                                 std::pair<float, float> distFilterThreshold, float downsampleLeafSize)
+    GeometricSegmentation::GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud)
     {
         mpAtlas = pAtlas;
-        mMinCloudSize = minCloudSize;
         mHasDepthCloud = hasDepthCloud;
-        mDistFilterThreshold = distFilterThreshold;
-        mDownsampleLeafSize = downsampleLeafSize;
+
+        // Get the system parameters
+        sysParams = SystemParams::GetParams();
     }
 
     void GeometricSegmentation::AddKeyFrameToBuffer(KeyFrame *pKF)
@@ -25,7 +24,7 @@ namespace ORB_SLAM3
 
     void GeometricSegmentation::Run()
     {
-        while (1)
+        while (!(sysParams->general.mode_of_operation == SystemParams::general::ModeOfOperation::SEM))
         {
             // Check if there are new KeyFrames in the buffer
             if (mvpKeyFrameBuffer.empty())
@@ -41,17 +40,17 @@ namespace ORB_SLAM3
             mMutexNewKFs.unlock();
 
             // Fetch the planes from the current KeyFrame
-            fetchPlanesFromKeyFrame(mpCurrentKeyFrame, mHasDepthCloud, mMinCloudSize);
+            fetchPlanesFromKeyFrame(mpCurrentKeyFrame, mHasDepthCloud);
 
             usleep(3000);
         }
     }
 
-    void GeometricSegmentation::fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud, int minCloudSize)
+    void GeometricSegmentation::fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud)
     {
         // Get the plane equation from the points the camera is seeing
         std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> planePointVec;
-        planePointVec = getPlanesFromPointClouds(pKF, hasDepthCloud, minCloudSize);
+        planePointVec = getPlanesFromPointClouds(pKF, hasDepthCloud);
 
         // Loop through all the planes detected
         for (auto planePoint : planePointVec)
@@ -84,7 +83,7 @@ namespace ORB_SLAM3
     }
 
     std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> GeometricSegmentation::getPlanesFromPointClouds(
-        ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud, int minCloudSize)
+        ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud)
     {
         // Variables
         std::vector<g2o::Plane3D> detectedPlanes;
@@ -105,12 +104,12 @@ namespace ORB_SLAM3
         pcl::copyPointCloud(*pointcloud, *cloudRGBA);
         
         // Downsample the given pointcloud after filtering based on distance
-        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(cloudRGBA, mDistFilterThreshold);
-        filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, mDownsampleLeafSize);
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(cloudRGBA);
+        filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->geo_seg.downsample_leaf_size);
 
-        if (filteredCloud->points.size() > minCloudSize)
+        if (filteredCloud->points.size() > sysParams->seg.pointclouds_thresh)
         {
-            extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(filteredCloud, minCloudSize);
+            extractedPlanes = Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(filteredCloud);
         }
         return extractedPlanes;
     }

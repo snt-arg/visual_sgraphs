@@ -102,7 +102,7 @@ namespace ORB_SLAM3
          */
         template <typename PointT>
         static typename pcl::PointCloud<PointT>::Ptr pointcloudDistanceFilter(
-            const typename pcl::PointCloud<PointT>::Ptr &cloud, std::pair<float, float> thresholds);
+            const typename pcl::PointCloud<PointT>::Ptr &cloud);
 
         /**
          * @brief Performs PCL ransac to get the plane equations from the a given point cloud
@@ -111,7 +111,7 @@ namespace ORB_SLAM3
          */
         template <typename PointT, template<typename> class SegmentationType>
         static std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> ransacPlaneFitting(
-            typename pcl::PointCloud<PointT>::Ptr &cloud, int minSegmentationPoints);
+            typename pcl::PointCloud<PointT>::Ptr &cloud);
 
         /**
          * @brief Checks to see if the given point is on the plane or not
