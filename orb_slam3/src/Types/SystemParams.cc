@@ -56,6 +56,7 @@ namespace ORB_SLAM3
             sem_seg.max_step_elevation = mConfig["sem_seg"]["max_step_elevation"].as<float>();
             sem_seg.max_tilt_wall = mConfig["sem_seg"]["max_tilt_wall"].as<float>();
             sem_seg.max_tilt_ground = mConfig["sem_seg"]["max_tilt_ground"].as<float>();
+            sem_seg.min_votes = mConfig["sem_seg"]["min_votes"].as<float>();
 
             room_seg.method = static_cast<room_seg::Method>(mConfig["room_seg"]["method"].as<int>());
 

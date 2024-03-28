@@ -63,6 +63,7 @@ namespace ORB_SLAM3
             float max_step_elevation = 0.2f;
             float max_tilt_wall = 0.3f;
             float max_tilt_ground = 0.2f;
+            float min_votes = 3.5;
         } sem_seg;
 
         struct room_seg

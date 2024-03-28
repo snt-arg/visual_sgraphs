@@ -9,6 +9,7 @@
 #include "Map.h"
 #include "MapPoint.h"
 #include "Semantic/Marker.h"
+#include "Types/SystemParams.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
 
 #include <pcl/common/io.h>

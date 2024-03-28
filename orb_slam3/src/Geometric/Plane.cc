@@ -138,8 +138,7 @@ namespace ORB_SLAM3
         }
 
         // set the plane type if votes above a certain threshold
-        // [TODO] parameterize the maxVotes threshold
-        if (maxVotes >= 2.5)
+        if (maxVotes >= SystemParams::GetParams()->sem_seg.min_votes)
             planeType = maxType;
     }
 

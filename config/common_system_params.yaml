@@ -70,6 +70,9 @@ sem_seg:
   max_tilt_wall: 0.2
   max_tilt_ground: 0.1
 
+  # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
+  min_votes: 2.5
+
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:
