@@ -289,21 +289,49 @@ Host unitree
 | Param                                                        | Description                                                                                                    |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `offline`                                                    | live or reading rosbag file (offline)?                                                                         |
-| `env_database`                                               | semantic map data file to be loaded                                                                            |
-| `pointcloud_size_geo`                                        | min number of points in the pointcloud to detect geometric objects                                             |
-| `geo_downsample_leaf_size`                                   | leaf size to use when downsampling pointcloud before using RANSAC in geometric segmentation                    |
-| `pointcloud_size_sem`                                        | min number of points in the pointcloud to detect semantic objects                                              |
-| `sem_prob_thresh`                                            | probability threshold to detect semantic objects                                                               |
-| `sem_downsample_leaf_size`                                   | leaf size to use when downsampling pointcloud before using RANSAC in geometric segmentation                    |
-| `marker_impact`                                              | how much to trust markers                                                                                      |
-| `distance_thresh_near`                                       | Minimum distance (in meters) for point cloud filtering, points closer are discarded                            |
-| `distance_thresh_far`                                        | Maximum distance (in meters) for point cloud filtering, points farther are discarded                           |
+| `sys_params_file`                                            | path to the common system parameters (see below)                                                               |
 | `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
 | `settings_file`                                              | path to settings file                                                                                          |
 | `enable_pangolin`                                            | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
 | `publish_static_transform`                                   | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
 | `roll`, `yaw`, and `pitch`                                   | poses and dimensions of movement                                                                               |
 | `map_frame_id` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
+
+### ⚙️ Common System Parameters
+Parameters for the SLAM system (independent of ROS) are stored in a yaml config file in `config/common_system_params.yaml`. The details of these parameters are
+| Param                                                        | Description                                                                                                    |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `general`                                                    | general system configuration - not specific to any module                                                      |
+| --- `mode_of_operation`                                      | one of three: 0 (SemSeg+GeoSeg), 1 (SemSeg), and 2 (GeoSeg)                                                    |
+| --- `env_database`                                           | path to the details for the high level semantics in the environment                                            |
+| `markers`                                                    | configuration related to aruco markers                                                                         |
+| --- `impact`                                                 | how much to trust markers                                                                                      |
+| `pointcloud`                                                 | configuration related to pointcloud processing                                                                 |
+| --- `distance_thresh`                                        | distance filtering thresholds                                                                                  |
+| ------ `near`                                                | minimum depth of point to be considered                                                                        |
+| ------ `far`                                                 | maximum depth of point to be considered                                                                        |
+| `seg`                                                        | configuration common to both segmentation modules (SemSeg and GeoSeg)                                          |
+| --- `pointclouds_thresh`                                     | minimum number of points needed to fit a plane                                                                 |
+| --- `plane_association_thresh`                               | minimum threshold for ominus for two planes to be considered the same                                          |
+| --- `plane_point_dist_thresh`                                | maximum distance for point to be considered on a plane                                                         |
+| --- `plane_facing_dot_thresh`                                | maximum dot product of plane normals for the planes to be considered as facing each other                      |
+| --- `ransac`                                                 | configuration related to RANSAC                                                                                |
+| ------ `max_planes`                                          | maximum number of planes to extract from a pointcloud                                                          |
+| ------ `distance_thresh`                                     | maximum distance for a point to be considered as inlier                                                        |
+| ------ `max_iterations`                                      | maximum number of RANSAC iterations                                                                            |
+| `geo_seg`                                                    | configuration specific to GeoSeg                                                                               |
+| --- `downsample_leaf_size`                                   | leaf size (same in all axes) for downsampling the pointcloud                                                   |
+| `sem_seg`                                                    | configuration common to both segmentation modules (SemSeg and GeoSeg)                                          |
+| --- `downsample_leaf_size`                                   | leaf size (same in all axes) for downsampling the pointcloud                                                   |
+| --- `prob_thresh`                                            | minimum class probability for point to be considered part of a class (must be > 0.5)                           |
+| --- `max_step_elevation`                                     | maximum median height of a stepped ground plane over the main ground plane                                     |
+| --- `max_tilt_wall`                                          | maximum tilt heuristic for a wall plane to be valid                                                            |
+| --- `max_tilt_ground`                                        | maximum tilt heuristic for a ground plane to be valid                                                          |
+| --- `min_votes`                                              | minimum votes for a plane to be classified with a semantic label                                               |
+| `room_seg`                                                   | configuration for room detection/segmentation                                                                  |
+| --- `method`                                                 | the algorithm to use; one of 0 (Geometric), 1 (Free space clustering), and 2 (GNNs)                            |
+| --- `max_step_elevation`                                     | maximum median height of a stepped ground plane over the main ground plane                                     |
+| --- `max_tilt_wall`                                          | maximum tilt heuristic for a wall plane to be valid                                                            |
 
 ## 📍 Maps <a id="maps"></a>
 
