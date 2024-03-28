@@ -218,14 +218,14 @@ namespace ORB_SLAM3
                 // re-associations and filters - run them after each ground plane is detected
                 if (clsId == 0)
                 {
-                    Plane *groundPlane = mpAtlas->GetBiggestGroundPlane();
-                    if (groundPlane != nullptr)
+                    Plane *mainGroundPlane = mpAtlas->GetBiggestGroundPlane();
+                    if (mainGroundPlane != nullptr)
                     {
                         // Re-compute the transformation from ground to horizontal - maybe global eq. changed
-                        mPlanePoseMat = computePlaneToHorizontal(groundPlane);
+                        mPlanePoseMat = computePlaneToHorizontal(mainGroundPlane);
 
                         // Filter the ground planes after the update
-                        filterGroundPlanes(groundPlane);
+                        filterGroundPlanes(mainGroundPlane);
                     }
                 }
             }
@@ -233,23 +233,19 @@ namespace ORB_SLAM3
 
         // Update the ground plane, as it might have been updated
         // even when semantic segmentation did not detect any planes
-        Plane *groundPlane = mpAtlas->GetBiggestGroundPlane();
-        if (groundPlane != nullptr)
+        Plane *mainGroundPlane = mpAtlas->GetBiggestGroundPlane();
+        if (mainGroundPlane != nullptr)
         {
             // Re-compute the transformation from ground to horizontal - maybe global eq. changed
-            mPlanePoseMat = computePlaneToHorizontal(groundPlane);
+            mPlanePoseMat = computePlaneToHorizontal(mainGroundPlane);
 
-            // Filter the ground planes
-            filterGroundPlanes(groundPlane);
-
-            // Re-check if all wall planes are still valid
-            for (const auto &plane : mpAtlas->GetAllPlanes())
-                if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL && !canBeValidWallPlane(plane))
-                    plane->resetPlaneSemantics();
+            // Filter planes with semantics
+            filterGroundPlanes(mainGroundPlane);
+            filterWallPlanes();
         }
 
         // reassociate semantic planes if they get close to each other :)) after optimization
-        reAssociateSemanticPlanes(mpAtlas->GetAllPlanes());
+        reAssociateSemanticPlanes();
     }
 
     void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
@@ -317,23 +313,28 @@ namespace ORB_SLAM3
         matchedPlane->castWeightedVote(planeType, confidence);
     }
 
-    bool SemanticSegmentation::canBeValidWallPlane(Plane *plane)
+    void SemanticSegmentation::filterWallPlanes()
     {
-        // wall validation based on the mPlanePoseMat
-        // only works if the ground plane is set, needs the correction matrix: mPlanePoseMat
-        Eigen::Vector3f transformedPlaneCoefficients = transformPlaneEqToGroundReference(plane->getGlobalEquation().coeffs());
+        for (const auto &plane : mpAtlas->GetAllPlanes())
+        {
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+            {
+                // wall validation based on the mPlanePoseMat
+                // only works if the ground plane is set, needs the correction matrix: mPlanePoseMat
+                Eigen::Vector3f transformedPlaneCoefficients = transformPlaneEqToGroundReference(plane->getGlobalEquation().coeffs());
 
-        // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
-        // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
-        // [TODO] - Parameterize threshold
-        if (abs(transformedPlaneCoefficients(1)) < sysParams->sem_seg.max_tilt_wall)
-            return true;
-        return false;
+                // if the transformed plane is vertical based on absolute value, then assign semantic, otherwise ignore
+                // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
+                if (abs(transformedPlaneCoefficients(1)) > sysParams->sem_seg.max_tilt_wall)
+                    plane->resetPlaneSemantics();
+            }
+        }
     }
 
-    void SemanticSegmentation::reAssociateSemanticPlanes(const std::vector<Plane *> &planes)
+    void SemanticSegmentation::reAssociateSemanticPlanes()
     {
         // loop through all the planes to look for associations after possible update by the optimization
+        const std::vector<Plane *> planes = mpAtlas->GetAllPlanes();
         for (const auto &plane : planes)
         {
             // consider planes that have a semantic type and are not excluded from association
@@ -413,7 +414,6 @@ namespace ORB_SLAM3
 
             // if the transformed plane is horizontal based on absolute value, then assign semantic, otherwise ignore
             // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
-            // [TODO] - Parameterize threshold
             if (abs(transformedPlaneCoefficients(0)) > sysParams->sem_seg.max_tilt_ground)
                 plane->resetPlaneSemantics();
         }

@@ -103,20 +103,18 @@ namespace ORB_SLAM3
                             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId);
 
         /**
-         * @brief Checks whether a plane can be a valid wall plane
-         * @param plane the plane
+         * @brief Filters the wall planes to remove heavily tilted walls
          */
-        bool canBeValidWallPlane(Plane *plane);
+        void filterWallPlanes();
 
         /**
-         * @brief Reassociates the wall planes if they get closer after optimization
-         * @param planes the planes (can be all planes - walls checked within the function)
+         * @brief Reassociates semantically classified planes if they get closer after optimization
          */
-        void reAssociateSemanticPlanes(const std::vector<Plane *> &planes);
+        void reAssociateSemanticPlanes();
 
         /**
          * @brief Filters the ground plane to remove points that are too far from the plane
-         * @param groundPlane the ground plane
+         * @param groundPlane the main ground plane that is the reference
          */
         void filterGroundPlanes(Plane *groundPlane);
 
