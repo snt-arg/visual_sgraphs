@@ -19,7 +19,9 @@
 
 #include <std_msgs/Header.h>
 #include <std_msgs/UInt64.h>
+#include <std_msgs/Float64.h>
 #include <sensor_msgs/Imu.h>
+#include <geometry_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>
 #include <pcl/common/common.h>
 #include <pcl/PCLPointCloud2.h>
@@ -29,6 +31,10 @@
 #include <visualization_msgs/Marker.h>
 #include <segmenter_ros/VSGraphDataMsg.h>
 #include <segmenter_ros/SegmenterDataMsg.h>
+#include <orb_slam3_ros/KeyFramePlaneBundle.h>
+#include <orb_slam3_ros/KeyFrameData.h>
+#include <orb_slam3_ros/KeyFramePlaneObservation.h>
+#include <orb_slam3_ros/PlaneData.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <rviz_visual_tools/rviz_visual_tools.h>
@@ -59,9 +65,6 @@
 #include "Semantic/Room.h"
 #include "Semantic/Marker.h"
 
-using json = nlohmann::json;
-
-class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
@@ -98,13 +101,13 @@ void publishRooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
 void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishDoors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
-void publishKeyframeImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishTfTransform(Sophus::SE3f, string, string, ros::Time);
 void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
 void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
+void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *>, std::vector<ORB_SLAM3::Plane *>, ros::Time);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
