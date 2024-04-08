@@ -42,6 +42,10 @@ namespace ORB_SLAM3
             // Fetch the planes from the current KeyFrame
             fetchPlanesFromKeyFrame(mpCurrentKeyFrame, mHasDepthCloud);
 
+            // clear the current KeyFrame pointcloud if semantic mode is not active
+            if (sysParams->general.mode_of_operation == SystemParams::general::ModeOfOperation::GEO)
+                mpCurrentKeyFrame->clearPointCloud();
+
             usleep(3000);
         }
     }

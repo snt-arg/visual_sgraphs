@@ -46,7 +46,6 @@ namespace ORB_SLAM3
             enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
 
             // clear cloud as it is no longer needed and consumes significant memory
-            // [TODO] - clear even if semantic segmentation is not running
             thisKF->clearPointCloud();
 
             // get all planes for each class specific point cloud using RANSAC
