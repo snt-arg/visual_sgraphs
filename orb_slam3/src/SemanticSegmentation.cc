@@ -486,7 +486,6 @@ namespace ORB_SLAM3
                 allWalls.push_back(plane);
 
         // Get the closest walls to the current KeyFrame
-        double poseToPlaneDistThresh = 5.0;
         std::vector<Plane *> closestWalls;
         for (auto wall : allWalls)
         {
@@ -495,7 +494,7 @@ namespace ORB_SLAM3
                                                                    pKF->GetPose().translation().cast<double>());
 
             // Update closestWalls if distance is smaller than the threshold
-            if (distance < poseToPlaneDistThresh)
+            if (distance < sysParams->room_seg.marker_wall_distance_thresh)
                 closestWalls.push_back(wall);
         }
 

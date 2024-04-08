@@ -76,3 +76,8 @@ room_seg:
   # 1: Segment based on free space clustering
   # 2: Segment based on GNN
   method: 0
+
+  # Parameters for the geometrically-based closest walls room segmentation
+  geo_based:
+    # The maximum distance from a marker to a wall to be considered part of the room
+    marekr_wall_distance_thresh: 6.0

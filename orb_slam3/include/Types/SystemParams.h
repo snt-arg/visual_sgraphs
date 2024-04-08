@@ -12,7 +12,7 @@ namespace ORB_SLAM3
         static SystemParams *GetParams();
         void SetParams(const std::string &strConfigFile);
 
-        // structs for different categories of parameters
+        // Structs for different categories of parameters
         struct general
         {
             // enum for mode of operation
@@ -42,7 +42,7 @@ namespace ORB_SLAM3
             float plane_association_thresh = 0.2f;
             float plane_point_dist_thresh = 0.2f;
             float plane_facing_dot_thresh = -0.8f;
-            
+
             struct ransac
             {
                 unsigned int max_planes = 2;
@@ -58,12 +58,12 @@ namespace ORB_SLAM3
 
         struct sem_seg
         {
-            float downsample_leaf_size = 0.03f;
+            float min_votes = 3.5;
             float prob_thresh = 0.5f;
-            float max_step_elevation = 0.2f;
             float max_tilt_wall = 0.3f;
             float max_tilt_ground = 0.2f;
-            float min_votes = 3.5;
+            float max_step_elevation = 0.2f;
+            float downsample_leaf_size = 0.03f;
         } sem_seg;
 
         struct room_seg
@@ -75,6 +75,8 @@ namespace ORB_SLAM3
                 GNN = 2
             };
             Method method = GEOMETRIC;
+
+            float marker_wall_distance_thresh = 3.0f;
         } room_seg;
 
     private:
