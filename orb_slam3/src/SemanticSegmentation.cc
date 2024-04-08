@@ -60,7 +60,7 @@ namespace ORB_SLAM3
 
             // Check for possible room candidates
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
-                updateMapRoomCandidateToRoom_Geo();
+                updateMapRoomCandidateToRoomGeo(thisKF);
         }
     }
 
@@ -172,7 +172,7 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
-        std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
+                                               std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
     {
         for (size_t clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
@@ -473,7 +473,7 @@ namespace ORB_SLAM3
         return planePoseMat;
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoom_Geo()
+    void SemanticSegmentation::updateMapRoomCandidateToRoomGeo(KeyFrame *pKF)
     {
         // Get all the mapped planes and rooms
         std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
@@ -485,10 +485,24 @@ namespace ORB_SLAM3
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
                 allWalls.push_back(plane);
 
+        // Get the closest walls to the current KeyFrame
+        double poseToPlaneDistThresh = 5.0;
+        std::vector<Plane *> closestWalls;
+        for (auto wall : allWalls)
+        {
+            // Calculate distance between wall centroid and KeyFrame pose
+            double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(),
+                                                                   pKF->GetPose().translation().cast<double>());
+
+            // Update closestWalls if distance is smaller than the threshold
+            if (distance < poseToPlaneDistThresh)
+                closestWalls.push_back(wall);
+        }
+
         // Get all the facing walls
         std::vector<std::pair<Plane *, Plane *>> facingWalls;
-        for (auto wall1 : allWalls)
-            for (auto wall2 : allWalls)
+        for (auto wall1 : closestWalls)
+            for (auto wall2 : closestWalls)
             {
                 // Skip the same wall
                 if (wall1->getId() == wall2->getId())
@@ -508,6 +522,8 @@ namespace ORB_SLAM3
                 // If all the walls of the room candidate are detected, skip it
                 int wallsNeeded = roomCandidate->getIsCorridor() ? 2 : 4;
                 int wallsDetectedSoFar = roomCandidate->getWalls().size();
+
+                // [TODO] Re-check the walls of each room to remove the below condition
                 if (wallsDetectedSoFar == wallsNeeded)
                     continue;
 
@@ -564,12 +580,15 @@ namespace ORB_SLAM3
                     }
                 }
 
+                // [TODO] Check the isCorridor and the number of walls we connected
+                // If it is more than 4 four 4-wall room or 2 for corridor, we should take only the ones closest to the room
+
                 // Finally, update the room candidate to a room
                 roomCandidate->setIsCandidate(false);
             }
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoom_Voxblox(Room *roomCandidate)
+    void SemanticSegmentation::updateMapRoomCandidateToRoomVoxblox(Room *roomCandidate)
     {
         // [TODO] Needs to be implemented
 
@@ -654,7 +673,7 @@ namespace ORB_SLAM3
         //           << std::endl;
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoom_GNN(Room *roomCandidate)
+    void SemanticSegmentation::updateMapRoomCandidateToRoomGNN(Room *roomCandidate)
     {
         // [TODO] Needs to be implemented
     }

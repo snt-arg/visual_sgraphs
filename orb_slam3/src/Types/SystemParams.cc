@@ -2,7 +2,7 @@
 
 namespace ORB_SLAM3
 {
-    SystemParams* SystemParams::mSystemParams = nullptr;
+    SystemParams *SystemParams::mSystemParams = nullptr;
 
     SystemParams::SystemParams()
     {
@@ -59,7 +59,6 @@ namespace ORB_SLAM3
             sem_seg.min_votes = mConfig["sem_seg"]["min_votes"].as<float>();
 
             room_seg.method = static_cast<room_seg::Method>(mConfig["room_seg"]["method"].as<int>());
-
         }
         catch (YAML::Exception &e)
         {

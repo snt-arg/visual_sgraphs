@@ -10,12 +10,10 @@ general:
   # [TODO] - the path looks ugly, possible workaround?
   env_database: "../../../src/visual_sgraphs/config/Environments/LuxVSD/luxvsd_seq02.json"
 
-
 #################################### Marker Parameters ###########################################
 markers:
   # How much the framework should trust the markers (0.1 default, higher for mono setups)
   impact: 0.1
-
 
 ############################## PointCloud Parameters #############################################
 pointcloud:
@@ -48,12 +46,10 @@ seg:
     # The maximum number of iterations for the RANSAC algorithm
     max_iterations: 500
 
-
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
   # The leaf size for the pointcloud downsampling
   downsample_leaf_size: 0.08
-
 
 ############################## Semantic Segmentation Parameters ####################################
 sem_seg:
@@ -72,7 +68,6 @@ sem_seg:
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
   min_votes: 2.5
-
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:

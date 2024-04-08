@@ -45,8 +45,8 @@ namespace ORB_SLAM3
          * @param clsCloudPtrs the class specific point clouds
          */
         void threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
-                                                     cv::Mat &segImgUncertainity,
-                                                     std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
+                                      cv::Mat &segImgUncertainity,
+                                      std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
 
         /**
          * @brief Enriches the class-specific point clouds (with XYZ and RGB) with the current keyframe point cloud
@@ -142,19 +142,19 @@ namespace ORB_SLAM3
         /**
          * @brief Converts mapped room candidates to rooms using geometric constraints
          */
-        void updateMapRoomCandidateToRoom_Geo();
+        void updateMapRoomCandidateToRoomGeo(KeyFrame *pKF);
 
         /**
          * @brief Converts mapped room candidates to rooms using voxmap and freespace clusters
          * @param roomCandidate the address of the candidate room
          */
-        void updateMapRoomCandidateToRoom_Voxblox(Room *roomCandidate);
+        void updateMapRoomCandidateToRoomVoxblox(Room *roomCandidate);
 
         /**
          * @brief Converts mapped room candidates to rooms using a GNN
          * @param roomCandidate the address of the candidate room
          */
-        void updateMapRoomCandidateToRoom_GNN(Room *roomCandidate);
+        void updateMapRoomCandidateToRoomGNN(Room *roomCandidate);
 
         // Running the thread
         void Run();
