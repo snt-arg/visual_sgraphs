@@ -1,3 +1,3 @@
 std_msgs/Header header
-std_msgs/UInt64 keyFrameId
-geometry_msgs/Pose keyFramePose
+std_msgs/UInt64 keyframeid
+geometry_msgs/Pose keyframepose

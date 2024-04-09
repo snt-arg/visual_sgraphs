@@ -1,5 +1,5 @@
-std_msgs/UInt64 keyFrameId
-std_msgs/UInt64 planeId
+std_msgs/UInt64 keyframeid
+std_msgs/UInt64 planeid
 
 # the plane local equation in the observation
 std_msgs/Float64 a

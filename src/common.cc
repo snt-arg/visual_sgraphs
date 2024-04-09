@@ -19,7 +19,7 @@ std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, doorsPub,
-    all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
+    all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub, keyframe_markers_pub, plane_markers_pub, observation_markers_pub;
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
@@ -86,8 +86,10 @@ void setupPublishers(ros::NodeHandle &node_handler, image_transport::ImageTransp
 
     // Keyrame-Plane association
     kf_plane_assoc = node_handler.advertise<orb_slam3_ros::KeyFramePlaneBundle>(node_name + "/kf_plane_assoc", 1);
+    keyframe_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/keyframe_markers", 1);
+    plane_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/plane_markers", 1);
+    observation_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/observation_markers", 1);
 
-    // Get body odometry if IMU data is also available
     if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO ||
         sensor_type == ORB_SLAM3::System::IMU_RGBD)
         odom_pub = node_handler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
@@ -244,7 +246,7 @@ void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, std
     {
         if (keyframe->isPublished)
             continue;
-
+            
         // Create an object of VSGraphDataMsg
         segmenter_ros::VSGraphDataMsg vsGraphPublisher = segmenter_ros::VSGraphDataMsg();
 
@@ -264,70 +266,53 @@ void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, std
         keyframe->isPublished = true;
 
         // Publish the keyframes, planes, and observations
-        orb_slam3_ros::KeyFramePlaneBundle kfPlaneBundle;
-        std::vector<orb_slam3_ros::PlaneData> planes;
-        std::vector<orb_slam3_ros::KeyFramePlaneObservation> observations;
-        std::vector<orb_slam3_ros::KeyFrameData> keyframes;
+        visualization_msgs::MarkerArray planes;
+        visualization_msgs::MarkerArray observations;
+        visualization_msgs::MarkerArray keyframes;
+
+
+        
 
         for (auto plane: plane_vec)
         {
-            orb_slam3_ros::PlaneData planeData;
-            std_msgs::UInt64 planeId;
-            planeId.data = plane->getId();
-
-            std_msgs::Float64 a;
-            std_msgs::Float64 b;
-            std_msgs::Float64 c;
-            std_msgs::Float64 d;
-
+            // orb_slam3_ros::PlaneData planeData;
+            visualization_msgs::Marker planeMarker;
+            
+            uint16_t planeId = plane->getId();
+            planeMarker.id = planeId;
             Eigen::Vector4f coeffs = plane->getGlobalEquation().coeffs().cast<float>();
-            a.data = coeffs[0];
-            b.data = coeffs[1];
-            c.data = coeffs[2];
-            d.data = coeffs[3];
 
-            planeData.planeId = planeId;
-            planeData.a = a;
-            planeData.b = b;
-            planeData.c = c;
-            planeData.d = d;
+            planeMarker.pose.orientation.w = coeffs[0];
+            planeMarker.pose.orientation.x = coeffs[1];
+            planeMarker.pose.orientation.y = coeffs[2];
+            planeMarker.pose.orientation.z = coeffs[3];
 
-            planes.push_back(planeData);
+            planes.markers.push_back(planeMarker);
 
             for (auto observation: plane->getObservations())
             {
-                orb_slam3_ros::KeyFramePlaneObservation kfPlaneObs;
-                std_msgs::UInt64 kfId;
-                kfId.data = observation.first->mnId;
-                kfPlaneObs.keyFrameId = kfId;
-                kfPlaneObs.planeId = planeId;
 
-                std_msgs::Float64 a;
-                std_msgs::Float64 b;
-                std_msgs::Float64 c;
-                std_msgs::Float64 d;
-                
+                visualization_msgs::Marker observationMarker;
+                uint16_t keyframeId = observation.first->mnId;
+                uint32_t result = (static_cast<uint32_t>(keyframeId) << 16) | planeId;
+
+                observationMarker.id = result; 
                 Eigen::Vector4f coeffs = observation.second.coeffs().cast<float>();
-                a.data = coeffs[0];
-                b.data = coeffs[1];
-                c.data = coeffs[2];
-                d.data = coeffs[3];
 
-                kfPlaneObs.a = a;
-                kfPlaneObs.b = b;
-                kfPlaneObs.c = c;
-                kfPlaneObs.d = d;
-
-                observations.push_back(kfPlaneObs);
+                observationMarker.pose.orientation.w = coeffs[0];
+                observationMarker.pose.orientation.x = coeffs[1];
+                observationMarker.pose.orientation.y = coeffs[2];
+                observationMarker.pose.orientation.z = coeffs[3];
+    
+                observations.markers.push_back(observationMarker);
             }
         }
 
         for (auto kf: keyframe_vec)
         {
-            orb_slam3_ros::KeyFrameData kfData;
-            std_msgs::UInt64 kfId;
-            kfId.data = kf->mnId;
-            kfData.keyFrameId = kfId;
+            // orb_slam3_ros::KeyFrameData kfData;
+            visualization_msgs::Marker keyframeMarker;
+            keyframeMarker.id = kf->mnId;
 
             // Get the pose of the keyframe
             Sophus::SE3f kf_pose = kf->GetPose();
@@ -339,16 +324,14 @@ void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, std
             kfPose.orientation.y = kf_pose.unit_quaternion().y();
             kfPose.orientation.z = kf_pose.unit_quaternion().z();
             kfPose.orientation.w = kf_pose.unit_quaternion().w();
-            kfData.keyFramePose = kfPose;
-            
-            keyframes.push_back(kfData);
+            keyframeMarker.pose = kfPose;
+
+            keyframes.markers.push_back(keyframeMarker);
         }
 
-        kfPlaneBundle.planes = planes;
-        kfPlaneBundle.observations = observations;
-        kfPlaneBundle.keyframes = keyframes;
-        
-        kf_plane_assoc.publish(kfPlaneBundle);
+        keyframe_markers_pub.publish(keyframes);
+        plane_markers_pub.publish(planes);
+        observation_markers_pub.publish(observations);
     }
 }
 

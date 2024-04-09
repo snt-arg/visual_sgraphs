@@ -1,5 +1,5 @@
 std_msgs/Header header
-std_msgs/UInt64 planeId
+std_msgs/UInt64 planeid
 
 # global plane equation ax+by+cz+d=0
 std_msgs/Float64 a
