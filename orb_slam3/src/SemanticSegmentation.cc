@@ -473,6 +473,9 @@ namespace ORB_SLAM3
         return planePoseMat;
     }
 
+    /**
+     * 🚧 [vS-Graphs v.2.0] This solution is not very reliable. It is recommended to use Voxblox version.
+     */
     void SemanticSegmentation::updateMapRoomCandidateToRoomGeo(KeyFrame *pKF)
     {
         // Get all the mapped planes and rooms
@@ -518,15 +521,9 @@ namespace ORB_SLAM3
             // Loop over all the rooms
             for (auto roomCandidate : allRooms)
             {
-                // If all the walls of the room candidate are detected, skip it
+                // Fetch parameters of the room candidate
                 int wallsNeeded = roomCandidate->getIsCorridor() ? 2 : 4;
                 int wallsDetectedSoFar = roomCandidate->getWalls().size();
-
-                // [TODO] Re-check the walls of each room to remove the below condition
-                if (wallsDetectedSoFar == wallsNeeded)
-                    continue;
-
-                // Get the room's candidate marker's pose
                 Sophus::SE3f metaMarkerPose = roomCandidate->getMetaMarker()->getGlobalPose();
 
                 // Find the closest facing walls to the room center
@@ -537,8 +534,10 @@ namespace ORB_SLAM3
                 for (auto facingWallsPair : facingWalls)
                 {
                     // Calculate distance between wall centroids and metaMarkerPose
-                    double distance1 = Utils::calculateDistancePointToPlane(facingWallsPair.first->getGlobalEquation().coeffs(), metaMarkerPose.translation().cast<double>());
-                    double distance2 = Utils::calculateDistancePointToPlane(facingWallsPair.second->getGlobalEquation().coeffs(), metaMarkerPose.translation().cast<double>());
+                    double distance1 = Utils::calculateDistancePointToPlane(facingWallsPair.first->getGlobalEquation().coeffs(),
+                                                                            metaMarkerPose.translation().cast<double>());
+                    double distance2 = Utils::calculateDistancePointToPlane(facingWallsPair.second->getGlobalEquation().coeffs(),
+                                                                            metaMarkerPose.translation().cast<double>());
 
                     // Update closestPair1 if distance1 is smaller
                     if (distance1 < minDistance1)
@@ -559,7 +558,8 @@ namespace ORB_SLAM3
                 if (roomCandidate->getIsCorridor())
                 {
                     if (closestPair1.first != nullptr && closestPair1.second != nullptr)
-                    { // Update the room walls
+                    {
+                        // Update the room walls
                         roomCandidate->setWalls(closestPair1.first);
                         roomCandidate->setWalls(closestPair1.second);
                     }

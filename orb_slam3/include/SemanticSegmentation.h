@@ -141,6 +141,7 @@ namespace ORB_SLAM3
 
         /**
          * @brief Converts mapped room candidates to rooms using geometric constraints
+         * 🚧 [vS-Graphs v.2.0] This solution is not very reliable. It is recommended to use Voxblox version.
          */
         void updateMapRoomCandidateToRoomGeo(KeyFrame *pKF);
 
