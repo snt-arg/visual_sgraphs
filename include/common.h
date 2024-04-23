@@ -65,8 +65,8 @@ class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
-extern double roll, pitch, yaw;           // Defining axes for transformation
-extern bool publish_static_transform;     // If true, it should use transformed calculations
+extern double roll, pitch, yaw;       // Defining axes for transformation
+extern bool publish_static_transform; // If true, it should use transformed calculations
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 
 // List of visited Fiducial Markers in different timestamps

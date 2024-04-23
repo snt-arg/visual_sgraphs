@@ -73,9 +73,9 @@ sem_seg:
 room_seg:
   # The method to use for room segmentation
   # 0: Segment geometrically based on closest walls
-  # 1: Segment based on free space clustering
+  # 1: Segment based on free-space clustering (voxblox)
   # 2: Segment based on GNN
-  method: 0
+  method: 1
 
   # Parameters for the geometrically-based closest walls room segmentation
   geo_based:
