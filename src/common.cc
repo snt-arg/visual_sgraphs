@@ -75,9 +75,9 @@ void setupPublishers(ros::NodeHandle &node_handler, image_transport::ImageTransp
     all_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 1);
     kf_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
+    plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
     segmented_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
-    plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
 
     // Semantic
     doorsPub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
@@ -982,4 +982,14 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double fra
     }
 
     return std::make_pair(minTimeDifference, matchedMarkers);
+}
+
+void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray)
+{
+    // for (const auto &skeleton : skeletonArray.markers)
+    // {
+    // std::cout << "Skeleton: " << std::endl;
+    // CHeck the size of the cluster
+    // If more than threshold 5, add it to the buffer
+    // }
 }

@@ -61,6 +61,8 @@ namespace ORB_SLAM3
             // Check for possible room candidates
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
                 updateMapRoomCandidateToRoomGeo(thisKF);
+            else if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
+                updateMapRoomCandidateToRoomVoxblox();
         }
     }
 
@@ -474,7 +476,8 @@ namespace ORB_SLAM3
     }
 
     /**
-     * 🚧 [vS-Graphs v.2.0] This solution is not very reliable. It is recommended to use Voxblox version.
+     * 🚧 [vS-Graphs v.2.0] This solution is not very reliable.
+     * It is highly recommended to use the Skeleton Voxblox version.
      */
     void SemanticSegmentation::updateMapRoomCandidateToRoomGeo(KeyFrame *pKF)
     {
@@ -587,9 +590,79 @@ namespace ORB_SLAM3
             }
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoomVoxblox(Room *roomCandidate)
+    void SemanticSegmentation::updateMapRoomCandidateToRoomVoxblox()
     {
-        // [TODO] Needs to be implemented
+        // Take the clusters
+        // Get all walls
+        // Find the cluster points close to walls
+        // Check wall condition
+
+        // Get all the mapped planes and rooms
+        // std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
+        // std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
+
+        // Filter the planes to get only the walls
+        // std::vector<Plane *> allWalls;
+        // for (auto plane : allPlanes)
+        //     if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+        //         allWalls.push_back(plane);
+
+        // void RoomAnalyzer::analyze_skeleton_graph(
+        //     const visualization_msgs::msg::MarkerArray::SharedPtr &skeleton_graph_msg)
+        // {
+        //     cloud_clusters.clear();
+        //     subgraphs.clear();
+
+        //     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters;
+        //     int subgraph_id = 0;
+
+        //     visualization_msgs::msg::MarkerArray curr_connected_clusters;
+        //     std::vector<std::pair<int, int>> connected_subgraph_map;
+        //     for (const auto &single_graph : skeleton_graph_msg->markers)
+        //     {
+        //         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster(
+        //             new pcl::PointCloud<pcl::PointXYZRGB>);
+        //         std::string vertex_string = "connected_vertices_";
+        //         size_t found = single_graph.ns.find(vertex_string);
+        //         if (found != std::string::npos)
+        //         {
+        //             float r = rand() % 256;
+        //             float g = rand() % 256;
+        //             float b = rand() % 256;
+        //             for (size_t i = 0; i < single_graph.points.size(); ++i)
+        //             {
+        //                 pcl::PointXYZRGB pcl_point;
+        //                 pcl_point.x = single_graph.points[i].x;
+        //                 pcl_point.y = single_graph.points[i].y;
+        //                 pcl_point.z = 0.0;
+        //                 pcl_point.r = r;
+        //                 pcl_point.g = g;
+        //                 pcl_point.b = b;
+        //                 tmp_cloud_cluster->points.push_back(pcl_point);
+        //             }
+        //             // insert subgraph id in the seq
+        //             tmp_cloud_cluster->header.seq = subgraph_id;
+        //             curr_cloud_clusters.push_back(tmp_cloud_cluster);
+        //             curr_connected_clusters.markers.push_back(single_graph);
+        //             subgraph_id++;
+        //             continue;
+        //         }
+
+        //         std::string edge_string = "connected_edges_";
+        //         size_t edge_found = single_graph.ns.find(edge_string);
+        //         if (edge_found != std::string::npos)
+        //         {
+        //             curr_connected_clusters.markers.push_back(single_graph);
+        //         }
+        //         continue;
+        //     }
+
+        //     cloud_clusters = curr_cloud_clusters;
+        //     subgraphs = connected_subgraph_map;
+        //     clusters_marker_array = curr_connected_clusters;
+
+        //     return;
+        // }
 
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =
@@ -615,16 +688,16 @@ namespace ORB_SLAM3
         //     detectedRoom->setRoomCenter(detectedRoom->getMetaMarker()->getGlobalPose().translation().cast<double>());
 
         // Find attached doors and add them to the room
-        for (auto mapDoor : mpAtlas->GetAllDoors())
-        {
-            ORB_SLAM3::Marker *marker = mapDoor->getMarker();
-            std::vector<int> roomDoorMarkerIds = roomCandidate->getDoorMarkerIds();
+        // for (auto mapDoor : mpAtlas->GetAllDoors())
+        // {
+        //     ORB_SLAM3::Marker *marker = mapDoor->getMarker();
+        //     std::vector<int> roomDoorMarkerIds = roomCandidate->getDoorMarkerIds();
 
-            // Loop over the door markers of the room
-            for (auto doorMarkerId : roomDoorMarkerIds)
-                if (doorMarkerId == marker->getId())
-                    roomCandidate->setDoors(mapDoor);
-        }
+        //     // Loop over the door markers of the room
+        //     for (auto doorMarkerId : roomDoorMarkerIds)
+        //         if (doorMarkerId == marker->getId())
+        //             roomCandidate->setDoors(mapDoor);
+        // }
 
         // [TODO] Detect walls close to the room center (setWalls in SemSeg)
 

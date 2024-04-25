@@ -10,8 +10,8 @@
 
 #include <ros/ros.h>
 #include <ros/time.h>
-#include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
+#include <cv_bridge/cv_bridge.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <tf/transform_broadcaster.h>
@@ -42,9 +42,9 @@
 
 // Transformation process
 #include <pcl_ros/transforms.h>
-#include <tf2_ros/static_transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 
 // ORB-SLAM3-specific libraries
 #include "System.h"
@@ -95,15 +95,15 @@ void publishTrackingImage(cv::Mat, ros::Time);
 void publishCameraPose(Sophus::SE3f, ros::Time);
 void publishStaticTfTransform(string, string, ros::Time);
 void publishRooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
-void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishDoors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
-void publishKeyframeImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishTfTransform(Sophus::SE3f, string, string, ros::Time);
 void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
 void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publishKeyframeImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
@@ -124,3 +124,9 @@ void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray);
  * @param frameTimestamp The timestamp of the frame that captured the marker
  */
 std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double frameTimestamp);
+
+/**
+ * @brief Gets skeleton voxels from `voxblox_skeleton` to be processed
+ * @param skeletonArray The array of skeleton voxels received
+ */
+void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray);

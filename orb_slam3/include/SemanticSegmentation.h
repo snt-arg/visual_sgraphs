@@ -147,9 +147,8 @@ namespace ORB_SLAM3
 
         /**
          * @brief Converts mapped room candidates to rooms using voxmap and freespace clusters
-         * @param roomCandidate the address of the candidate room
          */
-        void updateMapRoomCandidateToRoomVoxblox(Room *roomCandidate);
+        void updateMapRoomCandidateToRoomVoxblox();
 
         /**
          * @brief Converts mapped room candidates to rooms using a GNN
