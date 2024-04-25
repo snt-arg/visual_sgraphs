@@ -25,6 +25,7 @@ public:
     void GrabImageRight(const sensor_msgs::ImageConstPtr &msg);
     cv::Mat GetImage(const sensor_msgs::ImageConstPtr &img_msg);
     void GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage);
+    void GrabVoxBloxGraph(const visualization_msgs::MarkerArray &msgSkeletonGraph);
 
     ImuGrabber *mpImuGb;
     std::mutex mBufMutexLeft, mBufMutexRight;
@@ -100,6 +101,10 @@ int main(int argc, char **argv)
     // Subscriber for images obtained from the Semantic Segmentater
     ros::Subscriber sub_segmented_img = node_handler.subscribe("/camera/color/image_segment", 10,
                                                                &ImageGrabber::GrabSegmentation, &igb);
+
+    // Subscriber to get the mesh from voxblox
+    ros::Subscriber voxblox_skeleton_mesh = node_handler.subscribe("/voxblox_skeletonizer/sparse_graph", 1,
+                                                                   &ImageGrabber::GrabVoxBloxGraph, &igb);
 
     setupPublishers(node_handler, image_transport, node_name);
     setupServices(node_handler, node_name);
@@ -294,4 +299,10 @@ void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSe
 
     // Add the segmented image to a buffer to be processed in the SemanticSegmentation thread
     pSLAM->addSegmentedImage(&tuple);
+}
+
+void ImageGrabber::GrabVoxBloxGraph(const visualization_msgs::MarkerArray &msgSkeletonGraphs)
+{
+    // Pass the skeleton graph to a buffer to be processed by the SemanticSegmentation thread
+    getVoxbloxSkeleton(msgSkeletonGraphs);
 }
