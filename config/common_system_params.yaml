@@ -73,11 +73,16 @@ sem_seg:
 room_seg:
   # The method to use for room segmentation
   # 0: Segment geometrically based on closest walls
-  # 1: Segment based on free-space clustering (voxblox)
+  # 1: Segment based on free-space clustering (skeleton voxblox)
   # 2: Segment based on GNN
   method: 1
 
   # Parameters for the geometrically-based closest walls room segmentation
   geo_based:
     # The maximum distance from a marker to a wall to be considered part of the room
-    marekr_wall_distance_thresh: 6.0
+    marker_wall_distance_thresh: 6.0
+
+  # Parameters for skeleton voxblox free-space room segmentation
+  skeleton_based:
+    # The minimum number of points needed to form a cluster
+    min_cluster_vertices: 5

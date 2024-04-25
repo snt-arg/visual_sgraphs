@@ -999,7 +999,7 @@ void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray)
         if (skeleton.ns.compare(0, strlen("connected_vertices"), "connected_vertices") == 0)
         {
             // Skip small clusters
-            if (skeleton.points.size() > 4)
+            if (skeleton.points.size() > ORB_SLAM3::SystemParams::GetParams()->room_seg.min_cluster_vertices)
                 // Add the points of the cluster to the buffer
                 for (const auto &point : skeleton.points)
                 {

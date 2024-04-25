@@ -76,6 +76,7 @@ namespace ORB_SLAM3
             };
             Method method = GEOMETRIC;
 
+            unsigned int min_cluster_vertices = 5;
             float marker_wall_distance_thresh = 3.0f;
         } room_seg;
 
