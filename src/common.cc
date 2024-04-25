@@ -17,6 +17,7 @@ ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
+std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, doorsPub,
     all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub;
@@ -986,10 +987,29 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double fra
 
 void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray)
 {
-    // for (const auto &skeleton : skeletonArray.markers)
-    // {
-    // std::cout << "Skeleton: " << std::endl;
-    // CHeck the size of the cluster
-    // If more than threshold 5, add it to the buffer
-    // }
+    // Reset the buffer
+    skeletonClusterPoints.clear();
+
+    for (const auto &skeleton : skeletonArray.markers)
+    {
+        // Take the points of the current cluster
+        std::vector<Eigen::Vector3d *> clusterPoints;
+
+        // Pick only the messages starting with name "connected_vertices_[x]"
+        if (skeleton.ns.compare(0, strlen("connected_vertices"), "connected_vertices") == 0)
+        {
+            // Skip small clusters
+            if (skeleton.points.size() > 4)
+                // Add the points of the cluster to the buffer
+                for (const auto &point : skeleton.points)
+                {
+                    Eigen::Vector3d *newPoint = new Eigen::Vector3d(point.x, point.y, point.z);
+                    clusterPoints.push_back(newPoint);
+                }
+
+            // Add the current cluster to the skeleton cluster points buffer
+            if (clusterPoints.size() > 0)
+                skeletonClusterPoints.push_back(clusterPoints);
+        }
+    }
 }

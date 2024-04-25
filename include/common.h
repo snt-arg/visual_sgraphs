@@ -72,12 +72,13 @@ extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, str
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 
+// List of white space cluster points obtained from `voxblox_skeleton`
+extern std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
+
 extern ros::Publisher kf_img_pub;
 extern image_transport::Publisher tracking_img_pub;
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub, segmented_pointclouds_pub;
-
-extern rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
 
 struct MapPointStruct
 {
