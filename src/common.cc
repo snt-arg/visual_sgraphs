@@ -1012,4 +1012,7 @@ void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray)
                 skeletonClusterPoints.push_back(clusterPoints);
         }
     }
+
+    // Send it to be processed
+    pSLAM->updateSkeletonCluster(skeletonClusterPoints);
 }

@@ -252,6 +252,12 @@ namespace ORB_SLAM3
         mpSemanticSegmentation->AddSegmentedFrameToBuffer(tuple);
     }
 
+    void System::updateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints)
+    {
+        // Adding
+        mpSemanticSegmentation->UpdateSkeletonCluster(skeletonClusterPoints);
+    }
+
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,
                                      const vector<IMU::Point> &vImuMeas, string filename, const std::vector<Marker *> markers)
     {

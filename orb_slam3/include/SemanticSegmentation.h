@@ -21,22 +21,31 @@ namespace ORB_SLAM3
     class SemanticSegmentation
     {
     private:
+        bool mGeoRuns;
         Atlas *mpAtlas;
         std::mutex mMutexNewKFs;
+        std::mutex mMutexNewRooms;
         Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
         const uint8_t bytesPerClassProb = 4; // Four bytes per class probability - refer to scene_segment_ros
+        // The updated segmented frame buffer
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
-        bool mGeoRuns;
+        // The latest skeleton cluster
+        std::vector<std::vector<Eigen::Vector3d *>> latestSkeletonCluster;
 
-        // system parameters
+        // System parameters
         SystemParams *sysParams;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         SemanticSegmentation(Atlas *pAtlas);
 
+        // Semantic segmentation frame buffer processing
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
         void AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
+
+        // Skeleton cluster processing
+        std::vector<std::vector<Eigen::Vector3d *>> GetLatestSkeletonCluster();
+        void UpdateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);
 
         /**
          * @brief Segments the point cloud into class specific point clouds

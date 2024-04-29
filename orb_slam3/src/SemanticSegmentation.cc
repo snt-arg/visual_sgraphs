@@ -77,6 +77,17 @@ namespace ORB_SLAM3
         return segmentedImageBuffer;
     }
 
+    void SemanticSegmentation::UpdateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints)
+    {
+        unique_lock<std::mutex> lock(mMutexNewRooms);
+        latestSkeletonCluster = skeletonClusterPoints;
+    }
+
+    std::vector<std::vector<Eigen::Vector3d *>> SemanticSegmentation::GetLatestSkeletonCluster()
+    {
+        return latestSkeletonCluster;
+    }
+
     void SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
                                                         cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs)
 
@@ -592,7 +603,7 @@ namespace ORB_SLAM3
 
     void SemanticSegmentation::updateMapRoomCandidateToRoomVoxblox()
     {
-        // Take the clusters
+        // Take the clusters latestSkeletonCluster
         // Get all walls
         // Find the cluster points close to walls
         // Check wall condition
