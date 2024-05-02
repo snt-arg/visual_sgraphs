@@ -3166,8 +3166,7 @@ namespace ORB_SLAM3
             nMinObs = 2;
         int nRefMatches = mpReferenceKF->TrackedMapPoints(nMinObs);
 
-        // Local Mapping accept keyframes?
-        bool bLocalMappingIdle = mpLocalMapper->AcceptKeyFrames();
+        
 
         // Check how many "close" points are being tracked and how many could be potentially created.
         int nNonTrackedClose = 0;
@@ -3219,10 +3218,14 @@ namespace ORB_SLAM3
                 thRefRatio = 0.90f;
         }
 
+        // Local Mapping accept keyframes?
+        bool bLocalMappingIdle = mpLocalMapper->AcceptKeyFrames();
+        // bLocalMappingIdle = bLocalMappingIdle || rand() % 100 < 6;       // to force extra keyframes
+
         // Condition 1a: More than "MaxFrames" have passed from last keyframe insertion
         const bool c1a = mCurrentFrame.mnId >= mnLastKeyFrameId + mMaxFrames;
         // Condition 1b: More than "MinFrames" have passed and Local Mapping is idle
-        const bool c1b = ((mCurrentFrame.mnId >= mnLastKeyFrameId + mMinFrames) && bLocalMappingIdle); // mpLocalMapper->KeyframesInQueue() < 2);
+        const bool c1b = ((mCurrentFrame.mnId >= mnLastKeyFrameId + mMinFrames) && bLocalMappingIdle && mpLocalMapper->KeyframesInQueue() < 5); // mpLocalMapper->KeyframesInQueue() < 2);
         // Condition 1c: tracking is weak
         const bool c1c = mSensor != System::MONOCULAR && mSensor != System::IMU_MONOCULAR && mSensor != System::IMU_STEREO && mSensor != System::IMU_RGBD && (mnMatchesInliers < nRefMatches * 0.25 || bNeedToInsertClose);
         // Condition 2: Few tracked points compared to reference keyframe. Lots of visual odometry compared to map matches.
@@ -3264,7 +3267,7 @@ namespace ORB_SLAM3
                 mpLocalMapper->InterruptBA();
                 if (mSensor != System::MONOCULAR && mSensor != System::IMU_MONOCULAR)
                 {
-                    if (mpLocalMapper->KeyframesInQueue() < 3)
+                    if (mpLocalMapper->KeyframesInQueue() < 8)
                         return true;
                     else
                         return false;

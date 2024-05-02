@@ -381,6 +381,29 @@ namespace ORB_SLAM3
         return os.good();
     }
 
+    EdgeVertexPlaneProjectPointXYZ::EdgeVertexPlaneProjectPointXYZ() : g2o::BaseBinaryEdge<1, double, g2o::VertexSBAPointXYZ, g2o::VertexPlane>() {}
+
+    // [TODO] - this can be made common for many of the classes
+    bool EdgeVertexPlaneProjectPointXYZ::read(std::istream &is)
+    {
+        for (int i = 0; i < information().rows(); i++)
+            for (int j = i; j < information().cols(); ++j)
+            {
+                is >> information()(i, j);
+                if (i != j)
+                    information()(j, i) = information()(i, j);
+            }
+        return true;
+    }
+
+    bool EdgeVertexPlaneProjectPointXYZ::write(std::ostream &os) const
+    {
+        for (int i = 0; i < information().rows(); i++)
+            for (int j = i; j < information().cols(); j++)
+                os << " " << information()(i, j);
+        return os.good();
+    }
+
     EdgeVertex2PlaneProjectSE3Room::EdgeVertex2PlaneProjectSE3Room() : g2o::BaseMultiEdge<3, Eigen::Vector3d>() {}
 
     EdgeVertex2PlaneProjectSE3Room::EdgeVertex2PlaneProjectSE3Room(Eigen::Vector3d position) : g2o::BaseMultiEdge<3, Eigen::Vector3d>()

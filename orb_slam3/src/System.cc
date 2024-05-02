@@ -207,6 +207,7 @@ namespace ORB_SLAM3
         mpGeometricSegmentation->setEnvFetchedValues(envDoors, envRooms);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
+        // [TODO] - launch threads based on flags
         mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
@@ -249,6 +250,14 @@ namespace ORB_SLAM3
     void System::addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple)
     {
         // Adding the segmented image to the buffer of the SemanticSegmentation
+        if (SystemParams::GetParams()->general.mode_of_operation == SystemParams::general::ModeOfOperation::GEO)
+        {
+            // just clear the pointcloud of the keyframe and return, as semantic segmentation is not running
+            ORB_SLAM3::KeyFrame *pKF = mpAtlas->GetKeyFrameById(std::get<0>(*tuple));
+            pKF->clearPointCloud();
+            return;
+        }
+
         mpSemanticSegmentation->AddSegmentedFrameToBuffer(tuple);
     }
 

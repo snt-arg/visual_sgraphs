@@ -47,7 +47,7 @@ namespace g2o
             return true;
         }
 
-        virtual int estimateDimension() const { return 4; }
+        virtual int estimateDimension() const { return 3; }
     };
 
 } // namespace g2o

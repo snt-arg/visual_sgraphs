@@ -147,6 +147,11 @@ namespace ORB_SLAM3
             for (unsigned int j = 0; j < clsCloudPtrs[i]->width; j++)
             {
                 const pcl::PointXYZRGB point = thisKFPointCloud->at(clsCloudPtrs[i]->points[j].x, clsCloudPtrs[i]->points[j].y);
+
+                // skip if the point is invalid, NaN or infinite
+                if (!pcl::isFinite(point))
+                    continue;
+
                 clsCloudPtrs[i]->points[j].x = point.x;
                 clsCloudPtrs[i]->points[j].y = point.y;
                 clsCloudPtrs[i]->points[j].z = point.z;
@@ -268,6 +273,7 @@ namespace ORB_SLAM3
         newMapPlane->setLocalEquation(estimatedPlane);
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->addObservation(pKF, estimatedPlane);
+        newMapPlane->referenceKeyFrame = pKF;
 
         // [TODO] - move this logic inside Atlas (or Map) for atomic IDs if multiple threads are running
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
@@ -284,11 +290,11 @@ namespace ORB_SLAM3
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
             newMapPlane->setMapClouds(planeCloud);
-        else
-            // Loop to find the points lying on wall
-            for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-                if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
-                    newMapPlane->setMapPoints(mapPoint);
+
+        // Loop to find the points lying on wall
+        for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
+            if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
+                newMapPlane->setMapPoints(mapPoint);
 
         pKF->AddMapPlane(newMapPlane);
         mpAtlas->AddMapPlane(newMapPlane);
@@ -307,10 +313,10 @@ namespace ORB_SLAM3
         // Update the pointcloud of the plane
         if (!planeCloud->points.empty())
             currentPlane->setMapClouds(planeCloud);
-        else
-            for (const auto &mapPoint : pKF->GetMapPoints())
-                if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
-                    currentPlane->setMapPoints(mapPoint);
+
+        for (const auto &mapPoint : pKF->GetMapPoints())
+            if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
+                currentPlane->setMapPoints(mapPoint);
     }
 
     void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
@@ -387,10 +393,9 @@ namespace ORB_SLAM3
                 // add the smaller planecloud to the bigger plane
                 bigPlane->setMapClouds(smallPlane->getMapClouds());
 
-                // [TODO] - is this fine?
-                // // add all observations of the smaller plane to the bigger plane
-                // for (const auto &obs : smallPlane->getObservations())
-                //     bigPlane->addObservation(obs.first, obs.second);
+                // add all map points of the smaller plane to the bigger plane
+                for (const auto &mapPoint : smallPlane->getMapPoints())
+                    bigPlane->setMapPoints(mapPoint);
 
                 // reset the smaller plane semantics
                 smallPlane->resetPlaneSemantics();
