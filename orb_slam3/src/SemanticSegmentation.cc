@@ -608,77 +608,35 @@ namespace ORB_SLAM3
 
     void SemanticSegmentation::updateMapRoomCandidateToRoomVoxblox()
     {
-        // Take the clusters latestSkeletonCluster
-        // Get all walls
-        // Find the cluster points close to walls
-        // Check wall condition
+        // Variables
+        std::vector<Plane *> allWalls, closestWalls;
+
+        // Get the skeleton clusters
+        std::vector<std::vector<Eigen::Vector3d *>> clusterPoints = GetLatestSkeletonCluster();
 
         // Get all the mapped planes and rooms
-        // std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
-        // std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
+        std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
+        std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
 
         // Filter the planes to get only the walls
-        // std::vector<Plane *> allWalls;
-        // for (auto plane : allPlanes)
-        //     if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
-        //         allWalls.push_back(plane);
+        for (auto plane : allPlanes)
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                allWalls.push_back(plane);
 
-        // void RoomAnalyzer::analyze_skeleton_graph(
-        //     const visualization_msgs::msg::MarkerArray::SharedPtr &skeleton_graph_msg)
-        // {
-        //     cloud_clusters.clear();
-        //     subgraphs.clear();
+        // Find the walls closest to the cluster points
+        for (auto cluster : clusterPoints)
+            for (auto wall : allWalls)
+            {
+                // Calculate distance between wall centroid and cluster point
+                for (auto point : cluster)
+                {
+                    double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), *point);
+                    if (distance < sysParams->room_seg.marker_wall_distance_thresh)
+                        closestWalls.push_back(wall);
+                }
+            }
 
-        //     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters;
-        //     int subgraph_id = 0;
-
-        //     visualization_msgs::msg::MarkerArray curr_connected_clusters;
-        //     std::vector<std::pair<int, int>> connected_subgraph_map;
-        //     for (const auto &single_graph : skeleton_graph_msg->markers)
-        //     {
-        //         pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster(
-        //             new pcl::PointCloud<pcl::PointXYZRGB>);
-        //         std::string vertex_string = "connected_vertices_";
-        //         size_t found = single_graph.ns.find(vertex_string);
-        //         if (found != std::string::npos)
-        //         {
-        //             float r = rand() % 256;
-        //             float g = rand() % 256;
-        //             float b = rand() % 256;
-        //             for (size_t i = 0; i < single_graph.points.size(); ++i)
-        //             {
-        //                 pcl::PointXYZRGB pcl_point;
-        //                 pcl_point.x = single_graph.points[i].x;
-        //                 pcl_point.y = single_graph.points[i].y;
-        //                 pcl_point.z = 0.0;
-        //                 pcl_point.r = r;
-        //                 pcl_point.g = g;
-        //                 pcl_point.b = b;
-        //                 tmp_cloud_cluster->points.push_back(pcl_point);
-        //             }
-        //             // insert subgraph id in the seq
-        //             tmp_cloud_cluster->header.seq = subgraph_id;
-        //             curr_cloud_clusters.push_back(tmp_cloud_cluster);
-        //             curr_connected_clusters.markers.push_back(single_graph);
-        //             subgraph_id++;
-        //             continue;
-        //         }
-
-        //         std::string edge_string = "connected_edges_";
-        //         size_t edge_found = single_graph.ns.find(edge_string);
-        //         if (edge_found != std::string::npos)
-        //         {
-        //             curr_connected_clusters.markers.push_back(single_graph);
-        //         }
-        //         continue;
-        //     }
-
-        //     cloud_clusters = curr_cloud_clusters;
-        //     subgraphs = connected_subgraph_map;
-        //     clusters_marker_array = curr_connected_clusters;
-
-        //     return;
-        // }
+        // Check wall conditions
 
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =
