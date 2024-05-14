@@ -29,6 +29,7 @@ namespace ORB_SLAM3
         const uint8_t bytesPerClassProb = 4; // Four bytes per class probability - refer to scene_segment_ros
         // The updated segmented frame buffer
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
+        unsigned long int mLastProcessedKeyFrameId = 0;
         // The latest skeleton cluster
         std::vector<std::vector<Eigen::Vector3d *>> latestSkeletonCluster;
 
@@ -48,22 +49,16 @@ namespace ORB_SLAM3
         void UpdateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);
 
         /**
-         * @brief Segments the point cloud into class specific point clouds
+         * @brief Segments the point cloud into class specific point clouds and enriches them with the current keyframe point cloud
          * @param pclPc2SegPrb the point cloud to be segmented
          * @param segImgUncertainity the segmentation image uncertainty
          * @param clsCloudPtrs the class specific point clouds
+         * @param thisKFPointCloud the current keyframe point cloud
          */
         void threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
                                       cv::Mat &segImgUncertainity,
-                                      std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
-
-        /**
-         * @brief Enriches the class-specific point clouds (with XYZ and RGB) with the current keyframe point cloud
-         * @param clsCloudPtrs the class specific point clouds
-         * @param thisKFPointCloud the current keyframe point cloud
-         */
-        void enrichClassSpecificPointClouds(
-            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud);
+                                      std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs,
+                                      const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud);
 
         /**
          * @brief Gets all planes for each class specific point cloud using RANSAC

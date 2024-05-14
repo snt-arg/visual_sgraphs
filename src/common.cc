@@ -74,7 +74,7 @@ void setupPublishers(ros::NodeHandle &node_handler, image_transport::ImageTransp
     tracking_img_pub = image_transport.advertise(node_name + "/tracking_image", 1);
     pose_pub = node_handler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
     all_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
-    kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 100); // rate of keyframe generation is higher
+    kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 10); // rate of keyframe generation is higher
     kf_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
     plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);

@@ -166,7 +166,7 @@ namespace ORB_SLAM3
         if (!planeCloud->points.empty())
             newMapPlane->setMapClouds(planeCloud);
 
-        // // Loop to find the points lying on wall
+        // Loop to find the points lying on wall
         // for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
         //     if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
         //         newMapPlane->setMapPoints(mapPoint);

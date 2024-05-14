@@ -1373,6 +1373,7 @@ namespace ORB_SLAM3
         list<Plane *> lLocalMapPlanes;
         list<Marker *> lLocalMapMarkers;
         list<KeyFrame *> lLocalKeyFrames;
+        list<MapPoint *> lLocalMapPoints;
 
         // unorderd maps to keep track of IDs
         std::unordered_map<int, bool> mpLocalKFid;
@@ -1403,7 +1404,6 @@ namespace ORB_SLAM3
         // Local MapPoints seen in Local KeyFrames
         num_fixedKF = 0;
         set<MapPoint *> sNumObsMP;
-        list<MapPoint *> lLocalMapPoints;
 
         for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
         {
@@ -1575,7 +1575,7 @@ namespace ORB_SLAM3
 
         // Fixed keyframes that observe the planes - take randomnly
         // [TODO] - make this a parameter after verification
-        int maxKFs = 16;
+        int maxKFs = 10;
         int numKFs = 0;
         for (list<Plane *>::iterator lit = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); lit != lend; lit++)
         {
@@ -1600,13 +1600,13 @@ namespace ORB_SLAM3
                     {
                         lFixedCameras.push_back(pKFi);
                         numKFs++;
+                        if (numKFs >= maxKFs)
+                            break;
                     }
                 }
-
-                if (numKFs >= maxKFs)
-                    break;
             }
-
+            if (numKFs >= maxKFs)
+                break;
         }
 
         num_fixedKF = lFixedCameras.size() + num_fixedKF;
@@ -1910,6 +1910,7 @@ namespace ORB_SLAM3
                     e->setRobustKernel(rk);
                     rk->setDelta(thHuberMono);
                     optimizer.addEdge(e);
+                    nEdges++;
                 }
             }
 
@@ -2082,6 +2083,13 @@ namespace ORB_SLAM3
         //     }
         // }
         // maxOpId += nDoors;
+
+        // abort if no edges
+        if (nEdges == 0)
+        {
+            Verbose::PrintMess("LM-LBA: There are 0 edges in the optimizations, LBA aborted", Verbose::VERBOSITY_NORMAL);
+            return;
+        }
 
         if (pbStopFlag)
             if (*pbStopFlag)

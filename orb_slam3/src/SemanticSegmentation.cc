@@ -30,23 +30,38 @@ namespace ORB_SLAM3
             segmentedImageBuffer.pop_front();
             mMutexNewKFs.unlock();
 
-            // separate point clouds while applying threshold
-            pcl::PCLPointCloud2::Ptr pclPc2SegPrb = std::get<2>(segImgTuple);
-            cv::Mat segImgUncertainity = std::get<1>(segImgTuple);
-            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> clsCloudPtrs;
-            threshSeparatePointCloud(pclPc2SegPrb, segImgUncertainity, clsCloudPtrs);
-
             // get the point cloud from the respective keyframe via the atlas - ignore it if KF doesn't exist
             KeyFrame *thisKF = mpAtlas->GetKeyFrameById(std::get<0>(segImgTuple));
             if (thisKF == nullptr)
                 continue;
             const pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisKFPointCloud = thisKF->getCurrentFramePointCloud();
+            if (thisKFPointCloud == nullptr)
+            {
+                std::cout << "SemSeg: skipping KF ID: " << thisKF->mnId << ". Missing pointcloud..." << std::endl;
+                continue;
+            }
 
-            // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
-            enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
+            // separate point clouds while applying threshold
+            pcl::PCLPointCloud2::Ptr pclPc2SegPrb = std::get<2>(segImgTuple);
+            cv::Mat segImgUncertainity = std::get<1>(segImgTuple);
+            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> clsCloudPtrs;
+            threshSeparatePointCloud(pclPc2SegPrb, segImgUncertainity, clsCloudPtrs, thisKFPointCloud);
 
-            // clear cloud as it is no longer needed and consumes significant memory
+            // clear pointclouds as they are no longer needed and consumes significant memory
+            // also clear pointclouds from the keyframes that might have been skipped
+            // always keep last few keyframes as there can be minor misordering in keyframe processing
             thisKF->clearPointCloud();
+            int buffer = 3;
+            if (thisKF->mnId - mLastProcessedKeyFrameId > buffer)
+            {
+                for (unsigned long int i = mLastProcessedKeyFrameId + 1; i < thisKF->mnId - buffer; i++)
+                {
+                    KeyFrame *pKF = mpAtlas->GetKeyFrameById(i);
+                    if (pKF != nullptr && pKF->getCurrentFramePointCloud() != nullptr)
+                        pKF->clearPointCloud();
+                }
+                mLastProcessedKeyFrameId = thisKF->mnId - buffer;
+            }
 
             // get all planes for each class specific point cloud using RANSAC
             std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> clsPlanes =
@@ -88,9 +103,9 @@ namespace ORB_SLAM3
         return latestSkeletonCluster;
     }
 
-    void SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
-                                                        cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs)
-
+    void SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb, cv::Mat &segImgUncertainity,
+                                                        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs,
+                                                        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud)
     {
         // parse the PointCloud2 message
         const int width = pclPc2SegPrb->width;
@@ -122,10 +137,22 @@ namespace ORB_SLAM3
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
 
+                    // get the original point from the keyframe point cloud
+                    const pcl::PointXYZRGB origPoint = thisKFPointCloud->at(point.x, point.y);
+                    if (!pcl::isFinite(origPoint))
+                        continue;
+
                     // convert uncertainity to single value and assign confidence to alpha channel
                     cv::Vec3b vec = segImgUncertainity.at<cv::Vec3b>(point.y, point.x);
                     point.a = 255 - static_cast<int>(0.299 * vec[2] + 0.587 * vec[1] + 0.114 * vec[0]);
 
+                    // assign the XYZ and RGB values to the class specific point cloud
+                    point.x = origPoint.x;
+                    point.y = origPoint.y;
+                    point.z = origPoint.z;
+                    point.r = origPoint.r;
+                    point.g = origPoint.g;
+                    point.b = origPoint.b;
                     clsCloudPtrs[j]->push_back(point);
                 }
             }
@@ -136,30 +163,6 @@ namespace ORB_SLAM3
         {
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
             clsCloudPtrs[i]->header = pclPc2SegPrb->header;
-        }
-    }
-
-    void SemanticSegmentation::enrichClassSpecificPointClouds(
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud)
-    {
-        for (int i = 0; i < clsCloudPtrs.size(); i++)
-        {
-            for (unsigned int j = 0; j < clsCloudPtrs[i]->width; j++)
-            {
-                const pcl::PointXYZRGB point = thisKFPointCloud->at(clsCloudPtrs[i]->points[j].x, clsCloudPtrs[i]->points[j].y);
-
-                // skip if the point is invalid, NaN or infinite
-                if (!pcl::isFinite(point))
-                    continue;
-
-                clsCloudPtrs[i]->points[j].x = point.x;
-                clsCloudPtrs[i]->points[j].y = point.y;
-                clsCloudPtrs[i]->points[j].z = point.z;
-                clsCloudPtrs[i]->points[j].r = point.r;
-                clsCloudPtrs[i]->points[j].g = point.g;
-                clsCloudPtrs[i]->points[j].b = point.b;
-            }
-            clsCloudPtrs[i]->header.frame_id = thisKFPointCloud->header.frame_id;
         }
     }
 
@@ -261,8 +264,8 @@ namespace ORB_SLAM3
             filterWallPlanes();
         }
 
-        // reassociate semantic planes if they get close to each other :)) after optimization
-        reAssociateSemanticPlanes();
+        // // reassociate semantic planes if they get close to each other :)) after optimization
+        // reAssociateSemanticPlanes();
     }
 
     void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,

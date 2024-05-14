@@ -25,13 +25,13 @@ pointcloud:
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
   # Also, the number of points needed to detect a plane in the pointcloud
-  pointclouds_thresh: 300
+  pointclouds_thresh: 400
 
   # Plane association threshold (ominus)
-  plane_association_thresh: 0.4
+  plane_association_thresh: 0.2
 
   # The maximum distance for point to be considered part of a plane
-  plane_point_dist_thresh: 0.1
+  plane_point_dist_thresh: 0.05
 
   # The maximum threshold for the dot product of the plane normals to be considered facing each other
   plane_facing_dot_thresh: -0.9
@@ -40,7 +40,7 @@ seg:
     # The maximum number of planes to be detected in one pointcloud
     max_planes: 1
 
-    # The maximum distance for a point to be considered part of a plane
+    # The maximum distance for a point to be considered an inlier of the plane model
     distance_thresh: 0.05
 
     # The maximum number of iterations for the RANSAC algorithm
@@ -64,7 +64,7 @@ sem_seg:
 
   # The maximum tilt heuristic for a wall/ground plane (checks respective component of plane equation)
   max_tilt_wall: 0.2
-  max_tilt_ground: 0.1
+  max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
   min_votes: 2.5
