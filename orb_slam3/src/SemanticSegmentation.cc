@@ -524,19 +524,8 @@ namespace ORB_SLAM3
         }
 
         // Get all the facing walls
-        std::vector<std::pair<Plane *, Plane *>> facingWalls;
-        for (auto wall1 : closestWalls)
-            for (auto wall2 : closestWalls)
-            {
-                // Skip the same wall
-                if (wall1->getId() == wall2->getId())
-                    continue;
-
-                // Check if the planes are facing each other
-                bool isFacing = Utils::arePlanesFacingEachOther(wall1, wall2);
-                if (isFacing)
-                    facingWalls.push_back(std::make_pair(wall1, wall2));
-            }
+        std::vector<std::pair<Plane *, Plane *>> facingWalls =
+            Utils::getAllPlanesFacingEachOther(closestWalls);
 
         // If there is at least one pair of facing wall
         if (facingWalls.size() > 0)
@@ -639,7 +628,11 @@ namespace ORB_SLAM3
                 }
             }
 
-        // Check wall conditions
+        // Get all the facing walls
+        std::vector<std::pair<Plane *, Plane *>> facingWalls =
+            Utils::getAllPlanesFacingEachOther(closestWalls);
+
+        // Check wall conditions if they shape a room/corridor or not
 
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =

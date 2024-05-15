@@ -47,6 +47,12 @@ namespace ORB_SLAM3
         static bool arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2);
 
         /**
+         * @brief Returns the planes that are facing each other from the given list
+         * @param planes list of planes to be checked
+         */
+        static std::vector<std::pair<Plane *, Plane *>> getAllPlanesFacingEachOther(const std::vector<Plane *> &planes);
+
+        /**
          * @brief Corrects the given plane equations to apply calculations
          * @param plane the input plane
          */
@@ -109,7 +115,7 @@ namespace ORB_SLAM3
          * @param cloud the input point cloud
          * @param minSegmentationPoints the minimum number of points
          */
-        template <typename PointT, template<typename> class SegmentationType>
+        template <typename PointT, template <typename> class SegmentationType>
         static std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> ransacPlaneFitting(
             typename pcl::PointCloud<PointT>::Ptr &cloud);
 
