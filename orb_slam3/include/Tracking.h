@@ -157,12 +157,6 @@ namespace ORB_SLAM3
                                                           const Eigen::Vector3f &location,
                                                           double distanceThreshold);
 
-        /**
-         * @brief Extracts all the walls related to a room
-         * @param detectedRoom the address of the detected room
-         */
-        void reorganizeRoomWalls(Room *detectedRoom);
-
 #ifdef REGISTER_LOOP
         void RequestStop();
         bool isStopped();

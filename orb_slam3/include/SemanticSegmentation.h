@@ -144,6 +144,12 @@ namespace ORB_SLAM3
         Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
 
         /**
+         * @brief Organizes the walls of a four-walled room
+         * @param givenRoom the address of the detected room
+         */
+        void organizeRoomWalls(Room *givenRoom);
+
+        /**
          * @brief Converts mapped room candidates to rooms using geometric constraints
          * 🚧 [vS-Graphs v.2.0] This solution is not very reliable. It is recommended to use Voxblox version.
          */

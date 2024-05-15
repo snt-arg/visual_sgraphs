@@ -3166,8 +3166,6 @@ namespace ORB_SLAM3
             nMinObs = 2;
         int nRefMatches = mpReferenceKF->TrackedMapPoints(nMinObs);
 
-        
-
         // Check how many "close" points are being tracked and how many could be potentially created.
         int nNonTrackedClose = 0;
         int nTrackedClose = 0;
@@ -4204,71 +4202,6 @@ namespace ORB_SLAM3
         }
 
         return closePoints;
-    }
-
-    void Tracking::reorganizeRoomWalls(ORB_SLAM3::Room *detectedRoom)
-    {
-        Plane *wall1 = nullptr;
-        for (const auto wall : detectedRoom->getWalls())
-        {
-            if (wall1 == nullptr)
-                wall1 = wall;
-            else
-            {
-                if (wall->getGlobalEquation().coeffs()(0) < wall1->getGlobalEquation().coeffs()(0))
-                    wall1 = wall;
-                else
-                    continue;
-            }
-        }
-
-        Plane *wall2 = nullptr;
-        for (const auto wall : detectedRoom->getWalls())
-        {
-            if (wall2 == nullptr)
-                wall2 = wall;
-            else
-            {
-                if (wall->getGlobalEquation().coeffs()(0) > wall2->getGlobalEquation().coeffs()(0))
-                    wall2 = wall;
-                else
-                    continue;
-            }
-        }
-
-        Plane *wall3 = nullptr;
-        for (const auto wall : detectedRoom->getWalls())
-        {
-            if (wall3 == nullptr)
-                wall3 = wall;
-            else
-            {
-                if (wall->getGlobalEquation().coeffs()(2) < wall3->getGlobalEquation().coeffs()(2))
-                    wall3 = wall;
-                else
-                    continue;
-            }
-        }
-
-        Plane *wall4 = nullptr;
-        for (const auto wall : detectedRoom->getWalls())
-        {
-            if (wall4 == nullptr)
-                wall4 = wall;
-            else
-            {
-                if (wall->getGlobalEquation().coeffs()(2) > wall4->getGlobalEquation().coeffs()(2))
-                    wall4 = wall;
-                else
-                    continue;
-            }
-        }
-
-        detectedRoom->clearWalls();
-        detectedRoom->setWalls(wall1);
-        detectedRoom->setWalls(wall2);
-        detectedRoom->setWalls(wall3);
-        detectedRoom->setWalls(wall4);
     }
 
     double Tracking::GetMarkerImpact() const

@@ -494,6 +494,70 @@ namespace ORB_SLAM3
         return planePoseMat;
     }
 
+    void SemanticSegmentation::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
+    {
+        // Variables
+        Plane *wall1 = nullptr, *wall2 = nullptr, *wall3 = nullptr, *wall4 = nullptr;
+
+        for (const auto wall : givenRoom->getWalls())
+        {
+            if (wall1 == nullptr)
+                wall1 = wall;
+            else
+            {
+                if (wall->getGlobalEquation().coeffs()(0) < wall1->getGlobalEquation().coeffs()(0))
+                    wall1 = wall;
+                else
+                    continue;
+            }
+        }
+
+        for (const auto wall : givenRoom->getWalls())
+        {
+            if (wall2 == nullptr)
+                wall2 = wall;
+            else
+            {
+                if (wall->getGlobalEquation().coeffs()(0) > wall2->getGlobalEquation().coeffs()(0))
+                    wall2 = wall;
+                else
+                    continue;
+            }
+        }
+
+        for (const auto wall : givenRoom->getWalls())
+        {
+            if (wall3 == nullptr)
+                wall3 = wall;
+            else
+            {
+                if (wall->getGlobalEquation().coeffs()(2) < wall3->getGlobalEquation().coeffs()(2))
+                    wall3 = wall;
+                else
+                    continue;
+            }
+        }
+
+        for (const auto wall : givenRoom->getWalls())
+        {
+            if (wall4 == nullptr)
+                wall4 = wall;
+            else
+            {
+                if (wall->getGlobalEquation().coeffs()(2) > wall4->getGlobalEquation().coeffs()(2))
+                    wall4 = wall;
+                else
+                    continue;
+            }
+        }
+
+        givenRoom->clearWalls();
+        givenRoom->setWalls(wall1);
+        givenRoom->setWalls(wall2);
+        givenRoom->setWalls(wall3);
+        givenRoom->setWalls(wall4);
+    }
+
     /**
      * 🚧 [vS-Graphs v.2.0] This solution is not very reliable.
      * It is highly recommended to use the Skeleton Voxblox version.
@@ -691,7 +755,7 @@ namespace ORB_SLAM3
         //     }
         //     else
         //     {
-        //         reorganizeRoomWalls(detectedRoom);
+        //         organizeRoomWalls(detectedRoom);
         //         // If it is a four-wall room
         //         Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
         //             detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
