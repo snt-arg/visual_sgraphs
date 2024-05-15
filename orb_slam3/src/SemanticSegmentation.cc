@@ -527,6 +527,42 @@ namespace ORB_SLAM3
         givenRoom->setWalls(maxWallZ);
     }
 
+    std::vector<std::vector<std::pair<Plane *, Plane *>>> SemanticSegmentation::getAllSquareRooms(
+        const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
+        double perpThreshDeg)
+    {
+        // Variables
+        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms;
+
+        // Convert threshold from degrees to radians
+        double perpThreshold = perpThreshDeg * Utils::DEG_TO_RAD;
+
+        // Iterate through each pair of facing walls
+        for (size_t idx1 = 0; idx1 < facingWalls.size(); ++idx1)
+            for (size_t idx2 = idx1 + 1; idx2 < facingWalls.size(); ++idx2)
+            {
+                // Get the walls
+                Plane *wall1P1 = facingWalls[idx1].first;
+                Plane *wall2P1 = facingWalls[idx1].second;
+                Plane *wall1P2 = facingWalls[idx2].first;
+                Plane *wall2P2 = facingWalls[idx2].second;
+
+                // Check if wall pairs form a square, considering the perpendicularity threshold
+                if (Utils::arePlanesPerpendicular(wall1P1, wall2P1, perpThreshold) &&
+                    Utils::arePlanesPerpendicular(wall2P1, wall1P2, perpThreshold) &&
+                    Utils::arePlanesPerpendicular(wall1P2, wall2P2, perpThreshold) &&
+                    Utils::arePlanesPerpendicular(wall2P2, wall1P1, perpThreshold))
+                {
+                    std::vector<std::pair<Plane *, Plane *>> squareRoom;
+                    squareRoom.push_back(facingWalls[idx1]);
+                    squareRoom.push_back(facingWalls[idx2]);
+                    squareRooms.push_back(squareRoom);
+                }
+            }
+
+        return squareRooms;
+    }
+
     /**
      * 🚧 [vS-Graphs v.2.0] This solution is not very reliable.
      * It is highly recommended to use the Skeleton Voxblox version.
@@ -666,7 +702,8 @@ namespace ORB_SLAM3
             Utils::getAllPlanesFacingEachOther(closestWalls);
 
         // Check wall conditions if they shape a room/corridor or not
-        // sysParams->room_seg.walls_perpendicularity_thresh;
+        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms =
+            getAllSquareRooms(facingWalls, sysParams->room_seg.walls_perpendicularity_thresh);
 
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =

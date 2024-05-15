@@ -150,6 +150,15 @@ namespace ORB_SLAM3
         void organizeRoomWalls(Room *givenRoom);
 
         /**
+         * @brief Gets all square rooms from the facing walls list
+         * @param facingWalls the facing walls list
+         * @param perpThreshDeg the perpendicular threshold in degrees
+         */
+        std::vector<std::vector<std::pair<Plane *, Plane *>>> getAllSquareRooms(
+            const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
+            double perpThreshDeg = 5.0);
+
+        /**
          * @brief Converts mapped room candidates to rooms using geometric constraints
          * 🚧 [vS-Graphs v.2.0] This solution is not very reliable. It is recommended to use Voxblox version.
          */
