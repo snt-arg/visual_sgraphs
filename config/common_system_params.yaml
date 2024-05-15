@@ -77,6 +77,9 @@ room_seg:
   # 2: Segment based on GNN
   method: 1
 
+  # Threshold for perpendicularity of wall pairs to be considered a square room (in degrees)
+  perpendicularity_thresh: 10.0
+
   # Parameters for the geometrically-based closest walls room segmentation
   geo_based:
     # The maximum distance from a marker to a wall to be considered part of the room
