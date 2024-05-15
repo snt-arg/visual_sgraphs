@@ -32,6 +32,20 @@ namespace ORB_SLAM3
             return false;
     }
 
+    bool Utils::arePlanesPerpendicular(const Plane *plane1, const Plane *plane2, const double &threshold)
+    {
+        // Calculate the dot product of the normal vectors of the planes
+        Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
+        Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
+        double dotProduct = normal1.dot(normal2);
+
+        // Calculate the angle between the planes
+        double angle = std::acos(std::abs(dotProduct));
+
+        // Check if the angle is within the threshold
+        return std::abs(angle - M_PI / 2.0) < threshold;
+    }
+
     std::vector<std::pair<Plane *, Plane *>> Utils::getAllPlanesFacingEachOther(const std::vector<Plane *> &planes)
     {
         std::vector<std::pair<Plane *, Plane *>> facingPlanes;

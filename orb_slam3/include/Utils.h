@@ -8,6 +8,7 @@
 #include "Tracking.h"
 #include "Thirdparty/pcl_custom/WeightedSACSegmentation.hpp"
 
+#include <cmath>
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -24,6 +25,9 @@ namespace ORB_SLAM3
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+        // Variables
+        static constexpr double DEG_TO_RAD = M_PI / 180.0;
 
         /**
          * @brief Calculate the Euclidean distance between two points
@@ -45,6 +49,14 @@ namespace ORB_SLAM3
          * @param plane2 second plane
          */
         static bool arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2);
+
+        /**
+         * @brief Checks to see if two planes are perpendicular to each other or not
+         * @param plane1 first plane
+         * @param plane2 second plane
+         * @param threshold the threshold value for perpendicularity
+         */
+        static bool arePlanesPerpendicular(const Plane *plane1, const Plane *plane2, const double &threshold);
 
         /**
          * @brief Returns the planes that are facing each other from the given list

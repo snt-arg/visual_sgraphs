@@ -666,6 +666,7 @@ namespace ORB_SLAM3
             Utils::getAllPlanesFacingEachOther(closestWalls);
 
         // Check wall conditions if they shape a room/corridor or not
+        // sysParams->room_seg.walls_perpendicularity_thresh;
 
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =
