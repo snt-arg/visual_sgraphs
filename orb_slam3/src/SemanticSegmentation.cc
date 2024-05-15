@@ -671,6 +671,8 @@ namespace ORB_SLAM3
     {
         // Variables
         std::vector<Plane *> allWalls, closestWalls;
+        std::vector<std::pair<Plane *, Plane *>> corridorRooms;
+        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms;
 
         // Get the skeleton clusters
         std::vector<std::vector<Eigen::Vector3d *>> clusterPoints = GetLatestSkeletonCluster();
@@ -701,9 +703,26 @@ namespace ORB_SLAM3
         std::vector<std::pair<Plane *, Plane *>> facingWalls =
             Utils::getAllPlanesFacingEachOther(closestWalls);
 
-        // Check wall conditions if they shape a room/corridor or not
-        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms =
-            getAllSquareRooms(facingWalls, sysParams->room_seg.walls_perpendicularity_thresh);
+        // Check wall conditions if they shape a square room (with perpendicularity threshold)
+        squareRooms = getAllSquareRooms(facingWalls, sysParams->room_seg.walls_perpendicularity_thresh);
+
+        // Iterate over each pair of facing walls
+        for (const auto &facingWall : facingWalls)
+        {
+            bool foundInSquareRooms = false;
+
+            // Check if the current facing wall pair exists in any square room
+            for (const auto &squareRoom : squareRooms)
+                if (std::find(squareRoom.begin(), squareRoom.end(), facingWall) != squareRoom.end())
+                {
+                    foundInSquareRooms = true;
+                    break;
+                }
+
+            // If the facing wall pair is not found in any square room, add it to corridorRooms
+            if (!foundInSquareRooms)
+                corridorRooms.push_back(facingWall);
+        }
 
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =
