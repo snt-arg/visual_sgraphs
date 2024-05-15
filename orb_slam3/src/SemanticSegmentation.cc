@@ -496,66 +496,35 @@ namespace ORB_SLAM3
 
     void SemanticSegmentation::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
     {
-        // Variables
-        Plane *wall1 = nullptr, *wall2 = nullptr, *wall3 = nullptr, *wall4 = nullptr;
-
-        for (const auto wall : givenRoom->getWalls())
+        // Function to find the minimum and maximum coefficient value of a wall among all walls
+        auto findExtremumWall = [&](const std::vector<Plane *> &walls, int coeffIndex, bool findMax) -> Plane *
         {
-            if (wall1 == nullptr)
-                wall1 = wall;
-            else
+            Plane *extremumWall = walls.front();
+            for (const auto &wall : walls)
             {
-                if (wall->getGlobalEquation().coeffs()(0) < wall1->getGlobalEquation().coeffs()(0))
-                    wall1 = wall;
-                else
-                    continue;
+                if ((findMax && wall->getGlobalEquation().coeffs()(coeffIndex) > extremumWall->getGlobalEquation().coeffs()(coeffIndex)) ||
+                    (!findMax && wall->getGlobalEquation().coeffs()(coeffIndex) < extremumWall->getGlobalEquation().coeffs()(coeffIndex)))
+                {
+                    extremumWall = wall;
+                }
             }
-        }
+            return extremumWall;
+        };
 
-        for (const auto wall : givenRoom->getWalls())
-        {
-            if (wall2 == nullptr)
-                wall2 = wall;
-            else
-            {
-                if (wall->getGlobalEquation().coeffs()(0) > wall2->getGlobalEquation().coeffs()(0))
-                    wall2 = wall;
-                else
-                    continue;
-            }
-        }
+        // Get all walls in the room
+        const std::vector<Plane *> &walls = givenRoom->getWalls();
 
-        for (const auto wall : givenRoom->getWalls())
-        {
-            if (wall3 == nullptr)
-                wall3 = wall;
-            else
-            {
-                if (wall->getGlobalEquation().coeffs()(2) < wall3->getGlobalEquation().coeffs()(2))
-                    wall3 = wall;
-                else
-                    continue;
-            }
-        }
-
-        for (const auto wall : givenRoom->getWalls())
-        {
-            if (wall4 == nullptr)
-                wall4 = wall;
-            else
-            {
-                if (wall->getGlobalEquation().coeffs()(2) > wall4->getGlobalEquation().coeffs()(2))
-                    wall4 = wall;
-                else
-                    continue;
-            }
-        }
+        // Find walls with minimum and maximum coefficients along x and z axes
+        Plane *maxWallX = findExtremumWall(walls, 0, true);
+        Plane *maxWallZ = findExtremumWall(walls, 2, true);
+        Plane *minWallX = findExtremumWall(walls, 0, false);
+        Plane *minWallZ = findExtremumWall(walls, 2, false);
 
         givenRoom->clearWalls();
-        givenRoom->setWalls(wall1);
-        givenRoom->setWalls(wall2);
-        givenRoom->setWalls(wall3);
-        givenRoom->setWalls(wall4);
+        givenRoom->setWalls(minWallX);
+        givenRoom->setWalls(maxWallX);
+        givenRoom->setWalls(minWallZ);
+        givenRoom->setWalls(maxWallZ);
     }
 
     /**
