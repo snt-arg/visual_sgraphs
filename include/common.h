@@ -20,6 +20,8 @@
 #include <std_msgs/Header.h>
 #include <std_msgs/UInt64.h>
 #include <std_msgs/Float64.h>
+#include <std_msgs/ColorRGBA.h>
+#include <geometry_msgs/Point.h>
 #include <sensor_msgs/Imu.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/Odometry.h>

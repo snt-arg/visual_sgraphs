@@ -275,9 +275,13 @@ void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, std
 
         for (auto plane: plane_vec)
         {
-            // orb_slam3_ros::PlaneData planeData;
             visualization_msgs::Marker planeMarker;
-            
+            std_msgs::ColorRGBA color;
+            color.r = 1.0;
+            color.g = 0.0;
+            color.b = 0.0;
+            color.a = 1.0;
+
             uint16_t planeId = plane->getId();
             planeMarker.id = planeId;
             Eigen::Vector4f coeffs = plane->getGlobalEquation().coeffs().cast<float>();
@@ -286,6 +290,23 @@ void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, std
             planeMarker.pose.orientation.x = coeffs[1];
             planeMarker.pose.orientation.y = coeffs[2];
             planeMarker.pose.orientation.z = coeffs[3];
+            planeMarker.color = color;
+
+            // // transform the point cloud to the map frame from the world frame
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = plane->getMapClouds();
+            planeCloud->header.frame_id = world_frame_id;
+
+            // pcl::PointCloud<pcl::PointXYZRGBA>::Ptr transformedCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+            // pcl_ros::transformPointCloud(map_frame_id, *planeCloud, *transformedCloud, *transformListener);
+        
+            for (auto point_xyz : planeCloud->points)
+            {
+                geometry_msgs::Point point;
+                point.x = point_xyz.x;
+                point.y = point_xyz.y;
+                point.z = point_xyz.z;
+                planeMarker.points.push_back(point);
+            }
 
             planes.markers.push_back(planeMarker);
 
@@ -315,7 +336,7 @@ void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, std
             keyframeMarker.id = kf->mnId;
 
             // Get the pose of the keyframe
-            Sophus::SE3f kf_pose = kf->GetPose();
+            Sophus::SE3f kf_pose = kf->GetPoseInverse();
             geometry_msgs::Pose kfPose;
             kfPose.position.x = kf_pose.translation().x();
             kfPose.position.y = kf_pose.translation().y();
