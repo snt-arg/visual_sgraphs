@@ -23,11 +23,30 @@ namespace g2o
 
         inline Vector4D toVector() const { return _coeffs; }
 
+        inline Vector3D toVector3D() const 
+        {
+            Vector3D normal = _coeffs.head<3>();
+            Vector3D result;
+            result << azimuth(normal), elevation(normal), distance();
+            return result;
+        }
+
         inline const Vector4D &coeffs() const { return _coeffs; }
 
         inline void fromVector(const Vector4D &coeffs_)
         {
             _coeffs = coeffs_;
+            normalize(_coeffs);
+        }
+
+        inline void fromVector3D(const Vector3D &vec)
+        {
+            double _azimuth = vec[0];
+            double _elevation = vec[1];
+            double s = std::sin(_elevation), c = std::cos(_elevation);
+            Vector3D n(c * std::cos(_azimuth), c * std::sin(_azimuth), s);
+            _coeffs.head<3>() = n;
+            _coeffs(3) = -vec[2];
             normalize(_coeffs);
         }
 

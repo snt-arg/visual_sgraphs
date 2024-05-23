@@ -321,6 +321,32 @@ namespace ORB_SLAM3
     };
 
     /**
+     * The edge used to connect a Map Point vertex (SBAPointXYZ) to a Plane vertex (VertexPlane)
+     */
+    class EdgeVertexPlaneProjectPointXYZ : public g2o::BaseBinaryEdge<1, double, g2o::VertexSBAPointXYZ, g2o::VertexPlane>
+    {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        EdgeVertexPlaneProjectPointXYZ();
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
+
+        void computeError()
+        {
+            // Map Point's position
+            const g2o::VertexSBAPointXYZ *vPoint = static_cast<const g2o::VertexSBAPointXYZ *>(_vertices[0]);
+            // Plane's global pose
+            const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+
+            // Calculating the error
+            // plane equation is already normalized -> D = n.x + d
+            _error[0] = vPlaneGP->estimate().coeffs().head(3).dot(vPoint->estimate().head(3)) + vPlaneGP->estimate().coeffs()(3);
+        }
+    };
+
+
+    /**
      * The edge used to connect a Plane vertex (VertexPlane) to a Marker vertex (SE3)
      * [Note]: it creates constraint for four measurements, i.e., (x, y, z, d)
      */

@@ -23,12 +23,11 @@ public:
         
         // if input is not of type PointXYZRGBA, run the base class implementation
         if (!std::is_same<PointT, pcl::PointXYZRGBA>::value)
-        {
             return pcl::SampleConsensusModelPlane<PointT>::countWithinDistance(model_coefficients, threshold);
-        }
 
         // Iterate through the 3d points and calculate the distances from them to the plane
         std::size_t nr_p = 0;
+        double nr_p_d = 0.0;
         for (std::size_t i = 0; i < this->indices_->size (); ++i)
         {
             // Calculate the distance from the point to the plane normal as the dot product
@@ -39,9 +38,10 @@ public:
                                 1.0f);
             if (std::abs (model_coefficients.dot (pt)) < threshold)
             {
-                nr_p += static_cast<int>((*this->input_)[(*this->indices_)[i]].a);
+                nr_p_d += static_cast<int>((*this->input_)[(*this->indices_)[i]].a)/255.0;
             }
         }
+        nr_p = static_cast<std::size_t>(nr_p_d);
         return nr_p;
     }
 };

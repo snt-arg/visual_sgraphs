@@ -10,8 +10,8 @@
 
 #include <ros/ros.h>
 #include <ros/time.h>
-#include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
+#include <cv_bridge/cv_bridge.h>
 #include <opencv2/core/core.hpp>
 #include <opencv2/core/eigen.hpp>
 #include <tf/transform_broadcaster.h>
@@ -50,9 +50,9 @@
 
 // Transformation process
 #include <pcl_ros/transforms.h>
-#include <tf2_ros/static_transform_broadcaster.h>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
+#include <tf2_ros/static_transform_broadcaster.h>
 
 // ORB-SLAM3-specific libraries
 #include "System.h"
@@ -70,19 +70,20 @@
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensor_type;
 
-extern double roll, pitch, yaw;           // Defining axes for transformation
-extern bool publish_static_transform;     // If true, it should use transformed calculations
+extern double roll, pitch, yaw;       // Defining axes for transformation
+extern bool publish_static_transform; // If true, it should use transformed calculations
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 
+// List of white space cluster points obtained from `voxblox_skeleton`
+extern std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
+
 extern ros::Publisher kf_img_pub;
 extern image_transport::Publisher tracking_img_pub;
 extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub, segmented_pointclouds_pub;
-
-extern rviz_visual_tools::RvizVisualToolsPtr wall_visual_tools;
 
 struct MapPointStruct
 {
@@ -100,7 +101,6 @@ void publishTrackingImage(cv::Mat, ros::Time);
 void publishCameraPose(Sophus::SE3f, ros::Time);
 void publishStaticTfTransform(string, string, ros::Time);
 void publishRooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
-void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishDoors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
 void publishTfTransform(Sophus::SE3f, string, string, ros::Time);
@@ -108,6 +108,8 @@ void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
 void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publishKeyframeImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 void publishKeyFramesPlanes(std::vector<ORB_SLAM3::KeyFrame *>, std::vector<ORB_SLAM3::Plane *>, ros::Time);
 
@@ -129,3 +131,9 @@ void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray);
  * @param frameTimestamp The timestamp of the frame that captured the marker
  */
 std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double frameTimestamp);
+
+/**
+ * @brief Gets skeleton voxels from `voxblox_skeleton` to be processed
+ * @param skeletonArray The array of skeleton voxels received
+ */
+void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray);

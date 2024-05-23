@@ -30,24 +30,38 @@ namespace ORB_SLAM3
             segmentedImageBuffer.pop_front();
             mMutexNewKFs.unlock();
 
-            // separate point clouds while applying threshold
-            pcl::PCLPointCloud2::Ptr pclPc2SegPrb = std::get<2>(segImgTuple);
-            cv::Mat segImgUncertainity = std::get<1>(segImgTuple);
-            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> clsCloudPtrs;
-            threshSeparatePointCloud(pclPc2SegPrb, segImgUncertainity, clsCloudPtrs);
-
             // get the point cloud from the respective keyframe via the atlas - ignore it if KF doesn't exist
             KeyFrame *thisKF = mpAtlas->GetKeyFrameById(std::get<0>(segImgTuple));
             if (thisKF == nullptr)
                 continue;
             const pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisKFPointCloud = thisKF->getCurrentFramePointCloud();
+            if (thisKFPointCloud == nullptr)
+            {
+                std::cout << "SemSeg: skipping KF ID: " << thisKF->mnId << ". Missing pointcloud..." << std::endl;
+                continue;
+            }
 
-            // fill in class specific point clouds with XYZZ and RGB from the keyframe pointcloud
-            enrichClassSpecificPointClouds(clsCloudPtrs, thisKFPointCloud);
+            // separate point clouds while applying threshold
+            pcl::PCLPointCloud2::Ptr pclPc2SegPrb = std::get<2>(segImgTuple);
+            cv::Mat segImgUncertainity = std::get<1>(segImgTuple);
+            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> clsCloudPtrs;
+            threshSeparatePointCloud(pclPc2SegPrb, segImgUncertainity, clsCloudPtrs, thisKFPointCloud);
 
-            // clear cloud as it is no longer needed and consumes significant memory
-            // [TODO] - clear even if semantic segmentation is not running
+            // clear pointclouds as they are no longer needed and consumes significant memory
+            // also clear pointclouds from the keyframes that might have been skipped
+            // always keep last few keyframes as there can be minor misordering in keyframe processing
             thisKF->clearPointCloud();
+            int buffer = 3;
+            if (thisKF->mnId - mLastProcessedKeyFrameId > buffer)
+            {
+                for (unsigned long int i = mLastProcessedKeyFrameId + 1; i < thisKF->mnId - buffer; i++)
+                {
+                    KeyFrame *pKF = mpAtlas->GetKeyFrameById(i);
+                    if (pKF != nullptr && pKF->getCurrentFramePointCloud() != nullptr)
+                        pKF->clearPointCloud();
+                }
+                mLastProcessedKeyFrameId = thisKF->mnId - buffer;
+            }
 
             // get all planes for each class specific point cloud using RANSAC
             std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> clsPlanes =
@@ -61,7 +75,9 @@ namespace ORB_SLAM3
 
             // Check for possible room candidates
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
-                updateMapRoomCandidateToRoom_Geo();
+                updateMapRoomCandidateToRoomGeo(thisKF);
+            else if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
+                updateMapRoomCandidateToRoomVoxblox();
         }
     }
 
@@ -76,9 +92,20 @@ namespace ORB_SLAM3
         return segmentedImageBuffer;
     }
 
-    void SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
-                                                        cv::Mat &segImgUncertainity, std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs)
+    void SemanticSegmentation::UpdateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints)
+    {
+        unique_lock<std::mutex> lock(mMutexNewRooms);
+        latestSkeletonCluster = skeletonClusterPoints;
+    }
 
+    std::vector<std::vector<Eigen::Vector3d *>> SemanticSegmentation::GetLatestSkeletonCluster()
+    {
+        return latestSkeletonCluster;
+    }
+
+    void SemanticSegmentation::threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb, cv::Mat &segImgUncertainity,
+                                                        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs,
+                                                        const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud)
     {
         // parse the PointCloud2 message
         const int width = pclPc2SegPrb->width;
@@ -110,10 +137,22 @@ namespace ORB_SLAM3
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
 
+                    // get the original point from the keyframe point cloud
+                    const pcl::PointXYZRGB origPoint = thisKFPointCloud->at(point.x, point.y);
+                    if (!pcl::isFinite(origPoint))
+                        continue;
+
                     // convert uncertainity to single value and assign confidence to alpha channel
                     cv::Vec3b vec = segImgUncertainity.at<cv::Vec3b>(point.y, point.x);
                     point.a = 255 - static_cast<int>(0.299 * vec[2] + 0.587 * vec[1] + 0.114 * vec[0]);
 
+                    // assign the XYZ and RGB values to the class specific point cloud
+                    point.x = origPoint.x;
+                    point.y = origPoint.y;
+                    point.z = origPoint.z;
+                    point.r = origPoint.r;
+                    point.g = origPoint.g;
+                    point.b = origPoint.b;
                     clsCloudPtrs[j]->push_back(point);
                 }
             }
@@ -124,25 +163,6 @@ namespace ORB_SLAM3
         {
             clsCloudPtrs[i]->width = clsCloudPtrs[i]->size();
             clsCloudPtrs[i]->header = pclPc2SegPrb->header;
-        }
-    }
-
-    void SemanticSegmentation::enrichClassSpecificPointClouds(
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud)
-    {
-        for (int i = 0; i < clsCloudPtrs.size(); i++)
-        {
-            for (unsigned int j = 0; j < clsCloudPtrs[i]->width; j++)
-            {
-                const pcl::PointXYZRGB point = thisKFPointCloud->at(clsCloudPtrs[i]->points[j].x, clsCloudPtrs[i]->points[j].y);
-                clsCloudPtrs[i]->points[j].x = point.x;
-                clsCloudPtrs[i]->points[j].y = point.y;
-                clsCloudPtrs[i]->points[j].z = point.z;
-                clsCloudPtrs[i]->points[j].r = point.r;
-                clsCloudPtrs[i]->points[j].g = point.g;
-                clsCloudPtrs[i]->points[j].b = point.b;
-            }
-            clsCloudPtrs[i]->header.frame_id = thisKFPointCloud->header.frame_id;
         }
     }
 
@@ -173,7 +193,7 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
-        std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
+                                               std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
     {
         for (size_t clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
@@ -244,8 +264,8 @@ namespace ORB_SLAM3
             filterWallPlanes();
         }
 
-        // reassociate semantic planes if they get close to each other :)) after optimization
-        reAssociateSemanticPlanes();
+        // // reassociate semantic planes if they get close to each other :)) after optimization
+        // reAssociateSemanticPlanes();
     }
 
     void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
@@ -256,6 +276,7 @@ namespace ORB_SLAM3
         newMapPlane->setLocalEquation(estimatedPlane);
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->addObservation(pKF, estimatedPlane);
+        newMapPlane->referenceKeyFrame = pKF;
 
         // [TODO] - move this logic inside Atlas (or Map) for atomic IDs if multiple threads are running
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
@@ -272,11 +293,11 @@ namespace ORB_SLAM3
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
             newMapPlane->setMapClouds(planeCloud);
-        else
-            // Loop to find the points lying on wall
-            for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-                if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
-                    newMapPlane->setMapPoints(mapPoint);
+
+        // Loop to find the points lying on wall
+        for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
+            if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
+                newMapPlane->setMapPoints(mapPoint);
 
         pKF->AddMapPlane(newMapPlane);
         mpAtlas->AddMapPlane(newMapPlane);
@@ -295,10 +316,10 @@ namespace ORB_SLAM3
         // Update the pointcloud of the plane
         if (!planeCloud->points.empty())
             currentPlane->setMapClouds(planeCloud);
-        else
-            for (const auto &mapPoint : pKF->GetMapPoints())
-                if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
-                    currentPlane->setMapPoints(mapPoint);
+
+        for (const auto &mapPoint : pKF->GetMapPoints())
+            if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
+                currentPlane->setMapPoints(mapPoint);
     }
 
     void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
@@ -375,10 +396,9 @@ namespace ORB_SLAM3
                 // add the smaller planecloud to the bigger plane
                 bigPlane->setMapClouds(smallPlane->getMapClouds());
 
-                // [TODO] - is this fine?
-                // // add all observations of the smaller plane to the bigger plane
-                // for (const auto &obs : smallPlane->getObservations())
-                //     bigPlane->addObservation(obs.first, obs.second);
+                // add all map points of the smaller plane to the bigger plane
+                for (const auto &mapPoint : smallPlane->getMapPoints())
+                    bigPlane->setMapPoints(mapPoint);
 
                 // reset the smaller plane semantics
                 smallPlane->resetPlaneSemantics();
@@ -474,7 +494,80 @@ namespace ORB_SLAM3
         return planePoseMat;
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoom_Geo()
+    void SemanticSegmentation::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
+    {
+        // Function to find the minimum and maximum coefficient value of a wall among all walls
+        auto findExtremumWall = [&](const std::vector<Plane *> &walls, int coeffIndex, bool findMax) -> Plane *
+        {
+            Plane *extremumWall = walls.front();
+            for (const auto &wall : walls)
+            {
+                if ((findMax && wall->getGlobalEquation().coeffs()(coeffIndex) > extremumWall->getGlobalEquation().coeffs()(coeffIndex)) ||
+                    (!findMax && wall->getGlobalEquation().coeffs()(coeffIndex) < extremumWall->getGlobalEquation().coeffs()(coeffIndex)))
+                {
+                    extremumWall = wall;
+                }
+            }
+            return extremumWall;
+        };
+
+        // Get all walls in the room
+        const std::vector<Plane *> &walls = givenRoom->getWalls();
+
+        // Find walls with minimum and maximum coefficients along x and z axes
+        Plane *maxWallX = findExtremumWall(walls, 0, true);
+        Plane *maxWallZ = findExtremumWall(walls, 2, true);
+        Plane *minWallX = findExtremumWall(walls, 0, false);
+        Plane *minWallZ = findExtremumWall(walls, 2, false);
+
+        givenRoom->clearWalls();
+        givenRoom->setWalls(minWallX);
+        givenRoom->setWalls(maxWallX);
+        givenRoom->setWalls(minWallZ);
+        givenRoom->setWalls(maxWallZ);
+    }
+
+    std::vector<std::vector<std::pair<Plane *, Plane *>>> SemanticSegmentation::getAllSquareRooms(
+        const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
+        double perpThreshDeg)
+    {
+        // Variables
+        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms;
+
+        // Convert threshold from degrees to radians
+        double perpThreshold = perpThreshDeg * Utils::DEG_TO_RAD;
+
+        // Iterate through each pair of facing walls
+        for (size_t idx1 = 0; idx1 < facingWalls.size(); ++idx1)
+            for (size_t idx2 = idx1 + 1; idx2 < facingWalls.size(); ++idx2)
+            {
+                // Get the walls
+                Plane *wall1P1 = facingWalls[idx1].first;
+                Plane *wall2P1 = facingWalls[idx1].second;
+                Plane *wall1P2 = facingWalls[idx2].first;
+                Plane *wall2P2 = facingWalls[idx2].second;
+
+                // Check if wall pairs form a square, considering the perpendicularity threshold
+                if (Utils::arePlanesPerpendicular(wall1P1, wall2P1, perpThreshold) &&
+                    Utils::arePlanesPerpendicular(wall2P1, wall1P2, perpThreshold) &&
+                    Utils::arePlanesPerpendicular(wall1P2, wall2P2, perpThreshold) &&
+                    Utils::arePlanesPerpendicular(wall2P2, wall1P1, perpThreshold))
+                {
+                    std::vector<std::pair<Plane *, Plane *>> squareRoom;
+                    squareRoom.push_back(facingWalls[idx1]);
+                    squareRoom.push_back(facingWalls[idx2]);
+                    squareRooms.push_back(squareRoom);
+                }
+            }
+
+        return squareRooms;
+    }
+
+    /**
+     * 🚧 [vS-Graphs v.2.0] This solution is not very reliable.
+     * It is highly recommended to use the Skeleton Voxblox version.
+     */
+    void SemanticSegmentation::updateMapRoomCandidateToRoomGeo(KeyFrame *pKF)
     {
         // Get all the mapped planes and rooms
         std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
@@ -486,33 +579,31 @@ namespace ORB_SLAM3
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
                 allWalls.push_back(plane);
 
-        // Get all the facing walls
-        std::vector<std::pair<Plane *, Plane *>> facingWalls;
-        for (auto wall1 : allWalls)
-            for (auto wall2 : allWalls)
-            {
-                // Skip the same wall
-                if (wall1->getId() == wall2->getId())
-                    continue;
+        // Get the closest walls to the current KeyFrame
+        std::vector<Plane *> closestWalls;
+        for (auto wall : allWalls)
+        {
+            // Calculate distance between wall centroid and KeyFrame pose
+            double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(),
+                                                                   pKF->GetPose().translation().cast<double>());
 
-                // Check if the planes are facing each other
-                bool isFacing = Utils::arePlanesFacingEachOther(wall1, wall2);
-                if (isFacing)
-                    facingWalls.push_back(std::make_pair(wall1, wall2));
-            }
+            // Update closestWalls if distance is smaller than the threshold
+            if (distance < sysParams->room_seg.marker_wall_distance_thresh)
+                closestWalls.push_back(wall);
+        }
+
+        // Get all the facing walls
+        std::vector<std::pair<Plane *, Plane *>> facingWalls =
+            Utils::getAllPlanesFacingEachOther(closestWalls);
 
         // If there is at least one pair of facing wall
         if (facingWalls.size() > 0)
             // Loop over all the rooms
             for (auto roomCandidate : allRooms)
             {
-                // If all the walls of the room candidate are detected, skip it
+                // Fetch parameters of the room candidate
                 int wallsNeeded = roomCandidate->getIsCorridor() ? 2 : 4;
                 int wallsDetectedSoFar = roomCandidate->getWalls().size();
-                if (wallsDetectedSoFar == wallsNeeded)
-                    continue;
-
-                // Get the room's candidate marker's pose
                 Sophus::SE3f metaMarkerPose = roomCandidate->getMetaMarker()->getGlobalPose();
 
                 // Find the closest facing walls to the room center
@@ -523,8 +614,10 @@ namespace ORB_SLAM3
                 for (auto facingWallsPair : facingWalls)
                 {
                     // Calculate distance between wall centroids and metaMarkerPose
-                    double distance1 = Utils::calculateDistancePointToPlane(facingWallsPair.first->getGlobalEquation().coeffs(), metaMarkerPose.translation().cast<double>());
-                    double distance2 = Utils::calculateDistancePointToPlane(facingWallsPair.second->getGlobalEquation().coeffs(), metaMarkerPose.translation().cast<double>());
+                    double distance1 = Utils::calculateDistancePointToPlane(facingWallsPair.first->getGlobalEquation().coeffs(),
+                                                                            metaMarkerPose.translation().cast<double>());
+                    double distance2 = Utils::calculateDistancePointToPlane(facingWallsPair.second->getGlobalEquation().coeffs(),
+                                                                            metaMarkerPose.translation().cast<double>());
 
                     // Update closestPair1 if distance1 is smaller
                     if (distance1 < minDistance1)
@@ -545,7 +638,8 @@ namespace ORB_SLAM3
                 if (roomCandidate->getIsCorridor())
                 {
                     if (closestPair1.first != nullptr && closestPair1.second != nullptr)
-                    { // Update the room walls
+                    {
+                        // Update the room walls
                         roomCandidate->setWalls(closestPair1.first);
                         roomCandidate->setWalls(closestPair1.second);
                     }
@@ -565,14 +659,70 @@ namespace ORB_SLAM3
                     }
                 }
 
+                // [TODO] Check the isCorridor and the number of walls we connected
+                // If it is more than 4 four 4-wall room or 2 for corridor, we should take only the ones closest to the room
+
                 // Finally, update the room candidate to a room
                 roomCandidate->setIsCandidate(false);
             }
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoom_Voxblox(Room *roomCandidate)
+    void SemanticSegmentation::updateMapRoomCandidateToRoomVoxblox()
     {
-        // [TODO] Needs to be implemented
+        // Variables
+        std::vector<Plane *> allWalls, closestWalls;
+        std::vector<std::pair<Plane *, Plane *>> corridorRooms;
+        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms;
+
+        // Get the skeleton clusters
+        std::vector<std::vector<Eigen::Vector3d *>> clusterPoints = GetLatestSkeletonCluster();
+
+        // Get all the mapped planes and rooms
+        std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
+        std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
+
+        // Filter the planes to get only the walls
+        for (auto plane : allPlanes)
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                allWalls.push_back(plane);
+
+        // Find the walls closest to the cluster points
+        for (auto cluster : clusterPoints)
+            for (auto wall : allWalls)
+            {
+                // Calculate distance between wall centroid and cluster point
+                for (auto point : cluster)
+                {
+                    double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), *point);
+                    if (distance < sysParams->room_seg.marker_wall_distance_thresh)
+                        closestWalls.push_back(wall);
+                }
+            }
+
+        // Get all the facing walls
+        std::vector<std::pair<Plane *, Plane *>> facingWalls =
+            Utils::getAllPlanesFacingEachOther(closestWalls);
+
+        // Check wall conditions if they shape a square room (with perpendicularity threshold)
+        squareRooms = getAllSquareRooms(facingWalls, sysParams->room_seg.walls_perpendicularity_thresh);
+
+        // Iterate over each pair of facing walls
+        for (const auto &facingWall : facingWalls)
+        {
+            bool foundInSquareRooms = false;
+
+            // Check if the current facing wall pair exists in any square room
+            for (const auto &squareRoom : squareRooms)
+                if (std::find(squareRoom.begin(), squareRoom.end(), facingWall) != squareRoom.end())
+                {
+                    foundInSquareRooms = true;
+                    break;
+                }
+
+            // If the facing wall pair is not found in any square room, add it to corridorRooms
+            if (!foundInSquareRooms)
+                corridorRooms.push_back(facingWall);
+        }
 
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =
@@ -598,16 +748,16 @@ namespace ORB_SLAM3
         //     detectedRoom->setRoomCenter(detectedRoom->getMetaMarker()->getGlobalPose().translation().cast<double>());
 
         // Find attached doors and add them to the room
-        for (auto mapDoor : mpAtlas->GetAllDoors())
-        {
-            ORB_SLAM3::Marker *marker = mapDoor->getMarker();
-            std::vector<int> roomDoorMarkerIds = roomCandidate->getDoorMarkerIds();
+        // for (auto mapDoor : mpAtlas->GetAllDoors())
+        // {
+        //     ORB_SLAM3::Marker *marker = mapDoor->getMarker();
+        //     std::vector<int> roomDoorMarkerIds = roomCandidate->getDoorMarkerIds();
 
-            // Loop over the door markers of the room
-            for (auto doorMarkerId : roomDoorMarkerIds)
-                if (doorMarkerId == marker->getId())
-                    roomCandidate->setDoors(mapDoor);
-        }
+        //     // Loop over the door markers of the room
+        //     for (auto doorMarkerId : roomDoorMarkerIds)
+        //         if (doorMarkerId == marker->getId())
+        //             roomCandidate->setDoors(mapDoor);
+        // }
 
         // [TODO] Detect walls close to the room center (setWalls in SemSeg)
 
@@ -631,7 +781,7 @@ namespace ORB_SLAM3
         //     }
         //     else
         //     {
-        //         reorganizeRoomWalls(detectedRoom);
+        //         organizeRoomWalls(detectedRoom);
         //         // If it is a four-wall room
         //         Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
         //             detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
@@ -655,7 +805,7 @@ namespace ORB_SLAM3
         //           << std::endl;
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoom_GNN(Room *roomCandidate)
+    void SemanticSegmentation::updateMapRoomCandidateToRoomGNN(Room *roomCandidate)
     {
         // [TODO] Needs to be implemented
     }

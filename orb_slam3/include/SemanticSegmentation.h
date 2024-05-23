@@ -21,40 +21,44 @@ namespace ORB_SLAM3
     class SemanticSegmentation
     {
     private:
+        bool mGeoRuns;
         Atlas *mpAtlas;
         std::mutex mMutexNewKFs;
+        std::mutex mMutexNewRooms;
         Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
         const uint8_t bytesPerClassProb = 4; // Four bytes per class probability - refer to scene_segment_ros
+        // The updated segmented frame buffer
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
-        bool mGeoRuns;
+        unsigned long int mLastProcessedKeyFrameId = 0;
+        // The latest skeleton cluster
+        std::vector<std::vector<Eigen::Vector3d *>> latestSkeletonCluster;
 
-        // system parameters
+        // System parameters
         SystemParams *sysParams;
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         SemanticSegmentation(Atlas *pAtlas);
 
+        // Semantic segmentation frame buffer processing
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
         void AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
 
+        // Skeleton cluster processing
+        std::vector<std::vector<Eigen::Vector3d *>> GetLatestSkeletonCluster();
+        void UpdateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);
+
         /**
-         * @brief Segments the point cloud into class specific point clouds
+         * @brief Segments the point cloud into class specific point clouds and enriches them with the current keyframe point cloud
          * @param pclPc2SegPrb the point cloud to be segmented
          * @param segImgUncertainity the segmentation image uncertainty
          * @param clsCloudPtrs the class specific point clouds
-         */
-        void threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
-                                                     cv::Mat &segImgUncertainity,
-                                                     std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
-
-        /**
-         * @brief Enriches the class-specific point clouds (with XYZ and RGB) with the current keyframe point cloud
-         * @param clsCloudPtrs the class specific point clouds
          * @param thisKFPointCloud the current keyframe point cloud
          */
-        void enrichClassSpecificPointClouds(
-            std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud);
+        void threshSeparatePointCloud(pcl::PCLPointCloud2::Ptr pclPc2SegPrb,
+                                      cv::Mat &segImgUncertainity,
+                                      std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs,
+                                      const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &thisKFPointCloud);
 
         /**
          * @brief Gets all planes for each class specific point cloud using RANSAC
@@ -140,21 +144,36 @@ namespace ORB_SLAM3
         Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
 
         /**
-         * @brief Converts mapped room candidates to rooms using geometric constraints
+         * @brief Organizes the walls of a four-walled room
+         * @param givenRoom the address of the detected room
          */
-        void updateMapRoomCandidateToRoom_Geo();
+        void organizeRoomWalls(Room *givenRoom);
+
+        /**
+         * @brief Gets all square rooms from the facing walls list
+         * @param facingWalls the facing walls list
+         * @param perpThreshDeg the perpendicular threshold in degrees
+         */
+        std::vector<std::vector<std::pair<Plane *, Plane *>>> getAllSquareRooms(
+            const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
+            double perpThreshDeg = 5.0);
+
+        /**
+         * @brief Converts mapped room candidates to rooms using geometric constraints
+         * 🚧 [vS-Graphs v.2.0] This solution is not very reliable. It is recommended to use Voxblox version.
+         */
+        void updateMapRoomCandidateToRoomGeo(KeyFrame *pKF);
 
         /**
          * @brief Converts mapped room candidates to rooms using voxmap and freespace clusters
-         * @param roomCandidate the address of the candidate room
          */
-        void updateMapRoomCandidateToRoom_Voxblox(Room *roomCandidate);
+        void updateMapRoomCandidateToRoomVoxblox();
 
         /**
          * @brief Converts mapped room candidates to rooms using a GNN
          * @param roomCandidate the address of the candidate room
          */
-        void updateMapRoomCandidateToRoom_GNN(Room *roomCandidate);
+        void updateMapRoomCandidateToRoomGNN(Room *roomCandidate);
 
         // Running the thread
         void Run();

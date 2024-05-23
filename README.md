@@ -81,10 +81,6 @@ sourcerealsense
 roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
 ```
 
-### 🦊 Voxblox (optional) <a id="voxblox"></a>
-
-Install `Voxblox` based on the installation guide introduced [here](https://voxblox.readthedocs.io/en/latest/pages/Installation.html), and to make sure if it works fine, try [running it](https://voxblox.readthedocs.io/en/latest/pages/Running-Voxblox.html) on a simple dataset, such as the `basement dataset`.
-
 ### 🎨 Kimera-Semantics (optional) <a id="kimera"></a>
 
 Install `Kimera-Semantics` based on the installation guide introduced [here](https://github.com/MIT-SPARK/Kimera-Semantics/tree/master). In case you have `Ros Noetic`, you may face some errors related to `pcl` library and the build fails. In this case, you should apply `catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_STANDARD=14` to be able to build it ([issue](https://github.com/MIT-SPARK/Kimera-Semantics/issues/67)).
@@ -136,13 +132,32 @@ git clone git@github.com:snt-arg/scene_segment_ros.git
 
 It is important to put the file in the same folder, as the Visual S-Graphs library depends on it. You can then run the scene semantic segmentor using the commands `roslaunch segmenter_ros segmenter_pFCN.launch` for using the **PanopticFCN** model. Reade more about available options in the [repo](https://github.com/snt-arg/scene_segment_ros).
 
-### IV. Installing the Libraries <a id="libraries"></a>
+### IV. 🦊 Installing Voxblox Skeleton <a id="voxblox"></a>
+
+This package (available [here](https://github.com/snt-arg/mav_voxblox_planning/tree/master)) enables you to use `voxblox` and `loco planning` for cluster-based room detection. Accordingly, install it using the commands below in a workspace **not necessarily the same folder (i.e., [workspace]/src)**:
+
+```
+cd ~/catkin_ws/src/
+
+# Cloning the latest code
+git clone git@github.com:snt-arg/mav_voxblox_planning.git
+wstool init . ./mav_voxblox_planning/install/install_ssh.rosinstall
+wstool update
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
+```
+
+### V. Installing Other Required Libraries <a id="libraries"></a>
 
 First, make sure that you have installed all the required dependencies, such as `ros-noetic-backward-ros` and `ros-noetic-rviz-visual-tools`, using the command `rosdep install --from-paths src --ignore-src -y`.
 
-Then, install both the libraries using `catkin build`. Finally, you can add a new alias to the `bashrc` file to run the environment whenever needed:
+### VI. Build
+
+Build the installed libraries and modules using `catkin build`. As a shortcut, you can add a new alias to the `bashrc` file to run the environment whenever needed, like below:
 
 ```
+alias sourceros='source /opt/ros/noetic/setup.bash'
+alias sourcevox="source ~/workspace/ros/voxblox_skeleton/devel/setup.bash"
+alias sourcerealsense='source ~/workspace/realsense/rs_ros/devel/setup.bash'
 alias sourcevsgraphs='source ~/workspace/ros/orbslam3_ros_ws/devel/setup.bash'
 ```
 
@@ -165,6 +180,8 @@ You can find the configuration files for the application in the `config` folder.
    - UniLu's single office ([link](https://uniluxembourg-my.sharepoint.com/:u:/r/personal/ali_tourani_uni_lu/Documents/Data/ULMS-Seq06.zip?csf=1&web=1&e=vyBNPZ)) for Stereo and Stereo-Inertial
 
 2. Run the ArUco marker detector module using `roslaunch aruco_ros marker_publisher.launch`
+3. Run the Semantic Segmentation module (pFCN) using `roslaunch segmenter_ros segmenter_pFCN.launch`
+4. Run VoxBlox Skeleton using `roslaunch voxblox_skeleton skeletonize_map_vsgraphs.launch 2>/dev/null`
 
 | Mode            | Dataset                            | Commands                                                                   | Notes                          |
 | --------------- | ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------ |
@@ -179,7 +196,9 @@ You can find the configuration files for the application in the `config` folder.
 
 #### 🦊 Voxblox Integration <a id="voxblox-integrate"></a>
 
-You need to first create a launch file that can be integrated into this framework. You can find a sample of such launch file [here](doc/voxblox_rs_rgbd.launch). Then, for running `voxblox`, you need to source it and run it in a separate terminal using `roslaunch voxblox_ros vsgraphs_rgbd.launch`.
+For detecting rooms, you need to use `voxblox skeleton` instead of the normal version of `voxblox`, as it uses free spaces for clustering in `skeletonize_map_vsgraphs` launch file.
+
+If you want to use normal `voxblox` (faces challenges for room creation), you may need to first create a launch file that can be integrated into this framework. You can find a sample of such launch file [here](doc/voxblox_rs_rgbd.launch). Then, for running `voxblox`, you need to source it and run it in a separate terminal using `roslaunch voxblox_ros vsgraphs_rgbd.launch`.
 
 Additionally, before running the framework, you need to source it, source `voxblox` with a `--extend` command, and then launch the framework.
 
@@ -289,21 +308,50 @@ Host unitree
 | Param                                                        | Description                                                                                                    |
 | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | `offline`                                                    | live or reading rosbag file (offline)?                                                                         |
-| `env_database`                                               | semantic map data file to be loaded                                                                            |
-| `pointcloud_size_geo`                                        | min number of points in the pointcloud to detect geometric objects                                             |
-| `geo_downsample_leaf_size`                                   | leaf size to use when downsampling pointcloud before using RANSAC in geometric segmentation                    |
-| `pointcloud_size_sem`                                        | min number of points in the pointcloud to detect semantic objects                                              |
-| `sem_prob_thresh`                                            | probability threshold to detect semantic objects                                                               |
-| `sem_downsample_leaf_size`                                   | leaf size to use when downsampling pointcloud before using RANSAC in geometric segmentation                    |
-| `marker_impact`                                              | how much to trust markers                                                                                      |
-| `distance_thresh_near`                                       | Minimum distance (in meters) for point cloud filtering, points closer are discarded                            |
-| `distance_thresh_far`                                        | Maximum distance (in meters) for point cloud filtering, points farther are discarded                           |
+| `sys_params_file`                                            | path to the common system parameters (see below)                                                               |
 | `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
 | `settings_file`                                              | path to settings file                                                                                          |
 | `enable_pangolin`                                            | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
 | `publish_static_transform`                                   | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
 | `roll`, `yaw`, and `pitch`                                   | poses and dimensions of movement                                                                               |
 | `map_frame_id` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
+
+### ⚙️ Common System Parameters
+
+Parameters for the SLAM system (independent of ROS) are stored in a yaml config file in `config/common_system_params.yaml`. The details of these parameters are
+| Param | Description |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| `general` | general system configuration - not specific to any module |
+| --- `mode_of_operation` | one of three: 0 (SemSeg+GeoSeg), 1 (SemSeg), and 2 (GeoSeg) |
+| --- `env_database` | path to the details for the high level semantics in the environment |
+| `markers` | configuration related to aruco markers |
+| --- `impact` | how much to trust markers |
+| `pointcloud` | configuration related to pointcloud processing |
+| --- `distance_thresh` | distance filtering thresholds |
+| ------ `near` | minimum depth of point to be considered |
+| ------ `far` | maximum depth of point to be considered |
+| `seg` | configuration common to both segmentation modules (SemSeg and GeoSeg) |
+| --- `pointclouds_thresh` | minimum number of points needed to fit a plane |
+| --- `plane_association_thresh` | minimum threshold for ominus for two planes to be considered the same |
+| --- `plane_point_dist_thresh` | maximum distance for point to be considered on a plane |
+| --- `plane_facing_dot_thresh` | maximum dot product of plane normals for the planes to be considered as facing each other |
+| --- `ransac` | configuration related to RANSAC |
+| ------ `max_planes` | maximum number of planes to extract from a pointcloud |
+| ------ `distance_thresh` | maximum distance for a point to be considered as inlier |
+| ------ `max_iterations` | maximum number of RANSAC iterations |
+| `geo_seg` | configuration specific to GeoSeg |
+| --- `downsample_leaf_size` | leaf size (same in all axes) for downsampling the pointcloud |
+| `sem_seg` | configuration common to both segmentation modules (SemSeg and GeoSeg) |
+| --- `downsample_leaf_size` | leaf size (same in all axes) for downsampling the pointcloud |
+| --- `prob_thresh` | minimum class probability for point to be considered part of a class (must be > 0.5) |
+| --- `max_step_elevation` | maximum median height of a stepped ground plane over the main ground plane |
+| --- `max_tilt_wall` | maximum tilt heuristic for a wall plane to be valid |
+| --- `max_tilt_ground` | maximum tilt heuristic for a ground plane to be valid |
+| --- `min_votes` | minimum votes for a plane to be classified with a semantic label |
+| `room_seg` | configuration for room detection/segmentation |
+| --- `method` | the algorithm to use; one of 0 (Geometric), 1 (Free space clustering), and 2 (GNNs) |
+| --- `max_step_elevation` | maximum median height of a stepped ground plane over the main ground plane |
+| --- `max_tilt_wall` | maximum tilt heuristic for a wall plane to be valid |
 
 ## 📍 Maps <a id="maps"></a>
 

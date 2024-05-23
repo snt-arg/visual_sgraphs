@@ -32,6 +32,38 @@ namespace ORB_SLAM3
             return false;
     }
 
+    bool Utils::arePlanesPerpendicular(const Plane *plane1, const Plane *plane2, const double &threshold)
+    {
+        // Calculate the dot product of the normal vectors of the planes
+        Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
+        Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
+        double dotProduct = normal1.dot(normal2);
+
+        // Calculate the angle between the planes
+        double angle = std::acos(std::abs(dotProduct));
+
+        // Check if the angle is within the threshold
+        return std::abs(angle - M_PI / 2.0) < threshold;
+    }
+
+    std::vector<std::pair<Plane *, Plane *>> Utils::getAllPlanesFacingEachOther(const std::vector<Plane *> &planes)
+    {
+        std::vector<std::pair<Plane *, Plane *>> facingPlanes;
+        for (auto plane1 : planes)
+            for (auto plane2 : planes)
+            {
+                // Skip the same plane
+                if (plane1->getId() == plane2->getId())
+                    continue;
+
+                // Check if the planes are facing each other
+                bool isFacing = Utils::arePlanesFacingEachOther(plane1, plane2);
+                if (isFacing)
+                    facingPlanes.push_back(std::make_pair(plane1, plane2));
+            }
+        return facingPlanes;
+    }
+
     Eigen::Vector4d Utils::correctPlaneDirection(const Eigen::Vector4d &plane)
     {
         // Check if the transformation is needed
@@ -180,7 +212,7 @@ namespace ORB_SLAM3
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
 
-    template <typename PointT, template<typename> class SegmentationType>
+    template <typename PointT, template <typename> class SegmentationType>
     std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> Utils::ransacPlaneFitting(
         typename pcl::PointCloud<PointT>::Ptr &cloud)
     {
@@ -195,7 +227,7 @@ namespace ORB_SLAM3
                 typename pcl::ExtractIndices<PointT> extract;
                 pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
                 pcl::ModelCoefficients::Ptr coeffs(new pcl::ModelCoefficients);
-                
+
                 // Create the SAC segmentation object
                 SegmentationType<PointT> seg;
 
@@ -231,7 +263,7 @@ namespace ORB_SLAM3
                     inPoint.y = cloud->points[idx].y;
                     inPoint.z = cloud->points[idx].z;
                     inPoint.a = cloud->points[idx].a;
-                    
+
                     // Add the point to the cloud
                     extractedCloud->points.push_back(inPoint);
                 }
@@ -252,12 +284,12 @@ namespace ORB_SLAM3
         }
         return extractedPlanes;
     }
-    template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
-            Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
-    template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
-            Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
+    template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>
+    Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::SACSegmentation>(
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
+    template std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>
+    Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
 
     ORB_SLAM3::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId)
     {

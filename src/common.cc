@@ -17,6 +17,7 @@ ros::Publisher pose_pub, odom_pub, kf_markers_pub;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
+std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, doorsPub,
     all_mappoints_pub, kf_plane_assoc, fiducial_markers_pub, doors_pub, planes_pub, rooms_pub, keyframe_markers_pub, plane_markers_pub, observation_markers_pub;
@@ -73,11 +74,11 @@ void setupPublishers(ros::NodeHandle &node_handler, image_transport::ImageTransp
     tracking_img_pub = image_transport.advertise(node_name + "/tracking_image", 1);
     pose_pub = node_handler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
     all_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
-    kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 1);
+    kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 10); // rate of keyframe generation is higher
     kf_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
+    plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
     segmented_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
-    plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
 
     // Semantic
     doorsPub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
@@ -684,9 +685,9 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
         for (const auto &point : planeClouds->points)
         {
-            // Skip some points randomly
-            if (rand() % 10 != 0)
-                continue;
+            // // Skip some points randomly
+            // if (rand() % 10 != 0)
+            //     continue;
 
             pcl::PointXYZRGB newPoint;
             newPoint.x = point.x;
@@ -1076,4 +1077,36 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double fra
     }
 
     return std::make_pair(minTimeDifference, matchedMarkers);
+}
+
+void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray)
+{
+    // Reset the buffer
+    skeletonClusterPoints.clear();
+
+    for (const auto &skeleton : skeletonArray.markers)
+    {
+        // Take the points of the current cluster
+        std::vector<Eigen::Vector3d *> clusterPoints;
+
+        // Pick only the messages starting with name "connected_vertices_[x]"
+        if (skeleton.ns.compare(0, strlen("connected_vertices"), "connected_vertices") == 0)
+        {
+            // Skip small clusters
+            if (skeleton.points.size() > ORB_SLAM3::SystemParams::GetParams()->room_seg.min_cluster_vertices)
+                // Add the points of the cluster to the buffer
+                for (const auto &point : skeleton.points)
+                {
+                    Eigen::Vector3d *newPoint = new Eigen::Vector3d(point.x, point.y, point.z);
+                    clusterPoints.push_back(newPoint);
+                }
+
+            // Add the current cluster to the skeleton cluster points buffer
+            if (clusterPoints.size() > 0)
+                skeletonClusterPoints.push_back(clusterPoints);
+        }
+    }
+
+    // Send it to be processed
+    pSLAM->updateSkeletonCluster(skeletonClusterPoints);
 }

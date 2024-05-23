@@ -2444,6 +2444,26 @@ namespace ORB_SLAM3
                     }
                 }
 
+                // Correct Planes
+                const vector<Plane *> vpPlanes = pActiveMap->GetAllPlanes();
+                for (Plane *pPlane : vpPlanes)
+                {
+                    if (pPlane->mnBAGlobalForKF == nLoopKF)
+                    {
+                        pPlane->setGlobalEquation(pPlane->mPlaneGBA);
+                    }
+                    else
+                    {
+                        KeyFrame *pRefKF = pPlane->referenceKeyFrame;
+                        if (pRefKF->mnBAGlobalForKF != nLoopKF)
+                            continue;
+
+                        Sophus::SE3f Tcorc = pRefKF->GetPoseInverse() * pRefKF->mTcwBefGBA;
+                        g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(Tcorc.matrix().cast<double>(), pPlane->getGlobalEquation());
+                        pPlane->setGlobalEquation(globalEquation);
+                    }
+                }
+
                 pActiveMap->InformNewBigChange();
                 pActiveMap->IncreaseChangeIndex();
 

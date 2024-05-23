@@ -42,6 +42,10 @@ namespace ORB_SLAM3
             // Fetch the planes from the current KeyFrame
             fetchPlanesFromKeyFrame(mpCurrentKeyFrame, mHasDepthCloud);
 
+            // clear the current KeyFrame pointcloud if semantic mode is not active
+            if (sysParams->general.mode_of_operation == SystemParams::general::ModeOfOperation::GEO)
+                mpCurrentKeyFrame->clearPointCloud();
+
             usleep(3000);
         }
     }
@@ -140,6 +144,7 @@ namespace ORB_SLAM3
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->addObservation(pKF, estimatedPlane);
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
+        newMapPlane->referenceKeyFrame = pKF;
 
         // Set the plane type to undefined, as it is not known yet
         newMapPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::UNDEFINED);
@@ -160,11 +165,11 @@ namespace ORB_SLAM3
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
             newMapPlane->setMapClouds(planeCloud);
-        else
-            // Loop to find the points lying on wall
-            for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-                if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
-                    newMapPlane->setMapPoints(mapPoint);
+
+        // Loop to find the points lying on wall
+        // for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
+        //     if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
+        //         newMapPlane->setMapPoints(mapPoint);
 
         pKF->AddMapPlane(newMapPlane);
         mpAtlas->AddMapPlane(newMapPlane);
@@ -192,10 +197,10 @@ namespace ORB_SLAM3
         // Update the pointcloud of the plane
         if (!planeCloud->points.empty())
             currentPlane->setMapClouds(planeCloud);
-        else
-            for (const auto &mapPoint : pKF->GetMapPoints())
-                if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
-                    currentPlane->setMapPoints(mapPoint);
+
+        // for (const auto &mapPoint : pKF->GetMapPoints())
+        //     if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
+        //         currentPlane->setMapPoints(mapPoint);
     }
 
     Eigen::Vector4d GeometricSegmentation::getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
