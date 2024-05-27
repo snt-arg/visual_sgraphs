@@ -62,7 +62,7 @@ namespace ORB_SLAM3
             // Get the plane equation
             Eigen::Vector4d planeEstimate = planePoint.second;
             g2o::Plane3D detectedPlane(planeEstimate);
-            
+
             // Convert the given plane to global coordinates
             g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                          detectedPlane);
@@ -80,10 +80,10 @@ namespace ORB_SLAM3
             else
                 // The wall already exists in the map, fetching that one
                 updateMapPlane(pKF, detectedPlane, globalPlaneCloud, matchedPlaneId);
-
-            // Add Markers while progressing in KFs
-            markerSemanticDetectionAndMapping(pKF, pKF->getCurrentFrameMarkers(), planeCloud);
         }
+
+        // Add Markers while progressing in KFs
+        markerSemanticDetectionAndMapping(pKF);
     }
 
     std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> GeometricSegmentation::getPlanesFromPointClouds(
@@ -106,7 +106,7 @@ namespace ORB_SLAM3
         // Convert the pointcloud to one with PointXYZRGBA for consistency
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloudRGBA(new pcl::PointCloud<pcl::PointXYZRGBA>);
         pcl::copyPointCloud(*pointcloud, *cloudRGBA);
-        
+
         // Downsample the given pointcloud after filtering based on distance
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(cloudRGBA);
         filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->geo_seg.downsample_leaf_size);
@@ -301,10 +301,11 @@ namespace ORB_SLAM3
         mpAtlas->AddMapRoom(newMapRoomCandidate);
     }
 
-    void GeometricSegmentation::markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF,
-                                                                  const std::vector<Marker *> &mvpMapMarkers,
-                                                                  const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
+    void GeometricSegmentation::markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF)
     {
+        // Get the markers from the current KeyFrame
+        std::vector<Marker *> mvpMapMarkers = pKF->getCurrentFrameMarkers();
+
         for (Marker *mCurrentMarker : mvpMapMarkers)
         {
             // Variables

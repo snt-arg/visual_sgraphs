@@ -64,8 +64,8 @@ namespace ORB_SLAM3
          * @param hasDepthCloud a boolean to indicate if the point cloud has depth information
          * @param minCloudSize the minimum size of the point cloud to be segmented
          */
-        std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> 
-            getPlanesFromPointClouds(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud);
+        std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>
+        getPlanesFromPointClouds(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud);
 
         /**
          * @brief Get the point cloud from a set of map-points
@@ -124,11 +124,8 @@ namespace ORB_SLAM3
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
          * @param pKF the current keyframe in which the detection took place
-         * @param mvpMapMarkers the address of the detected markers
          */
-        void markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF,
-                                               const std::vector<Marker *> &mvpMapMarkers,
-                                               const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
+        void markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF);
 
         /**
          * @brief Checks for the association of a given room
