@@ -137,25 +137,6 @@ namespace ORB_SLAM3
         return roomCenter;
     }
 
-    std::pair<bool, std::string> Utils::isMarkerAttachedToDoor(const int &markerId,
-                                                               std::vector<ORB_SLAM3::Door *> envDoors)
-    {
-        bool isDoor = false;
-        std::string name = "";
-        // Loop over all markers attached to doors
-        for (const auto &doorPtr : envDoors)
-        {
-            if (doorPtr->getMarkerId() == markerId)
-            {
-                isDoor = true;
-                name = doorPtr->getName();
-                break; // No need to continue searching if found
-            }
-        }
-        // Returning
-        return std::make_pair(isDoor, name);
-    }
-
     template <typename PointT>
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDownsample(
         const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize)

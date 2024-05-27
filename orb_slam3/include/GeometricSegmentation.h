@@ -7,6 +7,7 @@
 
 #include "Atlas.h"
 #include "Utils.h"
+#include "GeoSemHelpers.h"
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -33,21 +34,12 @@ namespace ORB_SLAM3
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud);
+        GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud,
+                              std::vector<ORB_SLAM3::Door *> envDoors,
+                              std::vector<ORB_SLAM3::Room *> envRooms);
 
         void AddKeyFrameToBuffer(KeyFrame *pKF);
         std::list<KeyFrame *> GetKeyFrameBuffer();
-
-        /**
-         * @brief Sets the environment doors and rooms fetched from the database
-         * @param nEnvDoors the address of the environment doors
-         * @param nEnvRooms the address of the environment rooms
-         */
-        void setEnvFetchedValues(std::vector<Door *> nEnvDoors, std::vector<Room *> nEnvRooms)
-        {
-            envDoors = nEnvDoors;
-            envRooms = nEnvRooms;
-        }
 
         /**
          * @brief Detects all the planes in the current keyframe
@@ -80,58 +72,6 @@ namespace ORB_SLAM3
          */
         Eigen::Vector4d getPlaneEquationFromPose(const Eigen::Matrix3f &rotationMatrix,
                                                  const Eigen::Vector3f &translation);
-
-        /**
-         * @brief Creates a new marker object to be added to the map
-         * @param visitedMarker the address of the visited marker
-         * @param pKF the address of the current keyframe
-         */
-        Marker *createMapMarker(const Marker *visitedMarker, KeyFrame *pKF);
-
-        /**
-         * @brief Creates a new plane object to be added to the map
-         * @param planePointPair all the map points to check the ones lying on the plane
-         * @param pKF the address of the current keyframe
-         */
-        void createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                            const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
-
-        /**
-         * @brief Updates an existing plane object in the map
-         * @param planeId the identifier of the existing plane
-         * @param visitedMarker the address of the visited marker
-         * @param pKF the address of the current keyframe
-         */
-        void updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId,
-                            ORB_SLAM3::Marker *visitedMarker = NULL);
-
-        /**
-         * @brief Creates a new door object to be added to the map
-         * @param attachedMarker the address of the attached marker
-         * @param pKF the address of the current keyframe
-         * @param name the name of the door
-         */
-        void createMapDoor(Marker *attachedMarker, KeyFrame *pKF, std::string name);
-
-        /**
-         * @brief Creates a new room object (corridor or room) to be added to the map
-         * @param matchedRoom the address of the room matched from the database
-         * @param attachedMarker the address of the attached marker
-         */
-        void createMapRoomCandidate(ORB_SLAM3::Room *matchedRoom, ORB_SLAM3::Marker *attachedMarker);
-
-        /**
-         * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
-         * @param pKF the current keyframe in which the detection took place
-         */
-        void markerSemanticDetectionAndMapping(ORB_SLAM3::KeyFrame *pKF);
-
-        /**
-         * @brief Checks for the association of a given room
-         * @param detectedRoom the address of the detected room
-         */
-        Room *roomAssociation(const ORB_SLAM3::Room *detectedRoom);
 
         /**
          * @brief Runs the geometric segmentation thread

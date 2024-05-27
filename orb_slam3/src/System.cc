@@ -202,13 +202,12 @@ namespace ORB_SLAM3
 
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
-        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud);
+        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, envDoors, envRooms);
         mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
-        mpGeometricSegmentation->setEnvFetchedValues(envDoors, envRooms);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
         // [TODO] - launch threads based on flags
-        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
+        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, envDoors, envRooms);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
 
         // Set pointers between threads

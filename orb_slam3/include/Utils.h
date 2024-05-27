@@ -98,14 +98,6 @@ namespace ORB_SLAM3
                                              const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2);
 
         /**
-         * @brief Checks to see if the marker is attached to a door or not (e.g., a window)
-         * and returns the name of it if exists (only valid for doors)
-         * @param markerId the id of the marker
-         */
-        static std::pair<bool, std::string> isMarkerAttachedToDoor(const int &markerId,
-                                                                   std::vector<ORB_SLAM3::Door *> envDoors);
-
-        /**
          * Downsamples the pointclouds based on the given leaf size
          * @param cloud the pointcloud to be downsampled
          */

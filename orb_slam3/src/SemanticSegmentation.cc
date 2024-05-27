@@ -2,9 +2,12 @@
 
 namespace ORB_SLAM3
 {
-    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas)
+    SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas, std::vector<ORB_SLAM3::Door *> nEnvDoors,
+                                               std::vector<ORB_SLAM3::Room *> nEnvRooms)
     {
         mpAtlas = pAtlas;
+        envDoors = nEnvDoors;
+        envRooms = nEnvRooms;
 
         // Get the system parameters
         sysParams = SystemParams::GetParams();
@@ -224,14 +227,18 @@ namespace ORB_SLAM3
                 if (matchedPlaneId == -1)
                 {
                     if (!mGeoRuns)
-                        createMapPlane(pKF, detectedPlane, clsId, conf, planeCloud);
+                    {
+                        ORB_SLAM3::Plane *newMapPlane = GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, planeCloud);
+                        // Cast a vote for the plane semantics
+                        updatePlaneSemantics(newMapPlane->getId(), clsId, conf);
+                    }
                 }
                 else
                 {
                     if (!mGeoRuns)
-                        updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId);
+                        GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, matchedPlaneId);
 
-                    // cast a vote for the plane semantics
+                    // Cast a vote for the plane semantics
                     updatePlaneSemantics(matchedPlaneId, clsId, conf);
                 }
 
@@ -266,60 +273,6 @@ namespace ORB_SLAM3
 
         // // reassociate semantic planes if they get close to each other :)) after optimization
         // reAssociateSemanticPlanes();
-    }
-
-    void SemanticSegmentation::createMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane, int clsId,
-                                              double conf, const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
-    {
-        ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
-        newMapPlane->setColor();
-        newMapPlane->setLocalEquation(estimatedPlane);
-        newMapPlane->SetMap(mpAtlas->GetCurrentMap());
-        newMapPlane->addObservation(pKF, estimatedPlane);
-        newMapPlane->referenceKeyFrame = pKF;
-
-        // [TODO] - move this logic inside Atlas (or Map) for atomic IDs if multiple threads are running
-        newMapPlane->setId(mpAtlas->GetAllPlanes().size());
-
-        // cast a vote for the plane semantics
-        newMapPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::UNDEFINED);
-        newMapPlane->castWeightedVote(Utils::getPlaneTypeFromClassId(clsId), conf);
-
-        // Set the global equation of the plane
-        g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
-                                                                     estimatedPlane);
-        newMapPlane->setGlobalEquation(globalEquation);
-
-        // Fill the plane with the pointcloud
-        if (!planeCloud->points.empty())
-            newMapPlane->setMapClouds(planeCloud);
-
-        // Loop to find the points lying on wall
-        for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-            if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
-                newMapPlane->setMapPoints(mapPoint);
-
-        pKF->AddMapPlane(newMapPlane);
-        mpAtlas->AddMapPlane(newMapPlane);
-    }
-
-    void SemanticSegmentation::updateMapPlane(ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                              pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId)
-    {
-        // Find the matched plane among all planes of the map
-        Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
-        currentPlane->addObservation(pKF, estimatedPlane);
-
-        // Add the plane to the list of planes in the current KeyFrame
-        pKF->AddMapPlane(currentPlane);
-
-        // Update the pointcloud of the plane
-        if (!planeCloud->points.empty())
-            currentPlane->setMapClouds(planeCloud);
-
-        for (const auto &mapPoint : pKF->GetMapPoints())
-            if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
-                currentPlane->setMapPoints(mapPoint);
     }
 
     void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
@@ -808,5 +761,30 @@ namespace ORB_SLAM3
     void SemanticSegmentation::updateMapRoomCandidateToRoomGNN(Room *roomCandidate)
     {
         // [TODO] Needs to be implemented
+    }
+
+    ORB_SLAM3::Room *SemanticSegmentation::roomAssociation(const ORB_SLAM3::Room *givenRoom)
+    {
+        // Variables
+        double minDistance = 100;
+        ORB_SLAM3::Room *foundMappedRoom = nullptr;
+
+        // Get the given room center
+        Eigen::Vector3d detetedRoomCenter = givenRoom->getRoomCenter();
+
+        // Check to find the room with the minimum distance from the center
+        for (const auto &mapRoom : mpAtlas->GetAllRooms())
+        {
+            Eigen::Vector3d mapRoomCenter = mapRoom->getRoomCenter();
+            double distance = (detetedRoomCenter - mapRoomCenter).norm();
+
+            if (distance < minDistance)
+            {
+                minDistance = distance;
+                foundMappedRoom = mapRoom;
+            }
+        }
+
+        return foundMappedRoom;
     }
 }

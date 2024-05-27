@@ -136,6 +136,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/Utils.cc
   orb_slam3/src/Config.cc
   orb_slam3/src/Settings.cc
+  orb_slam3/src/GeoSemHelpers.cc
   orb_slam3/src/Geometric/Plane.cc
   orb_slam3/src/Semantic/Marker.cc
   orb_slam3/src/Semantic/Door.cc
@@ -176,6 +177,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/Config.h
   orb_slam3/include/Utils.h
   orb_slam3/include/Settings.h
+  orb_slam3/include/GeoSemHelpers.h
   orb_slam3/include/Semantic/Door.h
   orb_slam3/include/Semantic/Room.h
   orb_slam3/include/Semantic/Floor.h
