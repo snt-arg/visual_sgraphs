@@ -81,7 +81,7 @@ namespace ORB_SLAM3
          * @param matchedRoom the address of the room matched from the database
          * @param attachedMarker the address of the attached marker
          */
-        static void createMapRoomCandidate(Atlas *mpAtlas, Room *matchedRoom, Marker *attachedMarker);
+        static void createMapRoomCandidate(Atlas *mpAtlas, Room *matchedRoom, Marker *attachedMarker = NULL);
     };
 }
 

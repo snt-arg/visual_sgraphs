@@ -190,11 +190,14 @@ namespace ORB_SLAM3
     void GeoSemHelpers::createMapRoomCandidate(Atlas *mpAtlas, ORB_SLAM3::Room *matchedRoom,
                                                ORB_SLAM3::Marker *attachedMarker)
     {
-        // Check if the room has not been created before
+        // Variables
         bool roomAlreadyInMap = false;
-        for (auto room : mpAtlas->GetAllRooms())
-            if (room->getMetaMarkerId() == attachedMarker->getId())
-                roomAlreadyInMap = true;
+
+        // Check if a room has not been created before for this marker
+        if (attachedMarker)
+            for (auto room : mpAtlas->GetAllRooms())
+                if (room->getMetaMarkerId() == attachedMarker->getId())
+                    roomAlreadyInMap = true;
 
         if (roomAlreadyInMap)
             return;
@@ -204,20 +207,26 @@ namespace ORB_SLAM3
 
         // Fill the room entity
         newMapRoomCandidate->setIsCandidate(true);
-        newMapRoomCandidate->setMetaMarker(attachedMarker);
         newMapRoomCandidate->setName(matchedRoom->getName());
         newMapRoomCandidate->SetMap(mpAtlas->GetCurrentMap());
         newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
         newMapRoomCandidate->setIsCorridor(matchedRoom->getIsCorridor());
         newMapRoomCandidate->setMetaMarkerId(matchedRoom->getMetaMarkerId());
-        newMapRoomCandidate->setRoomCenter(attachedMarker->getGlobalPose().translation().cast<double>());
+
+        // If the marker is also provided
+        if (attachedMarker)
+        {
+            newMapRoomCandidate->setMetaMarker(attachedMarker);
+            newMapRoomCandidate->setRoomCenter(attachedMarker->getGlobalPose().translation().cast<double>());
+        }
 
         for (int markerId : matchedRoom->getDoorMarkerIds())
             newMapRoomCandidate->setDoorMarkerIds(markerId);
 
+        std::string detectionMethod = attachedMarker ? "marker #" + attachedMarker->getId() : "free-space detection";
         std::cout
-            << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " (" << newMapRoomCandidate->getName()
-            << "), augmented by Marker-ID #" << newMapRoomCandidate->getMetaMarkerId() << "!" << std::endl;
+            << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " ("
+            << newMapRoomCandidate->getName() << ") using " << detectionMethod << std::endl;
 
         mpAtlas->AddMapRoom(newMapRoomCandidate);
     }
