@@ -15,19 +15,18 @@ namespace ORB_SLAM3
     class Room
     {
     private:
-        int id;                                      // The room's identifier
-        int opId;                                    // The room's identifier in the local optimizer
-        int opIdG;                                   // The room's identifier in the global optimizer
-        bool isCorridor;                             // Checks if the room is a corridor or not
-        bool isCandidate;                            // Checks if it is a candidate room (meta-marker detected) or not
-        int metaMarkerId;                            // The identifier of the room's meta-marker (containing information about the room)
-        std::string name;                            // The name devoted for each room (optional)
-        Marker *metaMarker;                          // The meta-marker assigned for the room
-        std::vector<Door *> doors;                   // The vector of detected doors of a room
-        std::vector<Plane *> walls;                  // The vector of detected walls of a room
-        Eigen::Vector3d roomCenter;                  // The center of the room as a 3D vector in the global reference
-        std::vector<int> doorMarkerIds;              // Markers attached to the doors of a room [in real map], e.g. [3, 4]
-        std::vector<std::vector<int>> wallMarkerIds; // Marker-pairs attached to a room [in real map], e.g. [[1, 2], [3, 4]]
+        int id;                         // The room's identifier
+        int opId;                       // The room's identifier in the local optimizer
+        int opIdG;                      // The room's identifier in the global optimizer
+        bool isCorridor;                // Checks if the room is a corridor or not
+        bool isCandidate;               // Checks if it is a candidate room (meta-marker detected) or not
+        int metaMarkerId;               // The identifier of the room's meta-marker (containing information about the room)
+        std::string name;               // The name devoted for each room (optional)
+        Marker *metaMarker;             // The meta-marker assigned for the room
+        std::vector<Door *> doors;      // The vector of detected doors of a room
+        std::vector<Plane *> walls;     // The vector of detected walls of a room
+        Eigen::Vector3d roomCenter;     // The center of the room as a 3D vector in the global reference
+        std::vector<int> doorMarkerIds; // Markers attached to the doors of a room [in real map], e.g. [3, 4]
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -72,9 +71,6 @@ namespace ORB_SLAM3
 
         Eigen::Vector3d getRoomCenter() const;
         void setRoomCenter(Eigen::Vector3d value);
-
-        void setWallMarkerIds(std::vector<int> value);
-        std::vector<std::vector<int>> getWallMarkerIds() const;
 
         Map *GetMap();
         void SetMap(Map *pMap);

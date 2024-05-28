@@ -81,7 +81,30 @@ namespace ORB_SLAM3
         v2.head<3>() = R * v.head<3>();
         v2(3) = v(3) - kfPose.block<3, 1>(0, 3).dot(v2.head<3>());
         return g2o::Plane3D(v2);
-    };
+    }
+
+    Eigen::Vector3d Utils::getClusterCenteroid(const std::vector<std::vector<Eigen::Vector3d *>> &points)
+    {
+        // Variables
+        int count = 0;
+        Eigen::Vector3d sum(0.0, 0.0, 0.0);
+
+        // Calculate the count and sum of the points
+        for (const auto &clusterPoint : points)
+            for (const auto &pointPtr : clusterPoint)
+                if (pointPtr)
+                {
+                    sum += *pointPtr;
+                    ++count;
+                }
+
+        // Return the centeroid of the cluster
+        if (count > 0)
+            return sum / count;
+        else
+            // Handle the case where there are no points to avoid division by zero
+            return Eigen::Vector3d(0.0, 0.0, 0.0);
+    }
 
     Eigen::Vector3d Utils::getRoomCenter(const Eigen::Vector3d &markerPosition,
                                          const Eigen::Vector4d &wall1,

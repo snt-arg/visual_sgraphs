@@ -76,12 +76,28 @@ namespace ORB_SLAM3
         static void createMapDoor(Atlas *mpAtlas, KeyFrame *pKF, Marker *attachedMarker, std::string name);
 
         /**
+         * @brief Organizes the walls of a four-walled room
+         * @param givenRoom the address of the detected room
+         */
+        static void organizeRoomWalls(Room *givenRoom);
+
+        /**
          * @brief Creates a new room object (corridor or room) to be added to the map
          * @param mpAtlas the current map in Atlas
          * @param matchedRoom the address of the room matched from the database
          * @param attachedMarker the address of the attached marker
          */
-        static void createMapRoomCandidate(Atlas *mpAtlas, Room *matchedRoom, Marker *attachedMarker = NULL);
+        static void createMapRoomCandidateByMarker(Atlas *mpAtlas, Room *matchedRoom, Marker *attachedMarker);
+
+        /**
+         * @brief Creates a new room object (corridor or room) to be added to the map
+         * @param mpAtlas the current map in Atlas
+         * @param isCorridor the boolean value to check if the room is a corridor or not
+         * @param clusterCentroid the centroid of the cluster
+         * @param walls the vector of walls detected in the room
+         */
+        static void createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
+                                                      Eigen::Vector3d clusterCentroid, std::vector<Plane *> walls);
     };
 }
 

@@ -127,12 +127,6 @@ namespace ORB_SLAM3
         Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
 
         /**
-         * @brief Organizes the walls of a four-walled room
-         * @param givenRoom the address of the detected room
-         */
-        void organizeRoomWalls(Room *givenRoom);
-
-        /**
          * @brief Gets all square rooms from the facing walls list
          * @param facingWalls the facing walls list
          * @param perpThreshDeg the perpendicular threshold in degrees

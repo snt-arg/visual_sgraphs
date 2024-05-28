@@ -447,39 +447,6 @@ namespace ORB_SLAM3
         return planePoseMat;
     }
 
-    void SemanticSegmentation::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
-    {
-        // Function to find the minimum and maximum coefficient value of a wall among all walls
-        auto findExtremumWall = [&](const std::vector<Plane *> &walls, int coeffIndex, bool findMax) -> Plane *
-        {
-            Plane *extremumWall = walls.front();
-            for (const auto &wall : walls)
-            {
-                if ((findMax && wall->getGlobalEquation().coeffs()(coeffIndex) > extremumWall->getGlobalEquation().coeffs()(coeffIndex)) ||
-                    (!findMax && wall->getGlobalEquation().coeffs()(coeffIndex) < extremumWall->getGlobalEquation().coeffs()(coeffIndex)))
-                {
-                    extremumWall = wall;
-                }
-            }
-            return extremumWall;
-        };
-
-        // Get all walls in the room
-        const std::vector<Plane *> &walls = givenRoom->getWalls();
-
-        // Find walls with minimum and maximum coefficients along x and z axes
-        Plane *maxWallX = findExtremumWall(walls, 0, true);
-        Plane *maxWallZ = findExtremumWall(walls, 2, true);
-        Plane *minWallX = findExtremumWall(walls, 0, false);
-        Plane *minWallZ = findExtremumWall(walls, 2, false);
-
-        givenRoom->clearWalls();
-        givenRoom->setWalls(minWallX);
-        givenRoom->setWalls(maxWallX);
-        givenRoom->setWalls(minWallZ);
-        givenRoom->setWalls(maxWallZ);
-    }
-
     std::vector<std::vector<std::pair<Plane *, Plane *>>> SemanticSegmentation::getAllSquareRooms(
         const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
         double perpThreshDeg)
@@ -630,6 +597,9 @@ namespace ORB_SLAM3
         // Get the skeleton clusters
         std::vector<std::vector<Eigen::Vector3d *>> clusterPoints = GetLatestSkeletonCluster();
 
+        // Get the centroid of the cluster
+        Eigen::Vector3d clusterCentroid = Utils::getClusterCenteroid(clusterPoints);
+
         // Get all the mapped planes and rooms
         std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
         std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
@@ -677,6 +647,22 @@ namespace ORB_SLAM3
                 corridorRooms.push_back(facingWall);
         }
 
+        // Create room candidates for them
+        for (const auto &corridor : corridorRooms)
+        {
+            std::vector<ORB_SLAM3::Plane *> walls = {corridor.first, corridor.second};
+            // Create a new room candidate
+            GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, clusterCentroid, walls);
+        }
+
+        for (const auto &squareRoom : squareRooms)
+        {
+            std::vector<ORB_SLAM3::Plane *> walls = {squareRoom[0].first, squareRoom[0].second,
+                                                     squareRoom[1].first, squareRoom[1].second};
+            // Create a new room candidate
+            GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, clusterCentroid, walls);
+        }
+
         // Calculate the plane (wall) equation on which the marker is attached
         // Eigen::Vector4d planeEstimate =
         //     getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
@@ -711,51 +697,6 @@ namespace ORB_SLAM3
         //         if (doorMarkerId == marker->getId())
         //             roomCandidate->setDoors(mapDoor);
         // }
-
-        // [TODO] Detect walls close to the room center (setWalls in SemSeg)
-
-        // Set the new room center
-        // Eigen::Vector3d updatedCentroid = Eigen::Vector3d::Zero();
-        // std::vector<Plane *> roomWalls = detectedRoom->getWalls();
-        // if (roomWalls.size() > 0)
-        // {
-        //     if (detectedRoom->getIsCorridor())
-        //     {
-        //         // Calculate the marker position placed on a wall
-        //         Eigen::Vector3d markerPosition =
-        //             roomWalls.front()->getMarkers().front()->getGlobalPose().translation().cast<double>();
-        //         // If it is a corridor
-        //         Eigen::Vector4d wall1(Utils::correctPlaneDirection(
-        //             roomWalls.front()->getGlobalEquation().coeffs()));
-        //         Eigen::Vector4d wall2(Utils::correctPlaneDirection(
-        //             roomWalls.front()->getGlobalEquation().coeffs()));
-        //         // Find the room center and add its vertex
-        //         updatedCentroid = Utils::getRoomCenter(markerPosition, wall1, wall2);
-        //     }
-        //     else
-        //     {
-        //         organizeRoomWalls(detectedRoom);
-        //         // If it is a four-wall room
-        //         Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[0]->getGlobalEquation().coeffs());
-        //         Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[1]->getGlobalEquation().coeffs());
-        //         Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[2]->getGlobalEquation().coeffs());
-        //         Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
-        //             detectedRoom->getWalls()[3]->getGlobalEquation().coeffs());
-        //         // Find the room center and add its vertex
-        //         updatedCentroid = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
-        //     }
-
-        //     // Update the room values
-        //     detectedRoom->setRoomCenter(updatedCentroid);
-        // }
-
-        // std::cout << "- Room#" << detectedRoom->getId() << " updated (" << detectedRoom->getName()
-        //           << "), augmented by Marker-ID #" << detectedRoom->getMetaMarkerId() << ", with #"
-        //           << " walls and doors [" << detectedDoors << "]!"
-        //           << std::endl;
     }
 
     void SemanticSegmentation::updateMapRoomCandidateToRoomGNN(Room *roomCandidate)

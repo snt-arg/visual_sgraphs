@@ -132,7 +132,7 @@ namespace ORB_SLAM3
                         // Create a room candidate if does not exist in the map
                         // [💡hint] Creation of room candidates happens here and updating (changing to real candidates)
                         // happens in the Semantic Segmentation module
-                        createMapRoomCandidate(mpAtlas, envRoom, mCurrentMarker);
+                        createMapRoomCandidateByMarker(mpAtlas, envRoom, mCurrentMarker);
             }
         }
     }
@@ -187,17 +187,49 @@ namespace ORB_SLAM3
         mpAtlas->AddMapDoor(newMapDoor);
     }
 
-    void GeoSemHelpers::createMapRoomCandidate(Atlas *mpAtlas, ORB_SLAM3::Room *matchedRoom,
-                                               ORB_SLAM3::Marker *attachedMarker)
+    void GeoSemHelpers::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
+    {
+        // Function to find the minimum and maximum coefficient value of a wall among all walls
+        auto findExtremumWall = [&](const std::vector<Plane *> &walls, int coeffIndex, bool findMax) -> Plane *
+        {
+            Plane *extremumWall = walls.front();
+            for (const auto &wall : walls)
+            {
+                if ((findMax && wall->getGlobalEquation().coeffs()(coeffIndex) > extremumWall->getGlobalEquation().coeffs()(coeffIndex)) ||
+                    (!findMax && wall->getGlobalEquation().coeffs()(coeffIndex) < extremumWall->getGlobalEquation().coeffs()(coeffIndex)))
+                {
+                    extremumWall = wall;
+                }
+            }
+            return extremumWall;
+        };
+
+        // Get all walls in the room
+        const std::vector<Plane *> &walls = givenRoom->getWalls();
+
+        // Find walls with minimum and maximum coefficients along x and z axes
+        Plane *maxWallX = findExtremumWall(walls, 0, true);
+        Plane *maxWallZ = findExtremumWall(walls, 2, true);
+        Plane *minWallX = findExtremumWall(walls, 0, false);
+        Plane *minWallZ = findExtremumWall(walls, 2, false);
+
+        givenRoom->clearWalls();
+        givenRoom->setWalls(minWallX);
+        givenRoom->setWalls(maxWallX);
+        givenRoom->setWalls(minWallZ);
+        givenRoom->setWalls(maxWallZ);
+    }
+
+    void GeoSemHelpers::createMapRoomCandidateByMarker(Atlas *mpAtlas, ORB_SLAM3::Room *matchedRoom,
+                                                       ORB_SLAM3::Marker *attachedMarker)
     {
         // Variables
         bool roomAlreadyInMap = false;
 
         // Check if a room has not been created before for this marker
-        if (attachedMarker)
-            for (auto room : mpAtlas->GetAllRooms())
-                if (room->getMetaMarkerId() == attachedMarker->getId())
-                    roomAlreadyInMap = true;
+        for (auto room : mpAtlas->GetAllRooms())
+            if (room->getMetaMarkerId() == attachedMarker->getId())
+                roomAlreadyInMap = true;
 
         if (roomAlreadyInMap)
             return;
@@ -207,26 +239,83 @@ namespace ORB_SLAM3
 
         // Fill the room entity
         newMapRoomCandidate->setIsCandidate(true);
+        newMapRoomCandidate->setMetaMarker(attachedMarker);
         newMapRoomCandidate->setName(matchedRoom->getName());
         newMapRoomCandidate->SetMap(mpAtlas->GetCurrentMap());
         newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
         newMapRoomCandidate->setIsCorridor(matchedRoom->getIsCorridor());
         newMapRoomCandidate->setMetaMarkerId(matchedRoom->getMetaMarkerId());
-
-        // If the marker is also provided
-        if (attachedMarker)
-        {
-            newMapRoomCandidate->setMetaMarker(attachedMarker);
-            newMapRoomCandidate->setRoomCenter(attachedMarker->getGlobalPose().translation().cast<double>());
-        }
+        newMapRoomCandidate->setRoomCenter(attachedMarker->getGlobalPose().translation().cast<double>());
 
         for (int markerId : matchedRoom->getDoorMarkerIds())
             newMapRoomCandidate->setDoorMarkerIds(markerId);
 
-        std::string detectionMethod = attachedMarker ? "marker #" + attachedMarker->getId() : "free-space detection";
         std::cout
             << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " ("
-            << newMapRoomCandidate->getName() << ") using " << detectionMethod << std::endl;
+            << newMapRoomCandidate->getName() << ") using marker #" << attachedMarker->getId() << "!\n";
+
+        mpAtlas->AddMapRoom(newMapRoomCandidate);
+    }
+
+    void GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
+                                                          Eigen::Vector3d clusterCentroid,
+                                                          std::vector<ORB_SLAM3::Plane *> walls)
+    {
+        // Variables
+        bool roomAlreadyInMap = false;
+
+        // [TODO] Check if a room has not been created before for this marker
+
+        if (roomAlreadyInMap)
+            return;
+
+        // Variables
+        Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
+        ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
+
+        // Fill the room entity
+        newMapRoomCandidate->setIsCandidate(true);
+        newMapRoomCandidate->setIsCorridor(isCorridor);
+        newMapRoomCandidate->SetMap(mpAtlas->GetCurrentMap());
+        newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
+        newMapRoomCandidate->setName(isCorridor ? "Unknown Corridor" : "Unknown Room");
+
+        // Connect the walls to the room
+        for (ORB_SLAM3::Plane *wall : walls)
+            newMapRoomCandidate->setWalls(wall);
+
+        // Detect the room center
+        if (isCorridor)
+        {
+            // Refining the walls of the corridor
+            Eigen::Vector4d wall1(Utils::correctPlaneDirection(
+                walls[0]->getGlobalEquation().coeffs()));
+            Eigen::Vector4d wall2(Utils::correctPlaneDirection(
+                walls[1]->getGlobalEquation().coeffs()));
+            // Find the room center and add its vertex
+            centroid = Utils::getRoomCenter(clusterCentroid, wall1, wall2);
+        }
+        else
+        {
+            // Reorganize the walls of the room
+            organizeRoomWalls(newMapRoomCandidate);
+            // Compute the centroid of the walls
+            Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
+                walls[0]->getGlobalEquation().coeffs());
+            Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
+                walls[1]->getGlobalEquation().coeffs());
+            Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
+                walls[2]->getGlobalEquation().coeffs());
+            Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
+                walls[3]->getGlobalEquation().coeffs());
+            // Find the room center and add its vertex
+            centroid = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
+        }
+        newMapRoomCandidate->setRoomCenter(centroid);
+
+        std::cout
+            << "- New room candidate detected: Room#" << newMapRoomCandidate->getId()
+            << " using the free-space!" << std::endl;
 
         mpAtlas->AddMapRoom(newMapRoomCandidate);
     }

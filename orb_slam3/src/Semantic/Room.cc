@@ -134,16 +134,6 @@ namespace ORB_SLAM3
         doorMarkerIds.push_back(value);
     }
 
-    std::vector<std::vector<int>> Room::getWallMarkerIds() const
-    {
-        return wallMarkerIds;
-    }
-
-    void Room::setWallMarkerIds(std::vector<int> value)
-    {
-        wallMarkerIds.push_back(value);
-    }
-
     Map *Room::GetMap()
     {
         unique_lock<mutex> lock(mMutexMap);
