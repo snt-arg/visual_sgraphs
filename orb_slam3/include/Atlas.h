@@ -122,7 +122,7 @@ namespace ORB_SLAM3
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<MapPoint *> GetReferenceMapPoints();
-        
+
         Plane *GetBiggestGroundPlane();
 
         vector<Map *> GetAllMaps();
@@ -187,7 +187,6 @@ namespace ORB_SLAM3
 
         // Mutex
         std::mutex mMutexAtlas;
-
     };
 
 }

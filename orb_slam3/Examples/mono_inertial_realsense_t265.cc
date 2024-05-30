@@ -1,20 +1,20 @@
 /**
-* This file is part of ORB-SLAM3
-*
-* Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-* Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
-*
-* ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
-* License as published by the Free Software Foundation, either version 3 of the License, or
-* (at your option) any later version.
-*
-* ORB-SLAM3 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
-* the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License for more details.
-*
-* You should have received a copy of the GNU General Public License along with ORB-SLAM3.
-* If not, see <http://www.gnu.org/licenses/>.
-*/
+ * This file is part of ORB-SLAM3
+ *
+ * Copyright (C) 2017-2021 Carlos Campos, Richard Elvira, Juan J. Gómez Rodríguez, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+ * Copyright (C) 2014-2016 Raúl Mur-Artal, José M.M. Montiel and Juan D. Tardós, University of Zaragoza.
+ *
+ * ORB-SLAM3 is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ORB-SLAM3 is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even
+ * the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along with ORB-SLAM3.
+ * If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #include <signal.h>
 #include <stdlib.h>
@@ -37,10 +37,10 @@ using namespace std;
 
 bool b_continue_session;
 
-void exit_loop_handler(int s){
+void exit_loop_handler(int s)
+{
     cout << "Finishing session" << endl;
     b_continue_session = false;
-
 }
 
 rs2_vector interpolateMeasure(const double target_time,
@@ -49,7 +49,8 @@ rs2_vector interpolateMeasure(const double target_time,
 
 int main(int argc, char **argv)
 {
-    if (argc < 3 || argc > 4) {
+    if (argc < 3 || argc > 4)
+    {
         cerr << endl
              << "Usage: ./mono_inertial_realsense_t265 path_to_vocabulary path_to_settings (trajectory_file_name)"
              << endl;
@@ -59,12 +60,13 @@ int main(int argc, char **argv)
     string file_name;
     bool bFileName = false;
 
-    if (argc == 4) {
+    if (argc == 4)
+    {
         file_name = string(argv[argc - 1]);
         bFileName = true;
     }
 
-    ORB_SLAM3::System SLAM(argv[1],argv[2],ORB_SLAM3::System::IMU_MONOCULAR, true, 0, file_name);
+    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_MONOCULAR, true, 0, file_name);
     float imageScale = SLAM.GetImageScale();
 
     struct sigaction sigIntHandler;
@@ -84,8 +86,8 @@ int main(int argc, char **argv)
     rs2::config cfg;
 
     // Enable both image strams (for some reason realsense does not allow to enable just one)
-    cfg.enable_stream(RS2_STREAM_FISHEYE, 1, RS2_FORMAT_Y8,30);
-    cfg.enable_stream(RS2_STREAM_FISHEYE, 2, RS2_FORMAT_Y8,30);
+    cfg.enable_stream(RS2_STREAM_FISHEYE, 1, RS2_FORMAT_Y8, 30);
+    cfg.enable_stream(RS2_STREAM_FISHEYE, 2, RS2_FORMAT_Y8, 30);
 
     // Add streams of gyro and accelerometer to configuration
     cfg.enable_stream(RS2_STREAM_ACCEL, RS2_FORMAT_MOTION_XYZ32F);
@@ -106,20 +108,23 @@ int main(int argc, char **argv)
     vector<double> v_accel_timestamp_sync;
     vector<rs2_vector> v_accel_data_sync;
 
-    cv::Mat imCV,imCV_right;
-    int width_img, height_img; //width_img = 848, height_img = 800;
+    cv::Mat imCV, imCV_right;
+    int width_img, height_img; // width_img = 848, height_img = 800;
     double timestamp_image = -1.0;
     bool image_ready = false;
     int count_im_buffer = 0; // count dropped frames
 
-    auto imu_callback = [&](const rs2::frame& frame){
+    auto imu_callback = [&](const rs2::frame &frame)
+    {
         std::unique_lock<std::mutex> lock(imu_mutex);
 
-        if(rs2::frameset fs = frame.as<rs2::frameset>()){
+        if (rs2::frameset fs = frame.as<rs2::frameset>())
+        {
             count_im_buffer++;
 
-            double new_timestamp_image = fs.get_timestamp()*1e-3;
-            if(abs(timestamp_image-new_timestamp_image)<0.001){
+            double new_timestamp_image = fs.get_timestamp() * 1e-3;
+            if (abs(timestamp_image - new_timestamp_image) < 0.001)
+            {
                 // cout << "Two frames with the same timeStamp!!!\n";
                 count_im_buffer--;
                 return;
@@ -127,13 +132,14 @@ int main(int argc, char **argv)
 
             rs2::video_frame color_frame = fs.get_fisheye_frame(1);
             // rs2::video_frame color_frame_right = fs.get_fisheye_frame(2);
-            imCV = cv::Mat(cv::Size(width_img, height_img), CV_8U, (void*)(color_frame.get_data()), cv::Mat::AUTO_STEP);
+            imCV = cv::Mat(cv::Size(width_img, height_img), CV_8U, (void *)(color_frame.get_data()), cv::Mat::AUTO_STEP);
 
             timestamp_image = new_timestamp_image;
             // fs.get_timestamp()*1e-3;
             image_ready = true;
 
-            while(v_gyro_timestamp.size() > v_accel_timestamp_sync.size()){
+            while (v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
+            {
 
                 int index = v_accel_timestamp_sync.size();
                 double target_time = v_gyro_timestamp[index];
@@ -146,21 +152,24 @@ int main(int argc, char **argv)
             lock.unlock();
             cond_image_rec.notify_all();
         }
-        else if (rs2::motion_frame m_frame = frame.as<rs2::motion_frame>()){
-            if (m_frame.get_profile().stream_name() == "Gyro"){
+        else if (rs2::motion_frame m_frame = frame.as<rs2::motion_frame>())
+        {
+            if (m_frame.get_profile().stream_name() == "Gyro")
+            {
                 // It runs at 200Hz
                 v_gyro_data.push_back(m_frame.get_motion_data());
-                v_gyro_timestamp.push_back((m_frame.get_timestamp()+offset)*1e-3);
+                v_gyro_timestamp.push_back((m_frame.get_timestamp() + offset) * 1e-3);
             }
-            else if (m_frame.get_profile().stream_name() == "Accel"){
+            else if (m_frame.get_profile().stream_name() == "Accel")
+            {
                 // It runs at 60Hz
                 prev_accel_timestamp = current_accel_timestamp;
                 prev_accel_data = current_accel_data;
 
                 current_accel_data = m_frame.get_motion_data();
-                current_accel_timestamp = (m_frame.get_timestamp()+offset)*1e-3;
+                current_accel_timestamp = (m_frame.get_timestamp() + offset) * 1e-3;
 
-                while(v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
+                while (v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
                 {
                     int index = v_accel_timestamp_sync.size();
                     double target_time = v_gyro_timestamp[index];
@@ -170,7 +179,6 @@ int main(int argc, char **argv)
 
                     v_accel_data_sync.push_back(interp_data);
                     v_accel_timestamp_sync.push_back(target_time);
-
                 }
             }
         }
@@ -180,12 +188,13 @@ int main(int argc, char **argv)
 
     rs2::stream_profile cam_stream = pipe_profile.get_stream(RS2_STREAM_FISHEYE, 1);
     rs2::stream_profile imu_stream = pipe_profile.get_stream(RS2_STREAM_GYRO);
-    float* Rbc = cam_stream.get_extrinsics_to(imu_stream).rotation;
-    float* tbc = cam_stream.get_extrinsics_to(imu_stream).translation;
+    float *Rbc = cam_stream.get_extrinsics_to(imu_stream).rotation;
+    float *tbc = cam_stream.get_extrinsics_to(imu_stream).translation;
     std::cout << "Tbc = " << std::endl;
-    for(int i = 0; i<3; i++){
-        for(int j = 0; j<3; j++)
-            std::cout << Rbc[i*3 + j] << ", ";
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 0; j < 3; j++)
+            std::cout << Rbc[i * 3 + j] << ", ";
         std::cout << tbc[i] << "\n";
     }
 
@@ -198,10 +207,8 @@ int main(int argc, char **argv)
     std::cout << " cy = " << intrinsics_cam.ppy << std::endl;
     std::cout << " height = " << intrinsics_cam.height << std::endl;
     std::cout << " width = " << intrinsics_cam.width << std::endl;
-    std::cout << " Coeff = " << intrinsics_cam.coeffs[0] << ", " << intrinsics_cam.coeffs[1] << ", " <<
-              intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
+    std::cout << " Coeff = " << intrinsics_cam.coeffs[0] << ", " << intrinsics_cam.coeffs[1] << ", " << intrinsics_cam.coeffs[2] << ", " << intrinsics_cam.coeffs[3] << ", " << intrinsics_cam.coeffs[4] << ", " << std::endl;
     std::cout << " Model = " << intrinsics_cam.model << std::endl;
-
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     vector<ORB_SLAM3::IMU::Point> vImuMeas;
@@ -219,7 +226,8 @@ int main(int argc, char **argv)
     double t_track = 0.f;
 
     std::chrono::steady_clock::time_point time_Start_Process;
-    while (!SLAM.isShutDown()){
+    while (!SLAM.isShutDown())
+    {
         std::vector<rs2_vector> vGyro;
         std::vector<double> vGyro_times;
         std::vector<rs2_vector> vAccel;
@@ -227,20 +235,21 @@ int main(int argc, char **argv)
 
         {
             std::unique_lock<std::mutex> lk(imu_mutex);
-            while(!image_ready)
+            while (!image_ready)
                 cond_image_rec.wait(lk);
 
 #ifdef COMPILEDWITHC11
-        std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
+            std::chrono::steady_clock::time_point time_Start_Process = std::chrono::steady_clock::now();
 #else
-        std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
+            std::chrono::monotonic_clock::time_point time_Start_Process = std::chrono::monotonic_clock::now();
 #endif
 
-            if(count_im_buffer>1)
-                cout << count_im_buffer -1 << " dropped frs\n";
+            if (count_im_buffer > 1)
+                cout << count_im_buffer - 1 << " dropped frs\n";
             count_im_buffer = 0;
 
-            while(v_gyro_timestamp.size() > v_accel_timestamp_sync.size()){
+            while (v_gyro_timestamp.size() > v_accel_timestamp_sync.size())
+            {
                 int index = v_accel_timestamp_sync.size();
                 double target_time = v_gyro_timestamp[index];
 
@@ -250,31 +259,31 @@ int main(int argc, char **argv)
                 v_accel_timestamp_sync.push_back(target_time);
             }
 
-            if(imageScale == 1.f)
+            if (imageScale == 1.f)
             {
                 im = imCV.clone();
             }
             else
             {
-    #ifdef REGISTER_TIMES
-        #ifdef COMPILEDWITHC11
+#ifdef REGISTER_TIMES
+#ifdef COMPILEDWITHC11
                 std::chrono::steady_clock::time_point t_Start_Resize = std::chrono::steady_clock::now();
-        #else
+#else
                 std::chrono::monotonic_clock::time_point t_Start_Resize = std::chrono::monotonic_clock::now();
-        #endif
-    #endif
+#endif
+#endif
                 int width = imCV.cols * imageScale;
                 int height = imCV.rows * imageScale;
                 cv::resize(imCV, im, cv::Size(width, height));
-    #ifdef REGISTER_TIMES
-        #ifdef COMPILEDWITHC11
+#ifdef REGISTER_TIMES
+#ifdef COMPILEDWITHC11
                 std::chrono::steady_clock::time_point t_End_Resize = std::chrono::steady_clock::now();
-        #else
+#else
                 std::chrono::monotonic_clock::time_point t_End_Resize = std::chrono::monotonic_clock::now();
-        #endif
-                t_resize = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Resize - t_Start_Resize).count();
+#endif
+                t_resize = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(t_End_Resize - t_Start_Resize).count();
                 SLAM.InsertResizeTime(t_resize);
-    #endif
+#endif
             }
 
             // Copy the IMU data
@@ -293,17 +302,18 @@ int main(int argc, char **argv)
             image_ready = false;
         }
 
-
-        for(int i=0; i<vGyro.size(); ++i){
+        for (int i = 0; i < vGyro.size(); ++i)
+        {
             ORB_SLAM3::IMU::Point lastPoint(vAccel[i].x, vAccel[i].y, vAccel[i].z,
                                             vGyro[i].x, vGyro[i].y, vGyro[i].z,
                                             vGyro_times[i]);
             vImuMeas.push_back(lastPoint);
 
-            if(isnan(vAccel[i].x) || isnan(vAccel[i].y) || isnan(vAccel[i].z) ||
-               isnan(vGyro[i].x) || isnan(vGyro[i].y) || isnan(vGyro[i].z) ||
-               isnan(vGyro_times[i])){
-                //cerr << "NAN AT MAIN" << endl;
+            if (isnan(vAccel[i].x) || isnan(vAccel[i].y) || isnan(vAccel[i].z) ||
+                isnan(vGyro[i].x) || isnan(vGyro[i].y) || isnan(vGyro[i].z) ||
+                isnan(vGyro_times[i]))
+            {
+                // cerr << "NAN AT MAIN" << endl;
                 exit(-1);
             }
         }
@@ -323,12 +333,12 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef REGISTER_TIMES
-        t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
+        t_track = t_resize + std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(t_End_Track - t_Start_Track).count();
         SLAM.InsertTrackTime(t_track);
 #endif
 
-        double timeProcess = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_Start_Track - time_Start_Process).count();
-        double timeSLAM = std::chrono::duration_cast<std::chrono::duration<double,std::milli> >(t_End_Track - t_Start_Track).count();
+        double timeProcess = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(t_Start_Track - time_Start_Process).count();
+        double timeSLAM = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(t_End_Track - t_Start_Track).count();
 
         // cout << "Time process: " << timeProcess << endl;
         // cout << "Time SLAM: " << timeSLAM << endl;
@@ -344,20 +354,24 @@ int main(int argc, char **argv)
 
 rs2_vector interpolateMeasure(const double target_time,
                               const rs2_vector current_data, const double current_time,
-                              const rs2_vector prev_data, const double prev_time){
+                              const rs2_vector prev_data, const double prev_time)
+{
 
     // If there are not previous information, the current data is propagated
-    if(prev_time == 0){
+    if (prev_time == 0)
+    {
         return current_data;
     }
 
     rs2_vector increment;
     rs2_vector value_interp;
 
-    if(target_time > current_time) {
+    if (target_time > current_time)
+    {
         value_interp = current_data;
     }
-    else if(target_time > prev_time){
+    else if (target_time > prev_time)
+    {
         increment.x = current_data.x - prev_data.x;
         increment.y = current_data.y - prev_data.y;
         increment.z = current_data.z - prev_data.z;
@@ -371,7 +385,8 @@ rs2_vector interpolateMeasure(const double target_time,
         // zero interpolation
         value_interp = current_data;
     }
-    else {
+    else
+    {
         value_interp = prev_data;
     }
 

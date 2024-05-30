@@ -87,7 +87,7 @@ namespace ORB_SLAM3
             continuous = mat.isContinuous();
         }
 
-        ar &cols &rows &type &continuous;
+        ar & cols & rows & type & continuous;
 
         if (Archive::is_loading::value)
             mat.create(rows, cols, type);
@@ -132,7 +132,7 @@ namespace ORB_SLAM3
             NumEl = vKP.size();
         }
 
-        ar &NumEl;
+        ar & NumEl;
 
         std::vector<cv::KeyPoint> vKPaux = vKP;
         if (Archive::is_loading::value)
@@ -148,13 +148,13 @@ namespace ORB_SLAM3
             if (Archive::is_saving::value)
                 KPi = vKPaux[i];
 
-            ar &KPi.angle;
-            ar &KPi.response;
-            ar &KPi.size;
-            ar &KPi.pt.x;
-            ar &KPi.pt.y;
-            ar &KPi.class_id;
-            ar &KPi.octave;
+            ar & KPi.angle;
+            ar & KPi.response;
+            ar & KPi.size;
+            ar & KPi.pt.x;
+            ar & KPi.pt.y;
+            ar & KPi.class_id;
+            ar & KPi.octave;
 
             if (Archive::is_loading::value)
                 vKPaux.push_back(KPi);

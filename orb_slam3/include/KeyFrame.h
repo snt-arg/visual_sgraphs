@@ -514,7 +514,7 @@ namespace ORB_SLAM3
         // Variables to be passed to GeometricSegmentation
         std::vector<Marker *> mCurrentFrameMarkers;
         std::vector<MapPoint *> mCurrentFrameMapPoints;
-        
+
         // point clouds
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr mCurrentFramePointClouds;
         std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> mCurrentClsCloudPtrs;
@@ -563,7 +563,7 @@ namespace ORB_SLAM3
 
         std::vector<Marker *> getCurrentFrameMarkers() const;
         std::vector<MapPoint *> getCurrentFrameMapPoints() const;
-        
+
         // getters and setter for point clouds
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCurrentFramePointCloud() const;
         void clearPointCloud();

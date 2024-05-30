@@ -345,7 +345,6 @@ namespace ORB_SLAM3
         }
     };
 
-
     /**
      * The edge used to connect a Plane vertex (VertexPlane) to a Marker vertex (SE3)
      * [Note]: it creates constraint for four measurements, i.e., (x, y, z, d)

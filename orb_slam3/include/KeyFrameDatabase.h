@@ -48,7 +48,7 @@ namespace ORB_SLAM3
         template <class Archive>
         void serialize(Archive &ar, const unsigned int version)
         {
-            ar &mvBackupInvertedFileId;
+            ar & mvBackupInvertedFileId;
         }
 
     public:
