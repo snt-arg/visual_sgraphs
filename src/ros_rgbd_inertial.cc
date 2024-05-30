@@ -224,14 +224,11 @@ void ImageGrabber::SyncWithImu()
             // Tracking process sends markers found in this frame for tracking and clears the buffer
             if (minMarkerTimeDiff < 0.05)
             {
-                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, cloud, tIm, vImuMeas, "",
-                                                    matchedMarkers);
+                pSLAM->TrackRGBD(im, depth, cloud, tIm, vImuMeas, "", matchedMarkers);
                 markersBuffer.clear();
             }
             else
-            {
-                Sophus::SE3f Tcw = pSLAM->TrackRGBD(im, depth, cloud, tIm, vImuMeas);
-            }
+                pSLAM->TrackRGBD(im, depth, cloud, tIm, vImuMeas);
 
             publishTopics(msg_time, Wbb);
         }

@@ -522,8 +522,6 @@ namespace ORB_SLAM3
             for (auto roomCandidate : allRooms)
             {
                 // Fetch parameters of the room candidate
-                int wallsNeeded = roomCandidate->getIsCorridor() ? 2 : 4;
-                int wallsDetectedSoFar = roomCandidate->getWalls().size();
                 Sophus::SE3f metaMarkerPose = roomCandidate->getMetaMarker()->getGlobalPose();
 
                 // Find the closest facing walls to the room center
@@ -699,7 +697,7 @@ namespace ORB_SLAM3
         // }
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoomGNN(Room *roomCandidate)
+    void SemanticSegmentation::updateMapRoomCandidateToRoomGNN()
     {
         // [TODO] Needs to be implemented
     }

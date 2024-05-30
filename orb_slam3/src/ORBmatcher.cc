@@ -430,12 +430,6 @@ namespace ORB_SLAM3
     int ORBmatcher::SearchByProjection(KeyFrame *pKF, Sophus::Sim3f &Scw, const vector<MapPoint *> &vpPoints,
                                        vector<MapPoint *> &vpMatched, int th, float ratioHamming)
     {
-        // Get Calibration Parameters for later projection
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
-
         Sophus::SE3f Tcw = Sophus::SE3f(Scw.rotationMatrix(), Scw.translation() / Scw.scale());
         Eigen::Vector3f Ow = Tcw.inverse().translation();
 
@@ -1170,14 +1164,8 @@ namespace ORB_SLAM3
             pCamera = pKF->mpCamera;
         }
 
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
-        const float &bf = pKF->mbf;
-
         int nFused = 0;
-
+        const float &bf = pKF->mbf;
         const int nMPs = vpMapPoints.size();
 
         // For debbuging
@@ -1348,12 +1336,6 @@ namespace ORB_SLAM3
 
     int ORBmatcher::Fuse(KeyFrame *pKF, Sophus::Sim3f &Scw, const vector<MapPoint *> &vpPoints, float th, vector<MapPoint *> &vpReplacePoint)
     {
-        // Get Calibration Parameters for later projection
-        const float &fx = pKF->fx;
-        const float &fy = pKF->fy;
-        const float &cx = pKF->cx;
-        const float &cy = pKF->cy;
-
         // Decompose Scw
         Sophus::SE3f Tcw = Sophus::SE3f(Scw.rotationMatrix(), Scw.translation() / Scw.scale());
         Eigen::Vector3f Ow = Tcw.inverse().translation();

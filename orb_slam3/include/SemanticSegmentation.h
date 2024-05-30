@@ -154,9 +154,8 @@ namespace ORB_SLAM3
 
         /**
          * @brief Converts mapped room candidates to rooms using a GNN
-         * @param roomCandidate the address of the candidate room
          */
-        void updateMapRoomCandidateToRoomGNN(Room *roomCandidate);
+        void updateMapRoomCandidateToRoomGNN();
 
         // Running the thread
         void Run();

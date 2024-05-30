@@ -74,7 +74,7 @@ namespace ORB_SLAM3
                 FREE_SPACE = 1,
                 GNN = 2
             };
-            Method method = GEOMETRIC;
+            Method method = FREE_SPACE;
 
             float walls_perpendicularity_thresh = 10.0;
 
