@@ -830,17 +830,21 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         pointRoom.z = roomPointTransformed.z();
         roomMarkerLine.points.push_back(pointRoom);
 
-        pointMarkerInit.frame_id_ = struct_frame_id;
-        pointMarkerInit.setX(metaMarker->getGlobalPose().translation()(0));
-        pointMarkerInit.setY(metaMarker->getGlobalPose().translation()(1));
-        pointMarkerInit.setZ(metaMarker->getGlobalPose().translation()(2));
-        transformListener->transformPoint(world_frame_id, ros::Time(0), pointMarkerInit,
-                                          struct_frame_id, pointMarkerTransform);
+        // In free space-based room candidate detection, the metaMarker is not available
+        if (metaMarker)
+        {
+            pointMarkerInit.frame_id_ = struct_frame_id;
+            pointMarkerInit.setX(metaMarker->getGlobalPose().translation()(0));
+            pointMarkerInit.setY(metaMarker->getGlobalPose().translation()(1));
+            pointMarkerInit.setZ(metaMarker->getGlobalPose().translation()(2));
+            transformListener->transformPoint(world_frame_id, ros::Time(0), pointMarkerInit,
+                                              struct_frame_id, pointMarkerTransform);
 
-        pointMarker.x = pointMarkerTransform.x();
-        pointMarker.z = pointMarkerTransform.z();
-        pointMarker.y = pointMarkerTransform.y();
-        roomMarkerLine.points.push_back(pointMarker);
+            pointMarker.x = pointMarkerTransform.x();
+            pointMarker.z = pointMarkerTransform.z();
+            pointMarker.y = pointMarkerTransform.y();
+            roomMarkerLine.points.push_back(pointMarker);
+        }
 
         // Add items to the roomArray
         roomArray.markers.push_back(roomWallLine);

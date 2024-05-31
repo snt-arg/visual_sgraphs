@@ -68,6 +68,7 @@ namespace ORB_SLAM3
             room_seg.walls_perpendicularity_thresh = mConfig["room_seg"]["perpendicularity_thresh"].as<float>();
             room_seg.min_cluster_vertices = mConfig["room_seg"]["skeleton_based"]["min_cluster_vertices"].as<unsigned int>();
             room_seg.marker_wall_distance_thresh = mConfig["room_seg"]["geo_based"]["marker_wall_distance_thresh"].as<float>();
+            room_seg.cluster_point_wall_distance_thresh = mConfig["room_seg"]["skeleton_based"]["cluster_point_wall_distance_thresh"].as<float>();
         }
         catch (YAML::Exception &e)
         {

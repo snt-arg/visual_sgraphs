@@ -81,7 +81,7 @@ namespace ORB_SLAM3
          * @brief Gets the centeroid of a cluster of points
          * @param points the given cluster of points
          */
-        static Eigen::Vector3d getClusterCenteroid(const std::vector<std::vector<Eigen::Vector3d *>> &points);
+        static Eigen::Vector3d getClusterCenteroid(const std::vector<Eigen::Vector3d *> &points);
 
         /**
          * @brief Gets the center points of a room with two walls

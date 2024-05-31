@@ -8,7 +8,7 @@ general:
 
   # The path of the high level semantic information of the environment
   # [TODO] - the path looks ugly, possible workaround?
-  env_database: "../../../src/visual_sgraphs/config/Environments/LuxVSD/luxvsd_seq02.json"
+  env_database: "../../../src/visual_sgraphs/config/Environments/LuxVSD/luxvsd_seq01.json"
 
 #################################### Marker Parameters ###########################################
 markers:
@@ -89,3 +89,5 @@ room_seg:
   skeleton_based:
     # The minimum number of points needed to form a cluster
     min_cluster_vertices: 5
+    # The maximum distance from a point of a cluster to a wall to be considered part of the room
+    cluster_point_wall_distance_thresh: 0.3

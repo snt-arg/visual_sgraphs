@@ -447,13 +447,11 @@ namespace ORB_SLAM3
         return planePoseMat;
     }
 
-    std::vector<std::vector<std::pair<Plane *, Plane *>>> SemanticSegmentation::getAllSquareRooms(
+    bool SemanticSegmentation::getRectangularRoom(
+        std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> &givenRoom,
         const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
         double perpThreshDeg)
     {
-        // Variables
-        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms;
-
         // Convert threshold from degrees to radians
         double perpThreshold = perpThreshDeg * Utils::DEG_TO_RAD;
 
@@ -473,14 +471,12 @@ namespace ORB_SLAM3
                     Utils::arePlanesPerpendicular(wall1P2, wall2P2, perpThreshold) &&
                     Utils::arePlanesPerpendicular(wall2P2, wall1P1, perpThreshold))
                 {
-                    std::vector<std::pair<Plane *, Plane *>> squareRoom;
-                    squareRoom.push_back(facingWalls[idx1]);
-                    squareRoom.push_back(facingWalls[idx2]);
-                    squareRooms.push_back(squareRoom);
+                    givenRoom = std::make_pair(facingWalls[idx1], facingWalls[idx2]);
+                    return true;
                 }
             }
-
-        return squareRooms;
+        // No rectangular room found
+        return false;
     }
 
     /**
@@ -589,14 +585,9 @@ namespace ORB_SLAM3
     {
         // Variables
         std::vector<Plane *> allWalls, closestWalls;
-        std::vector<std::pair<Plane *, Plane *>> corridorRooms;
-        std::vector<std::vector<std::pair<Plane *, Plane *>>> squareRooms;
 
         // Get the skeleton clusters
-        std::vector<std::vector<Eigen::Vector3d *>> clusterPoints = GetLatestSkeletonCluster();
-
-        // Get the centroid of the cluster
-        Eigen::Vector3d clusterCentroid = Utils::getClusterCenteroid(clusterPoints);
+        std::vector<std::vector<Eigen::Vector3d *>> clusters = GetLatestSkeletonCluster();
 
         // Get all the mapped planes and rooms
         std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
@@ -608,55 +599,56 @@ namespace ORB_SLAM3
                 allWalls.push_back(plane);
 
         // Find the walls closest to the cluster points
-        for (auto cluster : clusterPoints)
-            for (auto wall : allWalls)
+        for (auto cluster : clusters)
+        {
+            // Initializations
+            closestWalls.clear();
+            std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> rectangularRoom;
+
+            // Loop over all walls
+            for (const auto &wall : allWalls)
             {
-                // Calculate distance between wall centroid and cluster centroid
-                double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), clusterCentroid);
-                // If the distance is smaller than the threshold, add the wall to closestWalls
-                if (distance < sysParams->room_seg.marker_wall_distance_thresh)
-                    closestWalls.push_back(wall);
+                // Loop over all cluster points
+                for (const auto &point : cluster)
+                {
+                    // Calculate distance between wall centroid and cluster centroid
+                    double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), *point);
+                    // If the distance is smaller than the threshold, add the wall to closestWalls
+                    if (distance < sysParams->room_seg.cluster_point_wall_distance_thresh)
+                    {
+                        // Add the wall to closestWalls
+                        closestWalls.push_back(wall);
+                        break;
+                    }
+                }
             }
 
-        // Get all the facing walls
-        std::vector<std::pair<Plane *, Plane *>> facingWalls =
-            Utils::getAllPlanesFacingEachOther(closestWalls);
+            // Get all the facing walls
+            std::vector<std::pair<Plane *, Plane *>> facingWalls =
+                Utils::getAllPlanesFacingEachOther(closestWalls);
 
-        // Check wall conditions if they shape a square room (with perpendicularity threshold)
-        squareRooms = getAllSquareRooms(facingWalls, sysParams->room_seg.walls_perpendicularity_thresh);
+            // If no facing walls are found, continue to the next cluster
+            if (facingWalls.size() == 0)
+                continue;
 
-        // Iterate over each pair of facing walls
-        for (const auto &facingWall : facingWalls)
-        {
-            bool foundInSquareRooms = false;
-
-            // Check if the current facing wall pair exists in any square room
-            for (const auto &squareRoom : squareRooms)
-                if (std::find(squareRoom.begin(), squareRoom.end(), facingWall) != squareRoom.end())
-                {
-                    foundInSquareRooms = true;
-                    break;
-                }
-
-            // If the facing wall pair is not found in any square room, add it to corridorRooms
-            if (!foundInSquareRooms)
-                corridorRooms.push_back(facingWall);
-        }
-
-        // Create room candidates for them
-        for (const auto &corridor : corridorRooms)
-        {
-            std::vector<ORB_SLAM3::Plane *> walls = {corridor.first, corridor.second};
-            // Create a new room candidate
-            GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, clusterCentroid, walls);
-        }
-
-        for (const auto &squareRoom : squareRooms)
-        {
-            std::vector<ORB_SLAM3::Plane *> walls = {squareRoom[0].first, squareRoom[0].second,
-                                                     squareRoom[1].first, squareRoom[1].second};
-            // Create a new room candidate
-            GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, clusterCentroid, walls);
+            // Check wall conditions if they shape a square room (with perpendicularity threshold)
+            bool isRectRoomFound = getRectangularRoom(rectangularRoom, facingWalls,
+                                                      sysParams->room_seg.walls_perpendicularity_thresh);
+            // Create room candidates for them
+            if (isRectRoomFound)
+            {
+                std::vector<ORB_SLAM3::Plane *> walls = {rectangularRoom.first.first, rectangularRoom.first.second,
+                                                         rectangularRoom.second.first, rectangularRoom.second.second};
+                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, walls);
+            }
+            else
+            {
+                // [TODO] What if we have more than one facing wall?
+                // Get the walls
+                std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
+                // Create a corridor
+                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls, Utils::getClusterCenteroid(cluster));
+            }
         }
 
         // Calculate the plane (wall) equation on which the marker is attached

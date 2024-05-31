@@ -80,6 +80,7 @@ namespace ORB_SLAM3
 
             unsigned int min_cluster_vertices = 5;
             float marker_wall_distance_thresh = 3.0f;
+            float cluster_point_wall_distance_thresh = 0.5f;
         } room_seg;
 
     private:

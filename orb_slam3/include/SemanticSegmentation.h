@@ -127,13 +127,14 @@ namespace ORB_SLAM3
         Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
 
         /**
-         * @brief Gets all square rooms from the facing walls list
+         * @brief Gets the only rectangular room from the facing walls list (if exists, returns true)
+         * @param givenRoom the address of the given room
          * @param facingWalls the facing walls list
          * @param perpThreshDeg the perpendicular threshold in degrees
          */
-        std::vector<std::vector<std::pair<Plane *, Plane *>>> getAllSquareRooms(
-            const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
-            double perpThreshDeg = 5.0);
+        bool getRectangularRoom(std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> &givenRoom,
+                                const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
+                                double perpThreshDeg = 5.0);
 
         /**
          * @brief Checks for the association of a given room

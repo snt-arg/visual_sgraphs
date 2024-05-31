@@ -258,8 +258,8 @@ namespace ORB_SLAM3
     }
 
     void GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                          Eigen::Vector3d clusterCentroid,
-                                                          std::vector<ORB_SLAM3::Plane *> walls)
+                                                          std::vector<ORB_SLAM3::Plane *> walls,
+                                                          Eigen::Vector3d clusterCentroid)
     {
         // Variables
         bool roomAlreadyInMap = false;

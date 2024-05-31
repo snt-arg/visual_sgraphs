@@ -97,7 +97,8 @@ namespace ORB_SLAM3
          * @param walls the vector of walls detected in the room
          */
         static void createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                      Eigen::Vector3d clusterCentroid, std::vector<Plane *> walls);
+                                                      std::vector<ORB_SLAM3::Plane *> walls,
+                                                      Eigen::Vector3d clusterCentroid = Eigen::Vector3d::Zero());
     };
 }
 

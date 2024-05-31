@@ -49,18 +49,18 @@ namespace ORB_SLAM3
     std::vector<std::pair<Plane *, Plane *>> Utils::getAllPlanesFacingEachOther(const std::vector<Plane *> &planes)
     {
         std::vector<std::pair<Plane *, Plane *>> facingPlanes;
-        for (auto plane1 : planes)
-            for (auto plane2 : planes)
+        for (size_t idx1 = 0; idx1 < planes.size(); ++idx1)
+        {
+            Plane *plane1 = planes[idx1];
+            for (size_t idx2 = idx1 + 1; idx2 < planes.size(); ++idx2)
             {
-                // Skip the same plane
-                if (plane1->getId() == plane2->getId())
-                    continue;
-
+                Plane *plane2 = planes[idx2];
                 // Check if the planes are facing each other
                 bool isFacing = Utils::arePlanesFacingEachOther(plane1, plane2);
                 if (isFacing)
                     facingPlanes.push_back(std::make_pair(plane1, plane2));
             }
+        }
         return facingPlanes;
     }
 
@@ -83,22 +83,21 @@ namespace ORB_SLAM3
         return g2o::Plane3D(v2);
     }
 
-    Eigen::Vector3d Utils::getClusterCenteroid(const std::vector<std::vector<Eigen::Vector3d *>> &points)
+    Eigen::Vector3d Utils::getClusterCenteroid(const std::vector<Eigen::Vector3d *> &points)
     {
         // Variables
         int count = 0;
         Eigen::Vector3d sum(0.0, 0.0, 0.0);
 
         // Calculate the count and sum of the points
-        for (const auto &clusterPoint : points)
-            for (const auto &pointPtr : clusterPoint)
-                if (pointPtr)
-                {
-                    sum += *pointPtr;
-                    ++count;
-                }
+        for (const auto &pointPtr : points)
+            if (pointPtr)
+            {
+                sum += *pointPtr;
+                ++count;
+            }
 
-        // Return the centeroid of the cluster
+        // Return the centroid of the cluster
         if (count > 0)
             return sum / count;
         else
@@ -106,7 +105,7 @@ namespace ORB_SLAM3
             return Eigen::Vector3d(0.0, 0.0, 0.0);
     }
 
-    Eigen::Vector3d Utils::getRoomCenter(const Eigen::Vector3d &markerPosition,
+    Eigen::Vector3d Utils::getRoomCenter(const Eigen::Vector3d &givenPoint,
                                          const Eigen::Vector4d &wall1,
                                          const Eigen::Vector4d &wall2)
     {
@@ -127,7 +126,7 @@ namespace ORB_SLAM3
         vectorNormal = vec / vec.norm();
 
         // Calculate the room center by projecting the marker position onto the room plane
-        roomCenter = vec + (markerPosition - (markerPosition.dot(vectorNormal)) * vectorNormal);
+        roomCenter = vec + (givenPoint - (givenPoint.dot(vectorNormal)) * vectorNormal);
 
         return roomCenter;
     }
