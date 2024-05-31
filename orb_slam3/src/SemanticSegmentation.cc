@@ -611,13 +611,11 @@ namespace ORB_SLAM3
         for (auto cluster : clusterPoints)
             for (auto wall : allWalls)
             {
-                // Calculate distance between wall centroid and cluster point
-                for (auto point : cluster)
-                {
-                    double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), *point);
-                    if (distance < sysParams->room_seg.marker_wall_distance_thresh)
-                        closestWalls.push_back(wall);
-                }
+                // Calculate distance between wall centroid and cluster centroid
+                double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), clusterCentroid);
+                // If the distance is smaller than the threshold, add the wall to closestWalls
+                if (distance < sysParams->room_seg.marker_wall_distance_thresh)
+                    closestWalls.push_back(wall);
             }
 
         // Get all the facing walls
