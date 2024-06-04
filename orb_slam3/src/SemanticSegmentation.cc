@@ -590,7 +590,6 @@ namespace ORB_SLAM3
         std::vector<std::vector<Eigen::Vector3d *>> clusters = GetLatestSkeletonCluster();
 
         // Get all the mapped planes and rooms
-        std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
         std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
 
         // Filter the planes to get only the walls

@@ -831,7 +831,7 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msg_time)
         roomMarkerLine.points.push_back(pointRoom);
 
         // In free space-based room candidate detection, the metaMarker is not available
-        if (metaMarker)
+        if (metaMarker != nullptr)
         {
             pointMarkerInit.frame_id_ = struct_frame_id;
             pointMarkerInit.setX(metaMarker->getGlobalPose().translation()(0));

@@ -6,7 +6,10 @@
 
 namespace ORB_SLAM3
 {
-    Room::Room() {}
+    Room::Room()
+    {
+        metaMarker = nullptr;
+    }
     Room::~Room() {}
 
     int Room::getId() const
