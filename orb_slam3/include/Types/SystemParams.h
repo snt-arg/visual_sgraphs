@@ -76,6 +76,7 @@ namespace ORB_SLAM3
             };
             Method method = FREE_SPACE;
 
+            float room_center_distance_thresh = 1.5f;
             float walls_perpendicularity_thresh = 10.0;
 
             unsigned int min_cluster_vertices = 5;

@@ -93,12 +93,21 @@ namespace ORB_SLAM3
          * @brief Creates a new room object (corridor or room) to be added to the map
          * @param mpAtlas the current map in Atlas
          * @param isCorridor the boolean value to check if the room is a corridor or not
-         * @param clusterCentroid the centroid of the cluster
          * @param walls the vector of walls detected in the room
+         * @param clusterCentroid the centroid of the cluster
+         * @param centerDistanceThreshold the threshold value for the center distance
          */
         static void createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
                                                       std::vector<ORB_SLAM3::Plane *> walls,
+                                                      double centerDistanceThreshold = 1.5,
                                                       Eigen::Vector3d clusterCentroid = Eigen::Vector3d::Zero());
+
+        /**
+         * @brief Updates the room object in the map with new room information
+         * @param newRoom the address of the new room
+         * @param mappedRoom the address of the mapped room
+         */
+        static void updateMapRoomCandidate(ORB_SLAM3::Room *newRoom, ORB_SLAM3::Room *mappedRoom);
     };
 }
 

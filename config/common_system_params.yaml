@@ -80,6 +80,9 @@ room_seg:
   # Threshold for perpendicularity of wall pairs to be considered a square room (in degrees)
   perpendicularity_thresh: 10.0
 
+  # The maximum distance between two room centroids to be considered the same room (in meters)
+  room_center_distance_thresh: 1.0
+
   # Parameters for the geometrically-based closest walls room segmentation
   geo_based:
     # The maximum distance from a marker to a wall to be considered part of the room

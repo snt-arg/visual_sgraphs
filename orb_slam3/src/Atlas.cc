@@ -133,10 +133,16 @@ namespace ORB_SLAM3
         pMapMP->AddMapDoor(door);
     }
 
-    void Atlas::AddMapRoom(Room *room)
+    void Atlas::AddDetectedMapRoom(Room *room)
     {
         Map *pMapMP = room->GetMap();
-        pMapMP->AddMapRoom(room);
+        pMapMP->AddDetectedMapRoom(room);
+    }
+
+    void Atlas::AddMarkerBasedMapRoom(Room *room)
+    {
+        Map *pMapMP = room->GetMap();
+        pMapMP->AddMarkerBasedMapRoom(room);
     }
 
     void Atlas::AddMapFloor(Floor *floor)
@@ -248,15 +254,9 @@ namespace ORB_SLAM3
         return fetchedDoor;
     }
 
-    Room *Atlas::GetRoomById(int roomId)
+    Floor *Atlas::GetFloorById(int floorId)
     {
-        Room *fetchedRoom = mpCurrentMap->GetRoomById(roomId);
-        return fetchedRoom;
-    }
-
-    Floor *Atlas::GetFloorById(int roomId)
-    {
-        Floor *fetchedFloor = mpCurrentMap->GetFloorById(roomId);
+        Floor *fetchedFloor = mpCurrentMap->GetFloorById(floorId);
         return fetchedFloor;
     }
 
@@ -300,6 +300,18 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexAtlas);
         return mpCurrentMap->GetAllRooms();
+    }
+
+    std::vector<Room *> Atlas::GetAllDetectedMapRooms()
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->GetAllDetectedMapRooms();
+    }
+
+    std::vector<Room *> Atlas::GetAllMarkerBasedMapRooms()
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->GetAllMarkerBasedMapRooms();
     }
 
     std::vector<Floor *> Atlas::GetAllFloors()

@@ -227,7 +227,7 @@ namespace ORB_SLAM3
         bool roomAlreadyInMap = false;
 
         // Check if a room has not been created before for this marker
-        for (auto room : mpAtlas->GetAllRooms())
+        for (auto room : mpAtlas->GetAllMarkerBasedMapRooms())
             if (room->getMetaMarkerId() == attachedMarker->getId())
                 roomAlreadyInMap = true;
 
@@ -254,21 +254,14 @@ namespace ORB_SLAM3
             << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " ("
             << newMapRoomCandidate->getName() << ") using marker #" << attachedMarker->getId() << "!\n";
 
-        mpAtlas->AddMapRoom(newMapRoomCandidate);
+        mpAtlas->AddMarkerBasedMapRoom(newMapRoomCandidate);
     }
 
     void GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
                                                           std::vector<ORB_SLAM3::Plane *> walls,
+                                                          double centerDistanceThreshold,
                                                           Eigen::Vector3d clusterCentroid)
     {
-        // Variables
-        bool roomAlreadyInMap = false;
-
-        // [TODO] Check if a room has not been created before for this marker
-
-        if (roomAlreadyInMap)
-            return;
-
         // Variables
         Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
         ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
@@ -313,10 +306,27 @@ namespace ORB_SLAM3
         }
         newMapRoomCandidate->setRoomCenter(centroid);
 
+        // Check if a room has not been created before
+        for (auto room : mpAtlas->GetAllDetectedMapRooms())
+        {
+            // Calculate the distance between the room center and the centroid
+            double distance = (room->getRoomCenter() - centroid).norm();
+            if (distance < centerDistanceThreshold)
+            {
+                // If the room already exists, update the room candidate
+                updateMapRoomCandidate(newMapRoomCandidate, room);
+                return;
+            }
+        }
+
+        // Create a room candidate for it
         std::cout
             << "- New room candidate detected: Room#" << newMapRoomCandidate->getId()
             << " using the free-space!" << std::endl;
+        mpAtlas->AddDetectedMapRoom(newMapRoomCandidate);
+    }
 
-        mpAtlas->AddMapRoom(newMapRoomCandidate);
+    void GeoSemHelpers::updateMapRoomCandidate(ORB_SLAM3::Room *newRoom, ORB_SLAM3::Room *mappedRoom)
+    {
     }
 }

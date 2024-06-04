@@ -151,12 +151,12 @@ namespace ORB_SLAM3
         /**
          * @brief Converts mapped room candidates to rooms using voxmap and freespace clusters
          */
-        void updateMapRoomCandidateToRoomVoxblox();
+        void detectMapRoomCandidateVoxblox();
 
         /**
          * @brief Converts mapped room candidates to rooms using a GNN
          */
-        void updateMapRoomCandidateToRoomGNN();
+        void detectMapRoomCandidateGNN();
 
         // Running the thread
         void Run();

@@ -80,20 +80,22 @@ namespace ORB_SLAM3
         ~Map();
 
         void AddMapDoor(Door *pDoor);
-        void AddMapRoom(Room *pRoom);
         void AddMapFloor(Floor *pFloor);
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapPlane(Plane *pPlane);
         void AddMapMarker(Marker *pMarker);
+        void AddDetectedMapRoom(Room *room);
+        void AddMarkerBasedMapRoom(Room *room);
 
         void EraseMapDoor(Door *pDoor);
-        void EraseMapRoom(Room *pRoom);
         void EraseMapFloor(Floor *pFloor);
         void EraseMapPoint(MapPoint *pMP);
         void EraseKeyFrame(KeyFrame *pKF);
         void EraseMapPlane(Plane *pPlane);
         void EraseMapMarker(Marker *pMarker);
+        void EraseDetectedMapRoom(Room *pRoom);
+        void EraseMarkerBasedMapRoom(Room *pRoom);
 
         void InformNewBigChange();
         int GetLastBigChangeIdx();
@@ -106,6 +108,8 @@ namespace ORB_SLAM3
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
+        std::vector<Room *> GetAllDetectedMapRooms();
+        std::vector<Room *> GetAllMarkerBasedMapRooms();
         std::vector<MapPoint *> GetReferenceMapPoints();
 
         long unsigned KeyFramesInMap();
@@ -119,7 +123,6 @@ namespace ORB_SLAM3
 
         KeyFrame *GetOriginKF();
         Door *GetDoorById(int doorId);
-        Room *GetRoomById(int roomId);
         Floor *GetFloorById(int floorId);
         Plane *GetPlaneById(int planeId);
         Marker *GetMarkerById(int markerId);
@@ -188,16 +191,16 @@ namespace ORB_SLAM3
         long unsigned int mnId;
 
         std::set<Door *> mspDoors;
-        std::set<Room *> mspRooms;
         std::set<Floor *> mspFloors;
         std::set<Plane *> mspPlanes;
         std::set<Marker *> mspMarkers;
         std::set<MapPoint *> mspMapPoints;
         std::set<KeyFrame *> mspKeyFrames;
+        std::set<Room *> mspDetectedRooms;
+        std::set<Room *> mspMarkerBasedRooms;
 
         // Hashmaps and indices for fetching elements
         std::unordered_map<int, Door *> mDoorIndex;
-        std::unordered_map<int, Room *> mRoomIndex;
         std::unordered_map<int, Floor *> mFloorIndex;
         std::unordered_map<int, Plane *> mPlaneIndex;
         std::unordered_map<int, Marker *> mMarkerIndex;

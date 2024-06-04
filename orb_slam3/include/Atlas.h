@@ -89,14 +89,15 @@ namespace ORB_SLAM3
 
         void SetViewer(Viewer *pViewer);
 
-        // Method for change components in the current map
+        // Methods for adding new components in the current map
         void AddMapDoor(Door *door);
-        void AddMapRoom(Room *room);
         void AddMapFloor(Floor *floor);
         void AddMapPlane(Plane *plane);
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapMarker(Marker *marker);
+        void AddDetectedMapRoom(Room *room);
+        void AddMarkerBasedMapRoom(Room *room);
 
         std::vector<GeometricCamera *> GetAllCameras();
         GeometricCamera *AddCamera(GeometricCamera *pCam);
@@ -121,6 +122,8 @@ namespace ORB_SLAM3
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
+        std::vector<Room *> GetAllDetectedMapRooms();
+        std::vector<Room *> GetAllMarkerBasedMapRooms();
         std::vector<MapPoint *> GetReferenceMapPoints();
 
         Plane *GetBiggestGroundPlane();
@@ -151,7 +154,6 @@ namespace ORB_SLAM3
 
         // Functions for getting the entities
         Door *GetDoorById(int doorId);
-        Room *GetRoomById(int roomId);
         Plane *GetPlaneById(int planeId);
         Floor *GetFloorById(int floorId);
         Marker *GetMarkerById(int markerId);

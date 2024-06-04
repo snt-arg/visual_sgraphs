@@ -53,9 +53,10 @@ namespace ORB_SLAM3
 
         // Erase all semantic entities from memory
         mspDoors.clear();
-        mspRooms.clear();
         mspFloors.clear();
         mspPlanes.clear();
+        mspDetectedRooms.clear();
+        mspMarkerBasedRooms.clear();
 
         if (mThumbnail)
             delete mThumbnail;
@@ -117,19 +118,23 @@ namespace ORB_SLAM3
         mDoorIndex[pDoor->getId()] = pDoor;
     }
 
-    void Map::AddMapRoom(Room *pRoom)
+    void Map::AddDetectedMapRoom(Room *pRoom)
     {
         unique_lock<mutex> lock(mMutexMap);
-        mspRooms.insert(pRoom);
-        // Add the room to the hashmap
-        mRoomIndex[pRoom->getId()] = pRoom;
+        mspDetectedRooms.insert(pRoom);
+    }
+
+    void Map::AddMarkerBasedMapRoom(Room *pRoom)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspMarkerBasedRooms.insert(pRoom);
     }
 
     void Map::AddMapFloor(Floor *pFloor)
     {
         unique_lock<mutex> lock(mMutexMap);
         mspFloors.insert(pFloor);
-        // Add the room to the hashmap
+        // Add the floor to the hashmap
         mFloorIndex[pFloor->getId()] = pFloor;
     }
 
@@ -145,13 +150,6 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexMap);
         Door *fetchedDoor = mDoorIndex[doorId];
         return fetchedDoor;
-    }
-
-    Room *Map::GetRoomById(int roomId)
-    {
-        unique_lock<mutex> lock(mMutexMap);
-        Room *fetchedRoom = mRoomIndex[roomId];
-        return fetchedRoom;
     }
 
     Plane *Map::GetPlaneById(int planeId)
@@ -214,10 +212,16 @@ namespace ORB_SLAM3
         mspDoors.erase(pDoor);
     }
 
-    void Map::EraseMapRoom(Room *pRoom)
+    void Map::EraseDetectedMapRoom(Room *pRoom)
     {
         unique_lock<mutex> lock(mMutexMap);
-        mspRooms.erase(pRoom);
+        mspDetectedRooms.erase(pRoom);
+    }
+
+    void Map::EraseMarkerBasedMapRoom(Room *pRoom)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        mspMarkerBasedRooms.erase(pRoom);
     }
 
     void Map::EraseMapFloor(Floor *pFloor)
@@ -320,7 +324,22 @@ namespace ORB_SLAM3
     vector<Room *> Map::GetAllRooms()
     {
         unique_lock<mutex> lock(mMutexMap);
-        return vector<Room *>(mspRooms.begin(), mspRooms.end());
+        vector<Room *> allRooms;
+        allRooms.insert(allRooms.end(), mspDetectedRooms.begin(), mspDetectedRooms.end());
+        allRooms.insert(allRooms.end(), mspMarkerBasedRooms.begin(), mspMarkerBasedRooms.end());
+        return allRooms;
+    }
+
+    vector<Room *> Map::GetAllDetectedMapRooms()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<Room *>(mspDetectedRooms.begin(), mspDetectedRooms.end());
+    }
+
+    vector<Room *> Map::GetAllMarkerBasedMapRooms()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return vector<Room *>(mspMarkerBasedRooms.begin(), mspMarkerBasedRooms.end());
     }
 
     vector<Floor *> Map::GetAllFloors()
@@ -400,13 +419,14 @@ namespace ORB_SLAM3
         }
 
         mspDoors.clear();
-        mspRooms.clear();
         mspPlanes.clear();
         mspMarkers.clear();
         mspMapPoints.clear();
         mspKeyFrames.clear();
         mnMaxKFid = mnInitKFid;
         mbImuInitialized = false;
+        mspDetectedRooms.clear();
+        mspMarkerBasedRooms.clear();
         mvpReferenceMapPoints.clear();
         mvpKeyFrameOrigins.clear();
         mbIMU_BA1 = false;

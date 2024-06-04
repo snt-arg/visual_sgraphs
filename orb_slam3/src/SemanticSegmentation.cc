@@ -80,7 +80,7 @@ namespace ORB_SLAM3
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
                 updateMapRoomCandidateToRoomGeo(thisKF);
             else if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
-                updateMapRoomCandidateToRoomVoxblox();
+                detectMapRoomCandidateVoxblox();
         }
     }
 
@@ -581,7 +581,7 @@ namespace ORB_SLAM3
             }
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoomVoxblox()
+    void SemanticSegmentation::detectMapRoomCandidateVoxblox()
     {
         // Variables
         std::vector<Plane *> allWalls, closestWalls;
@@ -638,7 +638,8 @@ namespace ORB_SLAM3
             {
                 std::vector<ORB_SLAM3::Plane *> walls = {rectangularRoom.first.first, rectangularRoom.first.second,
                                                          rectangularRoom.second.first, rectangularRoom.second.second};
-                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, walls);
+                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, walls,
+                                                                 sysParams->room_seg.room_center_distance_thresh);
             }
             else
             {
@@ -646,7 +647,9 @@ namespace ORB_SLAM3
                 // Get the walls
                 std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
                 // Create a corridor
-                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls, Utils::getClusterCenteroid(cluster));
+                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls,
+                                                                 sysParams->room_seg.room_center_distance_thresh,
+                                                                 Utils::getClusterCenteroid(cluster));
             }
         }
 
@@ -686,7 +689,7 @@ namespace ORB_SLAM3
         // }
     }
 
-    void SemanticSegmentation::updateMapRoomCandidateToRoomGNN()
+    void SemanticSegmentation::detectMapRoomCandidateGNN()
     {
         // [TODO] Needs to be implemented
     }
