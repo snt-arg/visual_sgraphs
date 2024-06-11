@@ -47,7 +47,6 @@ namespace ORB_SLAM3
             seg.pointclouds_thresh = mConfig["seg"]["pointclouds_thresh"].as<unsigned int>();
             seg.ransac.max_planes = mConfig["seg"]["ransac"]["max_planes"].as<unsigned int>();
             seg.plane_point_dist_thresh = mConfig["seg"]["plane_point_dist_thresh"].as<float>();
-            seg.plane_facing_dot_thresh = mConfig["seg"]["plane_facing_dot_thresh"].as<float>();
             seg.ransac.distance_thresh = mConfig["seg"]["ransac"]["distance_thresh"].as<float>();
             seg.plane_association_thresh = mConfig["seg"]["plane_association_thresh"].as<float>();
             seg.ransac.max_iterations = mConfig["seg"]["ransac"]["max_iterations"].as<unsigned int>();
@@ -65,6 +64,7 @@ namespace ORB_SLAM3
 
             // Room Segmentation Parameters
             room_seg.method = static_cast<room_seg::Method>(mConfig["room_seg"]["method"].as<int>());
+            room_seg.plane_facing_dot_thresh = mConfig["room_seg"]["plane_facing_dot_thresh"].as<float>();
             room_seg.walls_perpendicularity_thresh = mConfig["room_seg"]["perpendicularity_thresh"].as<float>();
             room_seg.room_center_distance_thresh = mConfig["room_seg"]["room_center_distance_thresh"].as<float>();
             room_seg.min_cluster_vertices = mConfig["room_seg"]["skeleton_based"]["min_cluster_vertices"].as<unsigned int>();

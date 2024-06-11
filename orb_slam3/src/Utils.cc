@@ -26,7 +26,7 @@ namespace ORB_SLAM3
         float dotProduct = normal1.dot(normal2);
 
         // Check if the dot product is close to -1
-        if (dotProduct < SystemParams::GetParams()->seg.plane_facing_dot_thresh)
+        if (dotProduct < SystemParams::GetParams()->room_seg.plane_facing_dot_thresh)
             return true;
         else
             return false;

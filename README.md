@@ -334,7 +334,6 @@ Parameters for the SLAM system (independent of ROS) are stored in a yaml config 
 | --- `pointclouds_thresh` | minimum number of points needed to fit a plane |
 | --- `plane_association_thresh` | minimum threshold for ominus for two planes to be considered the same |
 | --- `plane_point_dist_thresh` | maximum distance for point to be considered on a plane |
-| --- `plane_facing_dot_thresh` | maximum dot product of plane normals for the planes to be considered as facing each other |
 | --- `ransac` | configuration related to RANSAC |
 | ------ `max_planes` | maximum number of planes to extract from a pointcloud |
 | ------ `distance_thresh` | maximum distance for a point to be considered as inlier |
@@ -350,8 +349,14 @@ Parameters for the SLAM system (independent of ROS) are stored in a yaml config 
 | --- `min_votes` | minimum votes for a plane to be classified with a semantic label |
 | `room_seg` | configuration for room detection/segmentation |
 | --- `method` | the algorithm to use; one of 0 (Geometric), 1 (Free space clustering), and 2 (GNNs) |
-| --- `max_step_elevation` | maximum median height of a stepped ground plane over the main ground plane |
-| --- `max_tilt_wall` | maximum tilt heuristic for a wall plane to be valid |
+| --- `plane_facing_dot_thresh` | maximum dot product of plane normals for the planes to be considered as facing each other |
+| --- `perpendicularity_thresh` | threshold for perpendicularity of wall pairs to be considered a square room (in degrees)|
+| --- `room_center_distance_thresh` | maximum distance between two room centroids to be considered the same room (in meters)|
+| --- `geo_based` | parameters for the geometrically-based closest walls room segmentation|
+| ------ `marker_wall_distance_thresh` | maximum distance from a marker to a wall to be considered part of the room|
+| --- `skeleton_based` | parameters for skeleton voxblox free-space room segmentation|
+| ------ `min_cluster_vertices` | minimum number of points needed to form a cluster|
+| ------ `cluster_point_wall_distance_thresh` | maximum distance from a point of a cluster to a wall to be considered part of the room|
 
 ## 📍 Maps <a id="maps"></a>
 

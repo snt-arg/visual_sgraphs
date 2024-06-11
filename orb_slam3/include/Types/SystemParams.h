@@ -41,7 +41,6 @@ namespace ORB_SLAM3
             unsigned int pointclouds_thresh = 200;
             float plane_association_thresh = 0.2f;
             float plane_point_dist_thresh = 0.2f;
-            float plane_facing_dot_thresh = -0.8f;
 
             struct ransac
             {
@@ -76,6 +75,7 @@ namespace ORB_SLAM3
             };
             Method method = FREE_SPACE;
 
+            float plane_facing_dot_thresh = -0.8f;
             float room_center_distance_thresh = 1.5f;
             float walls_perpendicularity_thresh = 10.0;
 

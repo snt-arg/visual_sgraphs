@@ -33,9 +33,6 @@ seg:
   # The maximum distance for point to be considered part of a plane
   plane_point_dist_thresh: 0.05
 
-  # The maximum threshold for the dot product of the plane normals to be considered facing each other
-  plane_facing_dot_thresh: -0.9
-
   ransac:
     # The maximum number of planes to be detected in one pointcloud
     max_planes: 1
@@ -76,6 +73,9 @@ room_seg:
   # 1: Segment based on free-space clustering (skeleton voxblox)
   # 2: Segment based on GNN
   method: 1
+
+  # The maximum threshold for the dot product of the plane normals to be considered facing each other
+  plane_facing_dot_thresh: -0.5
 
   # Threshold for perpendicularity of wall pairs to be considered a square room (in degrees)
   perpendicularity_thresh: 10.0
