@@ -584,6 +584,7 @@ namespace ORB_SLAM3
     void SemanticSegmentation::detectMapRoomCandidateVoxblox()
     {
         // Variables
+        ORB_SLAM3::Room *newClusterBasedRoom = nullptr;
         std::vector<Plane *> allWalls, closestWalls;
 
         // Get the skeleton clusters
@@ -638,8 +639,10 @@ namespace ORB_SLAM3
             {
                 std::vector<ORB_SLAM3::Plane *> walls = {rectangularRoom.first.first, rectangularRoom.first.second,
                                                          rectangularRoom.second.first, rectangularRoom.second.second};
-                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, walls,
-                                                                 sysParams->room_seg.room_center_distance_thresh);
+                // Search for a room candidate within the given range (marker-based)
+                // If found, augment information from new room to that one
+                newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, walls,
+                                                                                       sysParams->room_seg.room_center_distance_thresh);
             }
             else
             {
@@ -647,46 +650,27 @@ namespace ORB_SLAM3
                 // Get the walls
                 std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
                 // Create a corridor
-                GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls,
-                                                                 sysParams->room_seg.room_center_distance_thresh,
-                                                                 Utils::getClusterCenteroid(cluster));
+                newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls,
+                                                                                       sysParams->room_seg.room_center_distance_thresh,
+                                                                                       Utils::getClusterCenteroid(cluster));
+            }
+
+            // Check if the room has not been created before
+            ORB_SLAM3::Room *foundMarkerBasedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllMarkerBasedMapRooms());
+            if (foundMarkerBasedRoom != nullptr)
+            {
+                // If the room already exists, update the existing room candidate with the new information
+                GeoSemHelpers::augmentMapRoomCandidate(foundMarkerBasedRoom, newClusterBasedRoom, true);
+            }
+            else
+            {
+                // Otherwise, add the new room candidate to the map
+                std::cout
+                    << "- New room candidate detected: Room#" << newClusterBasedRoom->getId()
+                    << " using the free-space!" << std::endl;
+                mpAtlas->AddDetectedMapRoom(newClusterBasedRoom);
             }
         }
-
-        // Calculate the plane (wall) equation on which the marker is attached
-        // Eigen::Vector4d planeEstimate =
-        //     getPlaneEquationFromPose(currentMapMarker->getGlobalPose().rotationMatrix(),
-        //                              currentMapMarker->getGlobalPose().translation());
-
-        // // Get the plane based on the equation
-        // g2o::Plane3D detectedPlane(planeEstimate);
-
-        // // Convert the given plane to global coordinates
-        // g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
-        //                                                              detectedPlane);
-
-        // // Check if we need to add the wall to the map or not
-        // int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
-        // if (matchedPlaneId != -1)
-        //     // The wall already exists in the map, fetching that one
-        //     updateMapPlane(pKF, detectedPlane, planeCloud, matchedPlaneId, currentMapMarker);
-
-        // Update the room center based on the meta-marker position, if it is a candidate
-        // if (detectedRoom->getIsCandidate())
-        //     // Update the room center
-        //     detectedRoom->setRoomCenter(detectedRoom->getMetaMarker()->getGlobalPose().translation().cast<double>());
-
-        // Find attached doors and add them to the room
-        // for (auto mapDoor : mpAtlas->GetAllDoors())
-        // {
-        //     ORB_SLAM3::Marker *marker = mapDoor->getMarker();
-        //     std::vector<int> roomDoorMarkerIds = roomCandidate->getDoorMarkerIds();
-
-        //     // Loop over the door markers of the room
-        //     for (auto doorMarkerId : roomDoorMarkerIds)
-        //         if (doorMarkerId == marker->getId())
-        //             roomCandidate->setDoors(mapDoor);
-        // }
     }
 
     void SemanticSegmentation::detectMapRoomCandidateGNN()
@@ -694,7 +678,8 @@ namespace ORB_SLAM3
         // [TODO] Needs to be implemented
     }
 
-    ORB_SLAM3::Room *SemanticSegmentation::roomAssociation(const ORB_SLAM3::Room *givenRoom)
+    ORB_SLAM3::Room *SemanticSegmentation::roomAssociation(const ORB_SLAM3::Room *givenRoom,
+                                                           const vector<Room *> &givenRoomList)
     {
         // Variables
         double minDistance = 100;
@@ -704,7 +689,7 @@ namespace ORB_SLAM3
         Eigen::Vector3d detetedRoomCenter = givenRoom->getRoomCenter();
 
         // Check to find the room with the minimum distance from the center
-        for (const auto &mapRoom : mpAtlas->GetAllRooms())
+        for (const auto &mapRoom : givenRoomList)
         {
             Eigen::Vector3d mapRoomCenter = mapRoom->getRoomCenter();
             double distance = (detetedRoomCenter - mapRoomCenter).norm();

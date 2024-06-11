@@ -138,9 +138,10 @@ namespace ORB_SLAM3
 
         /**
          * @brief Checks for the association of a given room
-         * @param detectedRoom the address of the detected room
+         * @param givenRoom the address of the given room
+         * @param givenRoomList the list of rooms to be checked
          */
-        Room *roomAssociation(const ORB_SLAM3::Room *detectedRoom);
+        Room *roomAssociation(const ORB_SLAM3::Room *givenRoom, const vector<Room *> &givenRoomList);
 
         /**
          * @brief Converts mapped room candidates to rooms using geometric constraints

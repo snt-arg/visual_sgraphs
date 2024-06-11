@@ -247,8 +247,15 @@ namespace ORB_SLAM3
         newMapRoomCandidate->setMetaMarkerId(matchedRoom->getMetaMarkerId());
         newMapRoomCandidate->setRoomCenter(attachedMarker->getGlobalPose().translation().cast<double>());
 
+        // Add door markers to the room
         for (int markerId : matchedRoom->getDoorMarkerIds())
+        {
             newMapRoomCandidate->setDoorMarkerIds(markerId);
+            // Check if the door marker is already in the map
+            for (auto door : mpAtlas->GetAllDoors())
+                if (door->getMarker()->getId() == markerId)
+                    newMapRoomCandidate->setDoors(door);
+        }
 
         std::cout
             << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " ("
@@ -257,10 +264,10 @@ namespace ORB_SLAM3
         mpAtlas->AddMarkerBasedMapRoom(newMapRoomCandidate);
     }
 
-    void GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                          std::vector<ORB_SLAM3::Plane *> walls,
-                                                          double centerDistanceThreshold,
-                                                          Eigen::Vector3d clusterCentroid)
+    ORB_SLAM3::Room *GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
+                                                                      std::vector<ORB_SLAM3::Plane *> walls,
+                                                                      double centerDistanceThreshold,
+                                                                      Eigen::Vector3d clusterCentroid)
     {
         // Variables
         Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
@@ -306,27 +313,45 @@ namespace ORB_SLAM3
         }
         newMapRoomCandidate->setRoomCenter(centroid);
 
-        // Check if a room has not been created before
-        for (auto room : mpAtlas->GetAllDetectedMapRooms())
-        {
-            // Calculate the distance between the room center and the centroid
-            double distance = (room->getRoomCenter() - centroid).norm();
-            if (distance < centerDistanceThreshold)
-            {
-                // If the room already exists, update the room candidate
-                updateMapRoomCandidate(newMapRoomCandidate, room);
-                return;
-            }
-        }
-
-        // Create a room candidate for it
-        std::cout
-            << "- New room candidate detected: Room#" << newMapRoomCandidate->getId()
-            << " using the free-space!" << std::endl;
-        mpAtlas->AddDetectedMapRoom(newMapRoomCandidate);
+        return newMapRoomCandidate;
     }
 
-    void GeoSemHelpers::updateMapRoomCandidate(ORB_SLAM3::Room *newRoom, ORB_SLAM3::Room *mappedRoom)
+    void GeoSemHelpers::augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
+                                                bool isMarkerBasedMapped)
     {
+        if (isMarkerBasedMapped)
+        {
+            // Augment the already detected marker-based room with the cluster-based room information
+            markerBasedRoom->setIsCandidate(false);
+            markerBasedRoom->setRoomCenter(clusterBasedRoom->getRoomCenter());
+            // Connect the walls to the room
+            for (ORB_SLAM3::Plane *wall : clusterBasedRoom->getWalls())
+                markerBasedRoom->setWalls(wall);
+            // Check for any information mismatch
+            if ((markerBasedRoom->getIsCorridor() && clusterBasedRoom->getWalls().size() != 2) ||
+                (!markerBasedRoom->getIsCorridor() && clusterBasedRoom->getWalls().size() != 4))
+            {
+                markerBasedRoom->setIsCandidate(true);
+            }
+            // Create a room candidate for it
+            std::cout << "- Marker-based room candidate #" << markerBasedRoom->getId()
+                      << " has been upgraded to room (walls added)!" << std::endl;
+        }
+        else
+        {
+            // Augment the already detected cluster-based room with the marker-based room information
+            clusterBasedRoom->setName(markerBasedRoom->getName());
+            clusterBasedRoom->setIsCorridor(markerBasedRoom->getIsCorridor());
+            clusterBasedRoom->setMetaMarker(markerBasedRoom->getMetaMarker());
+            clusterBasedRoom->setMetaMarkerId(markerBasedRoom->getMetaMarkerId());
+            // Connect the doors to the room
+            for (ORB_SLAM3::Door *door : markerBasedRoom->getDoors())
+                clusterBasedRoom->setDoors(door);
+            for (int markerId : markerBasedRoom->getDoorMarkerIds())
+                clusterBasedRoom->setDoorMarkerIds(markerId);
+            // Create a room candidate for it
+            std::cout << "- Cluster-based room candidate #" << clusterBasedRoom->getId()
+                      << " has been upgraded to room (semantic info added)!" << std::endl;
+        }
     }
 }
