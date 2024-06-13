@@ -266,7 +266,6 @@ namespace ORB_SLAM3
 
     ORB_SLAM3::Room *GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
                                                                       std::vector<ORB_SLAM3::Plane *> walls,
-                                                                      double centerDistanceThreshold,
                                                                       Eigen::Vector3d clusterCentroid)
     {
         // Variables

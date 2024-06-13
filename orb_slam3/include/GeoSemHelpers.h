@@ -95,11 +95,9 @@ namespace ORB_SLAM3
          * @param isCorridor the boolean value to check if the room is a corridor or not
          * @param walls the vector of walls detected in the room
          * @param clusterCentroid the centroid of the cluster
-         * @param centerDistanceThreshold the threshold value for the center distance
          */
         static ORB_SLAM3::Room *createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
                                                                   std::vector<ORB_SLAM3::Plane *> walls,
-                                                                  double centerDistanceThreshold = 1.5,
                                                                   Eigen::Vector3d clusterCentroid = Eigen::Vector3d::Zero());
 
         /**

@@ -641,8 +641,7 @@ namespace ORB_SLAM3
                                                          rectangularRoom.second.first, rectangularRoom.second.second};
                 // Search for a room candidate within the given range (marker-based)
                 // If found, augment information from new room to that one
-                newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, walls,
-                                                                                       sysParams->room_seg.room_center_distance_thresh);
+                newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, false, walls);
             }
             else
             {
@@ -651,7 +650,6 @@ namespace ORB_SLAM3
                 std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
                 // Create a corridor
                 newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls,
-                                                                                       sysParams->room_seg.room_center_distance_thresh,
                                                                                        Utils::getClusterCenteroid(cluster));
             }
 
@@ -682,7 +680,7 @@ namespace ORB_SLAM3
                                                            const vector<Room *> &givenRoomList)
     {
         // Variables
-        double minDistance = 100;
+        double minDistance = sysParams->room_seg.room_center_distance_thresh;
         ORB_SLAM3::Room *foundMappedRoom = nullptr;
 
         // Get the given room center
