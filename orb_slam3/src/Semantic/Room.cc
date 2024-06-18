@@ -107,6 +107,16 @@ namespace ORB_SLAM3
         walls.clear();
     }
 
+    Plane *Room::getGroundPlane() const
+    {
+        return groundPlane;
+    }
+
+    void Room::setGroundPlane(Plane *ground)
+    {
+        groundPlane = ground;
+    }
+
     std::vector<Door *> Room::getDoors() const
     {
         return doors;

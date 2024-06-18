@@ -108,6 +108,21 @@ namespace ORB_SLAM3
          */
         static void augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
                                             bool isMarkerBasedMapped);
+
+
+        /**
+         * @brief Chooses a ground plane from the Atlas to be associated with the room
+         * @param mpAtlas the current map in Atlas
+         * @param givenRoom the address of the detected room
+         */
+        static void associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom);
+
+        /**
+         * @brief Counts the number of points in the ground plane that are within the walls of the room
+         * @param roomWalls the vector of walls detected in the room
+         * @param groundPlane the ground plane associated with the room
+         */
+        static size_t countGroundPlanePointsWithinWalls(std::vector<ORB_SLAM3::Plane *> &roomWalls, ORB_SLAM3::Plane *groundPlane);
     };
 }
 

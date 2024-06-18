@@ -25,6 +25,7 @@ namespace ORB_SLAM3
         Marker *metaMarker;             // The meta-marker assigned for the room
         std::vector<Door *> doors;      // The vector of detected doors of a room
         std::vector<Plane *> walls;     // The vector of detected walls of a room
+        Plane *groundPlane;             // The ground plane associated with the room
         Eigen::Vector3d roomCenter;     // The center of the room as a 3D vector in the global reference
         std::vector<int> doorMarkerIds; // Markers attached to the doors of a room [in real map], e.g. [3, 4]
 
@@ -65,6 +66,9 @@ namespace ORB_SLAM3
         std::vector<Plane *> getWalls() const;
 
         void clearWalls();
+
+        Plane *getGroundPlane() const;
+        void setGroundPlane(Plane *ground);
 
         void setDoorMarkerIds(int value);
         std::vector<int> getDoorMarkerIds() const;

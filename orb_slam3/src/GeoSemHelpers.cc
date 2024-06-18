@@ -353,4 +353,89 @@ namespace ORB_SLAM3
                       << " has been upgraded to room (semantic info added)!" << std::endl;
         }
     }
+
+
+    void GeoSemHelpers::associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom)
+    {
+        std::vector<ORB_SLAM3::Plane *> allWalls = givenRoom->getWalls();
+        ORB_SLAM3::Plane *associatedGroundPlane = nullptr;
+        size_t maxInliers = 0;
+
+        // get the ground planes from the Atlas
+        std::vector<ORB_SLAM3::Plane *> groundPlanes;
+        for (const auto &plane : mpAtlas->GetAllPlanes())
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::GROUND)
+                groundPlanes.push_back(plane);
+
+
+        if (groundPlanes.empty())
+            // no ground planes in the Atlas
+            return;
+        else
+        {
+            // check which ground plane has the most points within the walls
+            for (const auto &plane : groundPlanes)
+            {
+                // count inliers of the plane
+                size_t inliers = countGroundPlanePointsWithinWalls(allWalls, plane);
+
+                // update the associated ground plane if the current plane has more inliers
+                if (inliers > maxInliers)
+                {
+                    maxInliers = inliers;
+                    associatedGroundPlane = plane;
+                }
+            }
+
+            if (associatedGroundPlane != nullptr)
+                givenRoom->setGroundPlane(associatedGroundPlane);
+            else
+                // set the biggest ground plane as the ground plane of the room
+                // [TODO] - logic for when ground plane is not found within the walls
+                givenRoom->setGroundPlane(mpAtlas->GetBiggestGroundPlane());
+        }
+    }
+
+
+    size_t GeoSemHelpers::countGroundPlanePointsWithinWalls(std::vector<ORB_SLAM3::Plane *> &roomWalls, ORB_SLAM3::Plane *groundPlane)
+    {
+        // [TODO] - verify the correctness of this function
+        // the point cloud of the ground plane
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr groundCloud = groundPlane->getMapClouds();
+
+        // the number of points within the walls
+        size_t count = 0;
+
+        // store the wall equations
+        std::vector<Eigen::Vector4d> wallEquations;
+        for (const auto &wall : roomWalls)
+            wallEquations.push_back(wall->getGlobalEquation().coeffs());
+
+        // for each point in the ground plane, check if it is within the walls
+        for (const auto &point : groundCloud->points)
+        {
+            bool isWithinWalls = true;
+            for (const auto &wallEquation : wallEquations)
+            {
+                // convert the point to Eigen vector
+                Eigen::Vector3d pointVec = Eigen::Vector3d(point.x, point.y, point.z); 
+
+                // substitute the point into the wall equation to get the signed distance
+                float signedDistance = wallEquation.head<3>().dot(pointVec) + wallEquation(3);
+
+                // if the point is outside the wall, break the loop
+                if (signedDistance < 0)
+                {
+                    isWithinWalls = false;
+                    break;
+                }
+            }
+
+            // if the point is within the walls, increment the count
+            if (isWithinWalls)
+                count++;
+        }
+        return count;
+    }
+
 }
