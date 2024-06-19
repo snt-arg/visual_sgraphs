@@ -57,6 +57,7 @@ namespace ORB_SLAM3
             // Semantic Segmentation Parameters
             sem_seg.min_votes = mConfig["sem_seg"]["min_votes"].as<float>();
             sem_seg.prob_thresh = mConfig["sem_seg"]["prob_thresh"].as<float>();
+            sem_seg.conf_thresh = mConfig["sem_seg"]["conf_thresh"].as<float>();
             sem_seg.max_tilt_wall = mConfig["sem_seg"]["max_tilt_wall"].as<float>();
             sem_seg.max_tilt_ground = mConfig["sem_seg"]["max_tilt_ground"].as<float>();
             sem_seg.max_step_elevation = mConfig["sem_seg"]["max_step_elevation"].as<float>();

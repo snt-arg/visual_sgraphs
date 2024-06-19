@@ -115,6 +115,9 @@ namespace ORB_SLAM3
         const int numPoints = width * pclPc2SegPrb->height;
         const int pointStep = pclPc2SegPrb->point_step;
         const int numClasses = pointStep / bytesPerClassProb;
+        const float distanceThreshNear = sysParams->pointcloud.distance_thresh.first;
+        const float distanceThreshFar = sysParams->pointcloud.distance_thresh.second;
+        const uint8_t confidenceThresh = sysParams->sem_seg.conf_thresh * 255;
 
         for (int i = 0; i < numClasses; i++)
         {
@@ -140,16 +143,22 @@ namespace ORB_SLAM3
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
 
-                    // get the original point from the keyframe point cloud
+                    // get the original point from the keyframe point cloud and perform distance thresholding
                     const pcl::PointXYZRGB origPoint = thisKFPointCloud->at(point.x, point.y);
-                    if (!pcl::isFinite(origPoint))
+                    if (!pcl::isFinite(origPoint) || 
+                        origPoint.z < distanceThreshNear ||
+                        origPoint.z > distanceThreshFar)
                         continue;
 
                     // convert uncertainity to single value and assign confidence to alpha channel
                     cv::Vec3b vec = segImgUncertainity.at<cv::Vec3b>(point.y, point.x);
                     point.a = 255 - static_cast<int>(0.299 * vec[2] + 0.587 * vec[1] + 0.114 * vec[0]);
 
-                    // assign the XYZ and RGB values to the class specific point cloud
+                    // exclude points with low confidence
+                    if (point.a < confidenceThresh)
+                        continue;
+
+                    // assign the XYZ and RGB values to the surviving point before pushing to specific point cloud
                     point.x = origPoint.x;
                     point.y = origPoint.y;
                     point.z = origPoint.z;
@@ -179,8 +188,9 @@ namespace ORB_SLAM3
         {
             // [TODO?] - Perhaps consider points in order of confidence instead of downsampling
             // Downsample the given pointcloud after filtering based on distance
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i]);
-            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->sem_seg.downsample_leaf_size);
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud;
+            // filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i]);
+            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(clsCloudPtrs[i], sysParams->sem_seg.downsample_leaf_size);
 
             // copy the filtered cloud for later storage into the keyframe
             pcl::copyPointCloud(*filteredCloud, *clsCloudPtrs[i]);
