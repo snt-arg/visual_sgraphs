@@ -25,10 +25,10 @@ pointcloud:
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
   # Also, the number of points needed to detect a plane in the pointcloud
-  pointclouds_thresh: 400
+  pointclouds_thresh: 300
 
   # Plane association threshold (ominus)
-  plane_association_thresh: 0.1
+  plane_association_thresh: 0.2
 
   # The maximum distance for point to be considered part of a plane
   plane_point_dist_thresh: 0.05
@@ -54,10 +54,10 @@ sem_seg:
   downsample_leaf_size: 0.04
 
   # The threshold for semantic segmentation probability validation (rejects probability below this)
-  prob_thresh: 0.85
+  prob_thresh: 0.70
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
-  conf_thresh: 0.9
+  conf_thresh: 0.50
 
   # The maximum height above the main ground to be a valid stepped ground plane (in meters)
   max_step_elevation: 0.5
@@ -67,7 +67,7 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
-  min_votes: 2.5
+  min_votes: 3.0
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:

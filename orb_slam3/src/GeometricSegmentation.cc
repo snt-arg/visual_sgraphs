@@ -77,7 +77,7 @@ namespace ORB_SLAM3
             pcl::transformPointCloud(*planeCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
             // Check if we need to add the wall to the map or not
-            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane, pKF->GetPose().matrix().cast<double>());
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
                 GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, globalPlaneCloud);

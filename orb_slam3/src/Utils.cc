@@ -322,7 +322,7 @@ namespace ORB_SLAM3
         return false;
     }
 
-    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose)
     {
         int planeId = -1;
 
@@ -340,8 +340,10 @@ namespace ORB_SLAM3
             if (mPlane->excludedFromAssoc)
                 continue;
 
+            // compare in the given plane's frame
             // Preparing a plane for feeding the detector
             g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
+            mappedPlane = convertToGlobalEquation(kfPose, mappedPlane);
 
             // Calculate difference vector based on walls' equations
             Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);

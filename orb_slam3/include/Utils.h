@@ -142,7 +142,7 @@ namespace ORB_SLAM3
          * @param givenPlane the given plane
          * @return the plane id of the mapped plane
          */
-        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane);
+        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose);
 
         /**
          * @brief Gets the planeVariant type from the class id

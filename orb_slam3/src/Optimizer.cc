@@ -1575,11 +1575,15 @@ namespace ORB_SLAM3
 
         // Fixed keyframes that observe the planes - take randomnly
         // [TODO] - make this a parameter after verification
-        int maxKFs = 10;
-        int numKFs = 0;
         for (list<Plane *>::iterator lit = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); lit != lend; lit++)
         {
             map<KeyFrame *, g2o::Plane3D> observations = (*lit)->getObservations();
+            
+            // 5 % of the observations, excluding less observed planes
+            if (observations.size() < 10)
+                continue;
+            size_t maxKFs = 0.05 * observations.size();
+            size_t numKFs = 0;
             
             // randomnly shuffle the map of observations, keeping the original intact
             std::vector<std::pair<KeyFrame *, g2o::Plane3D>> obsVec(observations.begin(), observations.end());
@@ -1588,10 +1592,6 @@ namespace ORB_SLAM3
             for (std::vector<std::pair<KeyFrame *, g2o::Plane3D>>::iterator mit = obsVec.begin(), mend = obsVec.end(); mit != mend; mit++)
             {
                 KeyFrame *pKFi = mit->first;
-                
-                // not newly added keyframes
-                if (pKFi->mnId >= pKF->mnId)
-                    continue;
 
                 if (pKFi->mnBALocalForKF != pKF->mnId && pKFi->mnBAFixedForKF != pKF->mnId)
                 {
@@ -1605,8 +1605,6 @@ namespace ORB_SLAM3
                     }
                 }
             }
-            if (numKFs >= maxKFs)
-                break;
         }
 
         num_fixedKF = lFixedCameras.size() + num_fixedKF;

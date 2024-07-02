@@ -143,11 +143,9 @@ namespace ORB_SLAM3
                     point.y = static_cast<int>(i / width);
                     point.x = i % width;
 
-                    // get the original point from the keyframe point cloud and perform distance thresholding
+                    // get the original point from the keyframe point cloud
                     const pcl::PointXYZRGB origPoint = thisKFPointCloud->at(point.x, point.y);
-                    if (!pcl::isFinite(origPoint) || 
-                        origPoint.z < distanceThreshNear ||
-                        origPoint.z > distanceThreshFar)
+                    if (!pcl::isFinite(origPoint))
                         continue;
 
                     // convert uncertainity to single value and assign confidence to alpha channel
@@ -189,8 +187,8 @@ namespace ORB_SLAM3
             // [TODO?] - Perhaps consider points in order of confidence instead of downsampling
             // Downsample the given pointcloud after filtering based on distance
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud;
-            // filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i]);
-            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(clsCloudPtrs[i], sysParams->sem_seg.downsample_leaf_size);
+            filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i]);
+            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->sem_seg.downsample_leaf_size);
 
             // copy the filtered cloud for later storage into the keyframe
             pcl::copyPointCloud(*filteredCloud, *clsCloudPtrs[i]);
@@ -221,7 +219,7 @@ namespace ORB_SLAM3
                                                                              detectedPlane);
 
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane, pKF->GetPose().matrix().cast<double>());
 
                 // pointcloud processing
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
@@ -337,7 +335,7 @@ namespace ORB_SLAM3
                 return;
 
             // check if the plane is associated with any other plane
-            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation());
+            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation(), Eigen::Matrix4d::Identity());
 
             // if a match is found, then add the smaller planecloud to the larger plane
             // set the smaller plane type to undefined and remove it from future associations
