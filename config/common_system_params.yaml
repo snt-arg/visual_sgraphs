@@ -54,10 +54,10 @@ sem_seg:
   downsample_leaf_size: 0.04
 
   # The threshold for semantic segmentation probability validation (rejects probability below this)
-  prob_thresh: 0.70
+  prob_thresh: 0.75
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
-  conf_thresh: 0.50
+  conf_thresh: 0.55
 
   # The maximum height above the main ground to be a valid stepped ground plane (in meters)
   max_step_elevation: 0.5
