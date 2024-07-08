@@ -3,14 +3,17 @@ import sys
 import rospy
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import PoseStamped
+import yaml
 
-# Parameters
-files_path = "/home/ali"
-# Such as orb3, vsgraphs, uco, suco (semantic UcoSLAM)
-slam_method = "vsgraphs"
-dataset_seq = "seq01"  # The dataset sequence running
-gt_pose_topic = "/gazebo/model_states"
-slam_pose_topic = "/orb_slam3/camera_pose"
+# Load the configurations
+config_file = open("config.yaml", "r")
+config = yaml.load(config_file, Loader=yaml.FullLoader)
+
+files_path = config["results_dir"]
+slam_method = config["slam_method"]
+dataset_seq = config["dataset_seq"]
+gt_pose_topic = config["ros_topics"]["ground_truth_pose"]
+slam_pose_topic = config["ros_topics"]["camera_pose"]
 
 # Creating a txt file that will contain poses
 print("Creating txt files for adding SLAM and Ground-Truth poses ...")

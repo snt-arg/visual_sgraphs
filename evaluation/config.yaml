@@ -1,0 +1,13 @@
+# the path to the directory where the results will be saved
+results_dir: "/home/ali"
+
+# Such as orb3, vsgraphs, uco, suco (semantic UcoSLAM)
+slam_method: "vsgraphs" 
+
+# the sequence number/name of the dataset
+dataset_seq: "seq01"
+
+# the relevant topics for the evaluation
+ros_topics:
+  camera_pose: "/orb_slam3/camera_pose"
+  ground_truth_pose: "/gazebo/model_states"
