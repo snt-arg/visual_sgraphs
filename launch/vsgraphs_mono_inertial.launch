@@ -2,6 +2,8 @@
     <!-- ****** System Arguments ****** -->
     <!-- Live or reading a rosbag file (offline) -->
     <arg name="offline" default="true" />
+     <!-- Flag to launch rviz -->
+    <arg name="launch_rviz" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
 
@@ -35,7 +37,7 @@
     <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera camera_color_optical_frame 10" />
     
     <!-- Visualization -->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/Visualization/vsgraphs_mono_imu.rviz" output="screen" />
+    <node if="$(arg launch_rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/Visualization/vsgraphs_mono_imu.rviz" output="screen" />
     
     <!-- Trajectory path -->
     <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_server_orb_slam3" output="screen" ns="orb_slam3_ros" >

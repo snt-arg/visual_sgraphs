@@ -2,6 +2,8 @@
     <!-- ****** System Arguments ****** -->
     <!-- Live or reading a rosbag file (offline) -->
     <arg name="offline" default="true" />
+     <!-- Flag to launch rviz -->
+    <arg name="launch_rviz" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
 
@@ -27,7 +29,7 @@
     </node>
     
     <!-- Visualization -->
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/Visualization/vsgraphs_mono.rviz" output="screen" />
+    <node if="$(arg launch_rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/Visualization/vsgraphs_mono.rviz" output="screen" />
 
     <!-- Transformation parameters -->
     <node pkg="tf" type="static_transform_publisher" name="wall_to_room" args="0 -3 0 0 0 0 plane room 10" />
