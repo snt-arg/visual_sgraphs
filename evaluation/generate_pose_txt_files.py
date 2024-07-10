@@ -20,9 +20,11 @@ print("Creating txt files for adding SLAM and Ground-Truth poses ...")
 gt_pose_file = open(
     f"{files_path}/gt_pose_{slam_method}_{dataset_seq}.txt", "w+")
 gt_pose_file.write("#timestamp tx ty tz qx qy qz qw\n")
+gt_pose_file.flush()
 slam_pose_file = open(
     f"{files_path}/slam_pose_{slam_method}_{dataset_seq}.txt", "w+")
 slam_pose_file.write("#timestamp tx ty tz qx qy qz qw\n")
+slam_pose_file.flush()
 
 # Check what to set for the robot-ID
 robot_id = -1
@@ -49,6 +51,7 @@ def groundtruthPoseCallback(groundtruth_pose_msg):
         + str(tz) + " " + str(rx) + " " + str(ry) + " "
         + str(rz) + " " + str(rw) + "\n"
     )
+    gt_pose_file.flush()
 
 
 def slamPoseCallback(slam_pose_msg):
@@ -67,6 +70,7 @@ def slamPoseCallback(slam_pose_msg):
         + str(odom_z) + " " + str(odom_rx) + " " + str(odom_ry) + " "
         + str(odom_rz) + " " + str(odom_rw) + "\n"
     )
+    slam_pose_file.flush()
 
 
 def subscribers():
