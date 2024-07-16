@@ -15,6 +15,10 @@ dataset_seq = config["dataset_seq"]
 gt_pose_topic = config["ros_topics"]["ground_truth_pose"]
 slam_pose_topic = config["ros_topics"]["camera_pose"]
 
+if len(sys.argv) > 1:
+    # use that as identifier
+    dataset_seq += sys.argv[1]
+
 # Creating a txt file that will contain poses
 print("Creating txt files for adding SLAM and Ground-Truth poses ...")
 gt_pose_file = open(
@@ -26,25 +30,17 @@ slam_pose_file = open(
 slam_pose_file.write("#timestamp tx ty tz qx qy qz qw\n")
 slam_pose_file.flush()
 
-# Check what to set for the robot-ID
-robot_id = -1
-for i in range(1, len(sys.argv)):
-    if i == 1:
-        robot_id = sys.argv[i]
-    elif i == 2:
-        gt_pose_topic = sys.argv[i]
-
 
 def groundtruthPoseCallback(groundtruth_pose_msg):
     # Calculate different variables
     time = rospy.get_rostime().to_sec()
-    tx = groundtruth_pose_msg.pose[int(robot_id)].position.x
-    ty = groundtruth_pose_msg.pose[int(robot_id)].position.y
-    tz = groundtruth_pose_msg.pose[int(robot_id)].position.z
-    rx = groundtruth_pose_msg.pose[int(robot_id)].orientation.x
-    ry = groundtruth_pose_msg.pose[int(robot_id)].orientation.y
-    rz = groundtruth_pose_msg.pose[int(robot_id)].orientation.z
-    rw = groundtruth_pose_msg.pose[int(robot_id)].orientation.w
+    tx = groundtruth_pose_msg.pose.position.x
+    ty = groundtruth_pose_msg.pose.position.y
+    tz = groundtruth_pose_msg.pose.position.z
+    rx = groundtruth_pose_msg.pose.orientation.x
+    ry = groundtruth_pose_msg.pose.orientation.y
+    rz = groundtruth_pose_msg.pose.orientation.z
+    rw = groundtruth_pose_msg.pose.orientation.w
     # Write to the Ground-Truth file
     gt_pose_file.write(
         str(time) + " " + str(tx) + " " + str(ty) + " "
