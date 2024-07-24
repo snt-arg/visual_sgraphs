@@ -245,6 +245,7 @@ Please note that in order to use inertial sensors (i.e., _IMU_) you need to init
 
 To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, _aligned depth_, _stereo_, and _color_, you can follow these steps:
 
+- Calibrate the IMU according to the guideline provided [here](config/Calibration/RealSense_Depth_D435i_IMU_Calibration.pdf). You need to run the [Python Script](config/Calibration/python_scripts/rs-imu-calibration.py), follow the steps, and save the calibration parameters into the camera.
 - Make sure you have the necessary drivers and packages installed for the RealSense camera to work with `ROS`, including `realsense2_camera` and `realsense2_description` packages using the following command:
 - Launch the `realsense2_camera` node using the proper command:
   - For Mono and RGB-D, with or without IMU, run `roslaunch realsense2_camera rs_rgbd.launch` (sample provided [here](/doc/realsense2_camera_rs_rgbd.launch)),
