@@ -1,11 +1,9 @@
 <launch>
     <!-- ****** System Arguments ****** -->
-    <!-- Live or reading a rosbag file (offline) -->
-    <arg name="offline" default="true" />
     <!-- Flag to launch rviz -->
     <arg name="launch_rviz" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
-    <param name="use_sim_time" value="$(arg offline)" />
+    <param name="use_sim_time" value="true" />
 
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" cwd="node" type="ros_rgbd" output="screen">
@@ -58,8 +56,9 @@
             args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager">
         <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
         <remap from="rgb/image_rect_color" to="/camera/color/image_raw"/>
+        <remap from="depth_registered/image_rect" to="/camera/depth/image_raw"/>
+        <!-- Result: -->
         <remap from="depth_registered/points" to="/camera/depth/points"/>
-        <remap from="depth_registered/image_rect" to="/camera/aligned_depth_to_color/image_raw"/>
     </node>
 
 </launch>

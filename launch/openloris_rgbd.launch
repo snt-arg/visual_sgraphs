@@ -58,8 +58,9 @@
             args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager">
         <remap from="rgb/camera_info" to="/d400/color/camera_info"/>
         <remap from="rgb/image_rect_color" to="/d400/color/image_raw"/>
-        <remap from="depth_registered/points" to="/camera/depth/points"/>
         <remap from="depth_registered/image_rect" to="/d400/aligned_depth_to_color/image_raw"/>
+        <!-- Result: -->
+        <remap from="depth_registered/points" to="/camera/depth/points"/>
     </node>
 
 </launch>

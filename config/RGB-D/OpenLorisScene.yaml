@@ -19,9 +19,6 @@ Camera1.k2: 0.0
 Camera1.p1: 0.0
 Camera1.p2: 0.0
 
-# Stereo
-Stereo.b: 0.0499585
-
 # Camera resolution
 Camera.width: 848
 Camera.height: 480
