@@ -1,11 +1,8 @@
 <launch>
-    <!-- ****** System Arguments ****** -->
-    <!-- Live or reading a rosbag file (offline) -->
-    <arg name="offline" default="true" />
     <!-- Flag to launch rviz -->
     <arg name="launch_rviz" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
-    <param name="use_sim_time" value="$(arg offline)" />
+    <param name="use_sim_time" value="true" />
 
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" cwd="node" type="ros_rgbd" output="screen">
@@ -14,10 +11,6 @@
 
         <!-- Remap to prepare the depth data -->
         <remap from="/camera/depth_registered/image_raw"    to="/d400/aligned_depth_to_color/image_raw"/>
-
-        <!-- Remap to prepare the pointcloud -->
-        <!-- ULMS with no depth: /camera/depth/points -->
-        <!-- <remap from="/camera/pointcloud"    to="/camera/depth/color/points"/> -->
 
         <!-- Parameters for loading setting files -->
         <param name="sys_params_file" type="string" value="$(find orb_slam3_ros)/config/common_system_params.yaml"/>
@@ -38,7 +31,7 @@
     <!-- Transformation parameters -->
     <node pkg="tf" type="static_transform_publisher" name="wall_to_room" args="0 -3 0 0 0 0 plane room 10" />
     <node pkg="tf" type="static_transform_publisher" name="world_to_wall" args="0 -3 0 0 0 0 world plane 10" />
-    <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera camera_color_optical_frame 10" />
+    <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera d400_color 10" />
 
     <!-- Visualization -->
     <node if="$(arg launch_rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/Visualization/vsgraphs_rgbd.rviz" output="screen" />

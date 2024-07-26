@@ -1,7 +1,7 @@
 %YAML:1.0
 
 #--------------------------------------------------------------------------------------------
-# Camera Parameters. Adjust them! (ICL Dataset - https://peringlab.org/lmdata/)
+# Camera Parameters. Adjust them! (OpenLoris Dataset - https://lifelong-robotic-vision.github.io/dataset/scene)
 #--------------------------------------------------------------------------------------------
 File.version: "1.0"
 
