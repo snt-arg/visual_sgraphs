@@ -19,7 +19,7 @@ markers:
 pointcloud:
   distance_thresh:
     near: 0.3
-    far: 3.0
+    far: 3.5
 
 ################################ Common Segmentation Parameters ##################################
 seg:
@@ -54,10 +54,10 @@ sem_seg:
   downsample_leaf_size: 0.04
 
   # The threshold for semantic segmentation probability validation (rejects probability below this)
-  prob_thresh: 0.75
+  prob_thresh: 0.5
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
-  conf_thresh: 0.55
+  conf_thresh: 0.25
 
   # The maximum height above the main ground to be a valid stepped ground plane (in meters)
   max_step_elevation: 0.5
@@ -67,7 +67,7 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
-  min_votes: 3.0
+  min_votes: 2.0
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:
