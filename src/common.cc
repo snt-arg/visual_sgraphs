@@ -9,7 +9,7 @@ ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
-ros::Publisher kf_img_pub;
+ros::Publisher kf_img_pub, kf_list_pub;
 bool publish_static_transform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
@@ -79,6 +79,7 @@ void setupPublishers(ros::NodeHandle &node_handler, image_transport::ImageTransp
     plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
     segmented_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
+    kf_list_pub = node_handler.advertise<nav_msgs::Path>(node_name + "/keyframe_list", 2);
 
     // Semantic
     doorsPub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
@@ -379,6 +380,10 @@ void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
     kf_lines.header.frame_id = world_frame_id;
     kf_lines.type = visualization_msgs::Marker::LINE_LIST;
 
+    nav_msgs::Path kf_list;
+    kf_list.header.frame_id = world_frame_id;
+    kf_list.header.stamp = msg_time;
+
     for (auto &keyframe : keyframe_vec)
     {
         geometry_msgs::Point kf_marker;
@@ -388,6 +393,19 @@ void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         kf_marker.y = kf_pose.translation().y();
         kf_marker.z = kf_pose.translation().z();
         kf_markers.points.push_back(kf_marker);
+
+        // populate the keyframe list
+        geometry_msgs::PoseStamped pose;
+        pose.header.stamp = ros::Time(keyframe->mTimeStamp);
+        pose.header.frame_id = world_frame_id;
+        pose.pose.position.x = kf_pose.translation().x();
+        pose.pose.position.y = kf_pose.translation().y();
+        pose.pose.position.z = kf_pose.translation().z();
+        pose.pose.orientation.w = kf_pose.unit_quaternion().w();
+        pose.pose.orientation.x = kf_pose.unit_quaternion().x();
+        pose.pose.orientation.y = kf_pose.unit_quaternion().y();
+        pose.pose.orientation.z = kf_pose.unit_quaternion().z();
+        kf_list.poses.push_back(pose);
 
         // // get all planes from the keyframe
         // std::vector<ORB_SLAM3::Plane *> planes = keyframe->GetMapPlanes();
@@ -426,6 +444,7 @@ void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
     markerArray.markers.push_back(kf_markers);
     // markerArray.markers.push_back(kf_lines);
     kf_markers_pub.publish(markerArray);
+    kf_list_pub.publish(kf_list);
 }
 
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msg_time)

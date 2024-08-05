@@ -29,6 +29,7 @@
 #include <visualization_msgs/Marker.h>
 #include <segmenter_ros/VSGraphDataMsg.h>
 #include <segmenter_ros/SegmenterDataMsg.h>
+#include <nav_msgs/Path.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <rviz_visual_tools/rviz_visual_tools.h>

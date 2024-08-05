@@ -11,3 +11,4 @@ dataset_seq: "seq01"
 ros_topics:
   camera_pose: "/orb_slam3/camera_pose"
   ground_truth_pose: "/gazebo/model_states"
+  keyframe_list: "/orb_slam3/keyframe_list"
