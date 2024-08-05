@@ -1,0 +1,58 @@
+<launch>
+    <!-- ****** System Arguments ****** -->
+    <!-- Live or reading a rosbag file (offline) -->
+    <arg name="offline" default="true" />
+    <!-- Check to see if loads ORB-SLAM's TF values or not -->
+    <param name="use_sim_time" value="$(arg offline)" />
+
+    <!-- Main node -->
+    <node name="orb_slam3" pkg="orb_slam3_ros" cwd="node" type="ros_rgbd" output="screen">
+        
+        <!-- RGB and Depth images -->
+        <remap from="/camera/rgb/image_raw"    to="/camera/rgb/image_color"/>
+        <remap from="/camera/depth_registered/image_raw"   to="/camera/depth/image"/>
+
+        <!-- Parameters for loading setting files -->
+        <param name="voc_file"        type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
+        <param name="settings_file"   type="string" value="$(find orb_slam3_ros)/config/RGB-D/TUM1.yaml"/>
+        <param name="sys_params_file" type="string" value="$(find orb_slam3_ros)/config/common_system_params.yaml"/>
+
+        <!-- Parameters for ROS -->
+        <param name="roll" type="double" value="0" />
+        <param name="yaw" type="double" value="1.5697" />
+        <param name="pitch" type="double" value="-1.5697" />
+        <param name="enable_pangolin"   type="bool"     value="false" />
+        <param name="world_frame_id"    type="string"   value="world" />        
+        <param name="cam_frame_id"      type="string"   value="camera" />
+        <param name="map_frame_id"    type="string"   value="map" />
+        <param name="publish_static_transform" type="bool" value="true" />
+    </node>
+
+    <!-- Transformation parameters -->
+    <node pkg="tf" type="static_transform_publisher" name="wall_to_room" args="0 0 3 0 0 0 plane room 10" />
+    <node pkg="tf" type="static_transform_publisher" name="world_to_wall" args="0 0 3 0 0 0 world plane 10" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="camera_to_camera_optical" args="0 0 0 0 0 0 camera openni_camera 10" /> -->
+
+    <!-- Visualization -->
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find orb_slam3_ros)/config/Visualization/vsgraphs_rgbd.rviz" output="screen" />
+    
+    <!-- Trajectory path -->
+    <node pkg="hector_trajectory_server" type="hector_trajectory_server" name="trajectory_server_orb_slam3" output="screen" ns="orb_slam3_ros" >
+        <param name="/target_frame_name"        value="/map" />
+        <param name="/source_frame_name"        value="/camera" />
+        <param name="/trajectory_update_rate"   value="20.0" />
+        <param name="/trajectory_publish_rate"  value="20.0" />
+    </node>
+
+    <!-- Publish depth cloud -->
+    <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
+
+    <node pkg="nodelet" type="nodelet" name="nodelet1"
+            args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager">
+        <remap from="rgb/camera_info" to="/camera/rgb/camera_info"/>
+        <remap from="rgb/image_rect_color" to="/camera/rgb/image_color"/>
+        <remap from="depth_registered/points" to="/camera/depth/points"/>
+        <remap from="depth_registered/image_rect" to="/camera/depth/image"/>
+    </node>
+
+</launch>
