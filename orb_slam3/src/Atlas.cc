@@ -56,17 +56,18 @@ namespace ORB_SLAM3
 
     void Atlas::CreateNewMap()
     {
+        // Lock the map creation
         unique_lock<mutex> lock(mMutexAtlas);
-        cout << "Creation of new map with id: " << Map::nNextId << endl;
+        cout << "- Creating a new map with ID " << Map::nNextId << " ..." << endl;
         if (mpCurrentMap)
         {
             if (!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap->GetMaxKFid())
                 mnLastInitKFidMap = mpCurrentMap->GetMaxKFid() + 1; // The init KF is the next of current maximum
 
             mpCurrentMap->SetStoredMap();
-            cout << "Stored map with ID: " << mpCurrentMap->GetId() << endl;
+            cout << "- Stored map with ID " << mpCurrentMap->GetId() << endl;
         }
-        cout << "Creation of new map with last KF id: " << mnLastInitKFidMap << endl;
+        cout << "- Creating a new map with the last KeyFrame-ID " << mnLastInitKFidMap << " ..." << endl;
 
         mpCurrentMap = new Map(mnLastInitKFidMap);
         mpCurrentMap->SetCurrentMap();

@@ -105,42 +105,50 @@ namespace ORB_SLAM3
 
         mStrVocabularyFilePath = strVocFile;
 
-        // Load ORB Vocabulary
-        cout << endl
-             << "Loading ORB Vocabulary. This could take a while..." << endl;
+        // Loading ORB Vocabulary
+        cout << "[ORB Vocabulary]" << endl;
+        cout << "- Loading ORB Vocabulary ..." << endl;
 
         mpVocabulary = new ORBVocabulary();
         bool bVocLoad = mpVocabulary->loadFromBinFile(strVocFile);
         if (!bVocLoad)
         {
-            cerr << "Wrong path to vocabulary. " << endl;
-            cerr << "Failed to open at: " << strVocFile << endl;
+            cerr << "- Wrong path to vocabulary. " << endl;
+            cerr << "- Failed to open at: " << strVocFile << endl;
             exit(-1);
         }
-        cout << "Vocabulary loaded!" << endl
+        cout << "- Vocabulary loaded!" << endl
              << endl;
 
         // Create KeyFrame Database
+        cout << "[Atlas Map Manager]" << endl;
         mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
         bool loadedAtlas = false;
         if (mStrLoadAtlasFromFile.empty())
         {
             // Create the Atlas
-            cout << "Initialization of Atlas from scratch " << endl;
+            cout << "- Initializing Atlas from scratch ..." << endl;
             mpAtlas = new Atlas(0);
+            cout << "- Atlas is ready!" << endl
+                 << endl;
         }
         else
         {
             // Load the file with an earlier session
             // clock_t start = clock();
-            cout << "Initialization of Atlas from file: " << mStrLoadAtlasFromFile << endl;
+            cout << "- Initializing Atlas from file: " << mStrLoadAtlasFromFile << "... " << endl;
             bool isRead = LoadAtlas(FileType::BINARY_FILE);
 
             if (!isRead)
             {
-                cout << "Error to load the file, please try with other session file or vocabulary file" << endl;
+                cout << "- Error while loading the file, please try again!" << endl;
                 exit(-1);
+            }
+            else
+            {
+                cout << "- Atlas is ready!" << endl
+                     << endl;
             }
             // mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
@@ -157,11 +165,13 @@ namespace ORB_SLAM3
             // usleep(10*1000*1000);
         }
 
-        // setup the system parameters
+        // Setup the system parameters
+        cout << "[System Params]" << endl;
         SystemParams *sysParams = SystemParams::GetParams();
         sysParams->SetParams(strSysParamsFile);
 
-        // parse the environment database
+        // Parse the environment database
+        cout << "[Environment Markers JSON File]" << endl;
         parseJsonDatabase(sysParams->general.env_database);
 
         // If the sensor is integrated with IMU, initialize the IMU first
@@ -173,6 +183,7 @@ namespace ORB_SLAM3
         mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
 
         // Initialize the Tracking thread
+        cout << "[Tracking]" << endl;
         mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                                  mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
@@ -244,6 +255,8 @@ namespace ORB_SLAM3
         // Getting semantic entities
         envRooms = parser.getEnvRooms(envData);
         envDoors = parser.getEnvDoors(envData);
+        // Printing the success message
+        std::cout << "- JSON loaded and candidates created!\n\n";
     }
 
     void System::addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple)

@@ -132,17 +132,18 @@ namespace ORB_SLAM3
         mnNumDataset = 0;
 
         vector<GeometricCamera *> vpCams = mpAtlas->GetAllCameras();
-        std::cout << "There are " << vpCams.size() << " cameras in the atlas" << std::endl;
+        std::cout << "- Found " << vpCams.size() << " camera(s) in Atlas!" << std::endl;
         for (GeometricCamera *pCam : vpCams)
         {
-            std::cout << "Camera " << pCam->GetId();
+            std::cout << "- Camera " << pCam->GetId();
             if (pCam->GetType() == GeometricCamera::CAM_PINHOLE)
-                std::cout << " is pinhole" << std::endl;
+                std::cout << " is a pinhole!" << std::endl;
             else if (pCam->GetType() == GeometricCamera::CAM_FISHEYE)
-                std::cout << " is fisheye" << std::endl;
+                std::cout << " is a fisheye!" << std::endl;
             else
-                std::cout << " is unknown" << std::endl;
+                std::cout << " is unknown!" << std::endl;
         }
+        std::cout << std::endl;
 
 #ifdef REGISTER_TIMES
         vdRectStereo_ms.clear();

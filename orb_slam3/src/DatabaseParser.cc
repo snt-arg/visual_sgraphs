@@ -13,7 +13,7 @@ namespace ORB_SLAM3
     {
         try
         {
-            std::cout << "\nLoading JSON data from '" << jsonFilePath << "'" << std::endl;
+            std::cout << "- Loading JSON data from " << jsonFilePath << std::endl;
             // Reading the JSON file from the given path
             ifstream jsonFile(jsonFilePath);
             // Parsing the JSON file to get the envrionment data
@@ -23,7 +23,9 @@ namespace ORB_SLAM3
         }
         catch (json::parse_error &ex)
         {
-            std::cerr << "Error while parsing the input JSON file: " << ex.byte << std::endl;
+            std::cout << "- Error parsing the environment JSON file: " << ex.what() << std::endl;
+            std::cout << "- Exiting ... \n\n";
+            exit(1);
         }
     }
 
