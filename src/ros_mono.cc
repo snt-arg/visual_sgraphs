@@ -5,7 +5,7 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(){};
+    ImageGrabber() {};
 
     void GrabImage(const sensor_msgs::ImageConstPtr &msg);
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
@@ -23,13 +23,13 @@ int main(int argc, char **argv)
 
     std::string node_name = ros::this_node::getName();
 
-    ros::NodeHandle node_handler;
-    image_transport::ImageTransport image_transport(node_handler);
+    ros::NodeHandle nodeHandler;
+    image_transport::ImageTransport image_transport(nodeHandler);
 
     std::string voc_file, settings_file, sys_params_file;
-    node_handler.param<std::string>(node_name + "/sys_params_file", sys_params_file, "file_not_set");
-    node_handler.param<std::string>(node_name + "/voc_file", voc_file, "file_not_set");
-    node_handler.param<std::string>(node_name + "/settings_file", settings_file, "file_not_set");
+    nodeHandler.param<std::string>(node_name + "/sys_params_file", sys_params_file, "file_not_set");
+    nodeHandler.param<std::string>(node_name + "/voc_file", voc_file, "file_not_set");
+    nodeHandler.param<std::string>(node_name + "/settings_file", settings_file, "file_not_set");
 
     if (voc_file == "file_not_set" || settings_file == "file_not_set")
     {
@@ -46,42 +46,42 @@ int main(int argc, char **argv)
     }
 
     bool enable_pangolin;
-    node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
+    nodeHandler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
 
-    node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
-    node_handler.param<double>(node_name + "/roll", roll, 0.0);
-    node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
+    nodeHandler.param<double>(node_name + "/yaw", yaw, 0.0);
+    nodeHandler.param<double>(node_name + "/roll", roll, 0.0);
+    nodeHandler.param<double>(node_name + "/pitch", pitch, 0.0);
 
-    node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
-    node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
-    node_handler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
-    node_handler.param<std::string>(node_name + "/struct_frame_id", struct_frame_id, "plane");
-    node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
+    nodeHandler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
+    nodeHandler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
+    nodeHandler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
+    nodeHandler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
+    nodeHandler.param<std::string>(node_name + "/struct_frame_id", struct_frame_id, "plane");
+    nodeHandler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImageGrabber igb;
-    sensor_type = ORB_SLAM3::System::MONOCULAR;
+    sensorType = ORB_SLAM3::System::MONOCULAR;
 
-    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensor_type, enable_pangolin);
+    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensorType, enable_pangolin);
 
     // Subscribe to get raw images
-    ros::Subscriber sub_img = node_handler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage, &igb);
+    ros::Subscriber sub_img = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage, &igb);
 
     // Subscribe to the markers detected by `aruco_ros` library
-    ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers",
-                                                       1, &ImageGrabber::GrabArUcoMarker, &igb);
+    ros::Subscriber sub_aruco = nodeHandler.subscribe("/aruco_marker_publisher/markers",
+                                                      1, &ImageGrabber::GrabArUcoMarker, &igb);
 
     // Subscriber for images obtained from the Semantic Segmentater
-    ros::Subscriber sub_segmented_img = node_handler.subscribe("/camera/color/image_segment", 10,
-                                                               &ImageGrabber::GrabSegmentation, &igb);
+    ros::Subscriber sub_segmented_img = nodeHandler.subscribe("/camera/color/image_segment", 10,
+                                                              &ImageGrabber::GrabSegmentation, &igb);
 
     // Subscriber to get the mesh from voxblox
-    ros::Subscriber voxblox_skeleton_mesh = node_handler.subscribe("/voxblox_skeletonizer/sparse_graph", 1,
-                                                                   &ImageGrabber::GrabVoxBloxGraph, &igb);
+    ros::Subscriber voxblox_skeleton_mesh = nodeHandler.subscribe("/voxblox_skeletonizer/sparse_graph", 1,
+                                                                  &ImageGrabber::GrabVoxBloxGraph, &igb);
 
-    setupPublishers(node_handler, image_transport, node_name);
-    setupServices(node_handler, node_name);
+    setupPublishers(nodeHandler, image_transport, node_name);
+    setupServices(nodeHandler, node_name);
 
     ros::spin();
 

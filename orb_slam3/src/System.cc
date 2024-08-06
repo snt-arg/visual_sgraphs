@@ -368,27 +368,26 @@ namespace ORB_SLAM3
         return Tcw;
     }
 
-    Sophus::SE3f System::TrackRGBD(const cv::Mat &im, const cv::Mat &depthmap,
+    Sophus::SE3f System::TrackRGBD(const cv::Mat &colorImg, const cv::Mat &depthmap,
                                    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &mainCloud,
                                    const double &timestamp, const vector<IMU::Point> &vImuMeas, string filename,
                                    const std::vector<Marker *> markers)
     {
-        // Check if the sensor is RGB-D
+        // Check if the sensor is correctly set as RGB-D
         if (mSensor != RGBD && mSensor != IMU_RGBD)
         {
-            cerr << "ERROR: you called TrackRGBD but input sensor was not set to RGBD." << endl;
+            cerr << "[Error] Improper sensor-type is set for 'TrackRGBD'! Exiting ..." << endl;
             exit(-1);
         }
 
         // Obtain the images
-        cv::Mat imToFeed = im.clone();
+        cv::Mat imToFeed = colorImg.clone();
         cv::Mat imDepthToFeed = depthmap.clone();
         if (settings_ && settings_->needToResize())
         {
-            cv::Mat resizedIm;
-            cv::resize(im, resizedIm, settings_->newImSize());
-            imToFeed = resizedIm;
-
+            cv::Mat resizedImage;
+            cv::resize(colorImg, resizedImage, settings_->newImSize());
+            imToFeed = resizedImage;
             cv::resize(depthmap, imDepthToFeed, settings_->newImSize());
         }
 
@@ -398,13 +397,9 @@ namespace ORB_SLAM3
             if (mbActivateLocalizationMode)
             {
                 mpLocalMapper->RequestStop();
-
                 // Wait until Local Mapping has effectively stopped
                 while (!mpLocalMapper->isStopped())
-                {
                     usleep(1000);
-                }
-
                 mpTracker->InformOnlyTracking(true);
                 mbActivateLocalizationMode = false;
             }
@@ -437,6 +432,7 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
+        // Track the RGB-D images
         Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, mainCloud, timestamp,
                                                     filename, markers, envDoors, envRooms);
 
@@ -468,9 +464,9 @@ namespace ORB_SLAM3
         cv::Mat imToFeed = im.clone();
         if (settings_ && settings_->needToResize())
         {
-            cv::Mat resizedIm;
-            cv::resize(im, resizedIm, settings_->newImSize());
-            imToFeed = resizedIm;
+            cv::Mat resizedImage;
+            cv::resize(im, resizedImage, settings_->newImSize());
+            imToFeed = resizedImage;
         }
 
         // Check mode change

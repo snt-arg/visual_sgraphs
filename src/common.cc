@@ -6,7 +6,7 @@
 
 // Variables for ORB-SLAM3
 ORB_SLAM3::System *pSLAM;
-ORB_SLAM3::System::eSensor sensor_type = ORB_SLAM3::System::NOT_SET;
+ORB_SLAM3::System::eSensor sensorType = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
 ros::Publisher kf_img_pub, kf_list_pub;
@@ -62,38 +62,38 @@ bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::
     return res.success;
 }
 
-void setupServices(ros::NodeHandle &node_handler, std::string node_name)
+void setupServices(ros::NodeHandle &nodeHandler, std::string node_name)
 {
-    static ros::ServiceServer save_map_service = node_handler.advertiseService(node_name + "/save_map", saveMapService);
-    static ros::ServiceServer save_traj_service = node_handler.advertiseService(node_name + "/save_traj", saveTrajectoryService);
+    static ros::ServiceServer save_map_service = nodeHandler.advertiseService(node_name + "/save_map", saveMapService);
+    static ros::ServiceServer save_traj_service = nodeHandler.advertiseService(node_name + "/save_traj", saveTrajectoryService);
 }
 
-void setupPublishers(ros::NodeHandle &node_handler, image_transport::ImageTransport &image_transport, std::string node_name)
+void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTransport &image_transport, std::string node_name)
 {
     // Basic
     tracking_img_pub = image_transport.advertise(node_name + "/tracking_image", 1);
-    pose_pub = node_handler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
-    all_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
-    kf_img_pub = node_handler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 10); // rate of keyframe generation is higher
-    kf_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
-    plane_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
-    tracked_mappoints_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
-    segmented_cloud_pub = node_handler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
-    kf_list_pub = node_handler.advertise<nav_msgs::Path>(node_name + "/keyframe_list", 2);
+    pose_pub = nodeHandler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
+    all_mappoints_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
+    kf_img_pub = nodeHandler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 10); // rate of keyframe generation is higher
+    kf_markers_pub = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
+    plane_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
+    tracked_mappoints_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
+    segmented_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
+    kf_list_pub = nodeHandler.advertise<nav_msgs::Path>(node_name + "/keyframe_list", 2);
 
     // Semantic
-    doorsPub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
-    rooms_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
-    fiducial_markers_pub = node_handler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
+    doorsPub = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
+    rooms_pub = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
+    fiducial_markers_pub = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Get body odometry if IMU data is also available
-    if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO ||
-        sensor_type == ORB_SLAM3::System::IMU_RGBD)
-        odom_pub = node_handler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
+    if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
+        sensorType == ORB_SLAM3::System::IMU_RGBD)
+        odom_pub = nodeHandler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
 
     // Showing planes using RViz Visual Tools
     visualTools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-        struct_frame_id, "/plane_visuals", node_handler);
+        struct_frame_id, "/plane_visuals", nodeHandler);
     visualTools->setAlpha(0.5);
     visualTools->loadMarkerPub();
     visualTools->deleteAllMarkers();
@@ -131,7 +131,7 @@ void publishTopics(ros::Time msg_time, Eigen::Vector3f Wbb)
     publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msg_time);
 
     // IMU-specific topics
-    if (sensor_type == ORB_SLAM3::System::IMU_MONOCULAR || sensor_type == ORB_SLAM3::System::IMU_STEREO || sensor_type == ORB_SLAM3::System::IMU_RGBD)
+    if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO || sensorType == ORB_SLAM3::System::IMU_RGBD)
     {
         // Body pose and translational velocity can be obtained from ORB-SLAM3
         Sophus::SE3f Twb = pSLAM->GetImuTwb();

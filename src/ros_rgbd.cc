@@ -1,3 +1,7 @@
+/**
+ * 🚀 [vS-Graphs] Database Parse for JSON Files
+ */
+
 #include "common.h"
 
 using namespace std;
@@ -5,7 +9,7 @@ using namespace std;
 class ImageGrabber
 {
 public:
-    ImageGrabber(){};
+    ImageGrabber() {};
 
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
     void GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage);
@@ -20,81 +24,79 @@ int main(int argc, char **argv)
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info);
 
     if (argc > 1)
-    {
         ROS_WARN("Arguments supplied via command line are ignored.");
-    }
 
-    std::string node_name = ros::this_node::getName();
+    std::string nodeName = ros::this_node::getName();
 
-    ros::NodeHandle node_handler;
-    image_transport::ImageTransport image_transport(node_handler);
+    ros::NodeHandle nodeHandler;
+    image_transport::ImageTransport imgTransport(nodeHandler);
 
-    std::string voc_file, settings_file, sys_params_file;
-    node_handler.param<std::string>(node_name + "/sys_params_file", sys_params_file, "file_not_set");
-    node_handler.param<std::string>(node_name + "/voc_file", voc_file, "file_not_set");
-    node_handler.param<std::string>(node_name + "/settings_file", settings_file, "file_not_set");
+    std::string vocFile, settingsFile, sysParamsFile;
+    nodeHandler.param<std::string>(nodeName + "/voc_file", vocFile, "file_not_set");
+    nodeHandler.param<std::string>(nodeName + "/settings_file", settingsFile, "file_not_set");
+    nodeHandler.param<std::string>(nodeName + "/sys_params_file", sysParamsFile, "file_not_set");
 
-    if (voc_file == "file_not_set" || settings_file == "file_not_set")
+    if (vocFile == "file_not_set" || settingsFile == "file_not_set")
     {
-        ROS_ERROR("Please provide voc_file and settings_file in the launch file");
+        ROS_ERROR("[Error] 'vocabulary' and 'settings' are not provided in the launch file! Exiting...");
         ros::shutdown();
         return 1;
     }
 
-    if (sys_params_file == "file_not_set")
+    if (sysParamsFile == "file_not_set")
     {
-        ROS_ERROR("Please provide the YAML file containing system parameters in the launch file!");
+        ROS_ERROR("[Error] The `YAML` file containing system parameters is not provided in the launch file! Exiting...");
         ros::shutdown();
         return 1;
     }
 
-    bool enable_pangolin;
-    node_handler.param<bool>(node_name + "/enable_pangolin", enable_pangolin, true);
+    bool enablePangolin;
+    nodeHandler.param<bool>(nodeName + "/enable_pangolin", enablePangolin, true);
 
-    node_handler.param<double>(node_name + "/yaw", yaw, 0.0);
-    node_handler.param<double>(node_name + "/roll", roll, 0.0);
-    node_handler.param<double>(node_name + "/pitch", pitch, 0.0);
+    nodeHandler.param<double>(nodeName + "/yaw", yaw, 0.0);
+    nodeHandler.param<double>(nodeName + "/roll", roll, 0.0);
+    nodeHandler.param<double>(nodeName + "/pitch", pitch, 0.0);
 
-    node_handler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
-    node_handler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
-    node_handler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
-    node_handler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
-    node_handler.param<std::string>(node_name + "/struct_frame_id", struct_frame_id, "plane");
-    node_handler.param<bool>(node_name + "/publish_static_transform", publish_static_transform, false);
+    nodeHandler.param<std::string>(nodeName + "/map_frame_id", map_frame_id, "map");
+    nodeHandler.param<std::string>(nodeName + "/cam_frame_id", cam_frame_id, "camera");
+    nodeHandler.param<std::string>(nodeName + "/room_frame_id", room_frame_id, "room");
+    nodeHandler.param<std::string>(nodeName + "/world_frame_id", world_frame_id, "world");
+    nodeHandler.param<std::string>(nodeName + "/struct_frame_id", struct_frame_id, "plane");
+    nodeHandler.param<bool>(nodeName + "/publish_static_transform", publish_static_transform, false);
 
-    // Create SLAM system. It initializes all system threads and gets ready to process frames.
+    // Initializing system threads and getting ready to process frames
     ImageGrabber igb;
-    sensor_type = ORB_SLAM3::System::RGBD;
+    sensorType = ORB_SLAM3::System::RGBD;
 
-    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensor_type, enable_pangolin);
+    pSLAM = new ORB_SLAM3::System(vocFile, settingsFile, sysParamsFile, sensorType, enablePangolin);
 
     // Subscribe to get raw images
-    message_filters::Subscriber<sensor_msgs::Image> sub_rgb_img(node_handler, "/camera/rgb/image_raw", 100);
-    message_filters::Subscriber<sensor_msgs::Image> sub_depth_img(node_handler, "/camera/depth_registered/image_raw", 100);
+    message_filters::Subscriber<sensor_msgs::Image> subImgRGB(nodeHandler, "/camera/rgb/image_raw", 100);
+    message_filters::Subscriber<sensor_msgs::Image> subImgDepth(nodeHandler, "/camera/depth_registered/image_raw", 100);
 
-    // Subscribe to get pointcloud from depth sensor
-    message_filters::Subscriber<sensor_msgs::PointCloud2> sub_pointcloud(node_handler, "/camera/depth/points", 100);
+    // Subscribe to get pointcloud from the depth sensor
+    message_filters::Subscriber<sensor_msgs::PointCloud2> subPointcloud(nodeHandler, "/camera/depth/points", 100);
 
     // Synchronization of raw and depth images
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::PointCloud2>
-        sync_pol;
-    message_filters::Synchronizer<sync_pol> sync(sync_pol(10), sub_rgb_img, sub_depth_img, sub_pointcloud);
+        syncPolicy;
+    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(10), subImgRGB, subImgDepth, subPointcloud);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2, _3));
 
     // Subscribe to the markers detected by `aruco_ros` library
-    ros::Subscriber sub_aruco = node_handler.subscribe("/aruco_marker_publisher/markers", 1,
-                                                       &ImageGrabber::GrabArUcoMarker, &igb);
+    ros::Subscriber subAruco = nodeHandler.subscribe("/aruco_marker_publisher/markers", 1,
+                                                     &ImageGrabber::GrabArUcoMarker, &igb);
 
     // Subscriber for images obtained from the Semantic Segmentater
-    ros::Subscriber sub_segmented_img = node_handler.subscribe("/camera/color/image_segment", 10,
-                                                               &ImageGrabber::GrabSegmentation, &igb);
+    ros::Subscriber subSegmentedImage = nodeHandler.subscribe("/camera/color/image_segment", 10,
+                                                              &ImageGrabber::GrabSegmentation, &igb);
 
     // Subscriber to get the mesh from voxblox
-    ros::Subscriber voxblox_skeleton_mesh = node_handler.subscribe("/voxblox_skeletonizer/sparse_graph", 1,
+    ros::Subscriber subVoxbloxSkeletonMesh = nodeHandler.subscribe("/voxblox_skeletonizer/sparse_graph", 1,
                                                                    &ImageGrabber::GrabVoxBloxGraph, &igb);
 
-    setupPublishers(node_handler, image_transport, node_name);
-    setupServices(node_handler, node_name);
+    setupPublishers(nodeHandler, imgTransport, nodeName);
+    setupServices(nodeHandler, nodeName);
 
     ros::spin();
 
@@ -157,17 +159,26 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
                                             cv_ptrRGB->header.stamp.toSec());
     }
 
-    ros::Time msg_time = cv_ptrRGB->header.stamp;
-
-    publishTopics(msg_time);
+    ros::Time msgTime = cv_ptrRGB->header.stamp;
+    publishTopics(msgTime);
 }
 
-void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &markerArray)
+/**
+ * @brief Callback function to get the markers detected by the `aruco_ros` library
+ *
+ * @param msgMarkerArray The markers detected by the `aruco_ros` library
+ */
+void ImageGrabber::GrabArUcoMarker(const aruco_msgs::MarkerArray &msgMarkerArray)
 {
     // Pass the visited markers to a buffer to be processed later
-    addMarkersToBuffer(markerArray);
+    addMarkersToBuffer(msgMarkerArray);
 }
 
+/**
+ * @brief Callback function to get scene segmentation results from the SemanticSegmenter module
+ *
+ * @param msgSegImage The segmentation results from the SemanticSegmenter
+ */
 void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage)
 {
     // Fetch the segmentation results
@@ -184,7 +195,7 @@ void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSe
         return;
     }
 
-    // convert to PCL PointCloud2 from sensor_msgs PointCloud2
+    // Convert to PCL PointCloud2 from `sensor_msgs` PointCloud2
     pcl::PCLPointCloud2::Ptr pclPc2SegPrb(new pcl::PCLPointCloud2);
     pcl_conversions::toPCL(msgSegImage.segmentedImageProbability, *pclPc2SegPrb);
 
@@ -195,6 +206,11 @@ void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSe
     pSLAM->addSegmentedImage(&tuple);
 }
 
+/**
+ * @brief Callback function to get the skeleton graph from the `voxblox` module
+ *
+ * @param msgSkeletonGraphs The skeleton graph from the `voxblox` module
+ */
 void ImageGrabber::GrabVoxBloxGraph(const visualization_msgs::MarkerArray &msgSkeletonGraphs)
 {
     // Pass the skeleton graph to a buffer to be processed by the SemanticSegmentation thread

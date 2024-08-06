@@ -64,7 +64,7 @@ using json = nlohmann::json;
 
 class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
-extern ORB_SLAM3::System::eSensor sensor_type;
+extern ORB_SLAM3::System::eSensor sensorType;
 
 extern double roll, pitch, yaw;       // Defining axes for transformation
 extern bool publish_static_transform; // If true, it should use transformed calculations
