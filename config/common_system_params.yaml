@@ -31,33 +31,33 @@ seg:
   plane_association_thresh: 0.2
 
   # The maximum distance for point to be considered part of a plane
-  plane_point_dist_thresh: 0.05
+  plane_point_dist_thresh: 0.02
 
   ransac:
     # The maximum number of planes to be detected in one pointcloud
-    max_planes: 1
+    max_planes: 2
 
     # The maximum distance for a point to be considered an inlier of the plane model
-    distance_thresh: 0.05
+    distance_thresh: 0.02
 
     # The maximum number of iterations for the RANSAC algorithm
-    max_iterations: 500
+    max_iterations: 800
 
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
   # The leaf size for the pointcloud downsampling
-  downsample_leaf_size: 0.08
+  downsample_leaf_size: 0.05
 
 ############################## Semantic Segmentation Parameters ####################################
 sem_seg:
   # The leaf size for the pointcloud downsampling
-  downsample_leaf_size: 0.04
+  downsample_leaf_size: 0.03
 
   # The threshold for semantic segmentation probability validation (rejects probability below this)
   prob_thresh: 0.5
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
-  conf_thresh: 0.25
+  conf_thresh: 0.1
 
   # The maximum height above the main ground to be a valid stepped ground plane (in meters)
   max_step_elevation: 0.5
@@ -67,7 +67,7 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
-  min_votes: 2.0
+  min_votes: 2.8
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:
