@@ -66,8 +66,8 @@ class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensorType;
 
-extern double roll, pitch, yaw;       // Defining axes for transformation
-extern bool publish_static_transform; // If true, it should use transformed calculations
+extern bool pubStaticTransform;
+extern double roll, pitch, yaw;
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 
 // List of visited Fiducial Markers in different timestamps
@@ -95,7 +95,6 @@ void setupPublishers(ros::NodeHandle &, image_transport::ImageTransport &, std::
 
 void publishTrackingImage(cv::Mat, ros::Time);
 void publishCameraPose(Sophus::SE3f, ros::Time);
-void publishStaticTfTransform(string, string, ros::Time);
 void publishRooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
 void publishDoors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
@@ -114,6 +113,16 @@ bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::Sav
 cv::Mat SE3f_to_cvMat(Sophus::SE3f);
 tf::Transform SE3f_to_tfTransform(Sophus::SE3f);
 sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
+
+/**
+ * Publishes a static transformation (TF) between two coordinate frames and define a
+ * fixed spatial relationship among them.
+ *
+ * @param parentFrameId The parent frame ID for the static transformation
+ * @param childFrameId The child frame ID for the static transformation
+ * @param msgTime The timestamp for the transformation message
+ */
+void publishStaticTfTransform(string parentFrameId, string childFrameId, ros::Time msgTime);
 
 /**
  * @brief Adds the markers to the buffer to be processed

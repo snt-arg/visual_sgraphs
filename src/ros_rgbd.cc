@@ -62,7 +62,7 @@ int main(int argc, char **argv)
     nodeHandler.param<std::string>(nodeName + "/room_frame_id", room_frame_id, "room");
     nodeHandler.param<std::string>(nodeName + "/world_frame_id", world_frame_id, "world");
     nodeHandler.param<std::string>(nodeName + "/struct_frame_id", struct_frame_id, "plane");
-    nodeHandler.param<bool>(nodeName + "/publish_static_transform", publish_static_transform, false);
+    nodeHandler.param<bool>(nodeName + "/publish_static_transform", pubStaticTransform, false);
 
     // Initializing system threads and getting ready to process frames
     ImageGrabber igb;

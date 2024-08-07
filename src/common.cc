@@ -9,11 +9,10 @@ ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensorType = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
-ros::Publisher kf_img_pub, kf_list_pub;
-bool publish_static_transform;
+bool pubStaticTransform;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
-ros::Publisher pose_pub, odom_pub, kf_markers_pub;
+ros::Publisher pose_pub, odom_pub, kf_markers_pub, kf_img_pub, kf_list_pub;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
@@ -114,8 +113,8 @@ void publishTopics(ros::Time msg_time, Eigen::Vector3f Wbb)
     publishCameraPose(Twc, msg_time);
     publishTfTransform(Twc, world_frame_id, cam_frame_id, msg_time);
 
-    // If the boolean was set to True in the launch file, perform a transform
-    if (publish_static_transform)
+    // Set a static transform between the world and map frame
+    if (pubStaticTransform)
         publishStaticTfTransform(world_frame_id, map_frame_id, msg_time);
 
     // Setup publishers
@@ -131,7 +130,8 @@ void publishTopics(ros::Time msg_time, Eigen::Vector3f Wbb)
     publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msg_time);
 
     // IMU-specific topics
-    if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO || sensorType == ORB_SLAM3::System::IMU_RGBD)
+    if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
+        sensorType == ORB_SLAM3::System::IMU_RGBD)
     {
         // Body pose and translational velocity can be obtained from ORB-SLAM3
         Sophus::SE3f Twb = pSLAM->GetImuTwb();
@@ -142,8 +142,6 @@ void publishTopics(ros::Time msg_time, Eigen::Vector3f Wbb)
         Eigen::Vector3f Wwb = Rwb * Wbb;
 
         publishTfTransform(Twb, world_frame_id, imu_frame_id, msg_time);
-        if (publish_static_transform)
-            publishStaticTfTransform(world_frame_id, map_frame_id, msg_time);
         publishBodyOdometry(Twb, Vwb, Wwb, msg_time);
     }
 }
@@ -200,40 +198,32 @@ void publishTfTransform(Sophus::SE3f T_SE3f, string frame_id, string child_frame
     tf_broadcaster.sendTransform(tf::StampedTransform(tf_transform, msg_time, frame_id, child_frame_id));
 }
 
-/**
- * Publishes a static transformation (TF) between two frames
- *
- * @param frame_id The parent frame ID for the static transformation
- * @param child_frame_id The child frame ID for the static transformation
- * @param msg_time The timestamp for the transformation message
- */
-void publishStaticTfTransform(string frame_id, string child_frame_id, ros::Time msg_time)
+void publishStaticTfTransform(string parentFrameId, string childFrameId, ros::Time msgTime)
 {
-    // Create a static transform broadcaster
-    static tf2_ros::StaticTransformBroadcaster static_broadcaster;
-    // Create a transform stamped message
-    geometry_msgs::TransformStamped static_stamped;
+    // Variables
+    tf2::Quaternion quat;
+    geometry_msgs::TransformStamped transformStamped;
+    static tf2_ros::StaticTransformBroadcaster broadcaster;
 
     // Set the values of the transform message
-    static_stamped.header.stamp = msg_time;
-    static_stamped.header.frame_id = frame_id;
-    static_stamped.child_frame_id = child_frame_id;
+    transformStamped.header.stamp = msgTime;
+    transformStamped.child_frame_id = childFrameId;
+    transformStamped.header.frame_id = parentFrameId;
 
     // Set the translation of the transform to (0,0,0)
-    static_stamped.transform.translation.x = 0;
-    static_stamped.transform.translation.y = 0;
-    static_stamped.transform.translation.z = 0;
+    transformStamped.transform.translation.x = 0;
+    transformStamped.transform.translation.y = 0;
+    transformStamped.transform.translation.z = 0;
 
     // Set the rotation of the transform to a fixed value
-    tf2::Quaternion quat;
     quat.setRPY(roll, pitch, yaw);
-    static_stamped.transform.rotation.x = quat.x();
-    static_stamped.transform.rotation.y = quat.y();
-    static_stamped.transform.rotation.z = quat.z();
-    static_stamped.transform.rotation.w = quat.w();
+    transformStamped.transform.rotation.x = quat.x();
+    transformStamped.transform.rotation.y = quat.y();
+    transformStamped.transform.rotation.z = quat.z();
+    transformStamped.transform.rotation.w = quat.w();
 
     // Publish the static transform using the broadcaster
-    static_broadcaster.sendTransform(static_stamped);
+    broadcaster.sendTransform(transformStamped);
 }
 
 void publishKeyframeImages(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msg_time)
