@@ -1,5 +1,4 @@
 <launch>
-    <!-- ****** System Arguments ****** -->
     <!-- Flag to launch rviz -->
     <arg name="launch_rviz" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
@@ -12,10 +11,6 @@
 
         <!-- Remap to prepare the depth data -->
         <remap from="/camera/depth_registered/image_raw"    to="/camera/depth/image_raw"/>
-
-        <!-- Remap to prepare the pointcloud -->
-        <!-- ULMS with no depth: /camera/depth/points -->
-        <!-- <remap from="/camera/pointcloud"    to="/camera/depth/color/points"/> -->
 
         <!-- Parameters for loading setting files -->
         <param name="settings_file"   type="string" value="$(find orb_slam3_ros)/config/RGB-D/ICL.yaml"/>
@@ -49,7 +44,7 @@
         <param name="/trajectory_publish_rate"  value="20.0" />
     </node>
 
-    <!-- Publish depth cloud -->
+    <!-- Generate and publish depth cloud -->
     <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
 
     <node pkg="nodelet" type="nodelet" name="nodelet1"
@@ -57,7 +52,7 @@
         <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
         <remap from="rgb/image_rect_color" to="/camera/color/image_raw"/>
         <remap from="depth_registered/image_rect" to="/camera/depth/image_raw"/>
-        <!-- Result: -->
+        <!-- Result -->
         <remap from="depth_registered/points" to="/camera/depth/points"/>
     </node>
 

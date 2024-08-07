@@ -90,11 +90,15 @@ namespace ORB_SLAM3
               Frame *pPrevF = static_cast<Frame *>(NULL), const IMU::Calib &ImuCalib = IMU::Calib(),
               const std::vector<Marker *> markers = std::vector<Marker *>{});
 
-        // Destructor
-        // ~Frame();
-
-        // Extract ORB on the image. 0 for left image and 1 for right image.
-        void ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1);
+        /**
+         * @brief Extract ORB features from the given grayscale image
+         *
+         * @param flag The flag to indicate which image to extract features from (0 for left, 1 for right)
+         * @param imageGray The grayscale image to extract features from
+         * @param x0 The x-coordinate of the top-left corner of the ROI
+         * @param x1 The x-coordinate of the bottom-right corner of the ROI
+         */
+        void ExtractORB(int flag, const cv::Mat &imageGray, const int x0, const int x1);
 
         // Compute Bag of Words representation.
         void ComputeBoW();

@@ -1,5 +1,4 @@
 <launch>
-    <!-- ****** System Arguments ****** -->
     <!-- Live or reading a rosbag file (offline) -->
     <arg name="offline" default="true" />
     <!-- Flag to launch rviz -->
@@ -15,14 +14,10 @@
         <!-- Remap to prepare the depth data -->
         <remap from="/camera/depth_registered/image_raw"    to="/camera/aligned_depth_to_color/image_raw"/>
 
-        <!-- Remap to prepare the pointcloud -->
-        <!-- ULMS with no depth: /camera/depth/points -->
-        <remap from="/camera/pointcloud"    to="/camera/depth/color/points"/>
-
         <!-- Parameters for loading setting files -->
+        <param name="sys_params_file" type="string" value="$(find orb_slam3_ros)/config/common_system_params.yaml"/>
         <param name="voc_file"        type="string" value="$(find orb_slam3_ros)/orb_slam3/Vocabulary/ORBvoc.txt.bin"/>
         <param name="settings_file"   type="string" value="$(find orb_slam3_ros)/config/RGB-D/LuxVSD_RS_D435i_640.yaml"/>
-        <param name="sys_params_file" type="string" value="$(find orb_slam3_ros)/config/common_system_params.yaml"/>
 
         <!-- Parameters for ROS -->
         <param name="roll" type="double" value="0" />
@@ -51,15 +46,16 @@
         <param name="/trajectory_publish_rate"  value="20.0" />
     </node>
 
-    <!-- Publish depth cloud -->
+    <!-- Generate and publish depth cloud -->
     <node pkg="nodelet" type="nodelet" name="nodelet_manager" args="manager" />
 
     <node pkg="nodelet" type="nodelet" name="nodelet1"
             args="load depth_image_proc/point_cloud_xyzrgb nodelet_manager">
         <remap from="rgb/camera_info" to="/camera/color/camera_info"/>
         <remap from="rgb/image_rect_color" to="/camera/color/image_raw"/>
-        <remap from="depth_registered/points" to="/camera/depth/points"/>
         <remap from="depth_registered/image_rect" to="/camera/aligned_depth_to_color/image_raw"/>
+        <!-- Result: -->
+        <remap from="depth_registered/points" to="/camera/depth/points"/>
     </node>
 
 </launch>

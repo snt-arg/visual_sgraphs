@@ -311,10 +311,11 @@ namespace ORB_SLAM3
     }
 
     // RGB-D Frames Processing
-    Frame::Frame(const cv::Mat &imColor, const cv::Mat &imGray, const cv::Mat &imDepth, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
-                 const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K,
-                 cv::Mat &distCoef, const float &bf, const float &thDepth, GeometricCamera *pCamera,
-                 Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
+    Frame::Frame(const cv::Mat &imColor, const cv::Mat &imGray, const cv::Mat &imDepth,
+                 const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud, const double &timeStamp,
+                 ORBextractor *extractor, ORBVocabulary *voc, cv::Mat &K, cv::Mat &distCoef,
+                 const float &bf, const float &thDepth, GeometricCamera *pCamera, Frame *pPrevF,
+                 const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
           mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL),
@@ -327,7 +328,7 @@ namespace ORB_SLAM3
         // Frame ID
         mnId = nNextId++;
 
-        // Scale Level Info
+        // Get the scale level info from the ORB extractor
         mnScaleLevels = mpORBextractorLeft->GetLevels();
         mfScaleFactor = mpORBextractorLeft->GetScaleFactor();
         mfLogScaleFactor = log(mfScaleFactor);
@@ -551,13 +552,14 @@ namespace ORB_SLAM3
         }
     }
 
-    void Frame::ExtractORB(int flag, const cv::Mat &im, const int x0, const int x1)
+    void Frame::ExtractORB(int flag, const cv::Mat &imageGray, const int x0, const int x1)
     {
         vector<int> vLapping = {x0, x1};
+        // Compute ORB based on the flag (0: left, 1: right)
         if (flag == 0)
-            monoLeft = (*mpORBextractorLeft)(im, cv::Mat(), mvKeys, mDescriptors, vLapping);
+            monoLeft = (*mpORBextractorLeft)(imageGray, cv::Mat(), mvKeys, mDescriptors, vLapping);
         else
-            monoRight = (*mpORBextractorRight)(im, cv::Mat(), mvKeysRight, mDescriptorsRight, vLapping);
+            monoRight = (*mpORBextractorRight)(imageGray, cv::Mat(), mvKeysRight, mDescriptorsRight, vLapping);
     }
 
     bool Frame::isSet() const

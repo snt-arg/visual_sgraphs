@@ -391,7 +391,7 @@ namespace ORB_SLAM3
             cv::resize(depthmap, imDepthToFeed, settings_->newImSize());
         }
 
-        // Check mode change
+        // Check for mode change
         {
             unique_lock<mutex> lock(mMutexMode);
             if (mbActivateLocalizationMode)
@@ -432,7 +432,7 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        // Track the RGB-D images
+        // Track RGB-D images
         Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, mainCloud, timestamp,
                                                     filename, markers, envDoors, envRooms);
 

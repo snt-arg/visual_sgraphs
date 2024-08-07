@@ -110,40 +110,29 @@ int main(int argc, char **argv)
 void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
                             const sensor_msgs::PointCloud2ConstPtr &msgPC)
 {
-    // Copy the ros image message to cv::Mat.
-    cv_bridge::CvImageConstPtr cv_ptrRGB;
+    // Variables
+    cv_bridge::CvImageConstPtr cv_ptrD, cv_ptrRGB;
+
     try
     {
+        cv_ptrD = cv_bridge::toCvShare(msgD);
         cv_ptrRGB = cv_bridge::toCvShare(msgRGB);
     }
     catch (cv_bridge::Exception &e)
     {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
+        ROS_ERROR("[Error] Problem occured while running `cv_bridge`: %s", e.what());
         return;
     }
-
-    cv_bridge::CvImageConstPtr cv_ptrD;
-    try
-    {
-        cv_ptrD = cv_bridge::toCvShare(msgD);
-    }
-    catch (cv_bridge::Exception &e)
-    {
-        ROS_ERROR("cv_bridge exception: %s", e.what());
-        return;
-    }
-
-    // Pointcloud
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     // Convert pointclouds from ros to pcl format
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::fromROSMsg(*msgPC, *cloud);
 
     // Find the marker with the minimum time difference compared to the current frame
     std::pair<double, std::vector<ORB_SLAM3::Marker *>>
-        result = findNearestMarker(cv_ptrRGB->header.stamp.toSec());
-    double minMarkerTimeDiff = result.first;
-    std::vector<ORB_SLAM3::Marker *> matchedMarkers = result.second;
+        foundMarkerRes = findNearestMarker(cv_ptrRGB->header.stamp.toSec());
+    double minMarkerTimeDiff = foundMarkerRes.first;
+    std::vector<ORB_SLAM3::Marker *> matchedMarkers = foundMarkerRes.second;
 
     // Tracking process sends markers found in this frame for tracking and clears the buffer
     if (minMarkerTimeDiff < 0.05)
