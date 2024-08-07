@@ -1436,9 +1436,12 @@ namespace ORB_SLAM3
             vector<Marker *> vpMarkers = pKFi->GetMapMarkers();
             for (vector<Marker *>::iterator idx = vpMarkers.begin(), vend = vpMarkers.end(); idx != vend; idx++)
             {
-                Marker *marker = *idx;
-                lLocalMapMarkers.push_back(marker);
-                mpLocalMarkerid[marker->getId()] = true;
+                if (mpLocalMarkerid.find((*idx)->getId()) == mpLocalMarkerid.end())
+                {
+                    Marker *marker = *idx;
+                    lLocalMapMarkers.push_back(marker);
+                    mpLocalMarkerid[marker->getId()] = true;
+                }
             }
 
             // Get all the Planes of the KF (Local Optimization)
@@ -1449,17 +1452,23 @@ namespace ORB_SLAM3
                 // If the plane is not known, do not add it to the local map
                 if (plane->getPlaneType() == Plane::planeVariant::UNDEFINED)
                     continue;
-                lLocalMapPlanes.push_back(plane);
-                mpLocalPlaneid[plane->getId()] = true;
+                if (mpLocalPlaneid.find(plane->getId()) == mpLocalPlaneid.end())
+                {
+                    lLocalMapPlanes.push_back(plane);
+                    mpLocalPlaneid[plane->getId()] = true;
+                }
             }
 
             // Get all the Doors of the KF (Local Optimization)
             vector<Door *> vpDoors = pKFi->GetMapDoors();
             for (vector<Door *>::iterator idx = vpDoors.begin(), vend = vpDoors.end(); idx != vend; idx++)
             {
-                Door *door = *idx;
-                lLocalMapDoors.push_back(door);
-                mpLocalDoorid[door->getId()] = true;
+                if (mpLocalDoorid.find((*idx)->getId()) == mpLocalDoorid.end())
+                {
+                    Door *door = *idx;
+                    lLocalMapDoors.push_back(door);
+                    mpLocalDoorid[door->getId()] = true;
+                }
             }
         }
 
@@ -1473,8 +1482,6 @@ namespace ORB_SLAM3
             vector<Plane *> roomWalls = (*idx)->getWalls();
             for (const auto &roomWall : roomWalls)
             {
-                // auto foundWall = std::find_if(lLocalMapPlanes.begin(), lLocalMapPlanes.end(), boost::bind(&Plane::getId, _1) == roomWall->getId());
-                // if (foundWall == lLocalMapPlanes.end())
                 if (mpLocalPlaneid.find(roomWall->getId()) == mpLocalPlaneid.end())
                 {
                     lLocalMapPlanes.push_back(roomWall);
@@ -1575,7 +1582,7 @@ namespace ORB_SLAM3
 
 
         num_fixedKF = lFixedCameras.size() + num_fixedKF;
-
+        
         if (num_fixedKF == 0)
         {
             Verbose::PrintMess("LM-LBA: There are 0 fixed KF in the optimizations, LBA aborted", Verbose::VERBOSITY_NORMAL);
