@@ -52,7 +52,15 @@ namespace ORB_SLAM3
 
         struct geo_seg
         {
-            float downsample_leaf_size = 0.09f;
+            struct pointcloud
+            {
+                float downsample_leaf_size = 0.09f;
+                struct outlier_removal
+                {
+                    float std_threshold = 1.0;
+                    unsigned int mean_threshold = 50;
+                } outlier_removal;
+            } pointcloud;
         } geo_seg;
 
         struct sem_seg
@@ -63,7 +71,16 @@ namespace ORB_SLAM3
             float max_tilt_wall = 0.3f;
             float max_tilt_ground = 0.2f;
             float max_step_elevation = 0.2f;
-            float downsample_leaf_size = 0.03f;
+
+            struct pointcloud
+            {
+                float downsample_leaf_size = 0.03f;
+                struct outlier_removal
+                {
+                    float std_threshold = 1.0;
+                    unsigned int mean_threshold = 50;
+                } outlier_removal;
+            } pointcloud;
         } sem_seg;
 
         struct room_seg

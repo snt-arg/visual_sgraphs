@@ -54,7 +54,9 @@ namespace ORB_SLAM3
             seg.ransac.max_iterations = mConfig["seg"]["ransac"]["max_iterations"].as<unsigned int>();
 
             // Geometric Segmentation Parameters
-            geo_seg.downsample_leaf_size = mConfig["geo_seg"]["downsample_leaf_size"].as<float>();
+            geo_seg.pointcloud.downsample_leaf_size = mConfig["geo_seg"]["pointcloud"]["downsample_leaf_size"].as<float>();
+            geo_seg.pointcloud.outlier_removal.std_threshold = mConfig["geo_seg"]["pointcloud"]["outlier_removal"]["std_threshold"].as<float>();
+            geo_seg.pointcloud.outlier_removal.mean_threshold = mConfig["geo_seg"]["pointcloud"]["outlier_removal"]["mean_threshold"].as<unsigned int>();
 
             // Semantic Segmentation Parameters
             sem_seg.min_votes = mConfig["sem_seg"]["min_votes"].as<float>();
@@ -63,7 +65,9 @@ namespace ORB_SLAM3
             sem_seg.max_tilt_wall = mConfig["sem_seg"]["max_tilt_wall"].as<float>();
             sem_seg.max_tilt_ground = mConfig["sem_seg"]["max_tilt_ground"].as<float>();
             sem_seg.max_step_elevation = mConfig["sem_seg"]["max_step_elevation"].as<float>();
-            sem_seg.downsample_leaf_size = mConfig["sem_seg"]["downsample_leaf_size"].as<float>();
+            sem_seg.pointcloud.downsample_leaf_size = mConfig["sem_seg"]["pointcloud"]["downsample_leaf_size"].as<float>();
+            sem_seg.pointcloud.outlier_removal.std_threshold = mConfig["sem_seg"]["pointcloud"]["outlier_removal"]["std_threshold"].as<float>();
+            sem_seg.pointcloud.outlier_removal.mean_threshold = mConfig["sem_seg"]["pointcloud"]["outlier_removal"]["mean_threshold"].as<unsigned int>();
 
             // Room Segmentation Parameters
             room_seg.method = static_cast<room_seg::Method>(mConfig["room_seg"]["method"].as<int>());

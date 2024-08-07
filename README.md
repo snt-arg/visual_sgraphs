@@ -340,9 +340,17 @@ Parameters for the SLAM system (independent of ROS) are stored in a yaml config 
 | ------ `distance_thresh` | maximum distance for a point to be considered as inlier |
 | ------ `max_iterations` | maximum number of RANSAC iterations |
 | `geo_seg` | configuration specific to GeoSeg |
-| --- `downsample_leaf_size` | leaf size (same in all axes) for downsampling the pointcloud |
+| --- `pointcloud` | the point cloud-related configurations |
+| ------ `downsample_leaf_size` | leaf size (same in all axes) for downsampling the pointcloud |
+| ------ `outlier_removal` | outlier removal process to normalize the pointcloud |
+| --------- `std_threshold` | standard deviation threshold |
+| --------- `mean_threshold` | number of points considered as neighbors |
 | `sem_seg` | configuration common to both segmentation modules (SemSeg and GeoSeg) |
-| --- `downsample_leaf_size` | leaf size (same in all axes) for downsampling the pointcloud |
+| --- `pointcloud` | the point cloud-related configurations |
+| ------ `downsample_leaf_size` | leaf size (same in all axes) for downsampling the pointcloud |
+| ------ `outlier_removal` | outlier removal process to normalize the pointcloud |
+| --------- `std_threshold` | standard deviation threshold |
+| --------- `mean_threshold` | number of points considered as neighbors |
 | --- `prob_thresh` | minimum class probability for point to be considered part of a class (must be > 0.5) |
 | --- `max_step_elevation` | maximum median height of a stepped ground plane over the main ground plane |
 | --- `max_tilt_wall` | maximum tilt heuristic for a wall plane to be valid |

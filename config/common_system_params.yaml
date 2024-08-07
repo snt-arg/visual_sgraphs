@@ -45,13 +45,23 @@ seg:
 
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
-  # The leaf size for the pointcloud downsampling
-  downsample_leaf_size: 0.08
+  pointcloud:
+    # The leaf size for the pointcloud downsampling
+    downsample_leaf_size: 0.05
+    # Pointcloud outlier removal
+    outlier_removal:
+      mean_threshold: 50
+      std_threshold: 1.0
 
 ############################## Semantic Segmentation Parameters ####################################
 sem_seg:
-  # The leaf size for the pointcloud downsampling
-  downsample_leaf_size: 0.04
+  pointcloud:
+    # The leaf size for the pointcloud downsampling
+    downsample_leaf_size: 0.04
+    # Pointcloud outlier removal
+    outlier_removal:
+      mean_threshold: 50
+      std_threshold: 1.0
 
   # The threshold for semantic segmentation probability validation (rejects probability below this)
   prob_thresh: 0.5

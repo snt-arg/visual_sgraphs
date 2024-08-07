@@ -18,6 +18,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 namespace ORB_SLAM3
 {
@@ -104,24 +105,38 @@ namespace ORB_SLAM3
                                              const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2);
 
         /**
-         * Downsamples the pointclouds based on the given leaf size
+         * @brief Downsamples the pointclouds based on the given leaf size
+         *
          * @param cloud the pointcloud to be downsampled
+         * @param leafSize the leaf size for downsampling
          */
         template <typename PointT>
         static typename pcl::PointCloud<PointT>::Ptr pointcloudDownsample(
             const typename pcl::PointCloud<PointT>::Ptr &cloud, float leafSize);
 
         /**
-         * Filters the pointclouds based on the given min/max distance acceptable
+         * @brief Filters the pointclouds based on the given min/max distance acceptable
+         *
          * @param cloud the pointcloud to be filtered
-         * @param thresholds the acceptable min/max distance
          */
         template <typename PointT>
         static typename pcl::PointCloud<PointT>::Ptr pointcloudDistanceFilter(
             const typename pcl::PointCloud<PointT>::Ptr &cloud);
 
         /**
+         * @brief Removes the points that are farther away from their neighbors
+         *
+         * @param cloud the pointcloud to be filtered
+         * @param meanThresh the mean threshold for neighbor points
+         * @param stdDevThresh the standard deviation threshold for neighbor points
+         */
+        template <typename PointT>
+        static typename pcl::PointCloud<PointT>::Ptr pointcloudOutlierRemoval(
+            const typename pcl::PointCloud<PointT>::Ptr &cloud, const int meanThresh, const float stdDevThresh);
+
+        /**
          * @brief Performs PCL ransac to get the plane equations from the a given point cloud
+         *
          * @param cloud the input point cloud
          * @param minSegmentationPoints the minimum number of points
          */

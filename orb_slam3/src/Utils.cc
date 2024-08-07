@@ -164,7 +164,7 @@ namespace ORB_SLAM3
         const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize)
     {
         // The filtered point cloud object
-        typename pcl::PointCloud<PointT>::Ptr filtered(new pcl::PointCloud<PointT>());
+        typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>());
 
         // Define the downsampling filter
         typename pcl::VoxelGrid<PointT>::Ptr downsampleFilter(new pcl::VoxelGrid<PointT>());
@@ -174,10 +174,10 @@ namespace ORB_SLAM3
         downsampleFilter->setInputCloud(cloud);
 
         // Apply the downsampling filter
-        downsampleFilter->filter(*filtered);
-        filtered->header = cloud->header;
+        downsampleFilter->filter(*filteredCloud);
+        filteredCloud->header = cloud->header;
 
-        return filtered;
+        return filteredCloud;
     }
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const float);
@@ -186,10 +186,11 @@ namespace ORB_SLAM3
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDistanceFilter(
         const typename pcl::PointCloud<PointT>::Ptr &cloud)
     {
+        // Variables
+        double distance;
         const std::pair<float, float> thresholds = SystemParams::GetParams()->pointcloud.distance_thresh;
         const float thresholdNear = thresholds.first;
         const float thresholdFar = thresholds.second;
-        double distance;
 
         // Define the filtered point cloud object
         typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>());
@@ -214,6 +215,26 @@ namespace ORB_SLAM3
     }
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
+
+    template <typename PointT>
+    typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudOutlierRemoval(
+        const typename pcl::PointCloud<PointT>::Ptr &cloud, const int meanThresh, const float stdDevThresh)
+    {
+        // Create a container for the filtered cloud
+        typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>);
+
+        // Create the filtering object: StatisticalOutlierRemoval
+        pcl::StatisticalOutlierRemoval<PointT> outlierRemoval;
+        outlierRemoval.setInputCloud(cloud);
+        outlierRemoval.setMeanK(meanThresh);
+        outlierRemoval.setStddevMulThresh(stdDevThresh);
+        outlierRemoval.filter(*filteredCloud);
+
+        // Return the filtered cloud
+        return filteredCloud;
+    }
+    template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(
+        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const int, const float);
 
     template <typename PointT, template <typename> class SegmentationType>
     std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> Utils::ransacPlaneFitting(

@@ -188,7 +188,10 @@ namespace ORB_SLAM3
             // Downsample the given pointcloud after filtering based on distance
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud;
             filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i]);
-            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->sem_seg.downsample_leaf_size);
+            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->sem_seg.pointcloud.downsample_leaf_size);
+            filteredCloud = Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(filteredCloud,
+                                                                               sysParams->sem_seg.pointcloud.outlier_removal.std_threshold,
+                                                                               sysParams->sem_seg.pointcloud.outlier_removal.mean_threshold);
 
             // copy the filtered cloud for later storage into the keyframe
             pcl::copyPointCloud(*filteredCloud, *clsCloudPtrs[i]);
