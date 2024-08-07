@@ -57,7 +57,7 @@ geo_seg:
 sem_seg:
   pointcloud:
     # The leaf size for the pointcloud downsampling
-    downsample_leaf_size: 0.0
+    downsample_leaf_size: 0.03
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
