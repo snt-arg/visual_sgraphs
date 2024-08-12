@@ -28,6 +28,7 @@
         <param name="world_frame_id"    type="string"   value="world" />        
         <param name="cam_frame_id"      type="string"   value="camera" />
         <param name="publish_static_transform" type="bool" value="true" />
+        <param name="publish_pointclouds" type="bool" value="true" />
     </node>
 
     <!-- Transformation parameters -->

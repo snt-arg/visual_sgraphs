@@ -9,7 +9,7 @@ ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensorType = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
-bool pubStaticTransform;
+bool pubStaticTransform, pubPointClouds;
 double roll = 0, pitch = 0, yaw = 0;
 image_transport::Publisher tracking_img_pub;
 ros::Publisher pose_pub, odom_pub, kf_markers_pub, kf_img_pub, kf_list_pub;
@@ -120,14 +120,21 @@ void publishTopics(ros::Time msg_time, Eigen::Vector3f Wbb)
     // Setup publishers
     publishDoors(pSLAM->GetAllDoors(), msg_time);
     publishRooms(pSLAM->GetAllRooms(), msg_time);
-    publishPlanes(pSLAM->GetAllPlanes(), msg_time);
+    // publishPlanes(pSLAM->GetAllPlanes(), msg_time);
     publishKeyframeImages(pSLAM->GetAllKeyFrames(), msg_time);
     publishAllPoints(pSLAM->GetAllMapPoints(), msg_time);
     publishTrackingImage(pSLAM->GetCurrentFrame(), msg_time);
     publishKeyframeMarkers(pSLAM->GetAllKeyFrames(), msg_time);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msg_time);
     publishTrackedPoints(pSLAM->GetTrackedMapPoints(), msg_time);
-    publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msg_time);
+    // publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msg_time);
+    // publish pointclouds
+    if (pubPointClouds)
+    {
+        publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msg_time);
+        publishPlanes(pSLAM->GetAllPlanes(), msg_time);
+    }
+
 
     // IMU-specific topics
     if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||

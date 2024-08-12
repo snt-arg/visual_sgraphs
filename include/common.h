@@ -66,7 +66,7 @@ class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensorType;
 
-extern bool pubStaticTransform;
+extern bool pubStaticTransform, pubPointClouds;
 extern double roll, pitch, yaw;
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 

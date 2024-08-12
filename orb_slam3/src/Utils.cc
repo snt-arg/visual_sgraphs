@@ -362,8 +362,7 @@ namespace ORB_SLAM3
                 continue;
 
             // compare in the given plane's frame
-            // Preparing a plane for feeding the detector
-            g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
+            g2o::Plane3D mappedPlane = g2o::Plane3D(mPlane->getGlobalEquation().coeffs());
             mappedPlane = convertToGlobalEquation(kfPose, mappedPlane);
 
             // Calculate difference vector based on walls' equations
