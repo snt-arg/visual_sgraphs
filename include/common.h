@@ -66,8 +66,8 @@ class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensorType;
 
-extern bool pubStaticTransform, pubPointClouds;
 extern double roll, pitch, yaw;
+extern bool pubStaticTransform, pubPointClouds;
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 
 // List of visited Fiducial Markers in different timestamps
@@ -78,7 +78,7 @@ extern std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 
 extern ros::Publisher kf_img_pub;
 extern image_transport::Publisher tracking_img_pub;
-extern ros::Publisher pose_pub, odom_pub, kf_markers_pub;
+extern ros::Publisher pubCameraPose, pubOdometry, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub, segmented_pointclouds_pub;
 
 struct MapPointStruct
@@ -98,31 +98,49 @@ void publishCameraPose(Sophus::SE3f, ros::Time);
 void publishRooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
 void publishDoors(std::vector<ORB_SLAM3::Door *>, ros::Time);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
-void publishTfTransform(Sophus::SE3f, string, string, ros::Time);
+void publishTFTransform(Sophus::SE3f, string, string, ros::Time);
 void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
 void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
-void publishKeyframeImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
-void publishKeyframeMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 
-cv::Mat SE3f_to_cvMat(Sophus::SE3f);
-tf::Transform SE3f_to_tfTransform(Sophus::SE3f);
-sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
+/**
+ * @brief Converts a SE3f to a cv::Mat
+ *
+ * @param data The SE3f data to be converted
+ */
+cv::Mat SE3fToCvMat(Sophus::SE3f data);
 
 /**
- * Publishes a static transformation (TF) between two coordinate frames and define a
+ * @brief Converts a SE3f to a tf::Transform
+ *
+ * @param data The SE3f data to be converted
+ */
+tf::Transform SE3fToTFTransform(Sophus::SE3f data);
+
+/**
+ * @brief Converts a vector of MapPoints to a PointCloud2 message
+ *
+ * @param mapPoints The vector of MapPoints to be converted
+ * @param msgTime The timestamp for the PointCloud2 message
+ */
+sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *> mapPoints, ros::Time msgTime);
+
+/**
+ * @brief Publishes a static transformation (TF) between two coordinate frames and define a
  * fixed spatial relationship among them.
  *
  * @param parentFrameId The parent frame ID for the static transformation
  * @param childFrameId The child frame ID for the static transformation
  * @param msgTime The timestamp for the transformation message
  */
-void publishStaticTfTransform(string parentFrameId, string childFrameId, ros::Time msgTime);
+void publishStaticTFTransform(string parentFrameId, string childFrameId, ros::Time msgTime);
 
 /**
  * @brief Adds the markers to the buffer to be processed
