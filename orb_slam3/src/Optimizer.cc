@@ -364,7 +364,7 @@ namespace ORB_SLAM3
             //             continue;
 
             //         if (optimizer.vertex(opIdG) && optimizer.vertex(pMP->mnId + maxKFid + 1))
-            //         {    
+            //         {
             //             ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ *e = new ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ();
             //             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pMP->mnId + maxKFid + 1)));
             //             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
@@ -621,7 +621,7 @@ namespace ORB_SLAM3
             if (optimizer.vertex(vpPlane->getOpIdG()))
             {
                 g2o::VertexPlane *vPlane = static_cast<g2o::VertexPlane *>(optimizer.vertex(vpPlane->getOpIdG()));
-                
+
                 if (nLoopKF == pMap->GetOriginKF()->mnId)
                 {
                     vpPlane->setGlobalEquation(vPlane->estimate());
@@ -1580,9 +1580,8 @@ namespace ORB_SLAM3
             }
         }
 
-
         num_fixedKF = lFixedCameras.size() + num_fixedKF;
-        
+
         if (num_fixedKF == 0)
         {
             Verbose::PrintMess("LM-LBA: There are 0 fixed KF in the optimizations, LBA aborted", Verbose::VERBOSITY_NORMAL);
@@ -1849,7 +1848,7 @@ namespace ORB_SLAM3
 
         // Planes (Local Optimization)
         for (list<Plane *>::iterator idx = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); idx != lend; idx++)
-        {   
+        {
             // Adding a vertex for each plane
             Plane *pMapPlane = *idx;
             g2o::VertexPlane *vPlane = new g2o::VertexPlane();
@@ -4174,44 +4173,46 @@ namespace ORB_SLAM3
         Rwg = VGDir->estimate().Rwg;
     }
 
-    void Optimizer::LocalBundleAdjustment(KeyFrame *pMainKF, vector<KeyFrame *> vpAdjustKF, vector<KeyFrame *> vpFixedKF, bool *pbStopFlag)
+    void Optimizer::LoopClosureLocalBundleAdjustment(KeyFrame *pMainKF, vector<KeyFrame *> vpAdjustKF,
+                                                     vector<KeyFrame *> vpFixedKF, bool *pbStopFlag)
     {
-        bool bShowImages = false;
-
+        // Variables
         vector<MapPoint *> vpMPs;
-
+        set<KeyFrame *> spKeyFrameBA;
+        long unsigned int maxKFid = 0;
         g2o::SparseOptimizer optimizer;
+
+        // Define a linear solver to solve the linear system arising while optimization
         g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
-
         linearSolver = new g2o::LinearSolverEigen<g2o::BlockSolver_6_3::PoseMatrixType>();
-
         g2o::BlockSolver_6_3 *solver_ptr = new g2o::BlockSolver_6_3(linearSolver);
 
         g2o::OptimizationAlgorithmLevenberg *solver = new g2o::OptimizationAlgorithmLevenberg(solver_ptr);
         optimizer.setAlgorithm(solver);
-
         optimizer.setVerbose(false);
 
+        // Force stop flag
         if (pbStopFlag)
             optimizer.setForceStopFlag(pbStopFlag);
 
-        long unsigned int maxKFid = 0;
-        set<KeyFrame *> spKeyFrameBA;
-
+        // Get the current map
         Map *pCurrentMap = pMainKF->GetMap();
 
         // Set fixed KeyFrame vertices
         int numInsertedPoints = 0;
         for (KeyFrame *pKFi : vpFixedKF)
         {
+            // Skip the KeyFrame if it is bad or is not in the current map
             if (pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
             {
-                Verbose::PrintMess("ERROR LBA: KF is bad or is not in the current map", Verbose::VERBOSITY_NORMAL);
+                Verbose::PrintMess("[Error in LoopClosureLocalBundleAdjustment] KeyFrame is bad or is not in the current map!", Verbose::VERBOSITY_NORMAL);
                 continue;
             }
 
+            // Set the local BA id for the KeyFrame
             pKFi->mnBALocalForMerge = pMainKF->mnId;
 
+            // Create a new vertex for the KeyFrame
             g2o::VertexSE3Expmap *vSE3 = new g2o::VertexSE3Expmap();
             Sophus::SE3<float> Tcw = pKFi->GetPose();
             vSE3->setEstimate(g2o::SE3Quat(Tcw.unit_quaternion().cast<double>(), Tcw.translation().cast<double>()));
@@ -4221,24 +4222,23 @@ namespace ORB_SLAM3
             if (pKFi->mnId > maxKFid)
                 maxKFid = pKFi->mnId;
 
+            // Get the map points observed by the KeyFrame
             set<MapPoint *> spViewMPs = pKFi->GetMapPoints();
             for (MapPoint *pMPi : spViewMPs)
-            {
                 if (pMPi)
                     if (!pMPi->isBad() && pMPi->GetMap() == pCurrentMap)
-
                         if (pMPi->mnBALocalForMerge != pMainKF->mnId)
                         {
+                            // Add the map point to the list of optimizable map points
                             vpMPs.push_back(pMPi);
                             pMPi->mnBALocalForMerge = pMainKF->mnId;
                             numInsertedPoints++;
                         }
-            }
 
             spKeyFrameBA.insert(pKFi);
         }
 
-        // Set non fixed Keyframe vertices
+        // Set non-fixed KeyFrame vertices
         set<KeyFrame *> spAdjustKF(vpAdjustKF.begin(), vpAdjustKF.end());
         numInsertedPoints = 0;
         for (KeyFrame *pKFi : vpAdjustKF)
@@ -4258,20 +4258,14 @@ namespace ORB_SLAM3
 
             set<MapPoint *> spViewMPs = pKFi->GetMapPoints();
             for (MapPoint *pMPi : spViewMPs)
-            {
                 if (pMPi)
-                {
                     if (!pMPi->isBad() && pMPi->GetMap() == pCurrentMap)
-                    {
                         if (pMPi->mnBALocalForMerge != pMainKF->mnId)
                         {
                             vpMPs.push_back(pMPi);
                             pMPi->mnBALocalForMerge = pMainKF->mnId;
                             numInsertedPoints++;
                         }
-                    }
-                }
-            }
 
             spKeyFrameBA.insert(pKFi);
         }

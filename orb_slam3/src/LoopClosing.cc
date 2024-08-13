@@ -1599,14 +1599,13 @@ namespace ORB_SLAM3
         vpMergeConnectedKFs.clear();
         std::copy(spLocalWindowKFs.begin(), spLocalWindowKFs.end(), std::back_inserter(vpLocalCurrentWindowKFs));
         std::copy(spMergeConnectedKFs.begin(), spMergeConnectedKFs.end(), std::back_inserter(vpMergeConnectedKFs));
-        if (mpTracker->mSensor == System::IMU_MONOCULAR || mpTracker->mSensor == System::IMU_STEREO || mpTracker->mSensor == System::IMU_RGBD)
-        {
+
+        // If the sensor contains IMU, merge with Inertial BA
+        if (mpTracker->mSensor == System::IMU_MONOCULAR || mpTracker->mSensor == System::IMU_STEREO ||
+            mpTracker->mSensor == System::IMU_RGBD)
             Optimizer::MergeInertialBA(mpCurrentKF, mpMergeMatchedKF, &bStop, pCurrentMap, vCorrectedSim3);
-        }
         else
-        {
-            Optimizer::LocalBundleAdjustment(mpCurrentKF, vpLocalCurrentWindowKFs, vpMergeConnectedKFs, &bStop);
-        }
+            Optimizer::LoopClosureLocalBundleAdjustment(mpCurrentKF, vpLocalCurrentWindowKFs, vpMergeConnectedKFs, &bStop);
 
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_EndWeldingBA = std::chrono::steady_clock::now();

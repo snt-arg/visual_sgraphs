@@ -62,8 +62,16 @@ namespace ORB_SLAM3
         void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF,
                                           int &num_MPs, int &num_edges, std::list<Room *> vpRooms, double markerImpact = 0.1);
 
-        void static LocalBundleAdjustment(KeyFrame *pMainKF, vector<KeyFrame *> vpAdjustKF, vector<KeyFrame *> vpFixedKF,
-                                          bool *pbStopFlag);
+        /**
+         * @brief Local Bundle Adjustment for loop closure detection
+         *
+         * @param pMainKF Main KeyFrame
+         * @param vpAdjustKF Non-fixed KeyFrames to adjust
+         * @param vpFixedKF Fixed KeyFrames to set
+         * @param pbStopFlag Flag to forcely stop the optimization
+         */
+        void static LoopClosureLocalBundleAdjustment(KeyFrame *pMainKF, vector<KeyFrame *> vpAdjustKF,
+                                                     vector<KeyFrame *> vpFixedKF, bool *pbStopFlag);
 
         int static PoseOptimization(Frame *pFrame);
         int static PoseInertialOptimizationLastKeyFrame(Frame *pFrame, bool bRecInit = false);

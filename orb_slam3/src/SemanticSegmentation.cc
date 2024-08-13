@@ -207,7 +207,8 @@ namespace ORB_SLAM3
     }
 
     void SemanticSegmentation::updatePlaneData(KeyFrame *pKF,
-                                               std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>> &clsPlanes)
+                                               std::vector<std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr,
+                                                                                 Eigen::Vector4d>>> &clsPlanes)
     {
         for (size_t clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
