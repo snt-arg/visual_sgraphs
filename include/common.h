@@ -78,7 +78,7 @@ extern std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 
 extern ros::Publisher kf_img_pub;
 extern image_transport::Publisher tracking_img_pub;
-extern ros::Publisher pubCameraPose, pubOdometry, kf_markers_pub;
+extern ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, kf_markers_pub;
 extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub, segmented_pointclouds_pub;
 
 struct MapPointStruct

@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /planes1/Namespaces1
-        - /voxblox skeleton1
+        - /Camera Pose1
       Splitter Ratio: 0.5078651905059814
     Tree Height: 404
   - Class: rviz/Selection
@@ -422,6 +422,14 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /orb_slam3/camera_pose_vis
+      Name: Camera Pose
+      Namespaces:
+        camera_pose: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 238; 238; 236
@@ -450,7 +458,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.223711013793945
+      Distance: 6.923818111419678
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -466,9 +474,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2502031922340393
+      Pitch: 0.305202841758728
       Target Frame: <Fixed Frame>
-      Yaw: 1.6853934526443481
+      Yaw: 2.3253982067108154
     Saved: ~
 Window Geometry:
   Displays:

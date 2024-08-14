@@ -16,7 +16,7 @@ rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
-ros::Publisher pubCameraPose, pubOdometry, kf_markers_pub, kf_img_pub, kf_list_pub;
+ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, kf_markers_pub, kf_img_pub, kf_list_pub;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, pubDoor,
     all_mappoints_pub, kf_plane_assoc, pubFiducialMarker, planes_pub, pubRoom;
@@ -78,6 +78,7 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
     kf_markers_pub = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
     plane_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     tracked_mappoints_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
+    pubCameraPoseVis = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/camera_pose_vis", 1);
     segmented_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
 
     // Semantic
@@ -195,6 +196,37 @@ void publishCameraPose(Sophus::SE3f Tcw_SE3f, ros::Time msgTime)
     poseMsg.pose.orientation.z = Tcw_SE3f.unit_quaternion().coeffs().z();
 
     pubCameraPose.publish(poseMsg);
+
+    // Add a marker for visualization
+    visualization_msgs::Marker cameraVisual;
+    visualization_msgs::MarkerArray cameraVisualList;
+
+    cameraVisual.id = 1;
+    cameraVisual.color.a = 0.5;
+    cameraVisual.scale.x = 1.0;
+    cameraVisual.scale.y = 1.0;
+    cameraVisual.scale.z = 1.0;
+    cameraVisual.ns = "camera_pose";
+    cameraVisual.action = cameraVisual.ADD;
+    cameraVisual.lifetime = ros::Duration();
+    cameraVisual.header.frame_id = cam_frame_id;
+    cameraVisual.header.stamp = ros::Time().now();
+    cameraVisual.mesh_use_embedded_materials = true;
+    cameraVisual.type = visualization_msgs::Marker::MESH_RESOURCE;
+    cameraVisual.mesh_resource =
+        "package://orb_slam3_ros/config/Assets/camera.dae";
+
+    cameraVisual.pose.position.x = Tcw_SE3f.translation().x();
+    cameraVisual.pose.position.y = Tcw_SE3f.translation().y();
+    cameraVisual.pose.position.z = Tcw_SE3f.translation().z();
+    cameraVisual.pose.orientation.x = Tcw_SE3f.unit_quaternion().x();
+    cameraVisual.pose.orientation.y = Tcw_SE3f.unit_quaternion().y();
+    cameraVisual.pose.orientation.z = Tcw_SE3f.unit_quaternion().z();
+    cameraVisual.pose.orientation.w = Tcw_SE3f.unit_quaternion().w();
+
+    cameraVisualList.markers.push_back(cameraVisual);
+
+    pubCameraPoseVis.publish(cameraVisualList);
 }
 
 void publishTFTransform(Sophus::SE3f T_SE3f, string frame_id, string child_frame_id, ros::Time msgTime)
