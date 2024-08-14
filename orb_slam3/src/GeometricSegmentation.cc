@@ -74,8 +74,9 @@ namespace ORB_SLAM3
             // convert planeCloud to global coordinates
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
-            pcl::transformPointCloud(*planeCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
-
+            // pcl::transformPointCloud(*planeCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
+            // globalPlaneCloud->clear();
+            
             // Check if we need to add the wall to the map or not
             int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane, pKF->GetPose().matrix().cast<double>());
             if (matchedPlaneId == -1)

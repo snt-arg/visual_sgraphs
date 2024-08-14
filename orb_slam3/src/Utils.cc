@@ -220,6 +220,10 @@ namespace ORB_SLAM3
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudOutlierRemoval(
         const typename pcl::PointCloud<PointT>::Ptr &cloud, const int meanThresh, const float stdDevThresh)
     {
+        // Check if the input cloud is empty
+        if (cloud->points.size() == 0)
+            return cloud;
+        
         // Create a container for the filtered cloud
         typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>);
 

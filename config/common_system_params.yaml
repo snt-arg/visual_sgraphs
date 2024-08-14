@@ -29,7 +29,7 @@ seg:
   pointclouds_thresh: 500
 
   # Plane association threshold (ominus)
-  plane_association_thresh: 0.2
+  plane_association_thresh: 0.15
 
   # The maximum distance for point to be considered part of a plane
   plane_point_dist_thresh: 0.02
@@ -68,7 +68,7 @@ sem_seg:
   prob_thresh: 0.6
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
-  conf_thresh: 0.2
+  conf_thresh: 0.3
 
   # The maximum height above the main ground to be a valid stepped ground plane (in meters)
   max_step_elevation: 0.5
