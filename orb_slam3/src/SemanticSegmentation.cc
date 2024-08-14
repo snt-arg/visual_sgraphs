@@ -249,6 +249,12 @@ namespace ORB_SLAM3
                 {
                     if (!mGeoRuns)
                         GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, matchedPlaneId);
+                    else{
+                        ORB_SLAM3::Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
+                        // Add the plane cloud to the matched plane
+                        if (!planeCloud->empty())
+                            matchedPlane->setMapClouds(planeCloud);
+                    }
 
                     // Cast a vote for the plane semantics
                     updatePlaneSemantics(matchedPlaneId, clsId, conf);
