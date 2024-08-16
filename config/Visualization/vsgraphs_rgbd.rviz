@@ -4,6 +4,7 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /TF1
         - /TF1/Frames1
         - /planes1/Namespaces1
         - /Camera Pose1
@@ -64,19 +65,19 @@ Visualization Manager:
         base_link:
           Value: true
         camera:
-          Value: true
+          Value: false
         camera_accel_frame:
-          Value: true
+          Value: false
         camera_accel_optical_frame:
-          Value: true
+          Value: false
         camera_aligned_depth_to_color_frame:
-          Value: true
+          Value: false
         camera_color_frame:
-          Value: true
+          Value: false
         camera_color_optical_frame:
-          Value: true
+          Value: false
         camera_depth_frame:
-          Value: true
+          Value: false
         camera_depth_optical_frame:
           Value: true
         camera_gyro_frame:
@@ -318,9 +319,7 @@ Visualization Manager:
       Marker Topic: /orb_slam3/rooms
       Name: rooms
       Namespaces:
-        roomLabel: true
-        room_marker_lines: true
-        rooms: true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -458,7 +457,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.923818111419678
+      Distance: 3.6539201736450195
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1

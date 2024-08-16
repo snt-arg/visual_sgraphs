@@ -202,15 +202,15 @@ void publishCameraPose(Sophus::SE3f Tcw_SE3f, ros::Time msgTime)
     visualization_msgs::MarkerArray cameraVisualList;
 
     cameraVisual.id = 1;
-    cameraVisual.color.a = 0.5;
-    cameraVisual.scale.x = 1.0;
-    cameraVisual.scale.y = 1.0;
-    cameraVisual.scale.z = 1.0;
+    cameraVisual.color.a = 0.7;
+    cameraVisual.scale.x = 0.5;
+    cameraVisual.scale.y = 0.5;
+    cameraVisual.scale.z = 0.5;
     cameraVisual.ns = "camera_pose";
+    cameraVisual.header.stamp = msgTime;
     cameraVisual.action = cameraVisual.ADD;
     cameraVisual.lifetime = ros::Duration();
-    cameraVisual.header.frame_id = cam_frame_id;
-    cameraVisual.header.stamp = ros::Time().now();
+    cameraVisual.header.frame_id = world_frame_id;
     cameraVisual.mesh_use_embedded_materials = true;
     cameraVisual.type = visualization_msgs::Marker::MESH_RESOURCE;
     cameraVisual.mesh_resource =
