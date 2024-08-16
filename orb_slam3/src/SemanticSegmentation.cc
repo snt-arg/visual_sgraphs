@@ -233,8 +233,7 @@ namespace ORB_SLAM3
                 double conf = Utils::calcSoftMin(confidences);
 
                 // transform the planeCloud to global if semSeg uses plane->setMapClouds(planeCloud)
-                if (!mGeoRuns)
-                    pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
+                pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
                 if (matchedPlaneId == -1)
                 {
@@ -249,7 +248,8 @@ namespace ORB_SLAM3
                 {
                     if (!mGeoRuns)
                         GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, matchedPlaneId);
-                    else{
+                    else
+                    {
                         ORB_SLAM3::Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
                         // Add the plane cloud to the matched plane
                         if (!planeCloud->empty())

@@ -223,7 +223,7 @@ namespace ORB_SLAM3
         // Check if the input cloud is empty
         if (cloud->points.size() == 0)
             return cloud;
-        
+
         // Create a container for the filtered cloud
         typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>);
 
@@ -371,6 +371,11 @@ namespace ORB_SLAM3
 
             // Calculate difference vector based on walls' equations
             Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
+
+            // Check based on distance, distance is last element of the difference vector
+            // [TODO] Diffrentiate between distance and angle
+            if (diffVector(2) > 0.1)
+                continue;
 
             // Create a single number determining the difference vector
             // [before] double planeDiff = diffVector.transpose() * Eigen::Matrix3d::Identity() * diffVector;

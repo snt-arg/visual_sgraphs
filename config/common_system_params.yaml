@@ -29,7 +29,7 @@ seg:
   pointclouds_thresh: 500
 
   # Plane association threshold (ominus)
-  plane_association_thresh: 0.15
+  plane_association_thresh: 0.25
 
   # The maximum distance for point to be considered part of a plane
   plane_point_dist_thresh: 0.02
