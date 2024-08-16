@@ -132,6 +132,7 @@ namespace ORB_SLAM3
         mnNumDataset = 0;
 
         vector<GeometricCamera *> vpCams = mpAtlas->GetAllCameras();
+        std::cout << "\n[Tracking]" << std::endl;
         std::cout << "- Found " << vpCams.size() << " camera(s) in Atlas!" << std::endl;
         for (GeometricCamera *pCam : vpCams)
         {
@@ -2186,11 +2187,9 @@ namespace ORB_SLAM3
             if (!mbOnlyTracking)
             {
                 if (bOK)
-                {
                     bOK = TrackLocalMap();
-                }
-                if (!bOK)
-                    cout << "Fail to track local map!" << endl;
+                else
+                    std::cout << "- Tracking failed ..." << std::endl;
             }
             else
             {

@@ -58,16 +58,18 @@ namespace ORB_SLAM3
     {
         // Lock the map creation
         unique_lock<mutex> lock(mMutexAtlas);
-        cout << "- Creating a new map with ID " << Map::nNextId << " ..." << endl;
+        std::cout << "\n[Atlas]" << std::endl;
+        std::cout << "- Creating a new map (MapId: " << Map::nNextId << ", Init KeyFrame: "
+                  << mnLastInitKFidMap << ") ..." << std::endl;
+
         if (mpCurrentMap)
         {
             if (!mspMaps.empty() && mnLastInitKFidMap < mpCurrentMap->GetMaxKFid())
-                mnLastInitKFidMap = mpCurrentMap->GetMaxKFid() + 1; // The init KF is the next of current maximum
+                mnLastInitKFidMap = mpCurrentMap->GetMaxKFid() + 1;
 
             mpCurrentMap->SetStoredMap();
-            cout << "- Stored map with ID " << mpCurrentMap->GetId() << endl;
+            std::cout << "- The created map with MapId #" << mpCurrentMap->GetId() << " has been stored!" << std::endl;
         }
-        cout << "- Creating a new map with the last KeyFrame-ID " << mnLastInitKFidMap << " ..." << endl;
 
         mpCurrentMap = new Map(mnLastInitKFidMap);
         mpCurrentMap->SetCurrentMap();
@@ -77,11 +79,11 @@ namespace ORB_SLAM3
     void Atlas::ChangeMap(Map *pMap)
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        cout << "Change to map with id: " << pMap->GetId() << endl;
+        std::cout << "\n[Atlas]" << std::endl;
+        std::cout << "- Changing to map with MapId #" << pMap->GetId() << " ..." << std::endl;
+
         if (mpCurrentMap)
-        {
             mpCurrentMap->SetStoredMap();
-        }
 
         mpCurrentMap = pMap;
         mpCurrentMap->SetCurrentMap();

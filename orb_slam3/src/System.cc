@@ -183,7 +183,6 @@ namespace ORB_SLAM3
         mpMapDrawer = new MapDrawer(mpAtlas, strSettingsFile, settings_);
 
         // Initialize the Tracking thread
-        cout << "[Tracking]" << endl;
         mpTracker = new Tracking(this, mpVocabulary, mpFrameDrawer, mpMapDrawer,
                                  mpAtlas, mpKeyFrameDatabase, strSettingsFile, mSensor, settings_, strSequence);
 
@@ -256,7 +255,7 @@ namespace ORB_SLAM3
         envRooms = parser.getEnvRooms(envData);
         envDoors = parser.getEnvDoors(envData);
         // Printing the success message
-        std::cout << "- JSON loaded and candidates created!\n\n";
+        std::cout << "- JSON loaded and candidates created!\n";
     }
 
     void System::addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple)

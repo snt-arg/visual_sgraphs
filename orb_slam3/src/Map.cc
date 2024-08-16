@@ -69,22 +69,27 @@ namespace ORB_SLAM3
     void Map::AddKeyFrame(KeyFrame *pKF)
     {
         unique_lock<mutex> lock(mMutexMap);
+
+        // Check if the KeyFrames are already in the map
         if (mspKeyFrames.empty())
         {
-            cout << "First KF:" << pKF->mnId << "; Map init KF:" << mnInitKFid << endl;
+            std::cout << "\n[Mapping]" << std::endl;
+            std::cout << "- Map initialized with initial KeyFrame #" << mnInitKFid << std::endl;
             mnInitKFid = pKF->mnId;
             mpKFinitial = pKF;
             mpKFlowerID = pKF;
         }
+
+        // Add the KeyFrame to the map
         mspKeyFrames.insert(pKF);
+
+        // Update the maximum KeyFrame id
         if (pKF->mnId > mnMaxKFid)
-        {
             mnMaxKFid = pKF->mnId;
-        }
+
         if (pKF->mnId < mpKFlowerID->mnId)
-        {
             mpKFlowerID = pKF;
-        }
+
         mKFIndex[pKF->mnId] = pKF;
     }
 
