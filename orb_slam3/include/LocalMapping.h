@@ -197,6 +197,6 @@ namespace ORB_SLAM3
         ofstream f_lm;
     };
 
-} // namespace ORB_SLAM
+}
 
-#endif // LOCALMAPPING_H
+#endif

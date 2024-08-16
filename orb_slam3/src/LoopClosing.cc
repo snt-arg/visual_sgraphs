@@ -955,17 +955,13 @@ namespace ORB_SLAM3
 
     void LoopClosing::CorrectLoop()
     {
-        // cout << "Loop detected!" << endl;
-
-        // Send a stop signal to Local Mapping
         // Avoid new keyframes are inserted while correcting the loop
         mpLocalMapper->RequestStop();
-        mpLocalMapper->EmptyQueue(); // Proccess keyframes in the queue
+        mpLocalMapper->EmptyQueue();
 
-        // If a Global Bundle Adjustment is running, abort it
+        // Abort a runnig Global Bundle Adjustment thread
         if (isRunningGBA())
         {
-            cout << "Stoping Global Bundle Adjustment...";
             unique_lock<mutex> lock(mMutexGBA);
             mbStopGBA = true;
 
@@ -976,26 +972,18 @@ namespace ORB_SLAM3
                 mpThreadGBA->detach();
                 delete mpThreadGBA;
             }
-            cout << "  Done!!" << endl;
         }
 
         // Wait until Local Mapping has effectively stopped
         while (!mpLocalMapper->isStopped())
-        {
             usleep(1000);
-        }
 
         // Ensure current keyframe is updated
-        // cout << "Start updating connections" << endl;
-        // assert(mpCurrentKF->GetMap()->CheckEssentialGraph());
         mpCurrentKF->UpdateConnections();
-        // assert(mpCurrentKF->GetMap()->CheckEssentialGraph());
 
         // Retrive keyframes connected to the current keyframe and compute corrected Sim3 pose by propagation
         mvpCurrentConnectedKFs = mpCurrentKF->GetVectorCovisibleKeyFrames();
         mvpCurrentConnectedKFs.push_back(mpCurrentKF);
-
-        // std::cout << "Loop: number of connected KFs -> " + to_string(mvpCurrentConnectedKFs.size()) << std::endl;
 
         KeyFrameAndPose CorrectedSim3, NonCorrectedSim3;
         CorrectedSim3[mpCurrentKF] = mg2oLoopScw;

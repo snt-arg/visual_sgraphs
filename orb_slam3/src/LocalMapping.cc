@@ -838,13 +838,13 @@ namespace ORB_SLAM3
     bool LocalMapping::Stop()
     {
         unique_lock<mutex> lock(mMutexStop);
+
+        // Check the conditions for stopping the Local Mapping
         if (mbStopRequested && !mbNotStop)
         {
             mbStopped = true;
-            cout << "Local Mapping STOP" << endl;
             return true;
         }
-
         return false;
     }
 
@@ -872,8 +872,6 @@ namespace ORB_SLAM3
             delete *lit;
         mlNewKeyFrames.clear();
         mlDetRooms.clear();
-
-        cout << "Local Mapping RELEASE" << endl;
     }
 
     bool LocalMapping::AcceptKeyFrames()

@@ -484,10 +484,10 @@ namespace ORB_SLAM3
                 Plane *wall2P2 = facingWalls[idx2].second;
 
                 // Check if wall pairs form a square, considering the perpendicularity threshold
-                if (Utils::arePlanesPerpendicular(wall1P1, wall2P1, perpThreshold) &&
+                if (Utils::arePlanesPerpendicular(wall1P1, wall1P2, perpThreshold) &&
+                    Utils::arePlanesPerpendicular(wall1P1, wall2P2, perpThreshold) &&
                     Utils::arePlanesPerpendicular(wall2P1, wall1P2, perpThreshold) &&
-                    Utils::arePlanesPerpendicular(wall1P2, wall2P2, perpThreshold) &&
-                    Utils::arePlanesPerpendicular(wall2P2, wall1P1, perpThreshold))
+                    Utils::arePlanesPerpendicular(wall2P1, wall2P2, perpThreshold))
                 {
                     givenRoom = std::make_pair(facingWalls[idx1], facingWalls[idx2]);
                     return true;
@@ -602,8 +602,8 @@ namespace ORB_SLAM3
     void SemanticSegmentation::detectMapRoomCandidateVoxblox()
     {
         // Variables
-        ORB_SLAM3::Room *newClusterBasedRoom = nullptr;
         std::vector<Plane *> allWalls, closestWalls;
+        ORB_SLAM3::Room *newClusterBasedRoom = nullptr;
 
         // Get the skeleton clusters
         std::vector<std::vector<Eigen::Vector3d *>> clusters = GetLatestSkeletonCluster();
@@ -681,10 +681,15 @@ namespace ORB_SLAM3
             else
             {
                 // Otherwise, add the new room candidate to the map
-                std::cout
-                    << "- New room candidate detected: Room#" << newClusterBasedRoom->getId()
-                    << " using the free-space!" << std::endl;
-                mpAtlas->AddDetectedMapRoom(newClusterBasedRoom);
+                ORB_SLAM3::Room *foundDetectedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllDetectedMapRooms());
+                if (foundDetectedRoom == nullptr)
+                {
+                    // If the room already exists, update the existing room candidate with the new information
+                    std::cout
+                        << "- New room detected: Room#" << newClusterBasedRoom->getId()
+                        << " using the free-space!" << std::endl;
+                    mpAtlas->AddDetectedMapRoom(newClusterBasedRoom);
+                }
             }
         }
     }
@@ -698,8 +703,11 @@ namespace ORB_SLAM3
                                                            const vector<Room *> &givenRoomList)
     {
         // Variables
-        double minDistance = sysParams->room_seg.room_center_distance_thresh;
         ORB_SLAM3::Room *foundMappedRoom = nullptr;
+        double minDistance = sysParams->room_seg.room_center_distance_thresh;
+
+        if (givenRoomList.empty())
+            return nullptr;
 
         // Get the given room center
         Eigen::Vector3d detetedRoomCenter = givenRoom->getRoomCenter();

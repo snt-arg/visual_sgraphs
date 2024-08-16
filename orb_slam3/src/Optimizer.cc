@@ -52,13 +52,6 @@ namespace ORB_SLAM3
         vector<Door *> vpDoors = pMap->GetAllDoors();
         vector<Room *> vpRooms = pMap->GetAllRooms();
 
-        cout << "Number of KeyFrames: " << vpKFs.size() << endl;
-        cout << "Number of MapPoints: " << vpMP.size() << endl;
-        cout << "Number of Markers: " << vpMarkers.size() << endl;
-        cout << "Number of Planes: " << vpPlanes.size() << endl;
-        cout << "Number of Doors: " << vpDoors.size() << endl;
-        cout << "Number of Rooms: " << vpRooms.size() << endl;
-
         BundleAdjustment(vpKFs, vpMP, vpMarkers, vpPlanes, vpDoors, vpRooms, nIterations, pbStopFlag,
                          nLoopKF, bRobust, markerImpact);
     }
