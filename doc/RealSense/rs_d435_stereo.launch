@@ -1,6 +1,8 @@
 <!-- 
   A modified version of `rs_rgbd.launch` for `realsense2_camera` library.
-  Used for Stereo cameras.
+  Used for Stereo versions of D400 series.
+
+  [note] Check for "MODIFIED" comments to track changes.
  -->
 
 <launch>
@@ -9,11 +11,12 @@
   <arg name="external_manager"    default="false"/>
   <arg name="manager"             default="realsense2_camera_manager"/>
 
-  <!-- Camera device specific arguments -->
-
   <arg name="serial_no"           default=""/>
   <arg name="usb_port_id"         default=""/>
   <arg name="device_type"         default=""/>
+
+  <!-- [MODIFIED] Add a desired preset. (link: https://dev.intelrealsense.com/docs/d400-series-visual-presets) -->
+  <!-- You need to give proper absolute address of the JSON file -->
   <arg name="json_file_path"      default=""/>
 
   <arg name="fisheye_width"       default="-1"/>
@@ -22,26 +25,26 @@
 
   <arg name="depth_width"         default="-1"/>
   <arg name="depth_height"        default="-1"/>
-  <arg name="enable_depth"        default="false"/> <!-- should be off for stereo -->
+  <arg name="enable_depth"        default="false"/> <!-- [MODIFIED] should be off for stereo -->
 
-  <arg name="infra_width"         default="640"/> <!-- maximum supported -->
-  <arg name="infra_height"        default="480"/> <!-- maximum supported -->
-  <arg name="enable_infra1"       default="true"/> <!-- changed -->
-  <arg name="enable_infra2"       default="true"/> <!-- changed -->
+  <arg name="infra_width"         default="640"/> <!-- [MODIFIED] maximum supported -->
+  <arg name="infra_height"        default="480"/> <!-- [MODIFIED] maximum supported -->
+  <arg name="enable_infra1"       default="true"/> <!-- [MODIFIED] -->
+  <arg name="enable_infra2"       default="true"/> <!-- [MODIFIED] -->
 
-  <arg name="color_width"         default="-1"/> <!-- changed -->
-  <arg name="color_height"        default="-1"/> <!-- changed -->
-  <arg name="enable_color"        default="false"/> <!-- changed -->
+  <arg name="color_width"         default="-1"/> <!-- [MODIFIED] -->
+  <arg name="color_height"        default="-1"/> <!-- [MODIFIED] -->
+  <arg name="enable_color"        default="false"/> <!-- [MODIFIED] -->
 
   <arg name="fisheye_fps"         default="-1"/>
-  <arg name="depth_fps"           default="-1"/> <!-- changed -->
-  <arg name="infra_fps"           default="30"/> <!-- changed -->
-  <arg name="color_fps"           default="-1"/> <!-- changed -->
+  <arg name="depth_fps"           default="-1"/> <!-- [MODIFIED] -->
+  <arg name="infra_fps"           default="30"/> <!-- [MODIFIED] -->
+  <arg name="color_fps"           default="-1"/> <!-- [MODIFIED] -->
   <arg name="gyro_fps"            default="-1"/>
   <arg name="accel_fps"           default="-1"/>
   <arg name="enable_gyro"         default="true"/>
   <arg name="enable_accel"        default="true"/>
-  <arg name="unite_imu_method"    default="linear_interpolation"/> <!-- united IMU data -->
+  <arg name="unite_imu_method"    default="linear_interpolation"/> <!-- [MODIFIED] united IMU data -->
 
   <arg name="enable_pointcloud"   default="true"/>
   <arg name="enable_sync"         default="true"/>
@@ -49,9 +52,7 @@
   <arg name="filters"             default=""/>
 
   <arg name="publish_tf"          default="false"/>
-  <arg name="tf_publish_rate"     default="0"/> <!-- 0 - static transform -->
-
-  <!-- rgbd_launch specific arguments -->
+  <arg name="tf_publish_rate"     default="0"/> <!-- [MODIFIED] static transform -->
 
   <!-- Arguments for remapping all device namespaces -->
   <arg name="rgb"                             default="color" />
@@ -68,7 +69,7 @@
   <arg name="respawn"                         default="$(arg bond)" />
 
   <!-- Processing Modules -->
-  <arg name="rgb_processing"                  default="false"/> <!-- changed -->
+  <arg name="rgb_processing"                  default="false"/> <!-- [MODIFIED] -->
   <arg name="debayer_processing"              default="false" />
   <arg name="ir_processing"                   default="false"/>
   <arg name="depth_processing"                default="false"/>
@@ -120,7 +121,7 @@
       <arg name="enable_gyro"              value="$(arg enable_gyro)"/>
       <arg name="enable_accel"             value="$(arg enable_accel)"/>
       <arg name="filters"                  value="$(arg filters)"/>
-      <arg name="unite_imu_method"         value="$(arg unite_imu_method)"/> <!-- added -->
+      <arg name="unite_imu_method"         value="$(arg unite_imu_method)"/> <!-- [MODIFIED] -->
       <arg name="publish_tf"               value="$(arg publish_tf)"/>
       <arg name="tf_publish_rate"          value="$(arg tf_publish_rate)"/>
     </include>

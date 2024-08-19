@@ -2487,10 +2487,12 @@ namespace ORB_SLAM3
             // Add the current KeyFrame to the buffer in GeometrySegmentation
             AddKeyFrameToGeoSegKFBuffer(pKFini);
 
-            Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
-                                   to_string(mpAtlas->MarkersInMap()) + " markers, and " + to_string(mpAtlas->GetAllPlanes().size()) + " walls, and " +
-                                   to_string(mpAtlas->GetAllDoors().size()) + " doors.",
-                               Verbose::VERBOSITY_QUIET);
+            std::cout << "\n[Tracking]" << std::endl;
+            std::cout << "- New map created with #" << to_string(mpAtlas->MapPointsInMap()) << " points, " << std::endl;
+            // Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
+            //                        to_string(mpAtlas->MarkersInMap()) + " markers, and " + to_string(mpAtlas->GetAllPlanes().size()) + " walls, and " +
+            //                        to_string(mpAtlas->GetAllDoors().size()) + " doors.",
+            //                    Verbose::VERBOSITY_QUIET);
 
             mpLocalMapper->InsertKeyFrame(pKFini);
 
@@ -2642,10 +2644,12 @@ namespace ORB_SLAM3
         sMPs = pKFini->GetMapPoints();
 
         // Bundle Adjustment
-        Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
-                               to_string(mpAtlas->MarkersInMap()) + " markers, and " + to_string(mpAtlas->GetAllPlanes().size()) + " walls, and " +
-                               to_string(mpAtlas->GetAllDoors().size()) + " doors.",
-                           Verbose::VERBOSITY_QUIET);
+        std::cout << "\n[Tracking]" << std::endl;
+        std::cout << "- New map created with #" << to_string(mpAtlas->MapPointsInMap()) << " points, " << std::endl;
+        // Verbose::PrintMess("New Map created with " + to_string(mpAtlas->MapPointsInMap()) + " points, " +
+        //                        to_string(mpAtlas->MarkersInMap()) + " markers, and " + to_string(mpAtlas->GetAllPlanes().size()) + " walls, and " +
+        //                        to_string(mpAtlas->GetAllDoors().size()) + " doors.",
+        //                    Verbose::VERBOSITY_QUIET);
         Optimizer::GlobalBundleAdjustemnt(mpAtlas->GetCurrentMap(), 20, NULL, 0, true,
                                           SystemParams::GetParams()->markers.impact);
 

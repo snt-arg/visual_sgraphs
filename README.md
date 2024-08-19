@@ -56,30 +56,7 @@ sudo make install
 
 ### 🎞️ RealSense (Live Mode - optional) <a id="realsense"></a>
 
-For running in live mode, you need to first install `realsense-ros` using the instructions provided [here](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy), summarized as below:
-
-```
-# Catkin workspace folder
-mkdir -p ~/catkin_ws/src
-cd ~/catkin_ws/src/
-
-# Cloning the latest code
-git clone https://github.com/IntelRealSense/realsense-ros.git
-cd realsense-ros/
-git checkout `git tag | sort -V | grep -P "^2.\d+\.\d+" | tail -1`
-cd ..
-
-# Installing the library
-catkin init
-catkin build
-
-# Sourcing the new configurations
-# nano ~/.bashrc -> Add "alias sourcerealsense='source ~/workspace/realsense/rs_ros/devel/setup.bash'"
-sourcerealsense
-
-# Do a quick test
-roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
-```
+Please refer to [this page](/doc/RealSense/README.md) for detailed description on how to prepare a RealSense D400 series camera for live feed or data collection.
 
 ### 🎨 Kimera-Semantics (optional) <a id="kimera"></a>
 
@@ -243,17 +220,7 @@ Please note that in order to use inertial sensors (i.e., _IMU_) you need to init
 
 ### I. Using a RealSense Camera
 
-To record a `rosbag` file using a **RealSense D435i** camera and capture _IMU_, _aligned depth_, _stereo_, and _color_, you can follow these steps:
-
-- Calibrate the IMU according to the guideline provided [here](config/Calibration/RealSense_Depth_D435i_IMU_Calibration.pdf). You need to run the [Python Script](config/Calibration/python_scripts/rs-imu-calibration.py), follow the steps, and save the calibration parameters into the camera.
-- Make sure you have the necessary drivers and packages installed for the RealSense camera to work with `ROS`, including `realsense2_camera` and `realsense2_description` packages using the following command:
-- Launch the `realsense2_camera` node using the proper command:
-  - For Mono and RGB-D, with or without IMU, run `roslaunch realsense2_camera rs_rgbd.launch` (sample provided [here](/doc/realsense2_camera_rs_rgbd.launch)),
-  - For Mono and RGB-D, with or without IMU, run `roslaunch realsense2_camera rs_stereo.launch` (sample provided [here](/doc/realsense2_camera_rs_stereo.launch)),
-- Navigate to the directory where you want to save the rosbag file,
-- Record the topics of interest:
-  - For Mono and RGB-D, with or without IMU, run `rosbag record /camera/color/image_raw /camera/aligned_depth_to_color/image_raw /camera/color/camera_info /camera/aligned_depth_to_color/camera_info /camera/imu /camera/depth/color/points`.
-  - For Stereo, with or without IMU, run `rosbag record /camera/color/image_raw /camera/infra1/image_rect_raw /camera/infra2/image_rect_raw /camera/imu /camera/color/camera_info /camera/infra1/camera_info /camera/infra2/camera_info`.
+Please refer to [this page](/doc/RealSense/README.md) for detailed description on how to use a RealSense D400 series camera for data collection.
 
 ### II. Using the Handheld Device
 
