@@ -16,12 +16,6 @@ markers:
   # How much the framework should trust the markers (0.1 default, higher for mono setups)
   impact: 0.1
 
-############################## PointCloud Parameters #############################################
-pointcloud:
-  distance_thresh:
-    near: 0.3
-    far: 3.5
-
 ################################ Common Segmentation Parameters ##################################
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)

@@ -493,6 +493,11 @@ namespace ORB_SLAM3
         thDepth_ = readParameter<float>(fSettings, "Stereo.ThDepth", found);
         b_ = readParameter<float>(fSettings, "Stereo.b", found);
         bf_ = b_ * calibration1_->getParameter(0);
+        nearThresh_ = readParameter<float>(fSettings, "RGBD.NearThresh", found);
+        farThresh_ = readParameter<float>(fSettings, "RGBD.FarThresh", found);
+
+        // set distance threshold in the system params
+        SystemParams::GetParams()->pointcloud.distance_thresh = std::make_pair(nearThresh_, farThresh_);
     }
 
     void Settings::readORB(cv::FileStorage &fSettings)

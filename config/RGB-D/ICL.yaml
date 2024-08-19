@@ -32,8 +32,10 @@ Camera.RGB: 1
 Stereo.ThDepth: 10.0
 Stereo.b: 0.0745
 
-# Depth map values factor
+# RGBD parameters
 RGBD.DepthMapFactor: 1.0
+RGBD.NearThresh: 0.3
+RGBD.FarThresh: 10.0
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters

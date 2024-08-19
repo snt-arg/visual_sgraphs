@@ -41,10 +41,6 @@ namespace ORB_SLAM3
             // Marker Parameters
             markers.impact = mConfig["markers"]["impact"].as<float>();
 
-            // PointCloud Parameters
-            pointcloud.distance_thresh = std::make_pair(mConfig["pointcloud"]["distance_thresh"]["near"].as<float>(),
-                                                        mConfig["pointcloud"]["distance_thresh"]["far"].as<float>());
-
             // Common Segmentation Parameters
             seg.pointclouds_thresh = mConfig["seg"]["pointclouds_thresh"].as<unsigned int>();
             seg.ransac.max_planes = mConfig["seg"]["ransac"]["max_planes"].as<unsigned int>();

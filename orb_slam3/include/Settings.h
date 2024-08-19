@@ -203,6 +203,7 @@ namespace ORB_SLAM3
          * RGBD stuff
          */
         float depthMapFactor_;
+        float nearThresh_, farThresh_;
 
         /*
          * ORB stuff
