@@ -13,7 +13,7 @@ Here you can find the required notes to properly use RealSense sensors to collec
   - [Calibrating IMU](#imu)
 - [Data Collection Procedure](#data)
 
-## Installation <a id="instal"></a>
+## ⚙️ Installation <a id="instal"></a>
 
 The first step is to install `realsense-ros`, following the instructions provided [in this link](https://github.com/IntelRealSense/realsense-ros/tree/ros1-legacy). You can also find a summary of the required steps below. Please note that this is **ROS-1** wrapper of the library, compatible with `vS-Graphs`.
 
@@ -46,7 +46,7 @@ roslaunch realsense2_camera rs_rgbd.launch [2>/dev/null]
 
 The installation directory, shown as `realsense-ros`, will have `realsense2_camera` and `realsense2_description` directories.
 
-## Launch File Modification <a id="modify"></a>
+## 📝 Launch File Modification <a id="modify"></a>
 
 The second step is to modify the launch file provided for launching RealSense to capture the topics required in `vS-Graphs`. Accordingly, you need to modify the values related to _IMU_, _aligned depth_, _stereo_, and _color_. To simplify having the required changes, you can use the modified versions of the launch files here:
 
@@ -55,7 +55,7 @@ The second step is to modify the launch file provided for launching RealSense to
 
 Finally, you can run the desired launch file using the command `roslaunch realsense2_camera [rs_X].launch`.
 
-### Using Presets <a id="presets"></a>
+### ⚠️ Using Presets <a id="presets"></a>
 
 RealSense D400 series contain various presets, well-adapted for different applications, such as hand gesture recognition or robotics. The argument `json_file_path` in the launch files described above keeps the path to these presets (if not provided, it uses the default preset). You can read more about the available presets in [this link](https://dev.intelrealsense.com/docs/d400-series-visual-presets).
 
@@ -67,7 +67,7 @@ Accordingly, you can download a preset (also available [here](/doc/RealSense/pre
 
 For `vS-Graphs` as a robotics framework, [high-accuracy](/doc/RealSense/presets/HighAccuracyPreset.json) can provide high confidence threshold value of depth and lower fill factor.
 
-## Calibration <a id="calibrate"></a>
+## 🔨 Calibration <a id="calibrate"></a>
 
 Generally, no calibration process is required for D400 seriers RGB cameras.
 
@@ -75,7 +75,7 @@ Generally, no calibration process is required for D400 seriers RGB cameras.
 
 In case you need to use the IMU sensor, you first need to calibrate it according to the guideline provided [here](/doc/RealSense/calibration/rs_d435i_imu_calibration.pdf). Accordingly, you need to run the [Python Script](/doc/RealSense/calibration/rs-imu-calibration.py), follow the steps shown in the terminal, and save the calibration parameters **into the camera**.
 
-## Data Collection Procedure <a id="data"></a>
+## 💽 Data Collection Procedure <a id="data"></a>
 
 The type of data fed to `vS-Graphs` is `rosbag` files recorded in ROS-1. In case you need to record a `rosbag` using a RealSense D400 series camera, follow the steps provided below:
 
