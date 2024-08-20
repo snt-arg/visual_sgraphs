@@ -83,14 +83,29 @@ namespace ORB_SLAM3
                                            const LoopClosing::KeyFrameAndPose &CorrectedSim3,
                                            const map<KeyFrame *, set<KeyFrame *>> &LoopConnections,
                                            const bool &bFixScale);
-        void static OptimizeEssentialGraph(KeyFrame *pCurKF, vector<KeyFrame *> &vpFixedKFs, vector<KeyFrame *> &vpFixedCorrectedKFs,
-                                           vector<KeyFrame *> &vpNonFixedKFs, vector<MapPoint *> &vpNonCorrectedMPs);
+
+        /**
+         * @brief Optimize the Essential Graph when a loop closure is detected
+         *
+         * @param pCurKF Current KeyFrame
+         * @param vpFixedKFs Fixed KeyFrames
+         * @param vpFixedCorrectedKFs Corrected Fixed KeyFrames
+         * @param vpNonFixedKFs Non-Fixed KeyFrames
+         * @param vpNonCorrectedMPs Non-Corrected MapPoints
+         * @param vpCurrentMapDoors Current Map Doors
+         * @param vpCurrentMapPlanes Current Map Planes
+         * @param vpCurrentMapMarkers Current Map Markers
+         * @param vpCurrentDMapRooms Current Detected Map Rooms
+         * @param vpCurrentMMapRooms Current Marker-based Map Rooms
+         */
+        void static OptimizeEssentialGraph(KeyFrame *pCurKF, vector<KeyFrame *> &vpFixedKFs,
+                                           vector<KeyFrame *> &vpFixedCorrectedKFs, vector<KeyFrame *> &vpNonFixedKFs,
+                                           vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
+                                           vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
+                                           vector<Room *> &vpCurrentDMapRooms, vector<Room *> &vpCurrentMMapRooms);
 
         // For inertial loopclosing
-        void static OptimizeEssentialGraph4DoF(Map *pMap, KeyFrame *pLoopKF, KeyFrame *pCurKF,
-                                               const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,
-                                               const LoopClosing::KeyFrameAndPose &CorrectedSim3,
-                                               const map<KeyFrame *, set<KeyFrame *>> &LoopConnections);
+        void static OptimizeEssentialGraph4DoF(Map *pMap, KeyFrame *pLoopKF, KeyFrame *pCurKF, const LoopClosing::KeyFrameAndPose &NonCorrectedSim3, const LoopClosing::KeyFrameAndPose &CorrectedSim3, const map<KeyFrame *, set<KeyFrame *>> &LoopConnections);
 
         // if bFixScale is true, optimize SE3 (stereo,rgbd), Sim3 otherwise (mono) (NEW)
         static int OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, std::vector<MapPoint *> &vpMatches1,

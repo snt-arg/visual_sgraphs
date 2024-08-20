@@ -58,20 +58,6 @@ namespace ORB_SLAM3
         }
     }
 
-    [[deprecated]] std::vector<Marker *> Plane::getMarkers() const
-    {
-        return markers;
-    }
-
-    [[deprecated]] void Plane::setMarkers(Marker *value)
-    {
-        // Check if the marker is not already added in the list of plane markers
-        if (std::find(markers.begin(), markers.end(), value) == markers.end())
-        {
-            markers.push_back(value);
-        }
-    }
-
     std::set<MapPoint *> Plane::getMapPoints()
     {
         unique_lock<mutex> lock(mMutexPoint);
@@ -117,7 +103,7 @@ namespace ORB_SLAM3
     void Plane::castWeightedVote(Plane::planeVariant semanticType, double voteWeight)
     {
         unique_lock<mutex> lock(mMutexType);
-        
+
         // check if semantic type is already in the semanticVotes map
         if (semanticVotes.find(semanticType) == semanticVotes.end())
             semanticVotes[semanticType] = voteWeight;

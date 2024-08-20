@@ -1550,12 +1550,17 @@ namespace ORB_SLAM3
         double timeWeldingBA = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(time_EndWeldingBA - time_StartWeldingBA).count();
         vdWeldingBA_ms.push_back(timeWeldingBA);
 #endif
-        // Loop closed. Release Local Mapping.
+        // Release Local Mapping after the loop closure
         mpLocalMapper->Release();
 
-        // Update the non critical area from the current map to the merged map
+        // Get the non-critical area from the current map to the new (merged) map
+        vector<Door *> vpCurrentMapDoors = pCurrentMap->GetAllDoors();
+        vector<Plane *> vpCurrentMapPlanes = pCurrentMap->GetAllPlanes();
         vector<KeyFrame *> vpCurrentMapKFs = pCurrentMap->GetAllKeyFrames();
         vector<MapPoint *> vpCurrentMapMPs = pCurrentMap->GetAllMapPoints();
+        vector<Marker *> vpCurrentMapMarkers = pCurrentMap->GetAllMarkers();
+        vector<Room *> vpCurrentDetectedMapRooms = pCurrentMap->GetAllDetectedMapRooms();
+        vector<Room *> vpCurrentMarkerBasedMapRooms = pCurrentMap->GetAllMarkerBasedMapRooms();
 
         if (vpCurrentMapKFs.size() != 0)
         {
@@ -1621,27 +1626,29 @@ namespace ORB_SLAM3
             while (!mpLocalMapper->isStopped())
                 usleep(1000);
 
-            // Optimize graph (and update the loop position for each element form the begining to the end)
+            // For non-monocular sensors, optimize the essential graph and update the loop position for each element
             if (mpTracker->mSensor != System::MONOCULAR)
-                Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs, vpCurrentMapKFs, vpCurrentMapMPs);
+                Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs,
+                                                  vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapDoors, vpCurrentMapPlanes,
+                                                  vpCurrentMapMarkers, vpCurrentDetectedMapRooms, vpCurrentMarkerBasedMapRooms);
 
             {
                 // Get Merge Map Mutex
                 unique_lock<mutex> currentLock(pCurrentMap->mMutexMapUpdate); // We update the current map with the Merge information
                 unique_lock<mutex> mergeLock(pMergeMap->mMutexMapUpdate);     // We remove the Kfs and MPs in the merged area from the old map
 
+                // Loop over the KeyFrames of the current map and move them to the new map
                 for (KeyFrame *pKFi : vpCurrentMapKFs)
                 {
                     if (!pKFi || pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
                         continue;
 
-                    // Make sure connections are updated
                     pKFi->UpdateMap(pMergeMap);
                     pMergeMap->AddKeyFrame(pKFi);
-
                     pCurrentMap->EraseKeyFrame(pKFi);
                 }
 
+                // Loop over the MapPoints of the current map and move them to the new map
                 for (MapPoint *pMPi : vpCurrentMapMPs)
                 {
                     if (!pMPi || pMPi->isBad())
@@ -1652,7 +1659,60 @@ namespace ORB_SLAM3
                     pCurrentMap->EraseMapPoint(pMPi);
                 }
 
-                // [TODO] Iterate over planes
+                // Loop over the Markers of the current map and move them to the new map
+                for (Marker *pMarker : vpCurrentMapMarkers)
+                {
+                    if (!pMarker)
+                        continue;
+
+                    pMarker->SetMap(pMergeMap);
+                    pMergeMap->AddMapMarker(pMarker);
+                    pCurrentMap->EraseMapMarker(pMarker);
+                }
+
+                // Loop over the Doors of the current map and move them to the new map
+                for (Door *pDoor : vpCurrentMapDoors)
+                {
+                    if (!pDoor)
+                        continue;
+
+                    pDoor->SetMap(pMergeMap);
+                    pMergeMap->AddMapDoor(pDoor);
+                    pCurrentMap->EraseMapDoor(pDoor);
+                }
+
+                // Loop over the Planes of the current map and move them to the new map
+                for (Plane *pPlane : vpCurrentMapPlanes)
+                {
+                    if (!pPlane)
+                        continue;
+
+                    pPlane->SetMap(pMergeMap);
+                    pMergeMap->AddMapPlane(pPlane);
+                    pCurrentMap->EraseMapPlane(pPlane);
+                }
+
+                // Loop over the Detected Rooms of the current map and move them to the new map
+                for (Room *pRoom : vpCurrentDetectedMapRooms)
+                {
+                    if (!pRoom)
+                        continue;
+
+                    pRoom->SetMap(pMergeMap);
+                    pMergeMap->AddDetectedMapRoom(pRoom);
+                    pCurrentMap->EraseDetectedMapRoom(pRoom);
+                }
+
+                // Loop over the Marker-based Rooms of the current map and move them to the new map
+                for (Room *pRoom : vpCurrentMarkerBasedMapRooms)
+                {
+                    if (!pRoom)
+                        continue;
+
+                    pRoom->SetMap(pMergeMap);
+                    pMergeMap->AddMarkerBasedMapRoom(pRoom);
+                    pCurrentMap->EraseMarkerBasedMapRoom(pRoom);
+                }
             }
         }
 

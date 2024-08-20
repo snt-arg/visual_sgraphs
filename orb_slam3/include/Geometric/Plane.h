@@ -31,28 +31,27 @@ namespace ORB_SLAM3
             GROUND = 1,
             WINDOW = 2
         };
-        
-        bool excludedFromAssoc;                                  // The plane's exclusion from association (once excluded, can't be associated again)
-        
+
+        bool excludedFromAssoc; // The plane's exclusion from association (once excluded, can't be associated again)
+
         // Variables for bundle adjustment
-        KeyFrame *referenceKeyFrame;                             // The first keyframe that observed the plane is the reference keyframe
-        unsigned long int mnBAGlobalForKF;                       // The reference keyframe ID for the Global BA the plane was part of
-        g2o::Plane3D mPlaneGBA;                                  // The plane equation in the global map after the Global BA
+        KeyFrame *referenceKeyFrame;       // The first keyframe that observed the plane is the reference keyframe
+        unsigned long int mnBAGlobalForKF; // The reference keyframe ID for the Global BA the plane was part of
+        g2o::Plane3D mPlaneGBA;            // The plane equation in the global map after the Global BA
 
     private:
-        int id;                                                  // The plane's identifier
-        int opId;                                                // The plane's identifier in the local optimizer
-        int opIdG;                                               // The plane's identifier in the global optimizer
-        planeVariant planeType;                                  // The plane's semantic type (e.g., wall, ground, etc.)
-        Eigen::Vector3f centroid;                                // The centroid of the plane
-        std::vector<uint8_t> color;                              // A color devoted for visualization
-        g2o::Plane3D localEquation;                              // The plane equation in the local map
-        g2o::Plane3D globalEquation;                             // The plane equation in the global map
-        std::vector<Marker *> markers;                           // The list of markers lying on the plane
-        std::set<MapPoint *> mapPoints;                          // The unique set of map points lying on the plane
-        std::map<planeVariant, double> semanticVotes;            // The votes for the semantic type of the plane
-        std::map<KeyFrame *, g2o::Plane3D> observations;         // Plane's observations in keyFrames
-        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud;      // The point cloud of the plane
+        int id;                                             // The plane's identifier
+        int opId;                                           // The plane's identifier in the local optimizer
+        int opIdG;                                          // The plane's identifier in the global optimizer
+        planeVariant planeType;                             // The plane's semantic type (e.g., wall, ground, etc.)
+        Eigen::Vector3f centroid;                           // The centroid of the plane
+        std::vector<uint8_t> color;                         // A color devoted for visualization
+        g2o::Plane3D localEquation;                         // The plane equation in the local map
+        g2o::Plane3D globalEquation;                        // The plane equation in the global map
+        std::set<MapPoint *> mapPoints;                     // The unique set of map points lying on the plane
+        std::map<planeVariant, double> semanticVotes;       // The votes for the semantic type of the plane
+        std::map<KeyFrame *, g2o::Plane3D> observations;    // Plane's observations in keyFrames
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud; // The point cloud of the plane
 
     public:
         Plane();
@@ -69,9 +68,6 @@ namespace ORB_SLAM3
 
         void setColor();
         std::vector<uint8_t> getColor() const;
-
-        void setMarkers(Marker *value);
-        std::vector<Marker *> getMarkers() const;
 
         planeVariant getPlaneType();
         void setPlaneType(planeVariant newType);

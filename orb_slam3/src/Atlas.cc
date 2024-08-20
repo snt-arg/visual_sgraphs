@@ -121,10 +121,6 @@ namespace ORB_SLAM3
 
     void Atlas::AddMapPlane(Plane *plane)
     {
-        // Add it to the list of visited marker-ids of planes
-        for (Marker *planeMarker : plane->getMarkers())
-            visitedPlanesMarkerIds.push_back(planeMarker->getId());
-
         // Add it to the map
         Map *pMapMP = plane->GetMap();
         pMapMP->AddMapPlane(plane);

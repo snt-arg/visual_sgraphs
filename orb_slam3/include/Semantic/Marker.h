@@ -25,15 +25,15 @@ namespace ORB_SLAM3
         };
 
     private:
-        int id;                                           // The marker's identifier
-        int opId;                                         // The marker's identifier in the local optimizer
-        int opIdG;                                        // The marker's identifier in the global optimizer
-        double time;                                      // The timestamp (in seconds) of observing the marker
-        bool markerInGMap;                                // Check if the marker is in the Global Map or not
-        Sophus::SE3f localPose;                           // Marker's pose (position and orientation) in the Local Map
-        Sophus::SE3f globalPose;                          // Marker's pose (position and orientation) in the Global Map
-        markerVariant markerType;                         // The semantic object the marker is labeled with (e.g., wall, etc.)
-        std::map<KeyFrame *, Sophus::SE3f> mObservations; // Marker's observations in keyFrames
+        int id;                                          // The marker's identifier
+        int opId;                                        // The marker's identifier in the local optimizer
+        int opIdG;                                       // The marker's identifier in the global optimizer
+        double time;                                     // The timestamp (in seconds) of observing the marker
+        bool markerInGMap;                               // Check if the marker is in the Global Map or not
+        Sophus::SE3f localPose;                          // Marker's pose (position and orientation) in the Local Map
+        Sophus::SE3f globalPose;                         // Marker's pose (position and orientation) in the Global Map
+        markerVariant markerType;                        // The semantic object the marker is labeled with (e.g., wall, etc.)
+        std::map<KeyFrame *, Sophus::SE3f> observations; // Marker's observations in KeyFrames
 
     public:
         Marker();

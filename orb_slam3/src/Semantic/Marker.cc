@@ -91,12 +91,12 @@ namespace ORB_SLAM3
 
     const std::map<KeyFrame *, Sophus::SE3f> &Marker::getObservations() const
     {
-        return mObservations;
+        return observations;
     }
 
     void Marker::addObservation(KeyFrame *pKF, Sophus::SE3f localPose)
     {
-        mObservations.insert({pKF, localPose});
+        observations.insert({pKF, localPose});
     }
 
     Map *Marker::GetMap()

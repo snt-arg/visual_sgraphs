@@ -2462,22 +2462,20 @@ namespace ORB_SLAM3
             pMP->UpdateNormalAndDepth();
         }
 
-        // [TODO] Correct Planes
-
-        // TODO Check this changeindex
         pMap->IncreaseChangeIndex();
     }
 
-    void Optimizer::OptimizeEssentialGraph(KeyFrame *pCurKF, vector<KeyFrame *> &vpFixedKFs, vector<KeyFrame *> &vpFixedCorrectedKFs,
-                                           vector<KeyFrame *> &vpNonFixedKFs, vector<MapPoint *> &vpNonCorrectedMPs)
+    void Optimizer::OptimizeEssentialGraph(KeyFrame *pCurKF, vector<KeyFrame *> &vpFixedKFs,
+                                           vector<KeyFrame *> &vpFixedCorrectedKFs, vector<KeyFrame *> &vpNonFixedKFs,
+                                           vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
+                                           vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
+                                           vector<Room *> &vpCurrentDMapRooms, vector<Room *> &vpCurrentMMapRooms)
     {
-        Verbose::PrintMess("Opt_Essential: There are " + to_string(vpFixedKFs.size()) + " KFs fixed in the merged map", Verbose::VERBOSITY_DEBUG);
-        Verbose::PrintMess("Opt_Essential: There are " + to_string(vpFixedCorrectedKFs.size()) + " KFs fixed in the old map", Verbose::VERBOSITY_DEBUG);
-        Verbose::PrintMess("Opt_Essential: There are " + to_string(vpNonFixedKFs.size()) + " KFs non-fixed in the merged map", Verbose::VERBOSITY_DEBUG);
-        Verbose::PrintMess("Opt_Essential: There are " + to_string(vpNonCorrectedMPs.size()) + " MPs non-corrected in the merged map", Verbose::VERBOSITY_DEBUG);
-
+        // Variables
         g2o::SparseOptimizer optimizer;
         optimizer.setVerbose(false);
+
+        // Linear solver and block solver
         g2o::BlockSolver_7_3::LinearSolverType *linearSolver =
             new g2o::LinearSolverEigen<g2o::BlockSolver_7_3::PoseMatrixType>();
         g2o::BlockSolver_7_3 *solver_ptr = new g2o::BlockSolver_7_3(linearSolver);
@@ -2486,6 +2484,7 @@ namespace ORB_SLAM3
         solver->setUserLambdaInit(1e-16);
         optimizer.setAlgorithm(solver);
 
+        // Get map
         Map *pMap = pCurKF->GetMap();
         const unsigned int nMaxKFid = pMap->GetMaxKFid();
 
@@ -2498,6 +2497,7 @@ namespace ORB_SLAM3
 
         const int minFeat = 100;
 
+        // Loop over fixed KeyFrames
         for (KeyFrame *pKFi : vpFixedKFs)
         {
             if (pKFi->isBad())
@@ -2526,8 +2526,8 @@ namespace ORB_SLAM3
             vpGoodPose[nIDi] = true;
             vpBadPose[nIDi] = false;
         }
-        Verbose::PrintMess("Opt_Essential: vpFixedKFs loaded", Verbose::VERBOSITY_DEBUG);
 
+        // Loop over fixed corrected KeyFrames
         set<unsigned long> sIdKF;
         for (KeyFrame *pKFi : vpFixedCorrectedKFs)
         {
@@ -2562,6 +2562,7 @@ namespace ORB_SLAM3
             vpBadPose[nIDi] = true;
         }
 
+        // Loop over non-fixed KeyFrames
         for (KeyFrame *pKFi : vpNonFixedKFs)
         {
             if (pKFi->isBad())
@@ -2729,9 +2730,7 @@ namespace ORB_SLAM3
             }
 
             if (num_connections == 0)
-            {
                 Verbose::PrintMess("Opt_Essential: KF " + to_string(pKFi->mnId) + " has 0 connections", Verbose::VERBOSITY_DEBUG);
-            }
         }
 
         // Optimize!
@@ -2740,7 +2739,8 @@ namespace ORB_SLAM3
 
         unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
-        // SE3 Pose Recovering. Sim3:[sR t;0 1] -> SE3:[R t/s;0 1]
+        // Loop over non-fixed KeyFrames to correct them
+        // [hint] Sim3 [sR t | 0 1] --> SE3 [R t/s| 0 1]
         for (KeyFrame *pKFi : vpNonFixedKFs)
         {
             if (pKFi->isBad())
@@ -2759,7 +2759,7 @@ namespace ORB_SLAM3
             pKFi->SetPose(Tiw.cast<float>());
         }
 
-        // Correct points. Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+        // Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
         for (MapPoint *pMPi : vpNonCorrectedMPs)
         {
             if (pMPi->isBad())
@@ -2788,10 +2788,74 @@ namespace ORB_SLAM3
 
                 pMPi->UpdateNormalAndDepth();
             }
-            else
+        }
+
+        // Correct the pose of the detected markers in the new map
+        for (Marker *pMarker : vpCurrentMapMarkers)
+        {
+            // Get a reference KeyFrame related to the marker
+            KeyFrame *pRefKF = nullptr;
+            Sophus::SE3f localPose = pMarker->getLocalPose();
+            std::map<KeyFrame *, Sophus::SE3f> observations = pMarker->getObservations();
+
+            // If the marker has no observations, continue
+            if (observations.empty())
+                continue;
+
+            // Set the first KeyFrame as the reference KeyFrame
+            pRefKF = observations.begin()->first;
+
+            // If the reference KeyFrame is bad, continue
+            if (pRefKF->isBad())
+                continue;
+
+            // Get the corrected pose of the reference KeyFrame
+            if (pRefKF && vpBadPose[pRefKF->mnId])
             {
-                cout << "ERROR: MapPoint has a reference KF from another map" << endl;
+                Sophus::SE3f Twr = pRefKF->GetPoseInverse();
+                Sophus::SE3f TNonCorrectedwr = pRefKF->mTwcBefMerge;
+
+                // Transform the local pose to the world coordinate system
+                Eigen::Vector3f correctedGlobalPose = Twr * TNonCorrectedwr.inverse() * localPose.translation();
+
+                // Set the corrected global pose to the marker
+                pMarker->setGlobalPose(Sophus::SE3f(Sophus::SO3f(), correctedGlobalPose));
             }
+        }
+
+        // Correct the pose of the detected planes in the new map
+        for (Plane *pPlane : vpCurrentMapPlanes)
+        {
+            // Get a reference KeyFrame related to the plane
+            KeyFrame *pRefKF = pPlane->referenceKeyFrame;
+
+            // If the reference KeyFrame is bad, continue
+            if (pRefKF->isBad())
+                continue;
+
+            // Get the corrected pose of the reference KeyFrame
+            if (pRefKF && vpBadPose[pRefKF->mnId])
+            {
+                Sophus::SE3f Tcorc = pRefKF->GetPoseInverse() * pRefKF->mTcwBefGBA;
+                // Transform the local pose to the world coordinate system
+                g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(Tcorc.matrix().cast<double>(), pPlane->getGlobalEquation());
+                pPlane->setGlobalEquation(globalEquation);
+            }
+        }
+
+        for (Door *pDoor : vpCurrentMapDoors)
+        {
+            // [TODO]
+        }
+
+        for (Room *pRoom : vpCurrentDMapRooms)
+        {
+            // [TODO]
+        }
+
+        for (Room *pRoom : vpCurrentMMapRooms)
+        {
+            // [TODO]
         }
     }
 
