@@ -136,7 +136,7 @@ namespace ORB_SLAM3
         void CorrectLoop();
 
         void MergeLocal();
-        void MergeLocal2();
+        void MergeLocalInertial();
 
         void CheckObservations(set<KeyFrame *> &spKFsMap1, set<KeyFrame *> &spKFsMap2);
 

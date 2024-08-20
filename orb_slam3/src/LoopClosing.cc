@@ -162,16 +162,18 @@ namespace ORB_SLAM3
 
                             mg2oMergeScw = mg2oMergeSlw;
 
-                            Verbose::PrintMess("*Merge detected", Verbose::VERBOSITY_QUIET);
+                            std::cout << "\n[Loop Closing]" << std::endl;
+                            std::cout << "- Map merge has been triggered ..." << std::endl;
 
 #ifdef REGISTER_TIMES
                             std::chrono::steady_clock::time_point time_StartMerge = std::chrono::steady_clock::now();
-
                             nMerges += 1;
 #endif
-                            // TODO UNCOMMENT
-                            if (mpTracker->mSensor == System::IMU_MONOCULAR || mpTracker->mSensor == System::IMU_STEREO || mpTracker->mSensor == System::IMU_RGBD)
-                                MergeLocal2();
+                            // Check which merge method to use based on the inertial sensor
+                            if (mpTracker->mSensor == System::IMU_MONOCULAR ||
+                                mpTracker->mSensor == System::IMU_STEREO ||
+                                mpTracker->mSensor == System::IMU_RGBD)
+                                MergeLocalInertial();
                             else
                                 MergeLocal();
 
@@ -182,7 +184,8 @@ namespace ORB_SLAM3
                             vdMergeTotal_ms.push_back(timeMergeTotal);
 #endif
 
-                            Verbose::PrintMess("Merge finished!", Verbose::VERBOSITY_QUIET);
+                            std::cout << "\n[Loop Closing]" << std::endl;
+                            std::cout << "- Map merge has been finished." << std::endl;
                         }
 
                         vdPR_CurrentTime.push_back(mpCurrentKF->mTimeStamp);
@@ -198,9 +201,9 @@ namespace ORB_SLAM3
                         mnMergeNumNotFound = 0;
                         mbMergeDetected = false;
 
+                        // Reset all loop variables if a loop is detected
                         if (mbLoopDetected)
                         {
-                            // Reset Loop variables
                             mpLoopLastCurrentKF->SetErase();
                             mpLoopMatchedKF->SetErase();
                             mnLoopNumCoincidences = 0;
@@ -1186,20 +1189,19 @@ namespace ORB_SLAM3
 
     void LoopClosing::MergeLocal()
     {
-        int numTemporalKFs = 25; // Temporal KFs in the local window if the map is inertial.
+        int numTemporalKFs = 25;
 
-        // Relationship to rebuild the essential graph, it is used two times, first in the local window and later in the rest of the map
+        // Variables to rebuild the essential graph
         KeyFrame *pNewChild;
         KeyFrame *pNewParent;
 
-        vector<KeyFrame *> vpLocalCurrentWindowKFs;
         vector<KeyFrame *> vpMergeConnectedKFs;
+        vector<KeyFrame *> vpLocalCurrentWindowKFs;
 
-        // Flag that is true only when we stopped a running BA, in this case we need relaunch at the end of the merge
+        // A flag to relaunch the BA after the merge
         bool bRelaunchBA = false;
 
-        // Verbose::PrintMess("MERGE-VISUAL: Check Full Bundle Adjustment", Verbose::VERBOSITY_DEBUG);
-        //  If a Global Bundle Adjustment is running, abort it
+        // Abort a runnig Global Bundle Adjustment thread, if any
         if (isRunningGBA())
         {
             unique_lock<mutex> lock(mMutexGBA);
@@ -1212,41 +1214,36 @@ namespace ORB_SLAM3
                 mpThreadGBA->detach();
                 delete mpThreadGBA;
             }
+
             bRelaunchBA = true;
         }
 
-        // Verbose::PrintMess("MERGE-VISUAL: Request Stop Local Mapping", Verbose::VERBOSITY_DEBUG);
-        // cout << "Request Stop Local Mapping" << endl;
+        // Stop the local mapping thread
         mpLocalMapper->RequestStop();
-        // Wait until Local Mapping has effectively stopped
         while (!mpLocalMapper->isStopped())
         {
             usleep(1000);
         }
-        // cout << "Local Map stopped" << endl;
 
+        // Stop the local mapping queue
         mpLocalMapper->EmptyQueue();
 
-        // Merge map will become in the new active map with the local window of KFs and MPs from the current map.
-        // Later, the elements of the current map will be transform to the new active map reference, in order to keep real time tracking
         Map *pCurrentMap = mpCurrentKF->GetMap();
         Map *pMergeMap = mpMergeMatchedKF->GetMap();
-
-        // std::cout << "Merge local, Active map: " << pCurrentMap->GetId() << std::endl;
-        // std::cout << "Merge local, Non-Active map: " << pMergeMap->GetId() << std::endl;
 
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartMerge = std::chrono::steady_clock::now();
 #endif
 
-        // Ensure current keyframe is updated
+        // Ensure the current KeyFrame is updated
         mpCurrentKF->UpdateConnections();
 
-        // Get the current KF and its neighbors(visual->covisibles; inertial->temporal+covisibles)
+        // Get the current KeyFrame and its neighbors (covisibles for visual and temporal and covisibles for inertial)
         set<KeyFrame *> spLocalWindowKFs;
-        // Get MPs in the welding area from the current map
+
+        // Get map points in the welding area from the current map
         set<MapPoint *> spLocalWindowMPs;
-        if (pCurrentMap->IsInertial() && pMergeMap->IsInertial()) // TODO Check the correct initialization
+        if (pCurrentMap->IsInertial() && pMergeMap->IsInertial())
         {
             KeyFrame *pKFi = mpCurrentKF;
             int nInserted = 0;
@@ -1272,15 +1269,14 @@ namespace ORB_SLAM3
             }
         }
         else
-        {
             spLocalWindowKFs.insert(mpCurrentKF);
-        }
 
         vector<KeyFrame *> vpCovisibleKFs = mpCurrentKF->GetBestCovisibilityKeyFrames(numTemporalKFs);
         spLocalWindowKFs.insert(vpCovisibleKFs.begin(), vpCovisibleKFs.end());
         spLocalWindowKFs.insert(mpCurrentKF);
         const int nMaxTries = 5;
         int nNumTries = 0;
+
         while (spLocalWindowKFs.size() < numTemporalKFs && nNumTries < nMaxTries)
         {
             vector<KeyFrame *> vpNewCovKFs;
@@ -1289,12 +1285,8 @@ namespace ORB_SLAM3
             {
                 vector<KeyFrame *> vpKFiCov = pKFi->GetBestCovisibilityKeyFrames(numTemporalKFs / 2);
                 for (KeyFrame *pKFcov : vpKFiCov)
-                {
                     if (pKFcov && !pKFcov->isBad() && spLocalWindowKFs.find(pKFcov) == spLocalWindowKFs.end())
-                    {
                         vpNewCovKFs.push_back(pKFcov);
-                    }
-                }
             }
 
             spLocalWindowKFs.insert(vpNewCovKFs.begin(), vpNewCovKFs.end());
@@ -1310,10 +1302,8 @@ namespace ORB_SLAM3
             spLocalWindowMPs.insert(spMPs.begin(), spMPs.end());
         }
 
-        // std::cout << "[Merge]: Ma = " << to_string(pCurrentMap->GetId()) << "; #KFs = " << to_string(spLocalWindowKFs.size()) << "; #MPs = " << to_string(spLocalWindowMPs.size()) << std::endl;
-
         set<KeyFrame *> spMergeConnectedKFs;
-        if (pCurrentMap->IsInertial() && pMergeMap->IsInertial()) // TODO Check the correct initialization
+        if (pCurrentMap->IsInertial() && pMergeMap->IsInertial())
         {
             KeyFrame *pKFi = mpMergeMatchedKF;
             int nInserted = 0;
@@ -1332,13 +1322,13 @@ namespace ORB_SLAM3
             }
         }
         else
-        {
             spMergeConnectedKFs.insert(mpMergeMatchedKF);
-        }
+
         vpCovisibleKFs = mpMergeMatchedKF->GetBestCovisibilityKeyFrames(numTemporalKFs);
         spMergeConnectedKFs.insert(vpCovisibleKFs.begin(), vpCovisibleKFs.end());
         spMergeConnectedKFs.insert(mpMergeMatchedKF);
         nNumTries = 0;
+
         while (spMergeConnectedKFs.size() < numTemporalKFs && nNumTries < nMaxTries)
         {
             vector<KeyFrame *> vpNewCovKFs;
@@ -1346,12 +1336,8 @@ namespace ORB_SLAM3
             {
                 vector<KeyFrame *> vpKFiCov = pKFi->GetBestCovisibilityKeyFrames(numTemporalKFs / 2);
                 for (KeyFrame *pKFcov : vpKFiCov)
-                {
                     if (pKFcov && !pKFcov->isBad() && spMergeConnectedKFs.find(pKFcov) == spMergeConnectedKFs.end())
-                    {
                         vpNewCovKFs.push_back(pKFcov);
-                    }
-                }
             }
 
             spMergeConnectedKFs.insert(vpNewCovKFs.begin(), vpNewCovKFs.end());
@@ -1369,13 +1355,10 @@ namespace ORB_SLAM3
         vpCheckFuseMapPoint.reserve(spMapPointMerge.size());
         std::copy(spMapPointMerge.begin(), spMapPointMerge.end(), std::back_inserter(vpCheckFuseMapPoint));
 
-        // std::cout << "[Merge]: Mm = " << to_string(pMergeMap->GetId()) << "; #KFs = " << to_string(spMergeConnectedKFs.size()) << "; #MPs = " << to_string(spMapPointMerge.size()) << std::endl;
-
-        //
         Sophus::SE3d Twc = mpCurrentKF->GetPoseInverse().cast<double>();
         g2o::Sim3 g2oNonCorrectedSwc(Twc.unit_quaternion(), Twc.translation(), 1.0);
         g2o::Sim3 g2oNonCorrectedScw = g2oNonCorrectedSwc.inverse();
-        g2o::Sim3 g2oCorrectedScw = mg2oMergeScw; // TODO Check the transformation
+        g2o::Sim3 g2oCorrectedScw = mg2oMergeScw;
 
         KeyFrameAndPose vCorrectedSim3, vNonCorrectedSim3;
         vCorrectedSim3[mpCurrentKF] = g2oCorrectedScw;
@@ -1428,13 +1411,10 @@ namespace ORB_SLAM3
                 Eigen::Quaternionf Rcor = (g2oCorrectedSiw.rotation().inverse() * vNonCorrectedSim3[pKFi].rotation()).cast<float>();
                 pKFi->mVwbMerge = Rcor * pKFi->GetVelocity();
             }
-
-            // TODO DEBUG to know which are the KFs that had been moved to the other map
         }
 
         int numPointsWithCorrection = 0;
 
-        // for(MapPoint* pMPi : spLocalWindowMPs)
         set<MapPoint *>::iterator itMP = spLocalWindowMPs.begin();
         while (itMP != spLocalWindowMPs.end())
         {
@@ -1465,27 +1445,15 @@ namespace ORB_SLAM3
 
             itMP++;
         }
-        /*if(numPointsWithCorrection>0)
-        {
-            std::cout << "[Merge]: " << std::to_string(numPointsWithCorrection) << " points removed from Ma due to its reference KF is not in welding area" << std::endl;
-            std::cout << "[Merge]: Ma has " << std::to_string(spLocalWindowMPs.size()) << " points" << std::endl;
-        }*/
 
         {
             unique_lock<mutex> currentLock(pCurrentMap->mMutexMapUpdate); // We update the current map with the Merge information
             unique_lock<mutex> mergeLock(pMergeMap->mMutexMapUpdate);     // We remove the Kfs and MPs in the merged area from the old map
 
-            // std::cout << "Merge local window: " << spLocalWindowKFs.size() << std::endl;
-            // std::cout << "[Merge]: init merging maps " << std::endl;
             for (KeyFrame *pKFi : spLocalWindowKFs)
             {
                 if (!pKFi || pKFi->isBad())
-                {
-                    // std::cout << "Bad KF in correction" << std::endl;
                     continue;
-                }
-
-                // std::cout << "KF id: " << pKFi->mnId << std::endl;
 
                 pKFi->mTcwBefMerge = pKFi->GetPose();
                 pKFi->mTwcBefMerge = pKFi->GetPoseInverse();
@@ -1498,9 +1466,7 @@ namespace ORB_SLAM3
                 pCurrentMap->EraseKeyFrame(pKFi);
 
                 if (pCurrentMap->isImuInitialized())
-                {
                     pKFi->SetVelocity(pKFi->mVwbMerge);
-                }
             }
 
             for (MapPoint *pMPi : spLocalWindowMPs)
@@ -1518,10 +1484,7 @@ namespace ORB_SLAM3
             mpAtlas->ChangeMap(pMergeMap);
             mpAtlas->SetMapBad(pCurrentMap);
             pMergeMap->IncreaseChangeIndex();
-            // TODO for debug
             pMergeMap->ChangeId(pCurrentMap->GetId());
-
-            // std::cout << "[Merge]: merging maps finished" << std::endl;
         }
 
         // Rebuild the essential graph in the local window
@@ -1545,37 +1508,26 @@ namespace ORB_SLAM3
 
         vpMergeConnectedKFs = mpMergeMatchedKF->GetVectorCovisibleKeyFrames();
         vpMergeConnectedKFs.push_back(mpMergeMatchedKF);
-        // vpCheckFuseMapPoint.reserve(spMapPointMerge.size());
-        // std::copy(spMapPointMerge.begin(), spMapPointMerge.end(), std::back_inserter(vpCheckFuseMapPoint));
 
-        // Project MapPoints observed in the neighborhood of the merge keyframe
-        // into the current keyframe and neighbors using corrected poses.
-        // Fuse duplications.
-        // std::cout << "[Merge]: start fuse points" << std::endl;
         SearchAndFuse(vCorrectedSim3, vpCheckFuseMapPoint);
-        // std::cout << "[Merge]: fuse points finished" << std::endl;
 
         // Update connectivity
         for (KeyFrame *pKFi : spLocalWindowKFs)
         {
             if (!pKFi || pKFi->isBad())
                 continue;
-
             pKFi->UpdateConnections();
         }
+
         for (KeyFrame *pKFi : spMergeConnectedKFs)
         {
             if (!pKFi || pKFi->isBad())
                 continue;
-
             pKFi->UpdateConnections();
         }
 
-        // std::cout << "[Merge]: Start welding bundle adjustment" << std::endl;
-
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartWeldingBA = std::chrono::steady_clock::now();
-
         double timeMergeMaps = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(time_StartWeldingBA - time_StartMerge).count();
         vdMergeMaps_ms.push_back(timeMergeMaps);
 #endif
@@ -1586,7 +1538,6 @@ namespace ORB_SLAM3
         std::copy(spLocalWindowKFs.begin(), spLocalWindowKFs.end(), std::back_inserter(vpLocalCurrentWindowKFs));
         std::copy(spMergeConnectedKFs.begin(), spMergeConnectedKFs.end(), std::back_inserter(vpMergeConnectedKFs));
 
-        // If the sensor contains IMU, merge with Inertial BA
         if (mpTracker->mSensor == System::IMU_MONOCULAR || mpTracker->mSensor == System::IMU_STEREO ||
             mpTracker->mSensor == System::IMU_RGBD)
             Optimizer::MergeInertialBA(mpCurrentKF, mpMergeMatchedKF, &bStop, pCurrentMap, vCorrectedSim3);
@@ -1599,8 +1550,6 @@ namespace ORB_SLAM3
         double timeWeldingBA = std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(time_EndWeldingBA - time_StartWeldingBA).count();
         vdWeldingBA_ms.push_back(timeWeldingBA);
 #endif
-        // std::cout << "[Merge]: Welding bundle adjustment finished" << std::endl;
-
         // Loop closed. Release Local Mapping.
         mpLocalMapper->Release();
 
@@ -1608,10 +1557,7 @@ namespace ORB_SLAM3
         vector<KeyFrame *> vpCurrentMapKFs = pCurrentMap->GetAllKeyFrames();
         vector<MapPoint *> vpCurrentMapMPs = pCurrentMap->GetAllMapPoints();
 
-        if (vpCurrentMapKFs.size() == 0)
-        {
-        }
-        else
+        if (vpCurrentMapKFs.size() != 0)
         {
             if (mpTracker->mSensor == System::MONOCULAR)
             {
@@ -1620,9 +1566,7 @@ namespace ORB_SLAM3
                 for (KeyFrame *pKFi : vpCurrentMapKFs)
                 {
                     if (!pKFi || pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
-                    {
                         continue;
-                    }
 
                     g2o::Sim3 g2oCorrectedSiw;
 
@@ -1651,9 +1595,10 @@ namespace ORB_SLAM3
                     if (pCurrentMap->isImuInitialized())
                     {
                         Eigen::Quaternionf Rcor = (g2oCorrectedSiw.rotation().inverse() * vNonCorrectedSim3[pKFi].rotation()).cast<float>();
-                        pKFi->SetVelocity(Rcor * pKFi->GetVelocity()); // TODO: should add here scale s
+                        pKFi->SetVelocity(Rcor * pKFi->GetVelocity());
                     }
                 }
+
                 for (MapPoint *pMPi : vpCurrentMapMPs)
                 {
                     if (!pMPi || pMPi->isBad() || pMPi->GetMap() != pCurrentMap)
@@ -1673,35 +1618,27 @@ namespace ORB_SLAM3
             }
 
             mpLocalMapper->RequestStop();
-            // Wait until Local Mapping has effectively stopped
             while (!mpLocalMapper->isStopped())
-            {
                 usleep(1000);
-            }
 
             // Optimize graph (and update the loop position for each element form the begining to the end)
             if (mpTracker->mSensor != System::MONOCULAR)
-            {
                 Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs, vpCurrentMapKFs, vpCurrentMapMPs);
-            }
 
             {
                 // Get Merge Map Mutex
                 unique_lock<mutex> currentLock(pCurrentMap->mMutexMapUpdate); // We update the current map with the Merge information
                 unique_lock<mutex> mergeLock(pMergeMap->mMutexMapUpdate);     // We remove the Kfs and MPs in the merged area from the old map
 
-                // std::cout << "Merge outside KFs: " << vpCurrentMapKFs.size() << std::endl;
                 for (KeyFrame *pKFi : vpCurrentMapKFs)
                 {
                     if (!pKFi || pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
-                    {
                         continue;
-                    }
-                    // std::cout << "KF id: " << pKFi->mnId << std::endl;
 
                     // Make sure connections are updated
                     pKFi->UpdateMap(pMergeMap);
                     pMergeMap->AddKeyFrame(pKFi);
+
                     pCurrentMap->EraseKeyFrame(pKFi);
                 }
 
@@ -1714,6 +1651,8 @@ namespace ORB_SLAM3
                     pMergeMap->AddMapPoint(pMPi);
                     pCurrentMap->EraseMapPoint(pMPi);
                 }
+
+                // [TODO] Iterate over planes
             }
         }
 
@@ -1744,11 +1683,9 @@ namespace ORB_SLAM3
         mpAtlas->RemoveBadMaps();
     }
 
-    void LoopClosing::MergeLocal2()
+    void LoopClosing::MergeLocalInertial()
     {
-        // cout << "Merge detected!!!!" << endl;
-
-        int numTemporalKFs = 11; // TODO (set by parameter): Temporal KFs in the local window if the map is inertial.
+        int numTemporalKFs = 11; // [TODO] Set by parameter
 
         // Relationship to rebuild the essential graph, it is used two times, first in the local window and later in the rest of the map
         KeyFrame *pNewChild;
@@ -1758,12 +1695,10 @@ namespace ORB_SLAM3
         vector<KeyFrame *> vpMergeConnectedKFs;
 
         KeyFrameAndPose CorrectedSim3, NonCorrectedSim3;
-        // NonCorrectedSim3[mpCurrentKF]=mg2oLoopScw;
 
         // Flag that is true only when we stopped a running BA, in this case we need relaunch at the end of the merge
         bool bRelaunchBA = false;
 
-        // cout << "Check Full Bundle Adjustment" << endl;
         //  If a Global Bundle Adjustment is running, abort it
         if (isRunningGBA())
         {
@@ -1780,14 +1715,13 @@ namespace ORB_SLAM3
             bRelaunchBA = true;
         }
 
-        // cout << "Request Stop Local Mapping" << endl;
         mpLocalMapper->RequestStop();
+
         // Wait until Local Mapping has effectively stopped
         while (!mpLocalMapper->isStopped())
         {
             usleep(1000);
         }
-        // cout << "Local Map stopped" << endl;
 
         Map *pCurrentMap = mpCurrentKF->GetMap();
         Map *pMergeMap = mpMergeMatchedKF->GetMap();
@@ -1798,14 +1732,9 @@ namespace ORB_SLAM3
 
             unique_lock<mutex> lock(mpAtlas->GetCurrentMap()->mMutexMapUpdate);
 
-            // cout << "KFs before empty: " << mpAtlas->GetCurrentMap()->KeyFramesInMap() << endl;
             mpLocalMapper->EmptyQueue();
-            // cout << "KFs after empty: " << mpAtlas->GetCurrentMap()->KeyFramesInMap() << endl;
 
             std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
-            // cout << "updating active map to merge reference" << endl;
-            // cout << "curr merge KF id: " << mpCurrentKF->mnId << endl;
-            // cout << "curr tracking KF id: " << mpTracker->GetLastKeyFrame()->mnId << endl;
             bool bScaleVel = false;
             if (s_on != 1)
                 bScaleVel = true;
@@ -1834,10 +1763,7 @@ namespace ORB_SLAM3
             pCurrentMap->SetImuInitialized();
         }
 
-        // cout << "MergeMap init ID: " << pMergeMap->GetInitKFid() << "       CurrMap init ID: " << pCurrentMap->GetInitKFid() << endl;
-
         // Load KFs and MPs from merge map
-        // cout << "updating current map" << endl;
         {
             // Get Merge Map Mutex (This section stops tracking!!)
             unique_lock<mutex> currentLock(pCurrentMap->mMutexMapUpdate); // We update the current map with the Merge information
@@ -1879,17 +1805,6 @@ namespace ORB_SLAM3
             }
         }
 
-        // cout << "MergeMap init ID: " << pMergeMap->GetInitKFid() << "       CurrMap init ID: " << pCurrentMap->GetInitKFid() << endl;
-
-        // cout << "end updating current map" << endl;
-
-        // Critical zone
-        // bool good = pCurrentMap->CheckEssentialGraph();
-        /*if(!good)
-            cout << "BAD ESSENTIAL GRAPH!!" << endl;*/
-
-        // cout << "Update essential graph" << endl;
-        //  mpCurrentKF->UpdateConnections(); // to put at false mbFirstConnection
         pMergeMap->GetOriginKF()->SetFirstConnection(false);
         pNewChild = mpMergeMatchedKF->GetParent(); // Old parent, it will be the new child of this KF
         pNewParent = mpMergeMatchedKF;             // Old child, now it will be the parent of its own parent(we need eliminate this KF from children list in its old parent)
@@ -1903,15 +1818,6 @@ namespace ORB_SLAM3
             pNewChild = pOldParent;
         }
 
-        // cout << "MergeMap init ID: " << pMergeMap->GetInitKFid() << "       CurrMap init ID: " << pCurrentMap->GetInitKFid() << endl;
-
-        // cout << "end update essential graph" << endl;
-
-        /*good = pCurrentMap->CheckEssentialGraph();
-        if(!good)
-            cout << "BAD ESSENTIAL GRAPH 1!!" << endl;*/
-
-        // cout << "Update relationship between KFs" << endl;
         vector<MapPoint *> vpCheckFuseMapPoint; // MapPoint vector from current map to allow to fuse duplicated points with the old map (merge)
         vector<KeyFrame *> vpCurrentConnectedKFs;
 
@@ -1920,13 +1826,9 @@ namespace ORB_SLAM3
         mvpMergeConnectedKFs.insert(mvpMergeConnectedKFs.end(), aux.begin(), aux.end());
         if (mvpMergeConnectedKFs.size() > 6)
             mvpMergeConnectedKFs.erase(mvpMergeConnectedKFs.begin() + 6, mvpMergeConnectedKFs.end());
-        /*mvpMergeConnectedKFs = mpMergeMatchedKF->GetVectorCovisibleKeyFrames();
-        mvpMergeConnectedKFs.push_back(mpMergeMatchedKF);*/
 
         mpCurrentKF->UpdateConnections();
         vpCurrentConnectedKFs.push_back(mpCurrentKF);
-        /*vpCurrentConnectedKFs = mpCurrentKF->GetVectorCovisibleKeyFrames();
-        vpCurrentConnectedKFs.push_back(mpCurrentKF);*/
         aux = mpCurrentKF->GetVectorCovisibleKeyFrames();
         vpCurrentConnectedKFs.insert(vpCurrentConnectedKFs.end(), aux.begin(), aux.end());
         if (vpCurrentConnectedKFs.size() > 6)
@@ -1941,31 +1843,9 @@ namespace ORB_SLAM3
                 break;
         }
 
-        /*cout << "vpCurrentConnectedKFs.size() " << vpCurrentConnectedKFs.size() << endl;
-        cout << "mvpMergeConnectedKFs.size() " << mvpMergeConnectedKFs.size() << endl;
-        cout << "spMapPointMerge.size() " << spMapPointMerge.size() << endl;*/
-
         vpCheckFuseMapPoint.reserve(spMapPointMerge.size());
         std::copy(spMapPointMerge.begin(), spMapPointMerge.end(), std::back_inserter(vpCheckFuseMapPoint));
-        // cout << "Finished to update relationship between KFs" << endl;
-
-        // cout << "MergeMap init ID: " << pMergeMap->GetInitKFid() << "       CurrMap init ID: " << pCurrentMap->GetInitKFid() << endl;
-
-        /*good = pCurrentMap->CheckEssentialGraph();
-        if(!good)
-            cout << "BAD ESSENTIAL GRAPH 2!!" << endl;*/
-
-        // cout << "start SearchAndFuse" << endl;
         SearchAndFuse(vpCurrentConnectedKFs, vpCheckFuseMapPoint);
-        // cout << "end SearchAndFuse" << endl;
-
-        // cout << "MergeMap init ID: " << pMergeMap->GetInitKFid() << "       CurrMap init ID: " << pCurrentMap->GetInitKFid() << endl;
-
-        /*good = pCurrentMap->CheckEssentialGraph();
-        if(!good)
-            cout << "BAD ESSENTIAL GRAPH 3!!" << endl;
-
-        cout << "Init to update connections" << endl;*/
 
         for (KeyFrame *pKFi : vpCurrentConnectedKFs)
         {
@@ -1981,35 +1861,19 @@ namespace ORB_SLAM3
 
             pKFi->UpdateConnections();
         }
-        // cout << "end update connections" << endl;
 
-        // cout << "MergeMap init ID: " << pMergeMap->GetInitKFid() << "       CurrMap init ID: " << pCurrentMap->GetInitKFid() << endl;
-
-        /*good = pCurrentMap->CheckEssentialGraph();
-        if(!good)
-            cout << "BAD ESSENTIAL GRAPH 4!!" << endl;*/
-
-        // TODO Check: If new map is too small, we suppose that not informaiton can be propagated from new to old map
+        // [TODO] If new map is too small, we suppose that not informaiton can be propagated from new to old map
         if (numKFnew < 10)
         {
             mpLocalMapper->Release();
             return;
         }
 
-        /*good = pCurrentMap->CheckEssentialGraph();
-        if(!good)
-            cout << "BAD ESSENTIAL GRAPH 5!!" << endl;*/
-
         // Perform BA
         bool bStopFlag = false;
         KeyFrame *pCurrKF = mpTracker->GetLastKeyFrame();
-        // cout << "start MergeInertialBA" << endl;
-        Optimizer::MergeInertialBA(pCurrKF, mpMergeMatchedKF, &bStopFlag, pCurrentMap, CorrectedSim3);
-        // cout << "end MergeInertialBA" << endl;
 
-        /*good = pCurrentMap->CheckEssentialGraph();
-        if(!good)
-            cout << "BAD ESSENTIAL GRAPH 6!!" << endl;*/
+        Optimizer::MergeInertialBA(pCurrKF, mpMergeMatchedKF, &bStopFlag, pCurrentMap, CorrectedSim3);
 
         // Release Local Mapping.
         mpLocalMapper->Release();

@@ -2462,6 +2462,8 @@ namespace ORB_SLAM3
             pMP->UpdateNormalAndDepth();
         }
 
+        // [TODO] Correct Planes
+
         // TODO Check this changeindex
         pMap->IncreaseChangeIndex();
     }
