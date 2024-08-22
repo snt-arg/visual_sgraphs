@@ -2849,8 +2849,6 @@ namespace ORB_SLAM3
         for (Marker *pMarker : vpCurrentMapMarkers)
         {
             // Get a reference KeyFrame related to the marker
-            KeyFrame *pRefKF = nullptr;
-            Sophus::SE3f localPose = pMarker->getLocalPose();
             std::map<KeyFrame *, Sophus::SE3f> observations = pMarker->getObservations();
 
             // If the marker has no observations, continue
@@ -2858,27 +2856,39 @@ namespace ORB_SLAM3
                 continue;
 
             // Set the first KeyFrame as the reference KeyFrame
-            pRefKF = observations.begin()->first;
+            KeyFrame *pRefKF = observations.begin()->first;
 
-            // If the reference KeyFrame is bad, continue
-            if (pRefKF->isBad())
+            // Find a valid reference KeyFrame
+            while (pRefKF->isBad())
+            {
+                if (!pRefKF)
+                    break;
+
+                observations.erase(pRefKF);
+                if (observations.empty())
+                    break;
+
+                pRefKF = observations.begin()->first;
+            }
+
+            if (!pRefKF || pRefKF->isBad())
                 continue;
 
             // Get the corrected pose of the reference KeyFrame
-            if (pRefKF && vpBadPose[pRefKF->mnId])
+            if (vpBadPose[pRefKF->mnId])
             {
-                Sophus::SE3f Twr = pRefKF->GetPoseInverse();
                 Sophus::SE3f TNonCorrectedwr = pRefKF->mTwcBefMerge;
+                Sophus::SE3f Tcorc = pRefKF->GetPoseInverse() * TNonCorrectedwr.inverse();
 
                 // Transform the local pose to the world coordinate system
-                Eigen::Vector3f correctedGlobalPose = Twr * TNonCorrectedwr.inverse() * localPose.translation();
+                Sophus::SE3f correctedGlobalPose = Tcorc * pMarker->getLocalPose();
 
                 // Set the corrected global pose to the marker
-                pMarker->setGlobalPose(Sophus::SE3f(Sophus::SO3f(), correctedGlobalPose));
+                pMarker->setGlobalPose(correctedGlobalPose);
             }
         }
 
-        // std::cout << "-- Aligning the poses of markers ..." << std::endl;
+        // Correct the pose of the detected doors in the new map
         for (Door *pDoor : vpCurrentMapDoors)
         {
             // [TODO]
