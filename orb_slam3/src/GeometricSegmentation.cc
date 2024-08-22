@@ -72,19 +72,16 @@ namespace ORB_SLAM3
                                                                          detectedPlane);
 
             // convert planeCloud to global coordinates
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
-            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
-            // pcl::transformPointCloud(*planeCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
-            // globalPlaneCloud->clear();
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr emptyPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
             
             // Check if we need to add the wall to the map or not
-            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane, pKF->GetPose().matrix().cast<double>());
+            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
-                GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, globalPlaneCloud);
+                GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, emptyPlaneCloud);
             else
                 // The wall already exists in the map, fetching that one
-                GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, globalPlaneCloud, matchedPlaneId);
+                GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, emptyPlaneCloud, matchedPlaneId);
         }
 
         // Add Markers while progressing in KFs
@@ -115,7 +112,9 @@ namespace ORB_SLAM3
         // Downsample the given pointcloud after filtering based on distance
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud;
         filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(cloudRGBA);
-        filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->geo_seg.pointcloud.downsample_leaf_size);
+        filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud,
+                                                                       sysParams->sem_seg.pointcloud.downsample.leaf_size,
+                                                                       sysParams->sem_seg.pointcloud.downsample.min_points_per_voxel);
         filteredCloud = Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(filteredCloud,
                                                                            sysParams->geo_seg.pointcloud.outlier_removal.std_threshold,
                                                                            sysParams->geo_seg.pointcloud.outlier_removal.mean_threshold);

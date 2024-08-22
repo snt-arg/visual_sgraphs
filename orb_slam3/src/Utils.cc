@@ -161,7 +161,7 @@ namespace ORB_SLAM3
 
     template <typename PointT>
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDownsample(
-        const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize)
+        const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize, const unsigned int minPointsPerVoxel)
     {
         // The filtered point cloud object
         typename pcl::PointCloud<PointT>::Ptr filteredCloud(new pcl::PointCloud<PointT>());
@@ -171,6 +171,7 @@ namespace ORB_SLAM3
 
         // Set the parameters of the downsampling filter
         downsampleFilter->setLeafSize(leafSize, leafSize, leafSize);
+        downsampleFilter->setMinimumPointsNumberPerVoxel(minPointsPerVoxel);
         downsampleFilter->setInputCloud(cloud);
 
         // Apply the downsampling filter
@@ -180,7 +181,7 @@ namespace ORB_SLAM3
         return filteredCloud;
     }
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudDownsample<pcl::PointXYZRGBA>(
-        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const float);
+        const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const float, const unsigned int);
 
     template <typename PointT>
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDistanceFilter(
@@ -347,7 +348,7 @@ namespace ORB_SLAM3
         return false;
     }
 
-    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose)
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
     {
         int planeId = -1;
 
@@ -365,17 +366,11 @@ namespace ORB_SLAM3
             if (mPlane->excludedFromAssoc)
                 continue;
 
-            // compare in the given plane's frame
-            g2o::Plane3D mappedPlane = g2o::Plane3D(mPlane->getGlobalEquation().coeffs());
-            mappedPlane = convertToGlobalEquation(kfPose, mappedPlane);
+            // Preparing a plane for feeding the detector
+            g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
 
             // Calculate difference vector based on walls' equations
             Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
-
-            // Check based on distance, distance is last element of the difference vector
-            // [TODO] Diffrentiate between distance and angle
-            if (diffVector(2) > 0.1)
-                continue;
 
             // Create a single number determining the difference vector
             // [before] double planeDiff = diffVector.transpose() * Eigen::Matrix3d::Identity() * diffVector;
