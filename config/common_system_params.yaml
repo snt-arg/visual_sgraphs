@@ -5,7 +5,7 @@ general:
   # 1: Semantic Segmentation runs independently
   # 2: Geometric Segmentation runs independently
   # run with 2 if semantic segmentation is not running - this clears the pointclouds
-  mode_of_operation: 0
+  mode_of_operation: 1
 
   # The path of the high level semantic information of the environment
   # [TODO] - the path looks ugly, possible workaround?
@@ -20,13 +20,13 @@ markers:
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
   # Also, the number of points needed to detect a plane in the pointcloud
-  pointclouds_thresh: 500
+  pointclouds_thresh: 400
 
   # Plane association threshold (ominus)
-  plane_association_thresh: 0.25
+  plane_association_thresh: 0.20
 
   # The maximum distance for point to be considered part of a plane
-  plane_point_dist_thresh: 0.02
+  plane_point_dist_thresh: 0.01
 
   ransac:
     # The maximum number of planes to be detected in one pointcloud
@@ -41,8 +41,10 @@ seg:
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
   pointcloud:
-    # The leaf size for the pointcloud downsampling
-    downsample_leaf_size: 0.05
+    # pointcloud downsampling parmeters
+    downsample:
+      leaf_size: 0.05
+      min_points_per_voxel: 15
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
@@ -51,15 +53,17 @@ geo_seg:
 ############################## Semantic Segmentation Parameters ####################################
 sem_seg:
   pointcloud:
-    # The leaf size for the pointcloud downsampling
-    downsample_leaf_size: 0.03
+    # pointcloud downsampling parmeters
+    downsample:
+      leaf_size: 0.03
+      min_points_per_voxel: 15
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
       std_threshold: 1.0
 
   # The threshold for semantic segmentation probability validation (rejects probability below this)
-  prob_thresh: 0.6
+  prob_thresh: 0.5
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
   conf_thresh: 0.3
@@ -72,7 +76,7 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
-  min_votes: 2.8
+  min_votes: 3.2
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:

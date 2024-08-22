@@ -12,7 +12,19 @@ namespace ORB_SLAM3
         static SystemParams *GetParams();
         void SetParams(const std::string &strConfigFile);
 
-        // Structs for different categories of parameters
+        // Common struct definitions
+        struct Downsample
+        {
+            float leaf_size = 0.03f;
+            unsigned int min_points_per_voxel = 5;
+        };
+        struct OutlierRemoval
+        {
+            float std_threshold = 1.0;
+            unsigned int mean_threshold = 50;
+        };
+
+        // Structs for different modules
         struct general
         {
             // enum for mode of operation
@@ -54,12 +66,8 @@ namespace ORB_SLAM3
         {
             struct pointcloud
             {
-                float downsample_leaf_size = 0.09f;
-                struct outlier_removal
-                {
-                    float std_threshold = 1.0;
-                    unsigned int mean_threshold = 50;
-                } outlier_removal;
+                Downsample downsample;
+                OutlierRemoval outlier_removal;
             } pointcloud;
         } geo_seg;
 
@@ -74,12 +82,8 @@ namespace ORB_SLAM3
 
             struct pointcloud
             {
-                float downsample_leaf_size = 0.03f;
-                struct outlier_removal
-                {
-                    float std_threshold = 1.0;
-                    unsigned int mean_threshold = 50;
-                } outlier_removal;
+                Downsample downsample;
+                OutlierRemoval outlier_removal;
             } pointcloud;
         } sem_seg;
 

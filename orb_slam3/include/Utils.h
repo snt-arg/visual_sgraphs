@@ -112,7 +112,7 @@ namespace ORB_SLAM3
          */
         template <typename PointT>
         static typename pcl::PointCloud<PointT>::Ptr pointcloudDownsample(
-            const typename pcl::PointCloud<PointT>::Ptr &cloud, float leafSize);
+            const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize, const unsigned int minPointsPerVoxel);
 
         /**
          * @brief Filters the pointclouds based on the given min/max distance acceptable
@@ -157,7 +157,7 @@ namespace ORB_SLAM3
          * @param givenPlane the given plane
          * @return the plane id of the mapped plane
          */
-        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose);
+        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane);
 
         /**
          * @brief Gets the planeVariant type from the class id

@@ -118,6 +118,7 @@ namespace ORB_SLAM3
         const float distanceThreshNear = sysParams->pointcloud.distance_thresh.first;
         const float distanceThreshFar = sysParams->pointcloud.distance_thresh.second;
         const uint8_t confidenceThresh = sysParams->sem_seg.conf_thresh * 255;
+        const float probThresh = sysParams->sem_seg.prob_thresh;
 
         for (int i = 0; i < numClasses; i++)
         {
@@ -136,7 +137,7 @@ namespace ORB_SLAM3
                 float value;
                 memcpy(&value, data + pointStep * i + bytesPerClassProb * j + pclPc2SegPrb->fields[0].offset, bytesPerClassProb);
 
-                if (value >= sysParams->sem_seg.prob_thresh)
+                if (value >= probThresh)
                 {
                     // inject coordinates as a point to respective point cloud
                     pcl::PointXYZRGBA point;
@@ -163,6 +164,18 @@ namespace ORB_SLAM3
                     point.r = origPoint.r;
                     point.g = origPoint.g;
                     point.b = origPoint.b;
+
+                    // confidence as the squared inverse depth - interpolated linearly between near and far thresholds
+                    // confidence = 255 for near, 55 for far, and interpolated according to squared distance
+                    const float thresholdNear = sysParams->pointcloud.distance_thresh.first;
+                    const float thresholdFar = sysParams->pointcloud.distance_thresh.second;
+                    if (point.z < thresholdNear)
+                        point.a = 255;
+                    else if (point.z > thresholdFar)
+                        point.a = 55;
+                    else
+                        point.a = 255 - static_cast<int>(200 * sqrt((point.z - thresholdNear) / (thresholdFar - thresholdNear)));
+
                     clsCloudPtrs[j]->push_back(point);
                 }
             }
@@ -188,7 +201,9 @@ namespace ORB_SLAM3
             // Downsample the given pointcloud after filtering based on distance
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr filteredCloud;
             filteredCloud = Utils::pointcloudDistanceFilter<pcl::PointXYZRGBA>(clsCloudPtrs[i]);
-            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud, sysParams->sem_seg.pointcloud.downsample_leaf_size);
+            filteredCloud = Utils::pointcloudDownsample<pcl::PointXYZRGBA>(filteredCloud,
+                                                                           sysParams->sem_seg.pointcloud.downsample.leaf_size,
+                                                                           sysParams->sem_seg.pointcloud.downsample.min_points_per_voxel);
             filteredCloud = Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(filteredCloud,
                                                                                sysParams->sem_seg.pointcloud.outlier_removal.std_threshold,
                                                                                sysParams->sem_seg.pointcloud.outlier_removal.mean_threshold);
@@ -223,7 +238,7 @@ namespace ORB_SLAM3
                                                                              detectedPlane);
 
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), detectedPlane, pKF->GetPose().matrix().cast<double>());
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
 
                 // pointcloud processing
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
@@ -290,7 +305,7 @@ namespace ORB_SLAM3
         }
 
         // // reassociate semantic planes if they get close to each other :)) after optimization
-        // reAssociateSemanticPlanes();
+        reAssociateSemanticPlanes();
     }
 
     void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
@@ -345,7 +360,7 @@ namespace ORB_SLAM3
                 return;
 
             // check if the plane is associated with any other plane
-            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation(), Eigen::Matrix4d::Identity());
+            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation());
 
             // if a match is found, then add the smaller planecloud to the larger plane
             // set the smaller plane type to undefined and remove it from future associations
@@ -371,9 +386,15 @@ namespace ORB_SLAM3
                 for (const auto &mapPoint : smallPlane->getMapPoints())
                     bigPlane->setMapPoints(mapPoint);
 
+                // push all observations of the smaller plane to the bigger plane
+                for (const auto &obs : smallPlane->getObservations())
+                    bigPlane->addObservation(obs.first, obs.second);
+
                 // reset the smaller plane semantics
                 smallPlane->resetPlaneSemantics();
                 smallPlane->excludedFromAssoc = true;
+        
+                std::cout << "Plane " << smallPlane->getId() << " merged with Plane " << bigPlane->getId() << std::endl;
             }
         }
     }
