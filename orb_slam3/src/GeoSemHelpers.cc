@@ -12,7 +12,7 @@ namespace ORB_SLAM3
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->addObservation(pKF, estimatedPlane);
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
-        newMapPlane->referenceKeyFrame = pKF;
+        newMapPlane->refKeyFrame = pKF;
 
         // Set the plane type to undefined, as it is not known yet
         newMapPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::UNDEFINED);
@@ -354,7 +354,6 @@ namespace ORB_SLAM3
         }
     }
 
-
     void GeoSemHelpers::associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom)
     {
         std::vector<ORB_SLAM3::Plane *> allWalls = givenRoom->getWalls();
@@ -366,7 +365,6 @@ namespace ORB_SLAM3
         for (const auto &plane : mpAtlas->GetAllPlanes())
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::GROUND)
                 groundPlanes.push_back(plane);
-
 
         if (groundPlanes.empty())
             // no ground planes in the Atlas
@@ -396,7 +394,6 @@ namespace ORB_SLAM3
         }
     }
 
-
     size_t GeoSemHelpers::countGroundPlanePointsWithinWalls(std::vector<ORB_SLAM3::Plane *> &roomWalls, ORB_SLAM3::Plane *groundPlane)
     {
         // [TODO] - verify the correctness of this function
@@ -418,7 +415,7 @@ namespace ORB_SLAM3
             for (const auto &wallEquation : wallEquations)
             {
                 // convert the point to Eigen vector
-                Eigen::Vector3d pointVec = Eigen::Vector3d(point.x, point.y, point.z); 
+                Eigen::Vector3d pointVec = Eigen::Vector3d(point.x, point.y, point.z);
 
                 // substitute the point into the wall equation to get the signed distance
                 float signedDistance = wallEquation.head<3>().dot(pointVec) + wallEquation(3);

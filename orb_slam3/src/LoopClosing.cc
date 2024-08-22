@@ -1626,12 +1626,13 @@ namespace ORB_SLAM3
             while (!mpLocalMapper->isStopped())
                 usleep(1000);
 
-            // For non-monocular sensors, optimize the essential graph and update the loop position for each element
+            // Optimize the essential graph and update the loop position for each element in the new map
             if (mpTracker->mSensor != System::MONOCULAR)
                 Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs,
                                                   vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapDoors, vpCurrentMapPlanes,
                                                   vpCurrentMapMarkers, vpCurrentDetectedMapRooms, vpCurrentMarkerBasedMapRooms);
 
+            // When all the elements are updated, move them to the new map
             {
                 // Get Merge Map Mutex
                 unique_lock<mutex> currentLock(pCurrentMap->mMutexMapUpdate); // We update the current map with the Merge information
@@ -1659,6 +1660,18 @@ namespace ORB_SLAM3
                     pCurrentMap->EraseMapPoint(pMPi);
                 }
 
+                // Loop over the Planes of the current map and move them to the new map
+                for (Plane *pPlane : vpCurrentMapPlanes)
+                {
+                    if (!pPlane)
+                        continue;
+
+                    pPlane->SetMap(pMergeMap);
+                    pPlane->setId(pMergeMap->GetAllPlanes().size());
+                    pMergeMap->AddMapPlane(pPlane);
+                    pCurrentMap->EraseMapPlane(pPlane);
+                }
+
                 // Loop over the Markers of the current map and move them to the new map
                 for (Marker *pMarker : vpCurrentMapMarkers)
                 {
@@ -1679,17 +1692,6 @@ namespace ORB_SLAM3
                     pDoor->SetMap(pMergeMap);
                     pMergeMap->AddMapDoor(pDoor);
                     pCurrentMap->EraseMapDoor(pDoor);
-                }
-
-                // Loop over the Planes of the current map and move them to the new map
-                for (Plane *pPlane : vpCurrentMapPlanes)
-                {
-                    if (!pPlane)
-                        continue;
-
-                    pPlane->SetMap(pMergeMap);
-                    pMergeMap->AddMapPlane(pPlane);
-                    pCurrentMap->EraseMapPlane(pPlane);
                 }
 
                 // Loop over the Detected Rooms of the current map and move them to the new map
@@ -2363,7 +2365,7 @@ namespace ORB_SLAM3
                     }
                     else
                     {
-                        KeyFrame *pRefKF = pPlane->referenceKeyFrame;
+                        KeyFrame *pRefKF = pPlane->refKeyFrame;
                         if (pRefKF->mnBAGlobalForKF != nLoopKF)
                             continue;
 

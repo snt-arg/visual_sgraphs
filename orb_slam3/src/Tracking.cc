@@ -2488,7 +2488,10 @@ namespace ORB_SLAM3
             AddKeyFrameToGeoSegKFBuffer(pKFini);
 
             std::cout << "\n[Tracking]" << std::endl;
-            std::cout << "- New map created with #" << to_string(mpAtlas->MapPointsInMap()) << " points." << std::endl;
+            std::cout << "- New map created with #" + to_string(mpAtlas->MapPointsInMap()) + " points, #" +
+                             to_string(mpAtlas->MarkersInMap()) + " markers, #" + to_string(mpAtlas->GetAllPlanes().size()) +
+                             " walls, and #" + to_string(mpAtlas->GetAllDoors().size()) + " doors."
+                      << std::endl;
 
             mpLocalMapper->InsertKeyFrame(pKFini);
 

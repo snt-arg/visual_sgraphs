@@ -2739,8 +2739,12 @@ namespace ORB_SLAM3
 
         unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
+        // Inform the user
+        std::cout << "\n[Optimizer]" << std::endl;
+
         // Loop over non-fixed KeyFrames to correct them
         // [hint] Sim3 [sR t | 0 1] --> SE3 [R t/s| 0 1]
+        std::cout << "-- Aligning the poses of KeyFrames ..." << std::endl;
         for (KeyFrame *pKFi : vpNonFixedKFs)
         {
             if (pKFi->isBad())
@@ -2760,6 +2764,7 @@ namespace ORB_SLAM3
         }
 
         // Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
+        std::cout << "-- Aligning the poses of 3D mapped points ..." << std::endl;
         for (MapPoint *pMPi : vpNonCorrectedMPs)
         {
             if (pMPi->isBad())
@@ -2790,7 +2795,57 @@ namespace ORB_SLAM3
             }
         }
 
+        // Correct the pose of the detected planes in the new map
+        std::cout << "-- Aligning the poses of planes ..." << std::endl;
+        for (Plane *pPlane : vpCurrentMapPlanes)
+        {
+            // Get a reference KeyFrame related to the plane
+            std::map<KeyFrame *, g2o::Plane3D> observations = pPlane->getObservations();
+
+            // If the plane has no observations, continue
+            if (observations.empty())
+                continue;
+
+            // Set the first KeyFrame as the reference KeyFrame
+            KeyFrame *pRefKF = observations.begin()->first;
+
+            // Find a valid reference KeyFrame
+            while (pRefKF->isBad())
+            {
+                if (!pRefKF)
+                    break;
+
+                observations.erase(pRefKF);
+                if (observations.empty())
+                    break;
+
+                pRefKF = observations.begin()->first;
+            }
+
+            if (!pRefKF || pRefKF->isBad())
+                continue;
+
+            // Get the corrected pose of the reference KeyFrame
+            if (vpBadPose[pRefKF->mnId])
+            {
+                Sophus::SE3f TNonCorrectedwr = pRefKF->mTwcBefMerge;
+                Sophus::SE3f Tcorc = pRefKF->GetPoseInverse() * TNonCorrectedwr.inverse();
+
+                // Transform the local pose to the world coordinate system
+                g2o::Plane3D globalEquation =
+                    Utils::convertToGlobalEquation(Tcorc.matrix().cast<double>(),
+                                                   pPlane->getGlobalEquation());
+
+                pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = pPlane->getMapClouds();
+                pcl::transformPointCloud(*planeCloud, *planeCloud, Tcorc.matrix().cast<float>());
+
+                // Update the global equation of the plane
+                pPlane->setGlobalEquation(globalEquation);
+            }
+        }
+
         // Correct the pose of the detected markers in the new map
+        std::cout << "-- Aligning the poses of markers ..." << std::endl;
         for (Marker *pMarker : vpCurrentMapMarkers)
         {
             // Get a reference KeyFrame related to the marker
@@ -2823,26 +2878,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Correct the pose of the detected planes in the new map
-        for (Plane *pPlane : vpCurrentMapPlanes)
-        {
-            // Get a reference KeyFrame related to the plane
-            KeyFrame *pRefKF = pPlane->referenceKeyFrame;
-
-            // If the reference KeyFrame is bad, continue
-            if (pRefKF->isBad())
-                continue;
-
-            // Get the corrected pose of the reference KeyFrame
-            if (pRefKF && vpBadPose[pRefKF->mnId])
-            {
-                Sophus::SE3f Tcorc = pRefKF->GetPoseInverse() * pRefKF->mTcwBefGBA;
-                // Transform the local pose to the world coordinate system
-                g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(Tcorc.matrix().cast<double>(), pPlane->getGlobalEquation());
-                pPlane->setGlobalEquation(globalEquation);
-            }
-        }
-
+        // std::cout << "-- Aligning the poses of markers ..." << std::endl;
         for (Door *pDoor : vpCurrentMapDoors)
         {
             // [TODO]
@@ -2857,6 +2893,8 @@ namespace ORB_SLAM3
         {
             // [TODO]
         }
+
+        std::cout << "- Corrections finished!" << std::endl;
     }
 
     int Optimizer::OptimizeSim3(KeyFrame *pKF1, KeyFrame *pKF2, vector<MapPoint *> &vpMatches1, g2o::Sim3 &g2oS12, const float th2,

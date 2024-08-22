@@ -35,7 +35,7 @@ namespace ORB_SLAM3
         bool excludedFromAssoc; // The plane's exclusion from association (once excluded, can't be associated again)
 
         // Variables for bundle adjustment
-        KeyFrame *referenceKeyFrame;       // The first keyframe that observed the plane is the reference keyframe
+        KeyFrame *refKeyFrame;             // The first keyframe that observed the plane is the reference keyframe
         unsigned long int mnBAGlobalForKF; // The reference keyframe ID for the Global BA the plane was part of
         g2o::Plane3D mPlaneGBA;            // The plane equation in the global map after the Global BA
 

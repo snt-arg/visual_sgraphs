@@ -4,7 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /TF1
         - /TF1/Frames1
         - /planes1/Namespaces1
         - /Camera Pose1
@@ -54,60 +53,12 @@ Visualization Manager:
       Reference Frame: <Fixed Frame>
       Value: false
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Filter (blacklist): ""
       Filter (whitelist): ""
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
-          Value: true
-        base_link:
-          Value: true
-        camera:
-          Value: false
-        camera_accel_frame:
-          Value: false
-        camera_accel_optical_frame:
-          Value: false
-        camera_aligned_depth_to_color_frame:
-          Value: false
-        camera_color_frame:
-          Value: false
-        camera_color_optical_frame:
-          Value: false
-        camera_depth_frame:
-          Value: false
-        camera_depth_optical_frame:
-          Value: true
-        camera_gyro_frame:
-          Value: true
-        camera_gyro_optical_frame:
-          Value: true
-        camera_infra1_frame:
-          Value: true
-        camera_infra1_optical_frame:
-          Value: true
-        camera_infra2_frame:
-          Value: true
-        camera_infra2_optical_frame:
-          Value: true
-        camera_link:
-          Value: true
-        map:
-          Value: true
-        os_imu:
-          Value: true
-        os_lidar:
-          Value: true
-        os_sensor:
-          Value: true
-        plane:
-          Value: true
-        room:
-          Value: true
-        world:
-          Value: true
       Marker Alpha: 1
       Marker Scale: 3
       Name: TF
@@ -115,47 +66,11 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        base_link:
-          base_footprint:
-            {}
-          camera_link:
-            camera_accel_frame:
-              camera_accel_optical_frame:
-                {}
-            camera_aligned_depth_to_color_frame:
-              {}
-            camera_color_frame:
-              {}
-            camera_depth_frame:
-              camera_depth_optical_frame:
-                {}
-            camera_gyro_frame:
-              camera_gyro_optical_frame:
-                {}
-            camera_infra1_frame:
-              camera_infra1_optical_frame:
-                {}
-            camera_infra2_frame:
-              camera_infra2_optical_frame:
-                {}
-          os_sensor:
-            os_imu:
-              {}
-            os_lidar:
-              {}
-        world:
-          camera:
-            camera_color_optical_frame:
-              {}
-          map:
-            {}
-          plane:
-            room:
-              {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Class: rviz/Image
-      Enabled: true
+      Enabled: false
       Image Topic: /aruco_marker_publisher/result
       Max Value: 1
       Median window: 5
@@ -165,7 +80,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/Image
       Enabled: false
       Image Topic: /orb_slam3/keyframe_image
@@ -191,7 +106,7 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/Image
-      Enabled: false
+      Enabled: true
       Image Topic: /camera/color/image_segment_vis
       Max Value: 1
       Median window: 5
@@ -201,7 +116,7 @@ Visualization Manager:
       Queue Size: 2
       Transport Hint: raw
       Unreliable: false
-      Value: false
+      Value: true
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -295,7 +210,7 @@ Visualization Manager:
       Marker Topic: /orb_slam3/fiducial_markers
       Name: markers
       Namespaces:
-        fiducial_markers: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
@@ -457,7 +372,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.6539201736450195
+      Distance: 9.102938652038574
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -465,17 +380,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.4557405710220337
-        Y: -0.6869516968727112
-        Z: 1.127766728401184
+        X: 1.0630128383636475
+        Y: -0.8191097378730774
+        Z: 1.818121314048767
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.305202841758728
+      Pitch: 0.6152028441429138
       Target Frame: <Fixed Frame>
-      Yaw: 2.3253982067108154
+      Yaw: 3.5954067707061768
     Saved: ~
 Window Geometry:
   Displays:
@@ -485,7 +400,7 @@ Window Geometry:
   Hide Right Dock: true
   KF img:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000015600000385fc020000000dfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000002e100000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001d1000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000180054007200610063006b0069006e006700200069006d00670100000214000000c30000001600fffffffc000002dd000000e5000000330100001cfa000000000100000004fb0000000e00520061007700200069006d00670100000000000001560000008600fffffffb0000000c004b004600200069006d00670100000000ffffffff0000007b00fffffffb00000010004b00650079004600720061006d00650000000000ffffffff0000000000000000fb0000001a005300650067006d0065006e00740065006400200069006d00670100000000ffffffff000000b700fffffffb0000000a0047007200610070006800000001e4000001290000000000000000fb0000000a004700720061007000680000000264000001450000000000000000fb00000014004c0069006e00650020006700720061007000680000000242000001670000000000000000000000010000010f000003b9fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000003b9000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073d00000042fc0100000002fb0000000800540069006d006500000000000000073d0000041800fffffffb0000000800540069006d00650100000000000004500000000000000000000006240000038500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000015600000385fc020000000dfb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000002e100000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000001d1000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000180054007200610063006b0069006e006700200069006d00670100000214000000c30000001600fffffffc000002dd000000e5000000330100001cfa000000030100000004fb0000000e00520061007700200069006d00670100000000000001560000008600fffffffb0000000c004b004600200069006d00670100000000ffffffff0000007b00fffffffb00000010004b00650079004600720061006d00650000000000ffffffff0000000000000000fb0000001a005300650067006d0065006e00740065006400200069006d00670100000000ffffffff000000b700fffffffb0000000a0047007200610070006800000001e4000001290000000000000000fb0000000a004700720061007000680000000264000001450000000000000000fb00000014004c0069006e00650020006700720061007000680000000242000001670000000000000000000000010000010f000003b9fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000003b9000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000073d00000042fc0100000002fb0000000800540069006d006500000000000000073d0000041800fffffffb0000000800540069006d00650100000000000004500000000000000000000006240000038500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Raw img:
     collapsed: false
   Segmented img:
