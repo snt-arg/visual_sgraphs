@@ -305,7 +305,7 @@ namespace ORB_SLAM3
         }
 
         // // reassociate semantic planes if they get close to each other :)) after optimization
-        reAssociateSemanticPlanes();
+        // reAssociateSemanticPlanes();
     }
 
     void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
