@@ -248,9 +248,6 @@ namespace ORB_SLAM3
                     confidences.push_back(static_cast<int>(planeCloud->points[i].a) / 255.0);
                 double conf = Utils::calcSoftMin(confidences);
 
-                // transform the planeCloud to global if semSeg uses plane->setMapClouds(planeCloud)
-                pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
-
                 if (matchedPlaneId == -1)
                 {
                     if (!mGeoRuns)

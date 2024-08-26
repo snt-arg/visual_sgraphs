@@ -31,8 +31,8 @@ namespace ORB_SLAM3
                 pointVec << point.x, point.y, point.z, 1;
                 Gij += pointVec * pointVec.transpose() * (static_cast<int>(point.a) / 255.0);
             }
-            obs.Gij = Gij;
         }
+        obs.Gij = Gij;
 
         // the aggregated confidence of the plane
         obs.confidence = confidence;
@@ -76,11 +76,14 @@ namespace ORB_SLAM3
         // the observation of the plane point cloud (measurement)
         Eigen::Matrix4d Gij;
         Gij.setZero();
-        for (auto &point: planeCloud->points)
+        if (SystemParams::GetParams()->optimization.plane_point.enabled)
         {
-            Eigen::Vector4d pointVec;
-            pointVec << point.x, point.y, point.z, 1;
-            Gij += pointVec * pointVec.transpose() * (static_cast<int>(point.a) / 255.0);
+            for (auto &point: planeCloud->points)
+            {
+                Eigen::Vector4d pointVec;
+                pointVec << point.x, point.y, point.z, 1;
+                Gij += pointVec * pointVec.transpose() * (static_cast<int>(point.a) / 255.0);
+            }
         }
         obs.Gij = Gij;
 
