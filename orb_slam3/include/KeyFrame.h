@@ -567,7 +567,7 @@ namespace ORB_SLAM3
         // getters and setter for point clouds
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr getCurrentFramePointCloud() const;
         void clearPointCloud();
-        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> getCurrentClsCloudPtrs() const;
+        std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> getClsCloudPtrs() const;
         void setCurrentClsCloudPtrs(std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> &clsCloudPtrs);
         void clearClsClouds();
 

@@ -34,6 +34,13 @@ namespace ORB_SLAM3
 
         bool excludedFromAssoc; // The plane's exclusion from association (once excluded, can't be associated again)
 
+        struct Observation
+        {
+            g2o::Plane3D localPlane;                        // The plane equation in the local frame
+            Eigen::Matrix4d Gij;                            // The aggregated point cloud measurement for point-plane constraint
+            double confidence;                              // The aggregated confidence of the plane
+        };
+
         // Variables for bundle adjustment
         KeyFrame *refKeyFrame;             // The first keyframe that observed the plane is the reference keyframe
         unsigned long int mnBAGlobalForKF; // The reference keyframe ID for the Global BA the plane was part of
@@ -50,7 +57,7 @@ namespace ORB_SLAM3
         g2o::Plane3D globalEquation;                        // The plane equation in the global map
         std::set<MapPoint *> mapPoints;                     // The unique set of map points lying on the plane
         std::map<planeVariant, double> semanticVotes;       // The votes for the semantic type of the plane
-        std::map<KeyFrame *, g2o::Plane3D> observations;    // Plane's observations in keyFrames
+        std::map<KeyFrame *, Observation> observations;    // Plane's observations in keyFrames
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud; // The point cloud of the plane
 
     public:
@@ -84,8 +91,8 @@ namespace ORB_SLAM3
         g2o::Plane3D getGlobalEquation() const;
         void setGlobalEquation(const g2o::Plane3D &value);
 
-        void addObservation(KeyFrame *pKF, g2o::Plane3D localEquation);
-        const std::map<KeyFrame *, g2o::Plane3D> &getObservations() const;
+        void addObservation(KeyFrame *pKF, Observation obs);
+        const std::map<KeyFrame *, Observation> &getObservations() const;
 
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getMapClouds();
         void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value);

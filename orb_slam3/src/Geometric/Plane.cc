@@ -171,14 +171,14 @@ namespace ORB_SLAM3
         centroid = value;
     }
 
-    const std::map<KeyFrame *, g2o::Plane3D> &Plane::getObservations() const
+    const std::map<KeyFrame *, Plane::Observation> &Plane::getObservations() const
     {
         return observations;
     }
 
-    void Plane::addObservation(KeyFrame *pKF, g2o::Plane3D localEquation)
+    void Plane::addObservation(KeyFrame *pKF, Plane::Observation obs)
     {
-        observations.insert({pKF, localEquation});
+        observations.insert({pKF, obs});
     }
 
     Map *Plane::GetMap()

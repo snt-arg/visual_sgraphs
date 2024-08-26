@@ -359,6 +359,27 @@ namespace ORB_SLAM3
         return os.good();
     }
 
+    EdgeSE3KFPointToPlane::EdgeSE3KFPointToPlane() : g2o::BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3Expmap, g2o::VertexPlane>() {}
+
+    bool EdgeSE3KFPointToPlane::read(std::istream &is)
+    {
+        for (int i = 0; i < information().rows(); ++i)
+            for (int j = i; j < information().cols(); ++j) {
+                is >> information()(i, j);
+                if (i != j) information()(j, i) = information()(i, j);
+            }
+        return true;
+    }
+
+    bool EdgeSE3KFPointToPlane::write(std::ostream &os) const
+    {
+        for (int i = 0; i < information().rows(); ++i)
+            for (int j = i; j < information().cols(); ++j)
+                os << " " << information()(i, j);
+        return os.good();
+    }
+
+
     EdgeVertexPlaneProjectSE3KF::EdgeVertexPlaneProjectSE3KF() : g2o::BaseBinaryEdge<3, g2o::Plane3D, g2o::VertexSE3Expmap, g2o::VertexPlane>() {}
 
     bool EdgeVertexPlaneProjectSE3KF::read(std::istream &is)

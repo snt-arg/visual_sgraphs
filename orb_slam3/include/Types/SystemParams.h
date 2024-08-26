@@ -48,6 +48,21 @@ namespace ORB_SLAM3
             std::pair<float, float> distance_thresh = std::make_pair(0.2f, 2.5f);
         } pointcloud;
 
+        struct optimization
+        {
+            struct plane_kf
+            {
+                bool enabled = false;
+                float information_gain = 0.1f;
+            } plane_kf;
+
+            struct plane_point
+            {
+                bool enabled = false;
+                float information_gain = 0.09f;
+            } plane_point;
+        } optimization;
+
         struct seg
         {
             unsigned int pointclouds_thresh = 200;

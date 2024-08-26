@@ -61,6 +61,7 @@ namespace ORB_SLAM3
                                      const vector<Door *> &vpDoors, const vector<Room *> &vpRooms, int nIterations,
                                      bool *pbStopFlag, const unsigned long nLoopKF, const bool bRobust, double markerImpact)
     {
+        SystemParams *sysParams = SystemParams::GetParams();
         vector<bool> vbNotIncludedMP;
         vbNotIncludedMP.resize(vpMP.size());
 
@@ -326,50 +327,52 @@ namespace ORB_SLAM3
             vpPlane->setOpIdG(opIdG);
 
             // Adding an edge between the plane and the keyframes
-            const map<KeyFrame *, g2o::Plane3D> observations = vpPlane->getObservations();
-            for (map<KeyFrame *, g2o::Plane3D>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            const map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = vpPlane->getObservations();
+            for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
-                g2o::Plane3D planeLocalEquation = obsId->second;
+                ORB_SLAM3::Plane::Observation obs = obsId->second;
+                g2o::Plane3D planeLocalEquation = obs.localPlane;
                 ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
 
                 if (optimizer.vertex(opIdG) && optimizer.vertex(pKFi->mnId))
                 {
-                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
-                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
-                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
-                    e->setMeasurement(planeLocalEquation);
+                    if (sysParams->optimization.plane_kf.enabled)
+                    {
+                        ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                        e->setInformation(Eigen::Matrix<double, 3, 3>::Identity() * obs.confidence * sysParams->optimization.plane_kf.information_gain);
+                        e->setMeasurement(planeLocalEquation);
 
-                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                    e->setRobustKernel(rk);
-                    rk->setDelta(thHuber2D);
-                    optimizer.addEdge(e);
+                        g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                        e->setRobustKernel(rk);
+                        rk->setDelta(thHuber2D);
+                        optimizer.addEdge(e);
+                    }
+                    
+                    // adding plane-point constraints
+                    if (sysParams->optimization.plane_point.enabled)
+                    {
+                        // get the class index of the plane
+                        int clsCloudIdx = Utils::getClassIdFromPlaneType(vpPlane->getPlaneType());
+                        if (clsCloudIdx != -1)
+                        {
+                            // add the plane-point constraint
+                            ORB_SLAM3::EdgeSE3KFPointToPlane *e = new ORB_SLAM3::EdgeSE3KFPointToPlane();
+                            e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                            e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
+                            e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * sysParams->optimization.plane_point.information_gain);
+                            e->setMeasurement(obs.Gij);
+
+                            g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                            e->setRobustKernel(rk);
+                            rk->setDelta(thHuber2D);
+                            optimizer.addEdge(e);
+                        }
+                    }
                 }
             }
-
-            // // Adding point-plane constraints to the map-points inside the plane
-            // set<MapPoint *> attachedPoints = vpPlane->getMapPoints();
-            // if (attachedPoints.size() > 5)
-            // {
-            //     for (const auto &pMP : attachedPoints)
-            //     {
-            //         if (pMP->isBad())
-            //             continue;
-
-            //         if (optimizer.vertex(opIdG) && optimizer.vertex(pMP->mnId + maxKFid + 1))
-            //         {
-            //             ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ *e = new ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ();
-            //             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pMP->mnId + maxKFid + 1)));
-            //             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
-            //             e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * 1);
-
-            //             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-            //             e->setRobustKernel(rk);
-            //             rk->setDelta(thHuber2D);
-            //             optimizer.addEdge(e);
-            //         }
-            //     }
-            // }
 
             // 🚧 [vS-Graphs v.2.0] in contrast with the first version of visual S-Graphs, where there was an edge between
             // Markers and Planes, in this version we removed that edge
@@ -1360,6 +1363,9 @@ namespace ORB_SLAM3
                                           int &num_OptKF, int &num_MPs, int &num_edges, std::list<Room *> vpRooms,
                                           double markerImpact)
     {
+        // System parameters
+        SystemParams *sysParams = SystemParams::GetParams();
+
         // Variables
         list<Door *> lLocalMapDoors;
         list<Room *> lLocalMapRooms;
@@ -1522,8 +1528,8 @@ namespace ORB_SLAM3
         // Loop through the recently added planes, get all the keyframes and add them
         for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
         {
-            std::map<KeyFrame *, g2o::Plane3D> planeObservations = (*idx)->getObservations();
-            for (map<KeyFrame *, g2o::Plane3D>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
+            std::map<KeyFrame *, ORB_SLAM3::Plane::Observation> planeObservations = (*idx)->getObservations();
+            for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
                 // auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame *k)
@@ -1848,7 +1854,8 @@ namespace ORB_SLAM3
             int opId = maxOpId + nPlanes;
             vPlane->setId(opId);
             // vPlane->setMarginalized(true);
-            vPlane->setEstimate(pMapPlane->getGlobalEquation());
+            g2o::Plane3D planeGlobalEquation = pMapPlane->getGlobalEquation();
+            vPlane->setEstimate(planeGlobalEquation);
             optimizer.addVertex(vPlane);
             nPlanes++;
 
@@ -1856,51 +1863,53 @@ namespace ORB_SLAM3
             pMapPlane->setOpId(opId);
 
             // Adding an edge between the plane and the keyframes
-            const map<KeyFrame *, g2o::Plane3D> observations = pMapPlane->getObservations();
-            for (map<KeyFrame *, g2o::Plane3D>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            const map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = pMapPlane->getObservations();
+            for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
-                g2o::Plane3D planeLocalEquation = obsId->second;
-                ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+                ORB_SLAM3::Plane::Observation obs = obsId->second;
+                g2o::Plane3D planeLocalEquation = obs.localPlane;
 
                 if (optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
                 {
-                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
-                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
-                    e->setMeasurement(planeLocalEquation);
+                    if (sysParams->optimization.plane_kf.enabled)
+                    {
+                        ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                        e->setInformation(Eigen::Matrix<double, 3, 3>::Identity() * obs.confidence * sysParams->optimization.plane_kf.information_gain);
+                        e->setMeasurement(planeLocalEquation);
 
-                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                    e->setRobustKernel(rk);
-                    rk->setDelta(thHuberMono);
-                    optimizer.addEdge(e);
-                    nEdges++;
+                        g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                        e->setRobustKernel(rk);
+                        rk->setDelta(thHuberMono);
+                        optimizer.addEdge(e);
+                        nEdges++;
+                    }
+                    
+                    // adding plane-point constraints
+                    if (sysParams->optimization.plane_point.enabled)
+                    {
+                        // get the class index of the plane
+                        int clsCloudIdx = Utils::getClassIdFromPlaneType(pMapPlane->getPlaneType());
+                        if (clsCloudIdx != -1)
+                        {
+                            // add the plane-point constraint
+                            ORB_SLAM3::EdgeSE3KFPointToPlane *e = new ORB_SLAM3::EdgeSE3KFPointToPlane();
+                            e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
+                            e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                            e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * sysParams->optimization.plane_point.information_gain);
+                            e->setMeasurement(obs.Gij);
+
+                            g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                            e->setRobustKernel(rk);
+                            rk->setDelta(thHuberMono);
+                            optimizer.addEdge(e);
+                            nEdges++;
+                        }
+                    }
                 }
             }
-
-            // // Adding point-plane constraints to the randomly chosen map-points inside the plane
-            // set<MapPoint *> attachedPoints = pMapPlane->getMapPoints();
-            // if (attachedPoints.size() > 5)
-            // {
-            //     for (const auto &pMP : attachedPoints)
-            //     {
-            //         if (pMP->isBad())
-            //             continue;
-
-            //         if (optimizer.vertex(opId) && optimizer.vertex(pMP->mnId + maxKFid + 1))
-            //         {
-            //             ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ *e = new ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ();
-            //             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pMP->mnId + maxKFid + 1)));
-            //             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-            //             e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * 1);
-
-            //             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-            //             e->setRobustKernel(rk);
-            //             rk->setDelta(thHuberMono);
-            //             optimizer.addEdge(e);
-            //         }
-            //     }
-            // }
 
             // 🚧 [vS-Graphs v.2.0] in contrast with the first version of visual S-Graphs, where there was an edge between
             // Markers and Planes, in this version we removed that edge
@@ -2800,7 +2809,7 @@ namespace ORB_SLAM3
         for (Plane *pPlane : vpCurrentMapPlanes)
         {
             // Get a reference KeyFrame related to the plane
-            std::map<KeyFrame *, g2o::Plane3D> observations = pPlane->getObservations();
+            std::map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = pPlane->getObservations();
 
             // If the plane has no observations, continue
             if (observations.empty())
@@ -2833,7 +2842,7 @@ namespace ORB_SLAM3
 
                 // Transform the local pose to the world coordinate system
                 g2o::Plane3D globalEquation =
-                    Utils::convertToGlobalEquation(Tcorc.matrix().cast<double>(),
+                    Utils::applyPoseToPlane(Tcorc.matrix().cast<double>(),
                                                    pPlane->getGlobalEquation());
 
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = pPlane->getMapClouds();

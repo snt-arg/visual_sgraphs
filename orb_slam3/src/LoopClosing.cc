@@ -2370,7 +2370,7 @@ namespace ORB_SLAM3
                             continue;
 
                         Sophus::SE3f Tcorc = pRefKF->GetPoseInverse() * pRefKF->mTcwBefGBA;
-                        g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(Tcorc.matrix().cast<double>(), pPlane->getGlobalEquation());
+                        g2o::Plane3D globalEquation = Utils::applyPoseToPlane(Tcorc.matrix().cast<double>(), pPlane->getGlobalEquation());
                         pPlane->setGlobalEquation(globalEquation);
                     }
                 }

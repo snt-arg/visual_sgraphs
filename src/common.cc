@@ -298,12 +298,12 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
     ORB_SLAM3::KeyFrame *thisKF = nullptr;
     for (int i = keyframe_vec.size() - 1; i >= 0; i--)
     {
-        if (keyframe_vec[i]->getCurrentClsCloudPtrs().size() > 0)
+        if (keyframe_vec[i]->getClsCloudPtrs().size() > 0)
         {
             thisKF = keyframe_vec[i];
-            // clear all clsClouds from the keyframes prior to the index i
-            for (int j = 0; j < i; j++)
-                keyframe_vec[j]->clearClsClouds();
+            // // clear all clsClouds from the keyframes prior to the index i
+            // for (int j = 0; j < i; j++)
+            //     keyframe_vec[j]->clearClsClouds();
             break;
         }
     }
@@ -311,7 +311,7 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         return;
 
     // get the class specific pointclouds from this keyframe
-    std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> clsCloudPtrs = thisKF->getCurrentClsCloudPtrs();
+    std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> clsCloudPtrs = thisKF->getClsCloudPtrs();
 
     // create a new pointcloud with aggregated points from all classes but with class-specific colors
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
@@ -338,7 +338,7 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         }
     }
     aggregatedCloud->header = clsCloudPtrs[0]->header;
-    thisKF->clearClsClouds();
+    // thisKF->clearClsClouds();
 
     // create a new pointcloud2 message from the transformed and aggregated pointcloud
     sensor_msgs::PointCloud2 cloud_msg;

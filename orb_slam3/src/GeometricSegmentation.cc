@@ -68,7 +68,7 @@ namespace ORB_SLAM3
             g2o::Plane3D detectedPlane(planeEstimate);
 
             // Convert the given plane to global coordinates
-            g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
+            g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                          detectedPlane);
 
             // convert planeCloud to global coordinates

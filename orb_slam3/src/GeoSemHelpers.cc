@@ -4,21 +4,45 @@ namespace ORB_SLAM3
 {
     ORB_SLAM3::Plane *GeoSemHelpers::createMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
                                                     const g2o::Plane3D estimatedPlane,
-                                                    const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud)
+                                                    const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud,
+                                                    double confidence)
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
         newMapPlane->setLocalEquation(estimatedPlane);
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
-        newMapPlane->addObservation(pKF, estimatedPlane);
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
         newMapPlane->refKeyFrame = pKF;
+        
+        // The observation of the plane
+        ORB_SLAM3::Plane::Observation obs;
+        
+        // the observation of the plane equation
+        obs.localPlane = estimatedPlane;
+        
+        // the observation of the plane point cloud (measurement)
+        Eigen::Matrix4d Gij;
+        Gij.setZero();
+        if (SystemParams::GetParams()->optimization.plane_point.enabled)
+        {
+            for (auto &point: planeCloud->points)
+            {
+                Eigen::Vector4d pointVec;
+                pointVec << point.x, point.y, point.z, 1;
+                Gij += pointVec * pointVec.transpose() * (static_cast<int>(point.a) / 255.0);
+            }
+            obs.Gij = Gij;
+        }
+
+        // the aggregated confidence of the plane
+        obs.confidence = confidence;
+        newMapPlane->addObservation(pKF, obs);
 
         // Set the plane type to undefined, as it is not known yet
         newMapPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::UNDEFINED);
 
         // Set the global equation of the plane
-        g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
+        g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                      estimatedPlane);
         newMapPlane->setGlobalEquation(globalEquation);
 
@@ -38,14 +62,37 @@ namespace ORB_SLAM3
     }
 
     void GeoSemHelpers::updateMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                       pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId)
+                                       pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId, double confidence)
     {
         // Find the matched plane among all planes of the map
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
-        currentPlane->addObservation(pKF, estimatedPlane);
+        
+        // The observation of the plane
+        ORB_SLAM3::Plane::Observation obs;
+        
+        // the observation of the plane equation
+        obs.localPlane = estimatedPlane;
+        
+        // the observation of the plane point cloud (measurement)
+        Eigen::Matrix4d Gij;
+        Gij.setZero();
+        for (auto &point: planeCloud->points)
+        {
+            Eigen::Vector4d pointVec;
+            pointVec << point.x, point.y, point.z, 1;
+            Gij += pointVec * pointVec.transpose() * (static_cast<int>(point.a) / 255.0);
+        }
+        obs.Gij = Gij;
+
+        // the aggregated confidence of the plane
+        obs.confidence = confidence;
+        currentPlane->addObservation(pKF, obs);
 
         // Add the plane to the list of planes in the current KeyFrame
         pKF->AddMapPlane(currentPlane);
+
+        // transform the plane cloud to the global frame
+        pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
         // Update the pointcloud of the plane
         if (!planeCloud->points.empty())

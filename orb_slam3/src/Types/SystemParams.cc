@@ -49,6 +49,12 @@ namespace ORB_SLAM3
             seg.plane_association_thresh = mConfig["seg"]["plane_association_thresh"].as<float>();
             seg.ransac.max_iterations = mConfig["seg"]["ransac"]["max_iterations"].as<unsigned int>();
 
+            // Optimization Parameters
+            optimization.plane_kf.enabled = mConfig["optimization"]["plane_kf"]["enabled"].as<bool>();
+            optimization.plane_kf.information_gain = mConfig["optimization"]["plane_kf"]["information_gain"].as<float>();
+            optimization.plane_point.enabled = mConfig["optimization"]["plane_point"]["enabled"].as<bool>();
+            optimization.plane_point.information_gain = mConfig["optimization"]["plane_point"]["information_gain"].as<float>();
+
             // Geometric Segmentation Parameters
             geo_seg.pointcloud.downsample.leaf_size = mConfig["geo_seg"]["pointcloud"]["downsample"]["leaf_size"].as<float>();
             geo_seg.pointcloud.downsample.min_points_per_voxel = mConfig["geo_seg"]["pointcloud"]["downsample"]["min_points_per_voxel"].as<unsigned int>();

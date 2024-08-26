@@ -214,7 +214,7 @@ namespace ORB_SLAM3
         
     }
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> KeyFrame::getCurrentClsCloudPtrs() const
+    std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> KeyFrame::getClsCloudPtrs() const
     {
         return mCurrentClsCloudPtrs;
     }

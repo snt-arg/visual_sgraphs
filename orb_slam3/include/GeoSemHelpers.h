@@ -25,7 +25,7 @@ namespace ORB_SLAM3
          * @param planeCloud the plane point cloud
          */
         static ORB_SLAM3::Plane *createMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                                const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud);
+                                                const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, double confidence = 1.0);
 
         /**
          * @brief Updates the map plane
@@ -36,7 +36,7 @@ namespace ORB_SLAM3
          * @param planeId the plane id
          */
         static void updateMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId);
+                                   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId, double confidence = 1.0);
 
         /**
          * @brief Checks to see if the marker is attached to a door or not (e.g., a window)

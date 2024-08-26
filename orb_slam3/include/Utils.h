@@ -76,7 +76,7 @@ namespace ORB_SLAM3
          * @param kfPose the pose of the current keyframe
          * @param plane the plane equation in the local map
          */
-        static g2o::Plane3D convertToGlobalEquation(const Eigen::Matrix4d &kfPose, const g2o::Plane3D &plane);
+        static g2o::Plane3D applyPoseToPlane(const Eigen::Matrix4d &kfPose, const g2o::Plane3D &plane);
 
         /**
          * @brief Gets the centeroid of a cluster of points
@@ -165,6 +165,13 @@ namespace ORB_SLAM3
          * @return the planeVariant type
          */
         static ORB_SLAM3::Plane::planeVariant getPlaneTypeFromClassId(int clsId);
+
+        /**
+         * @brief Gets the class id from the planeVariant type
+         * @param planeType the planeVariant type
+         * @return the class id
+         */
+        static int getClassIdFromPlaneType(ORB_SLAM3::Plane::planeVariant planeType);
 
         /**
          * @brief Calculates the soft-min approximation of the given values

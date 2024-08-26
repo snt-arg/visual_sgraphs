@@ -289,6 +289,28 @@ namespace ORB_SLAM3
         }
     };
 
+
+    class EdgeSE3KFPointToPlane: public g2o::BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3Expmap, g2o::VertexPlane> {
+        public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        
+        EdgeSE3KFPointToPlane();
+        virtual bool read(std::istream& is);
+        virtual bool write(std::ostream& os) const;
+
+        void setMeasurement(const Eigen::Matrix4d& m) override { _measurement = m; }
+
+        void computeError(){
+            const g2o::VertexSE3Expmap* v1 = static_cast<const g2o::VertexSE3Expmap*>(_vertices[0]);
+            const g2o::VertexPlane* v2 = static_cast<const g2o::VertexPlane*>(_vertices[1]);
+
+            Eigen::Matrix4d Ti = v1->estimate().inverse().to_homogeneous_matrix();
+            Eigen::Vector4d Pj = v2->estimate().coeffs();
+            Eigen::Matrix4d Gij = _measurement;
+            _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj / 2;
+        }
+    };
+
     /**
      * The edge used to connect a Plane vertex (VertexPlane) to a KeyFrame vertex (SE3)
      * [Note]: it creates constraint for three measurements, i.e., (x, y, z)

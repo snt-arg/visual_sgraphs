@@ -73,7 +73,7 @@ namespace ORB_SLAM3
             return plane;
     }
 
-    g2o::Plane3D Utils::convertToGlobalEquation(const Eigen::Matrix4d &kfPose, const g2o::Plane3D &plane)
+    g2o::Plane3D Utils::applyPoseToPlane(const Eigen::Matrix4d &kfPose, const g2o::Plane3D &plane)
     {
         Eigen::Vector4d v = plane.coeffs();
         Eigen::Vector4d v2;
@@ -333,6 +333,19 @@ namespace ORB_SLAM3
         }
     }
 
+    int Utils::getClassIdFromPlaneType(ORB_SLAM3::Plane::planeVariant planeType)
+    {
+        switch (planeType)
+        {
+        case ORB_SLAM3::Plane::planeVariant::GROUND:
+            return 0;
+        case ORB_SLAM3::Plane::planeVariant::WALL:
+            return 1;
+        default:
+            return -1;
+        }
+    }
+
     bool Utils::pointOnPlane(Eigen::Vector4d planeEquation, MapPoint *mapPoint)
     {
         if (mapPoint->isBad())
@@ -395,6 +408,7 @@ namespace ORB_SLAM3
     double Utils::calcSoftMin(vector<double> &values)
     {
         // parameter controlling the softness/sharpness of the soft-min
+        // the smaller the value, the more conservative the soft-min
         const double tau = 0.1;
 
         // soft-min = sum(exp(-value/tau) * value) / sum(exp(-value/tau))

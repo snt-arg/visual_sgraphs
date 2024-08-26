@@ -165,17 +165,18 @@ namespace ORB_SLAM3
                     point.g = origPoint.g;
                     point.b = origPoint.b;
 
-                    // confidence as the squared inverse depth - interpolated linearly between near and far thresholds
-                    // confidence = 255 for near, 55 for far, and interpolated according to squared distance
+                    // confidence as the squared inverse depth - interpolated between near and far thresholds
+                    // confidence = 255 for near, 25 for far, and interpolated according to squared distance
                     const float thresholdNear = sysParams->pointcloud.distance_thresh.first;
                     const float thresholdFar = sysParams->pointcloud.distance_thresh.second;
                     if (point.z < thresholdNear)
                         point.a = 255;
                     else if (point.z > thresholdFar)
-                        point.a = 55;
+                        point.a = 25;
                     else
-                        point.a = 255 - static_cast<int>(200 * sqrt((point.z - thresholdNear) / (thresholdFar - thresholdNear)));
+                        point.a = 255 - static_cast<int>(230 * sqrt((point.z - thresholdNear) / (thresholdFar - thresholdNear)));
 
+                    // add the point to the respective class specific point cloud
                     clsCloudPtrs[j]->push_back(point);
                 }
             }
@@ -234,13 +235,13 @@ namespace ORB_SLAM3
                 g2o::Plane3D detectedPlane(estimatedPlane);
 
                 // Convert the given plane to global coordinates
-                g2o::Plane3D globalEquation = Utils::convertToGlobalEquation(pKF->GetPoseInverse().matrix().cast<double>(),
+                g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                              detectedPlane);
 
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
 
-                // pointcloud processing
+                // pointcloud processing - compute the average confidence across all pixels in the plane observation
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
                 std::vector<double> confidences;
                 for (size_t i = 0; i < planeCloud->size(); i++)
@@ -254,7 +255,7 @@ namespace ORB_SLAM3
                 {
                     if (!mGeoRuns)
                     {
-                        ORB_SLAM3::Plane *newMapPlane = GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, planeCloud);
+                        ORB_SLAM3::Plane *newMapPlane = GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, conf);
                         // Cast a vote for the plane semantics
                         updatePlaneSemantics(newMapPlane->getId(), clsId, conf);
                     }
@@ -262,9 +263,10 @@ namespace ORB_SLAM3
                 else
                 {
                     if (!mGeoRuns)
-                        GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, matchedPlaneId);
+                        GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, matchedPlaneId, conf);
                     else
                     {
+                        pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
                         ORB_SLAM3::Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
                         // Add the plane cloud to the matched plane
                         if (!planeCloud->empty())

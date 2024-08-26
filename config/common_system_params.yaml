@@ -38,13 +38,25 @@ seg:
     # The maximum number of iterations for the RANSAC algorithm
     max_iterations: 800
 
+################################## Optimization Parameters #######################################
+optimization:
+  # plane equation to keyframe factor
+  plane_kf:
+    enabled: true
+    information_gain: 1.5
+  # point to plane factor
+  plane_point:
+    enabled: false
+    information_gain: 0.002
+
+
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
   pointcloud:
     # pointcloud downsampling parmeters
     downsample:
       leaf_size: 0.05
-      min_points_per_voxel: 15
+      min_points_per_voxel: 25
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
@@ -56,7 +68,7 @@ sem_seg:
     # pointcloud downsampling parmeters
     downsample:
       leaf_size: 0.03
-      min_points_per_voxel: 15
+      min_points_per_voxel: 25
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
@@ -75,8 +87,8 @@ sem_seg:
   max_tilt_wall: 0.2
   max_tilt_ground: 0.2
 
-  # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semnatic label
-  min_votes: 3.2
+  # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
+  min_votes: 2.5
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:
