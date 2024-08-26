@@ -72,6 +72,8 @@ namespace ORB_SLAM3
             sem_seg.pointcloud.downsample.min_points_per_voxel = mConfig["sem_seg"]["pointcloud"]["downsample"]["min_points_per_voxel"].as<unsigned int>();
             sem_seg.pointcloud.outlier_removal.std_threshold = mConfig["sem_seg"]["pointcloud"]["outlier_removal"]["std_threshold"].as<float>();
             sem_seg.pointcloud.outlier_removal.mean_threshold = mConfig["sem_seg"]["pointcloud"]["outlier_removal"]["mean_threshold"].as<unsigned int>();
+            sem_seg.reassociate.enabled = mConfig["sem_seg"]["reassociate"]["enabled"].as<bool>();
+            sem_seg.reassociate.association_thresh = mConfig["sem_seg"]["reassociate"]["association_thresh"].as<float>();
 
             // Room Segmentation Parameters
             room_seg.method = static_cast<room_seg::Method>(mConfig["room_seg"]["method"].as<int>());

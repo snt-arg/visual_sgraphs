@@ -361,7 +361,7 @@ namespace ORB_SLAM3
         return false;
     }
 
-    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane)
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, float threshold)
     {
         int planeId = -1;
 
@@ -398,7 +398,7 @@ namespace ORB_SLAM3
         }
 
         // If the difference is not large, no need to add the plane
-        if (minDiff < SystemParams::GetParams()->seg.plane_association_thresh)
+        if (minDiff < threshold)
             return planeId;
 
         // Otherwise, return -1 so that the the plane gets added to the map

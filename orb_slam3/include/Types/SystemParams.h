@@ -100,6 +100,12 @@ namespace ORB_SLAM3
                 Downsample downsample;
                 OutlierRemoval outlier_removal;
             } pointcloud;
+
+            struct reassociate
+            {
+                bool enabled = false;
+                float association_thresh = 0.2f;
+            } reassociate;
         } sem_seg;
 
         struct room_seg

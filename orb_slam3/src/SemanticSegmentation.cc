@@ -239,7 +239,7 @@ namespace ORB_SLAM3
                                                                              detectedPlane);
 
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation);
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation, sysParams->seg.plane_association_thresh);
 
                 // pointcloud processing - compute the average confidence across all pixels in the plane observation
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
@@ -303,8 +303,9 @@ namespace ORB_SLAM3
             filterWallPlanes();
         }
 
-        // // reassociate semantic planes if they get close to each other :)) after optimization
-        // reAssociateSemanticPlanes();
+        // reassociate semantic planes if they get close to each other :)) after optimization
+        if (sysParams->sem_seg.reassociate.enabled)
+            reAssociateSemanticPlanes();
     }
 
     void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
@@ -359,7 +360,7 @@ namespace ORB_SLAM3
                 return;
 
             // check if the plane is associated with any other plane
-            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation());
+            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation(), sysParams->sem_seg.reassociate.association_thresh);
 
             // if a match is found, then add the smaller planecloud to the larger plane
             // set the smaller plane type to undefined and remove it from future associations

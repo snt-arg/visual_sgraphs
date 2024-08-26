@@ -155,9 +155,10 @@ namespace ORB_SLAM3
          * @brief associates given planes with the mapped planes
          * @param mappedPlanes the mapped planes
          * @param givenPlane the given plane
+         * @param threshold the threshold value for association
          * @return the plane id of the mapped plane
          */
-        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane);
+        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, float threshold);
 
         /**
          * @brief Gets the planeVariant type from the class id

@@ -49,7 +49,6 @@ optimization:
     enabled: false
     information_gain: 0.002
 
-
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
   pointcloud:
@@ -89,6 +88,11 @@ sem_seg:
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
   min_votes: 2.5
+
+  # Whether to reassociate planes with the semantic labels - after optimization, some planes may get close
+  reassociate: 
+    enabled: false
+    association_thresh: 0.1
 
   ############################## Room Segmentation Parameters ####################################
 room_seg:
