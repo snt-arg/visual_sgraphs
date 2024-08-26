@@ -50,6 +50,7 @@ namespace ORB_SLAM3
             seg.ransac.max_iterations = mConfig["seg"]["ransac"]["max_iterations"].as<unsigned int>();
 
             // Optimization Parameters
+            optimization.marginalize_planes = mConfig["optimization"]["marginalize_planes"].as<bool>();
             optimization.plane_kf.enabled = mConfig["optimization"]["plane_kf"]["enabled"].as<bool>();
             optimization.plane_kf.information_gain = mConfig["optimization"]["plane_kf"]["information_gain"].as<float>();
             optimization.plane_point.enabled = mConfig["optimization"]["plane_point"]["enabled"].as<bool>();

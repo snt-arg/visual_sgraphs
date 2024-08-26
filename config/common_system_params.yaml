@@ -40,6 +40,7 @@ seg:
 
 ################################## Optimization Parameters #######################################
 optimization:
+  marginalize_planes: false
   # plane equation to keyframe factor
   plane_kf:
     enabled: true

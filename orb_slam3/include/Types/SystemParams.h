@@ -50,6 +50,8 @@ namespace ORB_SLAM3
 
         struct optimization
         {
+            bool marginalize_planes = false;
+
             struct plane_kf
             {
                 bool enabled = false;

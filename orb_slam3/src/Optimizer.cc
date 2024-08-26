@@ -319,7 +319,8 @@ namespace ORB_SLAM3
             int opIdG = maxOpId + nPlanes;
             vPlane->setId(opIdG);
             vPlane->setEstimate(vpPlane->getGlobalEquation());
-            // vPlane->setMarginalized(true);
+            if (sysParams->optimization.marginalize_planes)
+                vPlane->setMarginalized(true);
             optimizer.addVertex(vPlane);
             nPlanes++;
 
@@ -1853,7 +1854,8 @@ namespace ORB_SLAM3
             g2o::VertexPlane *vPlane = new g2o::VertexPlane();
             int opId = maxOpId + nPlanes;
             vPlane->setId(opId);
-            // vPlane->setMarginalized(true);
+            if (sysParams->optimization.marginalize_planes)
+                vPlane->setMarginalized(true);
             g2o::Plane3D planeGlobalEquation = pMapPlane->getGlobalEquation();
             vPlane->setEstimate(planeGlobalEquation);
             optimizer.addVertex(vPlane);
