@@ -16,6 +16,18 @@ markers:
   # How much the framework should trust the markers (0.1 default, higher for mono setups)
   impact: 0.1
 
+################################## Optimization Parameters #######################################
+optimization:
+  marginalize_planes: false
+  # plane equation to keyframe factor
+  plane_kf:
+    enabled: true
+    information_gain: 1.5
+  # point to plane factor
+  plane_point:
+    enabled: false
+    information_gain: 0.002
+
 ################################ Common Segmentation Parameters ##################################
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
@@ -91,7 +103,7 @@ sem_seg:
   min_votes: 2.5
 
   # Whether to reassociate planes with the semantic labels - after optimization, some planes may get close
-  reassociate: 
+  reassociate:
     enabled: false
     association_thresh: 0.1
 
@@ -110,7 +122,7 @@ room_seg:
   perpendicularity_thresh: 10.0
 
   # The maximum distance between two room centroids to be considered the same room (in meters)
-  room_center_distance_thresh: 1.0
+  center_distance_thresh: 1.0
 
   # Parameters for the geometrically-based closest walls room segmentation
   geo_based:
