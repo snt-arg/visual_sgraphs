@@ -75,7 +75,10 @@ namespace ORB_SLAM3
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr emptyPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
             
             // Check if we need to add the wall to the map or not
-            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation, sysParams->seg.plane_association_thresh);
+            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), 
+                                                        detectedPlane,
+                                                        pKF->GetPose().matrix().cast<double>(),
+                                                        sysParams->seg.plane_association_thresh);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
                 GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, emptyPlaneCloud);

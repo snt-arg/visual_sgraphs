@@ -361,7 +361,7 @@ namespace ORB_SLAM3
         return false;
     }
 
-    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, float threshold)
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose, const float threshold)
     {
         int planeId = -1;
 
@@ -382,7 +382,11 @@ namespace ORB_SLAM3
             // Preparing a plane for feeding the detector
             g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
 
+            // convert to local frame of given plane
+            mappedPlane = Utils::applyPoseToPlane(kfPose, mappedPlane);
+
             // Calculate difference vector based on walls' equations
+            // given plane is assumed to be in the frame represented by kfPose
             Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
 
             // Create a single number determining the difference vector

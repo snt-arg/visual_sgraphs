@@ -363,7 +363,7 @@ namespace ORB_SLAM3
                             ORB_SLAM3::EdgeSE3KFPointToPlane *e = new ORB_SLAM3::EdgeSE3KFPointToPlane();
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
                             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
-                            e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * sysParams->optimization.plane_point.information_gain);
+                            e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * obs.confidence * sysParams->optimization.plane_point.information_gain);
                             e->setMeasurement(obs.Gij);
 
                             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
@@ -1514,9 +1514,6 @@ namespace ORB_SLAM3
             set<MapPoint *> mapPoints = (*idx)->getMapPoints();
             for (const auto &mapPoint : mapPoints)
             {
-                // auto foundPoint = std::find_if(lLocalMapPoints.begin(), lLocalMapPoints.end(), [mapPoint](const MapPoint *p)
-                //                                { return p == mapPoint; });
-                // if (foundPoint == lLocalMapPoints.end())
                 if (mpLocalMPid.find(mapPoint->mnId) == mpLocalMPid.end())
                 {
                     lLocalMapPoints.push_back(mapPoint);
@@ -1533,9 +1530,6 @@ namespace ORB_SLAM3
             for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
-                // auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame *k)
-                //                                   { return k == pKFi; });
-                // if (foundKeyframe == lLocalKeyFrames.end())
                 if (mpLocalKFid.find(pKFi->mnId) == mpLocalKFid.end())
                 {
                     lLocalKeyFrames.push_back(pKFi);
@@ -1550,10 +1544,6 @@ namespace ORB_SLAM3
             std::map<KeyFrame *, std::tuple<int, int>> mapPointObservations = (*idx)->GetObservations();
             for (std::map<KeyFrame *, std::tuple<int, int>>::const_iterator obsId = mapPointObservations.begin(), obLast = mapPointObservations.end(); obsId != obLast; obsId++)
             {
-                // KeyFrame *pKFi = obsId->first;
-                // auto foundKeyframe = std::find_if(lLocalKeyFrames.begin(), lLocalKeyFrames.end(), [pKFi](const KeyFrame *k)
-                //                                   { return k == pKFi; });
-                // if (foundKeyframe == lLocalKeyFrames.end())
                 if (mpLocalKFid.find(obsId->first->mnId) == mpLocalKFid.end())
                 {
                     lLocalKeyFrames.push_back(obsId->first);
@@ -1562,7 +1552,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // Fixed Keyframes (Keyframes that see Local MapPoints but that are not Local Keyframes)
+        // Fixed Keyframes for MPs (Keyframes that see Local MapPoints but that are not Local Keyframes)
         list<KeyFrame *> lFixedCameras;
         for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
         {
@@ -1870,7 +1860,6 @@ namespace ORB_SLAM3
             {
                 KeyFrame *pKFi = obsId->first;
                 ORB_SLAM3::Plane::Observation obs = obsId->second;
-                g2o::Plane3D planeLocalEquation = obs.localPlane;
 
                 if (optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
                 {
@@ -1880,7 +1869,7 @@ namespace ORB_SLAM3
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
                         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                         e->setInformation(Eigen::Matrix<double, 3, 3>::Identity() * obs.confidence * sysParams->optimization.plane_kf.information_gain);
-                        e->setMeasurement(planeLocalEquation);
+                        e->setMeasurement(obs.localPlane);
 
                         g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                         e->setRobustKernel(rk);
@@ -1900,7 +1889,7 @@ namespace ORB_SLAM3
                             ORB_SLAM3::EdgeSE3KFPointToPlane *e = new ORB_SLAM3::EdgeSE3KFPointToPlane();
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
                             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                            e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * sysParams->optimization.plane_point.information_gain);
+                            e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * obs.confidence * sysParams->optimization.plane_point.information_gain);
                             e->setMeasurement(obs.Gij);
 
                             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;

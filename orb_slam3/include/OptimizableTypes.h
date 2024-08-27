@@ -307,7 +307,7 @@ namespace ORB_SLAM3
             Eigen::Matrix4d Ti = v1->estimate().inverse().to_homogeneous_matrix();
             Eigen::Vector4d Pj = v2->estimate().coeffs();
             Eigen::Matrix4d Gij = _measurement;
-            _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj / 2;
+            _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj;
         }
     };
 

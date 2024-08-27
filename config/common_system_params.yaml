@@ -44,11 +44,11 @@ optimization:
   # plane equation to keyframe factor
   plane_kf:
     enabled: true
-    information_gain: 1.5
+    information_gain: 0.5
   # point to plane factor
   plane_point:
     enabled: false
-    information_gain: 0.002
+    information_gain: 0.5
 
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
@@ -56,7 +56,7 @@ geo_seg:
     # pointcloud downsampling parmeters
     downsample:
       leaf_size: 0.05
-      min_points_per_voxel: 25
+      min_points_per_voxel: 20
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
@@ -68,7 +68,7 @@ sem_seg:
     # pointcloud downsampling parmeters
     downsample:
       leaf_size: 0.03
-      min_points_per_voxel: 25
+      min_points_per_voxel: 20
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50

@@ -29,7 +29,7 @@ namespace ORB_SLAM3
             {
                 Eigen::Vector4d pointVec;
                 pointVec << point.x, point.y, point.z, 1;
-                Gij += pointVec * pointVec.transpose() * (static_cast<int>(point.a) / 255.0);
+                Gij += pointVec * pointVec.transpose();
             }
         }
         obs.Gij = Gij;

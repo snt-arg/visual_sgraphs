@@ -35,7 +35,7 @@ namespace ORB_SLAM3
 
             // get the point cloud from the respective keyframe via the atlas - ignore it if KF doesn't exist
             KeyFrame *thisKF = mpAtlas->GetKeyFrameById(std::get<0>(segImgTuple));
-            if (thisKF == nullptr)
+            if (thisKF == nullptr || thisKF->isBad())
                 continue;
             const pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisKFPointCloud = thisKF->getCurrentFramePointCloud();
             if (thisKFPointCloud == nullptr)
@@ -239,7 +239,10 @@ namespace ORB_SLAM3
                                                                              detectedPlane);
 
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation, sysParams->seg.plane_association_thresh);
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), 
+                                                            detectedPlane, 
+                                                            pKF->GetPose().matrix().cast<double>(), 
+                                                            sysParams->seg.plane_association_thresh);
 
                 // pointcloud processing - compute the average confidence across all pixels in the plane observation
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
@@ -360,7 +363,10 @@ namespace ORB_SLAM3
                 return;
 
             // check if the plane is associated with any other plane
-            int matchedPlaneId = Utils::associatePlanes(otherPlanes, plane->getGlobalEquation(), sysParams->sem_seg.reassociate.association_thresh);
+            int matchedPlaneId = Utils::associatePlanes(otherPlanes,
+                                                        plane->getGlobalEquation(),
+                                                        Eigen::Matrix4d::Identity(),
+                                                        sysParams->sem_seg.reassociate.association_thresh);
 
             // if a match is found, then add the smaller planecloud to the larger plane
             // set the smaller plane type to undefined and remove it from future associations

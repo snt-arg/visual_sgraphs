@@ -154,11 +154,12 @@ namespace ORB_SLAM3
         /**
          * @brief associates given planes with the mapped planes
          * @param mappedPlanes the mapped planes
-         * @param givenPlane the given plane
+         * @param givenPlane the given plane (in the same frame as the kfPose, global if kfPose is identity)
+         * @param kfPose the pose of the current keyframe
          * @param threshold the threshold value for association
          * @return the plane id of the mapped plane
          */
-        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, float threshold);
+        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose, const float threshold);
 
         /**
          * @brief Gets the planeVariant type from the class id
