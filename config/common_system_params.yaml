@@ -22,11 +22,11 @@ optimization:
   # plane equation to keyframe factor
   plane_kf:
     enabled: true
-    information_gain: 1.5
+    information_gain: 0.5
   # point to plane factor
   plane_point:
     enabled: false
-    information_gain: 0.002
+    information_gain: 0.5
 
 ################################ Common Segmentation Parameters ##################################
 seg:
@@ -49,18 +49,6 @@ seg:
 
     # The maximum number of iterations for the RANSAC algorithm
     max_iterations: 800
-
-################################## Optimization Parameters #######################################
-optimization:
-  marginalize_planes: false
-  # plane equation to keyframe factor
-  plane_kf:
-    enabled: true
-    information_gain: 0.5
-  # point to plane factor
-  plane_point:
-    enabled: false
-    information_gain: 0.5
 
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
