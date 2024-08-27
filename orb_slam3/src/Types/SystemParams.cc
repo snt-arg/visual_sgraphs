@@ -78,9 +78,9 @@ namespace ORB_SLAM3
 
             // Room Segmentation Parameters
             room_seg.method = static_cast<room_seg::Method>(mConfig["room_seg"]["method"].as<int>());
+            room_seg.center_distance_thresh = mConfig["room_seg"]["center_distance_thresh"].as<float>();
             room_seg.plane_facing_dot_thresh = mConfig["room_seg"]["plane_facing_dot_thresh"].as<float>();
             room_seg.walls_perpendicularity_thresh = mConfig["room_seg"]["perpendicularity_thresh"].as<float>();
-            room_seg.room_center_distance_thresh = mConfig["room_seg"]["room_center_distance_thresh"].as<float>();
             room_seg.min_cluster_vertices = mConfig["room_seg"]["skeleton_based"]["min_cluster_vertices"].as<unsigned int>();
             room_seg.marker_wall_distance_thresh = mConfig["room_seg"]["geo_based"]["marker_wall_distance_thresh"].as<float>();
             room_seg.cluster_point_wall_distance_thresh = mConfig["room_seg"]["skeleton_based"]["cluster_point_wall_distance_thresh"].as<float>();

@@ -236,7 +236,7 @@ namespace ORB_SLAM3
 
                 // Convert the given plane to global coordinates
                 g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
-                                                                             detectedPlane);
+                                                                      detectedPlane);
 
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), globalEquation, sysParams->seg.plane_association_thresh);
@@ -393,7 +393,7 @@ namespace ORB_SLAM3
                 // reset the smaller plane semantics
                 smallPlane->resetPlaneSemantics();
                 smallPlane->excludedFromAssoc = true;
-        
+
                 std::cout << "Plane " << smallPlane->getId() << " merged with Plane " << bigPlane->getId() << std::endl;
             }
         }
@@ -725,7 +725,7 @@ namespace ORB_SLAM3
     {
         // Variables
         ORB_SLAM3::Room *foundMappedRoom = nullptr;
-        double minDistance = sysParams->room_seg.room_center_distance_thresh;
+        double minDistance = sysParams->room_seg.center_distance_thresh;
 
         if (givenRoomList.empty())
             return nullptr;
