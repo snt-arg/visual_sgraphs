@@ -95,10 +95,11 @@ namespace ORB_SLAM3
         return segmentedImageBuffer;
     }
 
-    void SemanticSegmentation::UpdateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints)
+    void SemanticSegmentation::SetLatestSkeletonCluster()
     {
         unique_lock<std::mutex> lock(mMutexNewRooms);
-        latestSkeletonCluster = skeletonClusterPoints;
+        // Get the latest skeleton cluster from Atlas
+        latestSkeletonCluster = mpAtlas->GetSkeletoClusterPoints();
     }
 
     std::vector<std::vector<Eigen::Vector3d *>> SemanticSegmentation::GetLatestSkeletonCluster()
@@ -239,9 +240,9 @@ namespace ORB_SLAM3
                                                                       detectedPlane);
 
                 // Check if we need to add the wall to the map or not
-                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), 
-                                                            detectedPlane, 
-                                                            pKF->GetPose().matrix().cast<double>(), 
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(),
+                                                            detectedPlane,
+                                                            pKF->GetPose().matrix().cast<double>(),
                                                             sysParams->seg.plane_association_thresh);
 
                 // pointcloud processing - compute the average confidence across all pixels in the plane observation
