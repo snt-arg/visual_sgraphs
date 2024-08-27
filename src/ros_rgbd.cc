@@ -13,7 +13,7 @@ public:
 
     void GrabArUcoMarker(const aruco_msgs::MarkerArray &msg);
     void GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSegImage);
-    void GrabVoxBloxGraph(const visualization_msgs::MarkerArray &msgSkeletonGraph);
+    void GrabVoxbloxSkeletonGraph(const visualization_msgs::MarkerArray &msgSkeletonGraph);
     void GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sensor_msgs::ImageConstPtr &msgD,
                   const sensor_msgs::PointCloud2ConstPtr &msgPC);
 };
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 
     // Subscriber to get the mesh from voxblox
     ros::Subscriber subVoxbloxSkeletonMesh = nodeHandler.subscribe("/voxblox_skeletonizer/sparse_graph", 1,
-                                                                   &ImageGrabber::GrabVoxBloxGraph, &igb);
+                                                                   &ImageGrabber::GrabVoxbloxSkeletonGraph, &igb);
 
     setupPublishers(nodeHandler, imgTransport, nodeName);
     setupServices(nodeHandler, nodeName);
@@ -201,8 +201,8 @@ void ImageGrabber::GrabSegmentation(const segmenter_ros::SegmenterDataMsg &msgSe
  *
  * @param msgSkeletonGraphs The skeleton graph from the `voxblox` module
  */
-void ImageGrabber::GrabVoxBloxGraph(const visualization_msgs::MarkerArray &msgSkeletonGraphs)
+void ImageGrabber::GrabVoxbloxSkeletonGraph(const visualization_msgs::MarkerArray &msgSkeletonGraphs)
 {
     // Pass the skeleton graph to a buffer to be processed by the SemanticSegmentation thread
-    getVoxbloxSkeleton(msgSkeletonGraphs);
+    setVoxbloxSkeletonCluster(msgSkeletonGraphs);
 }

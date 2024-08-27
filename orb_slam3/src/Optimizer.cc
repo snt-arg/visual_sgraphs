@@ -351,7 +351,7 @@ namespace ORB_SLAM3
                         rk->setDelta(thHuber2D);
                         optimizer.addEdge(e);
                     }
-                    
+
                     // adding plane-point constraints
                     if (sysParams->optimization.plane_point.enabled)
                     {
@@ -1877,7 +1877,7 @@ namespace ORB_SLAM3
                         optimizer.addEdge(e);
                         nEdges++;
                     }
-                    
+
                     // adding plane-point constraints
                     if (sysParams->optimization.plane_point.enabled)
                     {
@@ -2834,7 +2834,7 @@ namespace ORB_SLAM3
                 // Transform the local pose to the world coordinate system
                 g2o::Plane3D globalEquation =
                     Utils::applyPoseToPlane(Tcorc.matrix().cast<double>(),
-                                                   pPlane->getGlobalEquation());
+                                            pPlane->getGlobalEquation());
 
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = pPlane->getMapClouds();
                 pcl::transformPointCloud(*planeCloud, *planeCloud, Tcorc.matrix().cast<float>());

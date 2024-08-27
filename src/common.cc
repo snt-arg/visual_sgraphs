@@ -1038,7 +1038,7 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double fra
     return std::make_pair(minTimeDifference, matchedMarkers);
 }
 
-void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray)
+void setVoxbloxSkeletonCluster(const visualization_msgs::MarkerArray &skeletonArray)
 {
     // Reset the buffer
     skeletonClusterPoints.clear();
@@ -1066,6 +1066,6 @@ void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray)
         }
     }
 
-    // Send it to be processed
-    pSLAM->updateSkeletonCluster(skeletonClusterPoints);
+    // Set the cluster points to the active map
+    pSLAM->setSkeletonCluster(skeletonClusterPoints);
 }

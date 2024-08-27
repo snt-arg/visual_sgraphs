@@ -272,9 +272,10 @@ namespace ORB_SLAM3
         mpSemanticSegmentation->AddSegmentedFrameToBuffer(tuple);
     }
 
-    void System::updateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints)
+    void System::setSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints)
     {
-        // Adding
+        // Adding the skeleton cluster to the SemanticSegmentation
+        mpAtlas->SetSkeletonClusterPoints(skeletonClusterPoints);
         mpSemanticSegmentation->UpdateSkeletonCluster(skeletonClusterPoints);
     }
 
@@ -1374,6 +1375,12 @@ namespace ORB_SLAM3
         return checksum;
     }
 
+    ORB_SLAM3::Map *System::GetCurrentMap()
+    {
+        ORB_SLAM3::Map *pActiveMap = mpAtlas->GetCurrentMap();
+        return pActiveMap;
+    }
+
     vector<MapPoint *> System::GetAllMapPoints()
     {
         Map *pActiveMap = mpAtlas->GetCurrentMap();
@@ -1457,4 +1464,4 @@ namespace ORB_SLAM3
         return false;
     }
 
-} // namespace ORB_SLAM
+}

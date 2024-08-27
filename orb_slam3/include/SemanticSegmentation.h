@@ -48,8 +48,15 @@ namespace ORB_SLAM3
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
         void AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
 
-        // Skeleton cluster processing
+        /**
+         * @brief Gets the latest skeleton cluster acquired from voxblox
+         */
         std::vector<std::vector<Eigen::Vector3d *>> GetLatestSkeletonCluster();
+
+        /**
+         * @brief Updates the skeleton cluster acquired from voxblox
+         * @param skeletonClusterPoints the current keyframe point cloud
+         */
         void UpdateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);
 
         /**

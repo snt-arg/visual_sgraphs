@@ -235,6 +235,18 @@ namespace ORB_SLAM3
         return mpCurrentMap->KeyFramesInMap();
     }
 
+    std::vector<std::vector<Eigen::Vector3d *>> Atlas::GetSkeletoClusterPoints()
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        return mpCurrentMap->GetSkeletoClusterPoints();
+    }
+
+    void Atlas::SetSkeletonClusterPoints(const std::vector<std::vector<Eigen::Vector3d *>> &newClusterPoints)
+    {
+        unique_lock<mutex> lock(mMutexAtlas);
+        mpCurrentMap->SetSkeletonClusterPoints(newClusterPoints);
+    }
+
     std::vector<KeyFrame *> Atlas::GetAllKeyFrames()
     {
         unique_lock<mutex> lock(mMutexAtlas);

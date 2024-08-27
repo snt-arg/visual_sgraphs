@@ -126,6 +126,17 @@ namespace ORB_SLAM3
         std::vector<Room *> GetAllMarkerBasedMapRooms();
         std::vector<MapPoint *> GetReferenceMapPoints();
 
+        /**
+         * @brief Get the cluster points of the map set by `voxblox_skeleton`
+         */
+        std::vector<std::vector<Eigen::Vector3d *>> GetSkeletoClusterPoints();
+
+        /**
+         * @brief Set the cluster points of the map set by `voxblox_skeleton`
+         * @param newClusterPoints The new cluster points to set
+         */
+        void SetSkeletonClusterPoints(const std::vector<std::vector<Eigen::Vector3d *>> &newClusterPoints);
+
         Plane *GetBiggestGroundPlane();
 
         vector<Map *> GetAllMaps();

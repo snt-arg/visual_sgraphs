@@ -158,4 +158,4 @@ std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double fra
  * @brief Gets skeleton voxels from `voxblox_skeleton` to be processed
  * @param skeletonArray The array of skeleton voxels received
  */
-void getVoxbloxSkeleton(const visualization_msgs::MarkerArray &skeletonArray);
+void setVoxbloxSkeletonCluster(const visualization_msgs::MarkerArray &skeletonArray);

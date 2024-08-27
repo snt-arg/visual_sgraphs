@@ -168,6 +168,12 @@ namespace ORB_SLAM3
         // This resumes local mapping thread and performs SLAM again.
         void DeactivateLocalizationMode();
 
+        /**
+         * @brief Get the current active map in Atlas
+         * @return the current active map
+         */
+        ORB_SLAM3::Map *GetCurrentMap();
+
         // Returns true if there have been a big map change (loop closure, global BA)
         // since last call to this function
         bool MapChanged();
@@ -260,7 +266,7 @@ namespace ORB_SLAM3
          * @brief Update the skeleton cluster coming from `voxblox_skeleton`
          * @param skeletonClusterPoints the skeleton cluster points
          */
-        void updateSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);
+        void setSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);
 
 #ifdef REGISTER_TIMES
         void InsertRectTime(double &time);
