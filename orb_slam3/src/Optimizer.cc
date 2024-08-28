@@ -2469,7 +2469,8 @@ namespace ORB_SLAM3
                                            vector<KeyFrame *> &vpFixedCorrectedKFs, vector<KeyFrame *> &vpNonFixedKFs,
                                            vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
                                            vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
-                                           vector<Room *> &vpCurrentDMapRooms, vector<Room *> &vpCurrentMMapRooms)
+                                           vector<Room *> &vpCurrentDMapRooms, vector<Room *> &vpCurrentMMapRooms,
+                                           vector<vector<Eigen::Vector3d *>> &vpClusterPoints)
     {
         // Variables
         g2o::SparseOptimizer optimizer;
@@ -2903,6 +2904,34 @@ namespace ORB_SLAM3
         {
             // [TODO]
         }
+
+        // Correct the pose of the cluster points in the new map
+        std::cout << "-- Aligning the poses of cluster points ..." << std::endl;
+
+        // First, get a fixed KeyFrame as the reference KeyFrame
+        KeyFrame *pRefKFCluster = nullptr;
+        for (KeyFrame *pKFi : vpNonFixedKFs)
+        {
+            if (pKFi->isBad())
+                continue;
+
+            pRefKFCluster = pKFi;
+            break;
+        }
+
+        // Then, use the KeyFrame to get the corrected pose of cluster points
+        Sophus::SE3f TNonCorrectedwr = pRefKFCluster->mTwcBefMerge;
+        Sophus::SE3f Tcorc = pRefKFCluster->GetPoseInverse() * TNonCorrectedwr.inverse();
+        for (std::vector<Eigen::Vector3d *> &cluster : vpClusterPoints)
+            for (Eigen::Vector3d *pPoint : cluster)
+            {
+                // Apply the transformation to each point
+                Eigen::Vector4d homogeneousPoint(pPoint->x(), pPoint->y(), pPoint->z(), 1.0);
+                Eigen::Vector4d transformedPoint = Tcorc.matrix().cast<double>() * homogeneousPoint;
+
+                // Update the original point with the transformed coordinates
+                *pPoint = transformedPoint.head<3>();
+            }
 
         std::cout << "- Corrections finished!" << std::endl;
     }

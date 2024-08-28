@@ -32,7 +32,7 @@ namespace ORB_SLAM3
         mThumbnail = static_cast<GLubyte *>(NULL);
     }
 
-    Map::Map(int initKFid) : mnInitKFid(initKFid), mnMaxKFid(initKFid), /*mnLastLoopKFid(initKFid),*/ mnBigChangeIdx(0), mIsInUse(false),
+    Map::Map(int initKFid) : mnInitKFid(initKFid), mnMaxKFid(initKFid), mnBigChangeIdx(0), mIsInUse(false),
                              mHasTumbnail(false), mbBad(false), mbImuInitialized(false), mpFirstRegionKF(static_cast<KeyFrame *>(NULL)),
                              mnMapChange(0), mbFail(false), mnMapChangeNotified(0), mbIsInertial(false), mbIMU_BA1(false), mbIMU_BA2(false)
     {

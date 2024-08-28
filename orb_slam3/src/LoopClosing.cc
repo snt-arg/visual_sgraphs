@@ -1561,6 +1561,7 @@ namespace ORB_SLAM3
         vector<Marker *> vpCurrentMapMarkers = pCurrentMap->GetAllMarkers();
         vector<Room *> vpCurrentDetectedMapRooms = pCurrentMap->GetAllDetectedMapRooms();
         vector<Room *> vpCurrentMarkerBasedMapRooms = pCurrentMap->GetAllMarkerBasedMapRooms();
+        std::vector<std::vector<Eigen::Vector3d *>> vpClusterPoints = pCurrentMap->GetSkeletoClusterPoints();
 
         if (vpCurrentMapKFs.size() != 0)
         {
@@ -1630,7 +1631,8 @@ namespace ORB_SLAM3
             if (mpTracker->mSensor != System::MONOCULAR)
                 Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs,
                                                   vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapDoors, vpCurrentMapPlanes,
-                                                  vpCurrentMapMarkers, vpCurrentDetectedMapRooms, vpCurrentMarkerBasedMapRooms);
+                                                  vpCurrentMapMarkers, vpCurrentDetectedMapRooms, vpCurrentMarkerBasedMapRooms,
+                                                  vpClusterPoints);
 
             // When all the elements are updated, move them to the new map
             {
@@ -2200,9 +2202,7 @@ namespace ORB_SLAM3
 
                 // Get Map Mutex
                 unique_lock<mutex> lock(pActiveMap->mMutexMapUpdate);
-                // cout << "LC: Update Map Mutex adquired" << endl;
 
-                // pActiveMap->PrintEssentialGraph();
                 //  Correct keyframes starting at map first keyframe
                 list<KeyFrame *> lpKFtoCheck(pActiveMap->mvpKeyFrameOrigins.begin(), pActiveMap->mvpKeyFrameOrigins.end());
 
@@ -2210,11 +2210,7 @@ namespace ORB_SLAM3
                 {
                     KeyFrame *pKF = lpKFtoCheck.front();
                     const set<KeyFrame *> sChilds = pKF->GetChilds();
-                    // cout << "---Updating KF " << pKF->mnId << " with " << sChilds.size() << " childs" << endl;
-                    // cout << " KF mnBAGlobalForKF: " << pKF->mnBAGlobalForKF << endl;
                     Sophus::SE3f Twc = pKF->GetPoseInverse();
-                    // cout << "Twc: " << Twc << endl;
-                    // cout << "GBA: Correct KeyFrames" << endl;
                     for (set<KeyFrame *>::const_iterator sit = sChilds.begin(); sit != sChilds.end(); sit++)
                     {
                         KeyFrame *pChild = *sit;
@@ -2223,11 +2219,7 @@ namespace ORB_SLAM3
 
                         if (pChild->mnBAGlobalForKF != nLoopKF)
                         {
-                            // cout << "++++New child with flag " << pChild->mnBAGlobalForKF << "; LoopKF: " << nLoopKF << endl;
-                            // cout << " child id: " << pChild->mnId << endl;
                             Sophus::SE3f Tchildc = pChild->GetPose() * Twc;
-                            // cout << "Child pose: " << Tchildc << endl;
-                            // cout << "pKF->mTcwGBA: " << pKF->mTcwGBA << endl;
                             pChild->mTcwGBA = Tchildc * pKF->mTcwGBA; //*Tcorc*pKF->mTcwGBA;
 
                             Sophus::SO3f Rcor = pChild->mTcwGBA.so3().inverse() * pChild->GetPose().so3();
@@ -2238,7 +2230,6 @@ namespace ORB_SLAM3
                             else
                                 Verbose::PrintMess("Child velocity empty!! ", Verbose::VERBOSITY_NORMAL);
 
-                            // cout << "Child bias: " << pChild->GetImuBias() << endl;
                             pChild->mBiasGBA = pChild->GetImuBias();
 
                             pChild->mnBAGlobalForKF = nLoopKF;
@@ -2246,9 +2237,7 @@ namespace ORB_SLAM3
                         lpKFtoCheck.push_back(pChild);
                     }
 
-                    // cout << "-------Update pose" << endl;
                     pKF->mTcwBefGBA = pKF->GetPose();
-                    // cout << "pKF->mTcwBefGBA: " << pKF->mTcwBefGBA << endl;
                     pKF->SetPose(pKF->mTcwGBA);
                     /*cv::Mat Tco_cn = pKF->mTcwBefGBA * pKF->mTcwGBA.inv();
                     cv::Vec3d trasl = Tco_cn.rowRange(0,3).col(3);
@@ -2305,12 +2294,8 @@ namespace ORB_SLAM3
 
                     if (pKF->bImu)
                     {
-                        // cout << "-------Update inertial values" << endl;
                         pKF->mVwbBefGBA = pKF->GetVelocity();
-                        // if (pKF->mVwbGBA.empty())
-                        //     Verbose::PrintMess("pKF->mVwbGBA is empty", Verbose::VERBOSITY_NORMAL);
 
-                        // assert(!pKF->mVwbGBA.empty());
                         pKF->SetVelocity(pKF->mVwbGBA);
                         pKF->SetNewBias(pKF->mBiasGBA);
                     }
@@ -2318,8 +2303,7 @@ namespace ORB_SLAM3
                     lpKFtoCheck.pop_front();
                 }
 
-                // cout << "GBA: Correct MapPoints" << endl;
-                //  Correct MapPoints
+                // Correct MapPoints
                 const vector<MapPoint *> vpMPs = pActiveMap->GetAllMapPoints();
 
                 for (size_t i = 0; i < vpMPs.size(); i++)
@@ -2425,4 +2409,4 @@ namespace ORB_SLAM3
         return mbFinished;
     }
 
-} // namespace ORB_SLAM
+}

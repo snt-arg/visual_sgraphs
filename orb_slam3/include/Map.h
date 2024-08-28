@@ -145,7 +145,6 @@ namespace ORB_SLAM3
         void SetCurrentMap();
 
         bool IsInUse();
-        bool HasThumbnail();
 
         bool IsBad();
         void SetBad();
@@ -169,14 +168,12 @@ namespace ORB_SLAM3
         bool GetIniertialBA2();
         void SetInertialSensor();
 
-        void PrintEssentialGraph();
-        bool CheckEssentialGraph();
         void ChangeId(long unsigned int nId);
 
         unsigned int GetLowerKFID();
 
         void PreSave(std::set<GeometricCamera *> &spCams);
-        void PostLoad(KeyFrameDatabase *pKFDB, ORBVocabulary *pORBVoc /*, map<long unsigned int, KeyFrame*>& mpKeyFrameId*/, map<unsigned int, GeometricCamera *> &mpCams);
+        void PostLoad(KeyFrameDatabase *pKFDB, ORBVocabulary *pORBVoc, map<unsigned int, GeometricCamera *> &mpCams);
 
         KeyFrame *mpFirstRegionKF;
         std::mutex mMutexMapUpdate;
@@ -194,7 +191,6 @@ namespace ORB_SLAM3
 
         static long unsigned int nNextId;
 
-        // DEBUG: show KFs which are used in LBA
         std::set<long unsigned int> msOptKFs;
         std::set<long unsigned int> msFixedKFs;
 
@@ -239,7 +235,6 @@ namespace ORB_SLAM3
 
         long unsigned int mnInitKFid;
         long unsigned int mnMaxKFid;
-        // long unsigned int mnLastLoopKFid;
 
         // Index related to a big change in the map (loop closure, global BA)
         int mnBigChangeIdx;

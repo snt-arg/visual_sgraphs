@@ -31,10 +31,8 @@ namespace ORB_SLAM3
         std::vector<ORB_SLAM3::Door *> envDoors;
         std::vector<ORB_SLAM3::Room *> envRooms;
         unsigned long int mLastProcessedKeyFrameId = 0;
-        // The updated segmented frame buffer
-        std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
-        // The latest skeleton cluster
         std::vector<std::vector<Eigen::Vector3d *>> latestSkeletonCluster;
+        std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
 
         // System parameters
         SystemParams *sysParams;
