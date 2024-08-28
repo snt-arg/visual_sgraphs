@@ -150,19 +150,10 @@ namespace ORB_SLAM3
                 cout << "- Atlas is ready!" << endl
                      << endl;
             }
-            // mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
-
-            // cout << "KF in DB: " << mpKeyFrameDatabase->mnNumKFs << "; words: " << mpKeyFrameDatabase->mnNumWords << endl;
 
             loadedAtlas = true;
 
             mpAtlas->CreateNewMap();
-
-            // clock_t timeElapsed = clock() - start;
-            // unsigned msElapsed = timeElapsed / (CLOCKS_PER_SEC / 1000);
-            // cout << "Binary file read in " << msElapsed << " ms" << endl;
-
-            // usleep(10*1000*1000);
         }
 
         // Setup the system parameters
@@ -334,7 +325,6 @@ namespace ORB_SLAM3
             }
         }
 
-        // Check reset
         {
             unique_lock<mutex> lock(mMutexReset);
             if (mbReset)
@@ -644,7 +634,6 @@ namespace ORB_SLAM3
             f << setprecision(6) << *lT << " " << setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
         }
         f.close();
-        // cout << endl << "trajectory saved!" << endl;
     }
 
     void System::SaveKeyFrameTrajectoryTUM(const string &filename)
@@ -664,8 +653,6 @@ namespace ORB_SLAM3
         for (size_t i = 0; i < vpKFs.size(); i++)
         {
             KeyFrame *pKF = vpKFs[i];
-
-            // pKF->SetPose(pKF->GetPose()*Two);
 
             if (pKF->isBad())
                 continue;
@@ -730,12 +717,10 @@ namespace ORB_SLAM3
                   lend = mpTracker->mlRelativeFramePoses.end();
              lit != lend; lit++, lRit++, lT++, lbL++)
         {
-            // cout << "1" << endl;
             if (*lbL)
                 continue;
 
             KeyFrame *pKF = *lRit;
-            // cout << "KF: " << pKF->mnId << endl;
 
             Sophus::SE3f Trw;
 
@@ -743,27 +728,16 @@ namespace ORB_SLAM3
             if (!pKF)
                 continue;
 
-            // cout << "2.5" << endl;
-
             while (pKF->isBad())
             {
-                // cout << " 2.bad" << endl;
                 Trw = Trw * pKF->mTcp;
                 pKF = pKF->GetParent();
-                // cout << "--Parent KF: " << pKF->mnId << endl;
             }
 
             if (!pKF || pKF->GetMap() != pBiggerMap)
-            {
-                // cout << "--Parent KF is from another map" << endl;
                 continue;
-            }
-
-            // cout << "3" << endl;
 
             Trw = Trw * pKF->GetPose() * Twb; // Tcp*Tpw*Twb0=Tcb0 where b0 is the new world reference
-
-            // cout << "4" << endl;
 
             if (mSensor == IMU_MONOCULAR || mSensor == IMU_STEREO || mSensor == IMU_RGBD)
             {
@@ -779,10 +753,8 @@ namespace ORB_SLAM3
                 Eigen::Vector3f twc = Twc.translation();
                 f << setprecision(6) << 1e9 * (*lT) << " " << setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
             }
-
-            // cout << "5" << endl;
         }
-        // cout << "end saving trajectory" << endl;
+
         f.close();
         cout << endl
              << "End of saving trajectory to " << filename << " ..." << endl;
@@ -793,11 +765,6 @@ namespace ORB_SLAM3
 
         cout << endl
              << "Saving trajectory of map " << pMap->GetId() << " to " << filename << " ..." << endl;
-        /*if(mSensor==MONOCULAR)
-        {
-            cerr << "ERROR: SaveTrajectoryEuRoC cannot be used for monocular." << endl;
-            return;
-        }*/
 
         int numMaxKFs = 0;
 
@@ -814,7 +781,6 @@ namespace ORB_SLAM3
 
         ofstream f;
         f.open(filename.c_str());
-        // cout << "file open" << endl;
         f << fixed;
 
         // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
@@ -831,12 +797,10 @@ namespace ORB_SLAM3
                   lend = mpTracker->mlRelativeFramePoses.end();
              lit != lend; lit++, lRit++, lT++, lbL++)
         {
-            // cout << "1" << endl;
             if (*lbL)
                 continue;
 
             KeyFrame *pKF = *lRit;
-            // cout << "KF: " << pKF->mnId << endl;
 
             Sophus::SE3f Trw;
 
@@ -844,27 +808,16 @@ namespace ORB_SLAM3
             if (!pKF)
                 continue;
 
-            // cout << "2.5" << endl;
-
             while (pKF->isBad())
             {
-                // cout << " 2.bad" << endl;
                 Trw = Trw * pKF->mTcp;
                 pKF = pKF->GetParent();
-                // cout << "--Parent KF: " << pKF->mnId << endl;
             }
 
             if (!pKF || pKF->GetMap() != pMap)
-            {
-                // cout << "--Parent KF is from another map" << endl;
                 continue;
-            }
-
-            // cout << "3" << endl;
 
             Trw = Trw * pKF->GetPose() * Twb; // Tcp*Tpw*Twb0=Tcb0 where b0 is the new world reference
-
-            // cout << "4" << endl;
 
             if (mSensor == IMU_MONOCULAR || mSensor == IMU_STEREO || mSensor == IMU_RGBD)
             {
@@ -880,10 +833,7 @@ namespace ORB_SLAM3
                 Eigen::Vector3f twc = Twc.translation();
                 f << setprecision(6) << 1e9 * (*lT) << " " << setprecision(9) << twc(0) << " " << twc(1) << " " << twc(2) << " " << q.x() << " " << q.y() << " " << q.z() << " " << q.w() << endl;
             }
-
-            // cout << "5" << endl;
         }
-        // cout << "end saving trajectory" << endl;
         f.close();
         cout << endl
              << "End of saving trajectory to " << filename << " ..." << endl;
@@ -924,8 +874,6 @@ namespace ORB_SLAM3
         for (size_t i = 0; i < vpKFs.size(); i++)
         {
             KeyFrame *pKF = vpKFs[i];
-
-            // pKF->SetPose(pKF->GetPose()*Two);
 
             if (!pKF || pKF->isBad())
                 continue;

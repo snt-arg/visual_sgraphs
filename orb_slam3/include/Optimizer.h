@@ -95,15 +95,15 @@ namespace ORB_SLAM3
          * @param vpCurrentMapDoors Current Map Doors
          * @param vpCurrentMapPlanes Current Map Planes
          * @param vpCurrentMapMarkers Current Map Markers
-         * @param vpCurrentDMapRooms Current Detected Map Rooms
-         * @param vpCurrentMMapRooms Current Marker-based Map Rooms
+         * @param vpCurrentDetMapRooms Current Detected Map Rooms
+         * @param vpCurrentMrkMapRooms Current Marker-based Map Rooms
          * @param vpClusterPoints Cluster points of the map set by `voxblox_skeleton`
          */
         void static OptimizeEssentialGraph(KeyFrame *pCurKF, vector<KeyFrame *> &vpFixedKFs,
                                            vector<KeyFrame *> &vpFixedCorrectedKFs, vector<KeyFrame *> &vpNonFixedKFs,
                                            vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
                                            vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
-                                           vector<Room *> &vpCurrentDMapRooms, vector<Room *> &vpCurrentMMapRooms,
+                                           vector<Room *> &vpCurrentDetMapRooms, vector<Room *> &vpCurrentMrkMapRooms,
                                            vector<vector<Eigen::Vector3d *>> &vpClusterPoints);
 
         // For inertial loopclosing

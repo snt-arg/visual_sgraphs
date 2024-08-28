@@ -2469,7 +2469,7 @@ namespace ORB_SLAM3
                                            vector<KeyFrame *> &vpFixedCorrectedKFs, vector<KeyFrame *> &vpNonFixedKFs,
                                            vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
                                            vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
-                                           vector<Room *> &vpCurrentDMapRooms, vector<Room *> &vpCurrentMMapRooms,
+                                           vector<Room *> &vpCurrentDetMapRooms, vector<Room *> &vpCurrentMrkMapRooms,
                                            vector<vector<Eigen::Vector3d *>> &vpClusterPoints)
     {
         // Variables
@@ -2890,17 +2890,30 @@ namespace ORB_SLAM3
         }
 
         // Correct the pose of the detected doors in the new map
+        std::cout << "-- Aligning the poses of doors ..." << std::endl;
         for (Door *pDoor : vpCurrentMapDoors)
         {
-            // [TODO]
+            // Get the marker related to the door
+            Marker *pMarker = pDoor->getMarker();
+
+            // If the door has no marker, continue
+            if (!pMarker)
+                continue;
+
+            // Update the global pose of the door
+            pDoor->setGlobalPose(pMarker->getGlobalPose());
         }
 
-        for (Room *pRoom : vpCurrentDMapRooms)
+        // Correct the pose of the detected rooms in the new map
+        std::cout << "-- Aligning the poses of the detected rooms ..." << std::endl;
+        for (Room *pRoom : vpCurrentDetMapRooms)
         {
             // [TODO]
         }
 
-        for (Room *pRoom : vpCurrentMMapRooms)
+        // Correct the pose of the marker-based rooms in the new map
+        std::cout << "-- Aligning the poses of the marker-based rooms ..." << std::endl;
+        for (Room *pRoom : vpCurrentMrkMapRooms)
         {
             // [TODO]
         }
@@ -2912,7 +2925,7 @@ namespace ORB_SLAM3
         KeyFrame *pRefKFCluster = nullptr;
         for (KeyFrame *pKFi : vpNonFixedKFs)
         {
-            if (pKFi->isBad())
+            if (!pKFi || pKFi->isBad())
                 continue;
 
             pRefKFCluster = pKFi;
@@ -2920,18 +2933,21 @@ namespace ORB_SLAM3
         }
 
         // Then, use the KeyFrame to get the corrected pose of cluster points
-        Sophus::SE3f TNonCorrectedwr = pRefKFCluster->mTwcBefMerge;
-        Sophus::SE3f Tcorc = pRefKFCluster->GetPoseInverse() * TNonCorrectedwr.inverse();
-        for (std::vector<Eigen::Vector3d *> &cluster : vpClusterPoints)
-            for (Eigen::Vector3d *pPoint : cluster)
-            {
-                // Apply the transformation to each point
-                Eigen::Vector4d homogeneousPoint(pPoint->x(), pPoint->y(), pPoint->z(), 1.0);
-                Eigen::Vector4d transformedPoint = Tcorc.matrix().cast<double>() * homogeneousPoint;
+        if (pRefKFCluster)
+        {
+            Sophus::SE3f TNonCorrectedwr = pRefKFCluster->mTwcBefMerge;
+            Sophus::SE3f Tcorc = pRefKFCluster->GetPoseInverse() * TNonCorrectedwr.inverse();
+            for (std::vector<Eigen::Vector3d *> &cluster : vpClusterPoints)
+                for (Eigen::Vector3d *pPoint : cluster)
+                {
+                    // Apply the transformation to each point
+                    Eigen::Vector4d homogeneousPoint(pPoint->x(), pPoint->y(), pPoint->z(), 1.0);
+                    Eigen::Vector4d transformedPoint = Tcorc.matrix().cast<double>() * homogeneousPoint;
 
-                // Update the original point with the transformed coordinates
-                *pPoint = transformedPoint.head<3>();
-            }
+                    // Update the original point with the transformed coordinates
+                    *pPoint = transformedPoint.head<3>();
+                }
+        }
 
         std::cout << "- Corrections finished!" << std::endl;
     }
