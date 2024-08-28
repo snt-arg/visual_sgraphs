@@ -2764,6 +2764,25 @@ namespace ORB_SLAM3
             pKFi->SetPose(Tiw.cast<float>());
         }
 
+        // Keep a corrected KeyFrame as the reference
+        Sophus::SE3f TCorectedSampleKF;
+        KeyFrame *pSampleRefKF = nullptr;
+
+        for (KeyFrame *pKFi : vpNonFixedKFs)
+        {
+            if (!pKFi || pKFi->isBad())
+                continue;
+
+            pSampleRefKF = pKFi;
+            break;
+        }
+
+        if (pSampleRefKF)
+        {
+            Sophus::SE3f TNonCorrectedSampleKF = pSampleRefKF->mTwcBefMerge;
+            TCorectedSampleKF = pSampleRefKF->GetPoseInverse() * TNonCorrectedSampleKF.inverse();
+        }
+
         // Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
         std::cout << "-- Aligning the poses of 3D mapped points ..." << std::endl;
         for (MapPoint *pMPi : vpNonCorrectedMPs)
@@ -2904,50 +2923,65 @@ namespace ORB_SLAM3
             pDoor->setGlobalPose(pMarker->getGlobalPose());
         }
 
+        // Correct the pose of the marker-based rooms in the new map
+        std::cout << "-- Aligning the poses of the marker-based room candidates ..." << std::endl;
+        for (Room *pRoom : vpCurrentMrkMapRooms)
+        {
+            // Get the marker related to the room
+            Marker *pMarker = pRoom->getMetaMarker();
+
+            // If the room has no marker, continue
+            if (!pMarker)
+                continue;
+
+            // Update the global pose of the room
+            pRoom->setRoomCenter(pMarker->getGlobalPose().translation().cast<double>());
+        }
+
         // Correct the pose of the detected rooms in the new map
         std::cout << "-- Aligning the poses of the detected rooms ..." << std::endl;
         for (Room *pRoom : vpCurrentDetMapRooms)
         {
-            // [TODO]
-        }
+            // Get the current room center
+            Eigen::Vector3d roomCenter = pRoom->getRoomCenter();
 
-        // Correct the pose of the marker-based rooms in the new map
-        std::cout << "-- Aligning the poses of the marker-based rooms ..." << std::endl;
-        for (Room *pRoom : vpCurrentMrkMapRooms)
-        {
-            // [TODO]
+            // Check if there is a valid reference KeyFrame
+            if (pSampleRefKF)
+            {
+                // Apply the transformation to the room center
+                Eigen::Vector4d homogeneousCenter(roomCenter.x(), roomCenter.y(), roomCenter.z(), 1.0);
+                Eigen::Vector4d transformedCenter = TCorectedSampleKF.matrix().cast<double>() * homogeneousCenter;
+
+                // Convert back to a 3D point (ignore the homogeneous coordinate)
+                Eigen::Vector3d correctedRoomCenter = transformedCenter.head<3>();
+
+                // Update the global pose of the room
+                pRoom->setRoomCenter(correctedRoomCenter);
+            }
+            else
+                std::cout << "--- Skipped fixing room#" << pRoom->getId()
+                          << " due to improper reference KeyFrame!" << std::endl;
         }
 
         // Correct the pose of the cluster points in the new map
         std::cout << "-- Aligning the poses of cluster points ..." << std::endl;
 
-        // First, get a fixed KeyFrame as the reference KeyFrame
-        KeyFrame *pRefKFCluster = nullptr;
-        for (KeyFrame *pKFi : vpNonFixedKFs)
-        {
-            if (!pKFi || pKFi->isBad())
-                continue;
-
-            pRefKFCluster = pKFi;
-            break;
-        }
-
         // Then, use the KeyFrame to get the corrected pose of cluster points
-        if (pRefKFCluster)
+        if (pSampleRefKF)
         {
-            Sophus::SE3f TNonCorrectedwr = pRefKFCluster->mTwcBefMerge;
-            Sophus::SE3f Tcorc = pRefKFCluster->GetPoseInverse() * TNonCorrectedwr.inverse();
             for (std::vector<Eigen::Vector3d *> &cluster : vpClusterPoints)
                 for (Eigen::Vector3d *pPoint : cluster)
                 {
                     // Apply the transformation to each point
                     Eigen::Vector4d homogeneousPoint(pPoint->x(), pPoint->y(), pPoint->z(), 1.0);
-                    Eigen::Vector4d transformedPoint = Tcorc.matrix().cast<double>() * homogeneousPoint;
+                    Eigen::Vector4d transformedPoint = TCorectedSampleKF.matrix().cast<double>() * homogeneousPoint;
 
                     // Update the original point with the transformed coordinates
                     *pPoint = transformedPoint.head<3>();
                 }
         }
+        else
+            std::cout << "--- Skipped fixing cluster points due to improper reference KeyFrame!" << std::endl;
 
         std::cout << "- Corrections finished!" << std::endl;
     }
