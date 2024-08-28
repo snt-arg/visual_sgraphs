@@ -106,6 +106,7 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
+void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>>, ros::Time);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);

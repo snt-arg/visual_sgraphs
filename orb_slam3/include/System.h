@@ -263,7 +263,12 @@ namespace ORB_SLAM3
         void addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
 
         /**
-         * @brief Update the skeleton cluster coming from `voxblox_skeleton`
+         * @brief Get the skeleton cluster coming from the current map
+         */
+        std::vector<std::vector<Eigen::Vector3d *>> getSkeletonCluster();
+
+        /**
+         * @brief Update the skeleton cluster coming from `voxblox_skeleton` in the map
          * @param skeletonClusterPoints the skeleton cluster points
          */
         void setSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);

@@ -19,7 +19,7 @@ std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, kf_markers_pub, kf_img_pub, kf_list_pub;
 std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, struct_frame_id, room_frame_id;
 ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, pubDoor,
-    all_mappoints_pub, kf_plane_assoc, pubFiducialMarker, planes_pub, pubRoom;
+    all_mappoints_pub, kf_plane_assoc, pubFiducialMarker, planes_pub, pubRoom, freespace_cluster_pub;
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
@@ -79,6 +79,7 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
     plane_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     tracked_mappoints_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
     pubCameraPoseVis = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/camera_pose_vis", 1);
+    freespace_cluster_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/freespace_clusters", 1);
     segmented_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
 
     // Semantic
@@ -121,15 +122,14 @@ void publishTopics(ros::Time msgTime, Eigen::Vector3f Wbb)
     // Setup publishers
     publishDoors(pSLAM->GetAllDoors(), msgTime);
     publishRooms(pSLAM->GetAllRooms(), msgTime);
-    // publishPlanes(pSLAM->GetAllPlanes(), msgTime);
-    publishKeyFrameImages(pSLAM->GetAllKeyFrames(), msgTime);
     publishAllPoints(pSLAM->GetAllMapPoints(), msgTime);
-    publishTrackingImage(pSLAM->GetCurrentFrame(), msgTime);
-    publishKeyFrameMarkers(pSLAM->GetAllKeyFrames(), msgTime);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msgTime);
+    publishTrackingImage(pSLAM->GetCurrentFrame(), msgTime);
+    publishKeyFrameImages(pSLAM->GetAllKeyFrames(), msgTime);
+    publishKeyFrameMarkers(pSLAM->GetAllKeyFrames(), msgTime);
     publishTrackedPoints(pSLAM->GetTrackedMapPoints(), msgTime);
-    // publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msgTime);
-    // publish pointclouds
+    publishFreeSpaceClusters(pSLAM->getSkeletonCluster(), msgTime);
+    // Publish pointclouds
     if (pubPointClouds)
     {
         publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msgTime);
@@ -262,6 +262,57 @@ void publishStaticTFTransform(string parentFrameId, string childFrameId, ros::Ti
 
     // Publish the static transform using the broadcaster
     broadcaster.sendTransform(transformStamped);
+}
+
+void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>> clusterPoints, ros::Time msgTime)
+{
+    // Check if the cluster points are empty
+    if (clusterPoints.empty())
+        return;
+
+    // Variables
+    int colorIndex = 0;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr freeSpaceCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    std::vector<std::vector<uint8_t>> fixedColors = {
+        {255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {255, 255, 0}, {0, 255, 255}, {255, 0, 255}, {128, 0, 0}};
+
+    // Loop through all the cluster points and add them to the point cloud
+    for (const auto &cluster : clusterPoints)
+    {
+        // Variables
+        std::vector<uint8_t> color = fixedColors[colorIndex];
+        // Loop through all the points in the current cluster
+        for (const auto &point : cluster)
+        {
+            pcl::PointXYZRGB newPoint;
+            newPoint.x = point->x();
+            newPoint.y = point->y();
+            newPoint.z = point->z();
+            newPoint.r = color[0];
+            newPoint.g = color[1];
+            newPoint.b = color[2];
+            freeSpaceCloud->push_back(newPoint);
+        }
+        // Increment the color index
+        colorIndex += 1;
+        if (colorIndex == fixedColors.size())
+            colorIndex = 0;
+    }
+
+    // Check if the point cloud is empty
+    if (freeSpaceCloud->empty())
+        return;
+
+    // Convert the point cloud to a PointCloud2 message
+    sensor_msgs::PointCloud2 cloudMsg;
+    pcl::toROSMsg(*freeSpaceCloud, cloudMsg);
+
+    // Set message header
+    cloudMsg.header.stamp = msgTime;
+    cloudMsg.header.frame_id = struct_frame_id;
+
+    // Publish the point cloud
+    freespace_cluster_pub.publish(cloudMsg);
 }
 
 void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msgTime)

@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /planes1/Namespaces1
-        - /Camera Pose1
       Splitter Ratio: 0.5078651905059814
     Tree Height: 404
   - Class: rviz/Selection
@@ -323,9 +322,7 @@ Visualization Manager:
       Namespaces:
         closed_spaces: true
         connected_edges_0: true
-        connected_edges_1: true
         connected_vertices_0: true
-        connected_vertices_1: true
         edges: true
         vertices: true
       Queue Size: 100
@@ -337,6 +334,34 @@ Visualization Manager:
       Namespaces:
         camera_pose: true
       Queue Size: 100
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: Free-Space Clusters
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.10000000149011612
+      Style: Flat Squares
+      Topic: /orb_slam3/freespace_clusters
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -366,7 +391,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.102938652038574
+      Distance: 16.075531005859375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -382,9 +407,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6152028441429138
+      Pitch: 0.7302024960517883
       Target Frame: <Fixed Frame>
-      Yaw: 3.5954067707061768
+      Yaw: 5.090405464172363
     Saved: ~
 Window Geometry:
   Displays:
