@@ -1570,6 +1570,23 @@ namespace ORB_SLAM3
             }
         }
 
+        // // Fixed KeyFrames for Planes (Keyframes that see Local Planes but that are not Local Keyframes)
+        // for (list<Plane *>::iterator lit = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); lit != lend; lit++)
+        // {
+        //     map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = (*lit)->getObservations();
+        //     for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
+        //     {
+        //         KeyFrame *pKFi = mit->first;
+
+        //         if (pKFi->mnBALocalForKF != pKF->mnId && pKFi->mnBAFixedForKF != pKF->mnId)
+        //         {
+        //             pKFi->mnBAFixedForKF = pKF->mnId;
+        //             if (!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
+        //                 lFixedCameras.push_back(pKFi);
+        //         }
+        //     }
+        // }
+
         num_fixedKF = lFixedCameras.size() + num_fixedKF;
 
         if (num_fixedKF == 0)
@@ -1664,6 +1681,25 @@ namespace ORB_SLAM3
 
         vector<MapPoint *> vpMapPointEdgeStereo;
         vpMapPointEdgeStereo.reserve(nExpectedSize);
+
+        const int nExpectedSizePlane = (lLocalKeyFrames.size() + lFixedCameras.size()) * lLocalMapPlanes.size();
+        vector<EdgeVertexPlaneProjectSE3KF *> vpEdgesPlane;
+        vpEdgesPlane.reserve(nExpectedSizePlane);
+
+        vector<KeyFrame *> vpEdgeKFPlane;
+        vpEdgeKFPlane.reserve(nExpectedSizePlane);
+
+        vector<Plane *> vpPlaneEdgePlane;
+        vpPlaneEdgePlane.reserve(nExpectedSizePlane);
+
+        vector<EdgeSE3KFPointToPlane *> vpEdgesPlanePoint;
+        vpEdgesPlanePoint.reserve(nExpectedSizePlane);
+
+        vector<KeyFrame *> vpEdgeKFPlanePoint;
+        vpEdgeKFPlanePoint.reserve(nExpectedSizePlane);
+
+        vector<Plane *> vpPlaneEdgePlanePoint;
+        vpPlaneEdgePlanePoint.reserve(nExpectedSizePlane);
 
         const float thHuberMono = sqrt(5.991);
         const float thHuberStereo = sqrt(7.815);
@@ -1861,6 +1897,12 @@ namespace ORB_SLAM3
                 KeyFrame *pKFi = obsId->first;
                 ORB_SLAM3::Plane::Observation obs = obsId->second;
 
+                if (pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
+                {
+                    std::cout << "KF is bad or not in the current map" << std::endl;
+                    continue;
+                }
+
                 if (optimizer.vertex(opId) && optimizer.vertex(pKFi->mnId))
                 {
                     if (sysParams->optimization.plane_kf.enabled)
@@ -1876,6 +1918,11 @@ namespace ORB_SLAM3
                         rk->setDelta(thHuberMono);
                         optimizer.addEdge(e);
                         nEdges++;
+
+                        vpEdgesPlane.push_back(e);
+                        vpEdgeKFPlane.push_back(pKFi);
+                        vpPlaneEdgePlane.push_back(pMapPlane);
+
                     }
 
                     // adding plane-point constraints
@@ -1897,6 +1944,10 @@ namespace ORB_SLAM3
                             rk->setDelta(thHuberMono);
                             optimizer.addEdge(e);
                             nEdges++;
+
+                            vpEdgesPlanePoint.push_back(e);
+                            vpEdgeKFPlanePoint.push_back(pKFi);
+                            vpPlaneEdgePlanePoint.push_back(pMapPlane);
                         }
                     }
                 }
@@ -2064,6 +2115,9 @@ namespace ORB_SLAM3
 
         vector<pair<KeyFrame *, MapPoint *>> vToErase;
         vToErase.reserve(vpEdgesMono.size() + vpEdgesBody.size() + vpEdgesStereo.size());
+        
+        vector<pair<KeyFrame *, Plane *>> vToErasePlane;
+        vToErasePlane.reserve(vpEdgesPlane.size() * 2);
 
         // Check inlier observations
         for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++)
@@ -2111,6 +2165,35 @@ namespace ORB_SLAM3
             }
         }
 
+        for (size_t i = 0, iend = vpEdgesPlane.size(); i < iend; i++)
+        {
+            ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = vpEdgesPlane[i];
+            Plane *vpPlane = vpPlaneEdgePlane[i];
+
+            if (e->chi2() > 5.991 || !e->isDistanceCorrect())
+            {
+
+                // if not already in ToErase, add it
+                std::pair<KeyFrame *, Plane *> pKFPlane = make_pair(vpEdgeKFPlane[i], vpPlane);
+                if (std::find(vToErasePlane.begin(), vToErasePlane.end(), pKFPlane) == vToErasePlane.end())
+                    vToErasePlane.push_back(pKFPlane);
+            }
+        }
+
+        for (size_t i = 0, iend = vpEdgesPlanePoint.size(); i < iend; i++)
+        {
+            ORB_SLAM3::EdgeSE3KFPointToPlane *e = vpEdgesPlanePoint[i];
+            Plane *vpPlane = vpPlaneEdgePlanePoint[i];
+
+            if (e->chi2() > 5.991 || !e->isDistanceCorrect())
+            {
+                // if not already in ToErase, add it
+                std::pair<KeyFrame *, Plane *> pKFPlane = make_pair(vpEdgeKFPlanePoint[i], vpPlane);
+                if (std::find(vToErasePlane.begin(), vToErasePlane.end(), pKFPlane) == vToErasePlane.end())
+                    vToErasePlane.push_back(pKFPlane);
+            }
+        }
+
         // Get Map Mutex
         unique_lock<mutex> lock(pMap->mMutexMapUpdate);
 
@@ -2122,6 +2205,18 @@ namespace ORB_SLAM3
                 MapPoint *pMPi = vToErase[i].second;
                 pKFi->EraseMapPointMatch(pMPi);
                 pMPi->EraseObservation(pKFi);
+            }
+        }
+
+        if (!vToErasePlane.empty())
+        {
+            for (size_t i = 0; i < vToErasePlane.size(); i++)
+            {
+                KeyFrame *pKFi = vToErasePlane[i].first;
+                Plane *pPlane = vToErasePlane[i].second;
+                pPlane->eraseObservation(pKFi);
+
+                std::cout << "Observation of plane " << pPlane->getId() << " erased from KF " << pKFi->mnId << std::endl;
             }
         }
 
@@ -2835,7 +2930,7 @@ namespace ORB_SLAM3
                 if (!pRefKF)
                     break;
 
-                observations.erase(pRefKF);
+                pPlane->eraseObservation(pRefKF);
                 if (observations.empty())
                     break;
 

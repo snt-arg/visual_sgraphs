@@ -252,11 +252,15 @@ namespace ORB_SLAM3
                     confidences.push_back(static_cast<int>(planeCloud->points[i].a) / 255.0);
                 double conf = Utils::calcSoftMin(confidences);
 
+                // the semantic type of the observation
+                ORB_SLAM3::Plane::planeVariant semanticType = Utils::getPlaneTypeFromClassId(clsId);
+
                 if (matchedPlaneId == -1)
                 {
                     if (!mGeoRuns)
                     {
-                        ORB_SLAM3::Plane *newMapPlane = GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, conf);
+                        ORB_SLAM3::Plane *newMapPlane = GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane,
+                                                                                      planeCloud, semanticType, conf);
                         // Cast a vote for the plane semantics
                         updatePlaneSemantics(newMapPlane->getId(), clsId, conf);
                     }
@@ -264,7 +268,8 @@ namespace ORB_SLAM3
                 else
                 {
                     if (!mGeoRuns)
-                        GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, matchedPlaneId, conf);
+                        GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, 
+                                                      matchedPlaneId, semanticType, conf);
                     else
                     {
                         pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());

@@ -5,7 +5,7 @@ namespace ORB_SLAM3
     ORB_SLAM3::Plane *GeoSemHelpers::createMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
                                                     const g2o::Plane3D estimatedPlane,
                                                     const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud,
-                                                    double confidence)
+                                                    ORB_SLAM3::Plane::planeVariant semanticType, double confidence)
     {
         ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
         newMapPlane->setColor();
@@ -34,6 +34,9 @@ namespace ORB_SLAM3
         }
         obs.Gij = Gij;
 
+        // the semantic class of the observation
+        obs.semanticType = semanticType;
+
         // the aggregated confidence of the plane
         obs.confidence = confidence;
         newMapPlane->addObservation(pKF, obs);
@@ -45,6 +48,9 @@ namespace ORB_SLAM3
         g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
                                                               estimatedPlane);
         newMapPlane->setGlobalEquation(globalEquation);
+
+        // transform the plane cloud to the global frame
+        pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
         // Fill the plane with the pointcloud
         if (!planeCloud->points.empty())
@@ -62,7 +68,8 @@ namespace ORB_SLAM3
     }
 
     void GeoSemHelpers::updateMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                       pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId, double confidence)
+                                       pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId, 
+                                       ORB_SLAM3::Plane::planeVariant semanticType, double confidence)
     {
         // Find the matched plane among all planes of the map
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
@@ -86,6 +93,9 @@ namespace ORB_SLAM3
             }
         }
         obs.Gij = Gij;
+
+        // the semantic class of the observation
+        obs.semanticType = semanticType;
 
         // the aggregated confidence of the plane
         obs.confidence = confidence;

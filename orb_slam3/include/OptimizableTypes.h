@@ -289,7 +289,10 @@ namespace ORB_SLAM3
         }
     };
 
-
+    /**
+     * The edge used to connect a Plane vertex (VertexPlane) to a KeyFrame vertex (SE3)
+     * [Note]: it creates constraint connecting the points in a plane observation to the plane
+     */
     class EdgeSE3KFPointToPlane: public g2o::BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3Expmap, g2o::VertexPlane> {
         public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -308,6 +311,20 @@ namespace ORB_SLAM3
             Eigen::Vector4d Pj = v2->estimate().coeffs();
             Eigen::Matrix4d Gij = _measurement;
             _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj;
+        }
+
+        // Checks if the plane distance d is in the correct direction
+        bool isDistanceCorrect()
+        {
+            const g2o::VertexSE3Expmap *vKeyFrameGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+            
+            // local plane equation
+            Eigen::Isometry3d kfPose = vKeyFrameGP->estimate();
+            g2o::Plane3D localPlane = kfPose * vPlaneGP->estimate();
+
+            return (localPlane.coeffs()(3) > 0);
+
         }
     };
 
@@ -339,6 +356,20 @@ namespace ORB_SLAM3
 
             // Calculating the error
             _error = localPlane.ominus(_measurement);
+        }
+
+        // Checks if the plane distance d is in the correct direction
+        bool isDistanceCorrect()
+        {
+            const g2o::VertexSE3Expmap *vKeyFrameGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
+            
+            // local plane equation
+            Eigen::Isometry3d kfPose = vKeyFrameGP->estimate();
+            g2o::Plane3D localPlane = kfPose * vPlaneGP->estimate();
+
+            return (localPlane.coeffs()(3) > 0);
+
         }
     };
 

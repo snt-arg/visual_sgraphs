@@ -352,9 +352,9 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         if (keyframe_vec[i]->getClsCloudPtrs().size() > 0)
         {
             thisKF = keyframe_vec[i];
-            // // clear all clsClouds from the keyframes prior to the index i
-            // for (int j = 0; j < i; j++)
-            //     keyframe_vec[j]->clearClsClouds();
+            // clear all clsClouds from the keyframes prior to the index i
+            for (int j = 0; j < i; j++)
+                keyframe_vec[j]->clearClsClouds();
             break;
         }
     }
@@ -389,7 +389,7 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         }
     }
     aggregatedCloud->header = clsCloudPtrs[0]->header;
-    // thisKF->clearClsClouds();
+    thisKF->clearClsClouds();
 
     // create a new pointcloud2 message from the transformed and aggregated pointcloud
     sensor_msgs::PointCloud2 cloud_msg;
@@ -698,11 +698,11 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.y = point.y;
             newPoint.z = point.z;
 
-            // Compute from plane equation - y for ground, z for wall
-            if (planeType == ORB_SLAM3::Plane::planeVariant::GROUND)
-                newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
-            else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
-                newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
+            // // Compute from plane equation - y for ground, z for wall
+            // if (planeType == ORB_SLAM3::Plane::planeVariant::GROUND)
+            //     newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
+            // else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
+            //     newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
             // Set color according to type of plane
             std::vector<uint8_t> color = plane->getColor();

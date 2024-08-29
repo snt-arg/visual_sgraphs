@@ -39,6 +39,7 @@ namespace ORB_SLAM3
             g2o::Plane3D localPlane;                        // The plane equation in the local frame
             Eigen::Matrix4d Gij;                            // The aggregated point cloud measurement for point-plane constraint
             double confidence;                              // The aggregated confidence of the plane
+            planeVariant semanticType = UNDEFINED;          // The semantic type of the plane
         };
 
         // Variables for bundle adjustment
@@ -92,6 +93,7 @@ namespace ORB_SLAM3
         void setGlobalEquation(const g2o::Plane3D &value);
 
         void addObservation(KeyFrame *pKF, Observation obs);
+        void eraseObservation(KeyFrame *pKF);
         const std::map<KeyFrame *, Observation> &getObservations() const;
 
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getMapClouds();
@@ -106,7 +108,8 @@ namespace ORB_SLAM3
 
     protected:
         Map *mpMap;
-        std::mutex mMutexMap, mMutexPoint, mMutexCloud, mMutexType;
+        std::mutex mMutexMap, mMutexType;
+        mutable std::mutex mMutexFeatures, mMutexPos;
     };
 }
 

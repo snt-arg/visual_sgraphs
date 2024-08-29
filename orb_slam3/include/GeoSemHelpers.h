@@ -23,9 +23,13 @@ namespace ORB_SLAM3
          * @param pKF the address of the current keyframe
          * @param estimatedPlane the estimated plane
          * @param planeCloud the plane point cloud
+         * @param semanticType the semantic type of the plane observation
+         * @param confidence the confidence of the plane observation
          */
         static ORB_SLAM3::Plane *createMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                                const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, double confidence = 1.0);
+                                                const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud,
+                                                ORB_SLAM3::Plane::planeVariant semanticType = ORB_SLAM3::Plane::planeVariant::UNDEFINED,
+                                                double confidence = 1.0);
 
         /**
          * @brief Updates the map plane
@@ -34,9 +38,13 @@ namespace ORB_SLAM3
          * @param estimatedPlane the estimated plane
          * @param planeCloud the plane point cloud
          * @param planeId the plane id
+         * @param semanticType the semantic type of the plane observation
+         * @param confidence the confidence of the plane observation
          */
         static void updateMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId, double confidence = 1.0);
+                                   pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId,
+                                   ORB_SLAM3::Plane::planeVariant semanticType = ORB_SLAM3::Plane::planeVariant::UNDEFINED, 
+                                   double confidence = 1.0);
 
         /**
          * @brief Checks to see if the marker is attached to a door or not (e.g., a window)

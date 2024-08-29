@@ -60,25 +60,25 @@ namespace ORB_SLAM3
 
     std::set<MapPoint *> Plane::getMapPoints()
     {
-        unique_lock<mutex> lock(mMutexPoint);
+        unique_lock<mutex> lock(mMutexFeatures);
         return mapPoints;
     }
 
     void Plane::setMapPoints(MapPoint *value)
     {
-        unique_lock<mutex> lock(mMutexPoint);
+        unique_lock<mutex> lock(mMutexFeatures);
         mapPoints.insert(value);
     }
 
     pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Plane::getMapClouds()
     {
-        unique_lock<mutex> lock(mMutexCloud);
+        unique_lock<mutex> lock(mMutexFeatures);
         return planeCloud;
     }
 
     void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
-        unique_lock<mutex> lock(mMutexCloud);
+        unique_lock<mutex> lock(mMutexFeatures);
         for (const auto &point : value->points)
             planeCloud->points.push_back(point);
 
@@ -90,7 +90,7 @@ namespace ORB_SLAM3
 
     void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
-        unique_lock<mutex> lock(mMutexCloud);
+        unique_lock<mutex> lock(mMutexFeatures);
         pcl::copyPointCloud(*value, *planeCloud);
     }
 
@@ -103,6 +103,9 @@ namespace ORB_SLAM3
     void Plane::castWeightedVote(Plane::planeVariant semanticType, double voteWeight)
     {
         unique_lock<mutex> lock(mMutexType);
+
+        if (semanticType == planeVariant::UNDEFINED)
+            return;
 
         // check if semantic type is already in the semanticVotes map
         if (semanticVotes.find(semanticType) == semanticVotes.end())
@@ -126,6 +129,8 @@ namespace ORB_SLAM3
         // set the plane type if votes above a certain threshold
         if (maxVotes >= SystemParams::GetParams()->sem_seg.min_votes)
             planeType = maxType;
+        else
+            planeType = planeVariant::UNDEFINED;
     }
 
     void Plane::setPlaneType(planeVariant newType)
@@ -143,42 +148,63 @@ namespace ORB_SLAM3
 
     g2o::Plane3D Plane::getLocalEquation() const
     {
+        unique_lock<mutex> lock(mMutexPos);
         return localEquation;
     }
 
     void Plane::setLocalEquation(const g2o::Plane3D &value)
     {
+        unique_lock<mutex> lock(mMutexPos);
         localEquation = value;
     }
 
     g2o::Plane3D Plane::getGlobalEquation() const
     {
+        unique_lock<mutex> lock(mMutexPos);
         return globalEquation;
     }
 
     void Plane::setGlobalEquation(const g2o::Plane3D &value)
     {
+        unique_lock<mutex> lock(mMutexPos);
         globalEquation = value;
     }
 
     Eigen::Vector3f Plane::getCentroid() const
     {
+        unique_lock<mutex> lock(mMutexPos);
         return centroid;
     }
 
     void Plane::setCentroid(const Eigen::Vector3f &value)
     {
+        unique_lock<mutex> lock(mMutexPos);
         centroid = value;
     }
 
     const std::map<KeyFrame *, Plane::Observation> &Plane::getObservations() const
     {
+        unique_lock<mutex> lock(mMutexFeatures);
         return observations;
     }
 
     void Plane::addObservation(KeyFrame *pKF, Plane::Observation obs)
     {
+        unique_lock<mutex> lock(mMutexFeatures);
         observations.insert({pKF, obs});
+    }
+    
+    void Plane::eraseObservation(KeyFrame *pKF)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        Observation obs = observations[pKF];
+
+        // [TODO] - remove the plane from the keyframe if that is significant
+        // remove the vote casted 
+        castWeightedVote(obs.semanticType, -obs.confidence);
+
+        // remove the observation
+        observations.erase(pKF);
     }
 
     Map *Plane::GetMap()

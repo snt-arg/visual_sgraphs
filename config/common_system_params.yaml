@@ -26,7 +26,7 @@ optimization:
   # point to plane factor
   plane_point:
     enabled: false
-    information_gain: 0.5
+    information_gain: 0.2
 
 ################################ Common Segmentation Parameters ##################################
 seg:
@@ -48,7 +48,7 @@ seg:
     distance_thresh: 0.01
 
     # The maximum number of iterations for the RANSAC algorithm
-    max_iterations: 800
+    max_iterations: 500
 
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
@@ -78,7 +78,7 @@ sem_seg:
   prob_thresh: 0.5
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
-  conf_thresh: 0.3
+  conf_thresh: 0.2
 
   # The maximum height above the main ground to be a valid stepped ground plane (in meters)
   max_step_elevation: 0.5
