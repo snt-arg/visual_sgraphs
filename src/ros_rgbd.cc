@@ -58,12 +58,12 @@ int main(int argc, char **argv)
     nodeHandler.param<double>(nodeName + "/pitch", pitch, 0.0);
 
     nodeHandler.param<std::string>(nodeName + "/map_frame_id", map_frame_id, "map");
-    nodeHandler.param<std::string>(nodeName + "/cam_frame_id", cam_frame_id, "camera");
-    nodeHandler.param<std::string>(nodeName + "/room_frame_id", room_frame_id, "room");
-    nodeHandler.param<std::string>(nodeName + "/world_frame_id", world_frame_id, "world");
-    nodeHandler.param<std::string>(nodeName + "/struct_frame_id", struct_frame_id, "plane");
-    nodeHandler.param<bool>(nodeName + "/publish_static_transform", pubStaticTransform, false);
     nodeHandler.param<bool>(nodeName + "/publish_pointclouds", pubPointClouds, true);
+    nodeHandler.param<std::string>(nodeName + "/cam_frame_id", cam_frame_id, "camera");
+    nodeHandler.param<std::string>(nodeName + "/world_frame_id", world_frame_id, "world");
+    nodeHandler.param<bool>(nodeName + "/publish_static_transform", pubStaticTransform, false);
+    nodeHandler.param<std::string>(nodeName + "/frame_building_comp", frameBuildingComp, "plane");
+    nodeHandler.param<std::string>(nodeName + "/frame_architectural_comp", frameArchitecturalComp, "room");
 
     // Initializing system threads and getting ready to process frames
     ImageGrabber igb;

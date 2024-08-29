@@ -56,10 +56,10 @@ int main(int argc, char **argv)
 
     nodeHandler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     nodeHandler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
-    nodeHandler.param<std::string>(node_name + "/room_frame_id", room_frame_id, "room");
     nodeHandler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
-    nodeHandler.param<std::string>(node_name + "/struct_frame_id", struct_frame_id, "plane");
     nodeHandler.param<bool>(node_name + "/publish_static_transform", pubStaticTransform, false);
+    nodeHandler.param<std::string>(node_name + "/frame_building_comp", frameBuildingComp, "plane");
+    nodeHandler.param<std::string>(node_name + "/frame_architectural_comp", frameArchitecturalComp, "room");
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImageGrabber igb;
