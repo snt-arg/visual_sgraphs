@@ -11,15 +11,15 @@ ORB_SLAM3::System::eSensor sensorType = ORB_SLAM3::System::NOT_SET;
 // Variables for ROS
 double roll = 0, pitch = 0, yaw = 0;
 bool pubStaticTransform, pubPointClouds;
-image_transport::Publisher tracking_img_pub;
+image_transport::Publisher pubTrackingImage;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, kf_markers_pub, pubKFImage, kf_list_pub;
-std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, frameBuildingComp, frameArchitecturalComp;
-ros::Publisher tracked_mappoints_pub, segmented_cloud_pub, plane_cloud_pub, pubDoor,
-    all_mappoints_pub, kf_plane_assoc, pubFiducialMarker, planes_pub, pubRoom, freespace_cluster_pub;
+std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
+ros::Publisher pubTrackedMappoints, pubSegmentedPointcloud, pubPlanePointcloud, pubDoor,
+    pubAllMappoints, pubFiducialMarker, pubRoom, pubFreespaceCluster;
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
@@ -70,17 +70,17 @@ void setupServices(ros::NodeHandle &nodeHandler, std::string node_name)
 void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTransport &image_transport, std::string node_name)
 {
     // Basic
-    tracking_img_pub = image_transport.advertise(node_name + "/tracking_image", 1);
+    pubTrackingImage = image_transport.advertise(node_name + "/tracking_image", 1);
     kf_list_pub = nodeHandler.advertise<nav_msgs::Path>(node_name + "/keyframe_list", 2);
+    pubAllMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     pubCameraPose = nodeHandler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
-    all_mappoints_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     pubKFImage = nodeHandler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 10); // rate of keyframe generation is higher
     kf_markers_pub = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
-    plane_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
-    tracked_mappoints_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
+    pubPlanePointcloud = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
+    pubTrackedMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
+    pubFreespaceCluster = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/freespace_clusters", 1);
     pubCameraPoseVis = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/camera_pose_vis", 1);
-    freespace_cluster_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/freespace_clusters", 1);
-    segmented_cloud_pub = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
+    pubSegmentedPointcloud = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
 
     // Semantic
     pubDoor = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
@@ -117,7 +117,7 @@ void publishTopics(ros::Time msgTime, Eigen::Vector3f Wbb)
 
     // Set a static transform between the world and map frame
     if (pubStaticTransform)
-        publishStaticTFTransform(world_frame_id, map_frame_id, msgTime);
+        publishStaticTFTransform(world_frame_id, frameMap, msgTime);
 
     // Setup publishers
     publishDoors(pSLAM->GetAllDoors(), msgTime);
@@ -309,10 +309,10 @@ void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>> cluste
 
     // Set message header
     cloudMsg.header.stamp = msgTime;
-    cloudMsg.header.frame_id = frameBuildingComp;
+    cloudMsg.header.frame_id = frameMap;
 
     // Publish the point cloud
-    freespace_cluster_pub.publish(cloudMsg);
+    pubFreespaceCluster.publish(cloudMsg);
 }
 
 void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msgTime)
@@ -397,7 +397,7 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
 
     // publish the pointcloud to be seen at the plane frame
     cloud_msg.header.frame_id = cam_frame_id;
-    segmented_cloud_pub.publish(cloud_msg);
+    pubSegmentedPointcloud.publish(cloud_msg);
 }
 
 void publishTrackingImage(cv::Mat image, ros::Time msgTime)
@@ -406,19 +406,19 @@ void publishTrackingImage(cv::Mat image, ros::Time msgTime)
     header.stamp = msgTime;
     header.frame_id = world_frame_id;
     const sensor_msgs::ImagePtr rendered_image_msg = cv_bridge::CvImage(header, "bgr8", image).toImageMsg();
-    tracking_img_pub.publish(rendered_image_msg);
+    pubTrackingImage.publish(rendered_image_msg);
 }
 
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *> tracked_points, ros::Time msgTime)
 {
     sensor_msgs::PointCloud2 cloud = mapPointToPointcloud(tracked_points, msgTime);
-    tracked_mappoints_pub.publish(cloud);
+    pubTrackedMappoints.publish(cloud);
 }
 
 void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *> mapPoints, ros::Time msgTime)
 {
     sensor_msgs::PointCloud2 cloud = mapPointToPointcloud(mapPoints, msgTime);
-    all_mappoints_pub.publish(cloud);
+    pubAllMappoints.publish(cloud);
 }
 
 void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msgTime)
@@ -725,7 +725,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     cloud_msg.header.frame_id = frameBuildingComp;
 
     // Publish the point cloud
-    plane_cloud_pub.publish(cloud_msg);
+    pubPlanePointcloud.publish(cloud_msg);
 }
 
 void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)

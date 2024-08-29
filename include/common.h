@@ -68,7 +68,7 @@ extern ORB_SLAM3::System::eSensor sensorType;
 
 extern double roll, pitch, yaw;
 extern bool pubStaticTransform, pubPointClouds;
-extern std::string world_frame_id, cam_frame_id, imu_frame_id, map_frame_id, frameBuildingComp, frameArchitecturalComp;
+extern std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
@@ -77,9 +77,9 @@ extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 extern std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 
 extern ros::Publisher pubKFImage;
-extern image_transport::Publisher tracking_img_pub;
+extern image_transport::Publisher pubTrackingImage;
 extern ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, kf_markers_pub;
-extern ros::Publisher tracked_mappoints_pub, all_mappoints_pub, segmented_pointclouds_pub;
+extern ros::Publisher pubTrackedMappoints, pubAllMappoints, pubSegmentedPointcloud;
 
 struct MapPointStruct
 {

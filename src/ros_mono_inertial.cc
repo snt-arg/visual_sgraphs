@@ -75,8 +75,8 @@ int main(int argc, char **argv)
     nodeHandler.param<double>(node_name + "/roll", roll, 0.0);
     nodeHandler.param<double>(node_name + "/pitch", pitch, 0.0);
 
+    nodeHandler.param<std::string>(node_name + "/frame_map", frameMap, "map");
     nodeHandler.param<std::string>(node_name + "/imu_frame_id", imu_frame_id, "imu");
-    nodeHandler.param<std::string>(node_name + "/map_frame_id", map_frame_id, "map");
     nodeHandler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
     nodeHandler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
     nodeHandler.param<bool>(node_name + "/publish_static_transform", pubStaticTransform, false);

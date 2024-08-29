@@ -272,7 +272,7 @@ namespace ORB_SLAM3
     {
         // Adding the skeleton cluster to the SemanticSegmentation
         mpAtlas->SetSkeletonClusterPoints(skeletonClusterPoints);
-        mpSemanticSegmentation->SetLatestSkeletonCluster();
+        mpSemanticSegmentation->setLatestSkeletonCluster();
     }
 
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,

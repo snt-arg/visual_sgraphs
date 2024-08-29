@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     nodeHandler.param<double>(nodeName + "/roll", roll, 0.0);
     nodeHandler.param<double>(nodeName + "/pitch", pitch, 0.0);
 
-    nodeHandler.param<std::string>(nodeName + "/map_frame_id", map_frame_id, "map");
+    nodeHandler.param<std::string>(nodeName + "/frame_map", frameMap, "map");
     nodeHandler.param<bool>(nodeName + "/publish_pointclouds", pubPointClouds, true);
     nodeHandler.param<std::string>(nodeName + "/cam_frame_id", cam_frame_id, "camera");
     nodeHandler.param<std::string>(nodeName + "/world_frame_id", world_frame_id, "world");

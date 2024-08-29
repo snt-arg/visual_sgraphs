@@ -49,12 +49,12 @@ namespace ORB_SLAM3
         /**
          * @brief Gets the latest skeleton cluster acquired from voxblox
          */
-        std::vector<std::vector<Eigen::Vector3d *>> GetLatestSkeletonCluster();
+        std::vector<std::vector<Eigen::Vector3d *>> getLatestSkeletonCluster();
 
         /**
          * @brief Updates the skeleton cluster acquired from the current map (set by voxblox)
          */
-        void SetLatestSkeletonCluster();
+        void setLatestSkeletonCluster();
 
         /**
          * @brief Segments the point cloud into class specific point clouds and enriches them with the current keyframe point cloud

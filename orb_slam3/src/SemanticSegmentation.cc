@@ -95,14 +95,14 @@ namespace ORB_SLAM3
         return segmentedImageBuffer;
     }
 
-    void SemanticSegmentation::SetLatestSkeletonCluster()
+    void SemanticSegmentation::setLatestSkeletonCluster()
     {
         unique_lock<std::mutex> lock(mMutexNewRooms);
         // Get the latest skeleton cluster from Atlas
         latestSkeletonCluster = mpAtlas->GetSkeletoClusterPoints();
     }
 
-    std::vector<std::vector<Eigen::Vector3d *>> SemanticSegmentation::GetLatestSkeletonCluster()
+    std::vector<std::vector<Eigen::Vector3d *>> SemanticSegmentation::getLatestSkeletonCluster()
     {
         return latestSkeletonCluster;
     }
@@ -634,7 +634,7 @@ namespace ORB_SLAM3
         ORB_SLAM3::Room *newClusterBasedRoom = nullptr;
 
         // Get the skeleton clusters
-        std::vector<std::vector<Eigen::Vector3d *>> clusters = GetLatestSkeletonCluster();
+        std::vector<std::vector<Eigen::Vector3d *>> clusters = getLatestSkeletonCluster();
 
         // Get all the mapped planes and rooms
         std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();

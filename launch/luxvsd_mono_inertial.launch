@@ -24,7 +24,7 @@
         <param name="roll" type="double" value="0" />
         <param name="yaw" type="double" value="1.5697" />
         <param name="pitch" type="double" value="-1.5697" />
-        <param name="map_frame_id"    type="string"   value="map" />
+        <param name="frame_map"    type="string"   value="map" />
         <param name="imu_frame_id"      type="string"   value="imu" />
         <param name="enable_pangolin"   type="bool"     value="false" />
         <param name="world_frame_id"    type="string"   value="world" />

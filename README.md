@@ -277,16 +277,16 @@ Host unitree
 
 ### Params <a id="ros-param"></a>
 
-| Param                                                        | Description                                                                                                    |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
-| `offline`                                                    | live or reading rosbag file (offline)?                                                                         |
-| `sys_params_file`                                            | path to the common system parameters (see below)                                                               |
-| `voc_file`                                                   | path to ORB vocabulary file                                                                                    |
-| `settings_file`                                              | path to settings file                                                                                          |
-| `enable_pangolin`                                            | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
-| `publish_static_transform`                                   | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
-| `roll`, `yaw`, and `pitch`                                   | poses and dimensions of movement                                                                               |
-| `map_frame_id` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
+| Param                                                     | Description                                                                                                    |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `offline`                                                 | live or reading rosbag file (offline)?                                                                         |
+| `sys_params_file`                                         | path to the common system parameters (see below)                                                               |
+| `voc_file`                                                | path to ORB vocabulary file                                                                                    |
+| `settings_file`                                           | path to settings file                                                                                          |
+| `enable_pangolin`                                         | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
+| `publish_static_transform`                                | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
+| `roll`, `yaw`, and `pitch`                                | poses and dimensions of movement                                                                               |
+| `frame_map` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
 
 ## 📍 Maps <a id="maps"></a>
 
