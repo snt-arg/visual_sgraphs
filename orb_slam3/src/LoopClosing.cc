@@ -1189,7 +1189,9 @@ namespace ORB_SLAM3
 
     void LoopClosing::MergeLocal()
     {
+        // Variables
         int numTemporalKFs = 25;
+        sysParams = SystemParams::GetParams();
 
         // Variables to rebuild the essential graph
         KeyFrame *pNewChild;
@@ -1674,13 +1676,17 @@ namespace ORB_SLAM3
                     pCurrentMap->EraseMapPlane(pPlane);
                 }
 
+                // Re-associate semantic planes if they get close to each other :)) after optimization
+                if (sysParams->sem_seg.reassociate.enabled)
+                    Utils::reAssociateSemanticPlanes(mpAtlas);
+
                 // Loop over the Markers of the current map and move them to the new map
                 for (Marker *pMarker : vpCurrentMapMarkers)
                 {
                     if (!pMarker)
                         continue;
 
-                    pMarker->SetMap(pMergeMap);
+                    pMarker->setMap(pMergeMap);
                     pMergeMap->AddMapMarker(pMarker);
                     pCurrentMap->EraseMapMarker(pMarker);
                 }
@@ -1691,7 +1697,7 @@ namespace ORB_SLAM3
                     if (!pDoor)
                         continue;
 
-                    pDoor->SetMap(pMergeMap);
+                    pDoor->setMap(pMergeMap);
                     pMergeMap->AddMapDoor(pDoor);
                     pCurrentMap->EraseMapDoor(pDoor);
                 }
@@ -1702,7 +1708,7 @@ namespace ORB_SLAM3
                     if (!pRoom)
                         continue;
 
-                    pRoom->SetMap(pMergeMap);
+                    pRoom->setMap(pMergeMap);
                     pMergeMap->AddDetectedMapRoom(pRoom);
                     pCurrentMap->EraseDetectedMapRoom(pRoom);
                 }
@@ -1713,7 +1719,7 @@ namespace ORB_SLAM3
                     if (!pRoom)
                         continue;
 
-                    pRoom->SetMap(pMergeMap);
+                    pRoom->setMap(pMergeMap);
                     pMergeMap->AddMarkerBasedMapRoom(pRoom);
                     pCurrentMap->EraseMarkerBasedMapRoom(pRoom);
                 }

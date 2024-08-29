@@ -53,8 +53,8 @@ namespace ORB_SLAM3
         Sophus::SE3f getGlobalPose() const;
         void setGlobalPose(const Sophus::SE3f &value);
 
-        Map *GetMap();
-        void SetMap(Map *pMap);
+        Map *getMap();
+        void setMap(Map *pMap);
 
     protected:
         Map *mpMap;

@@ -99,11 +99,6 @@ namespace ORB_SLAM3
         void filterWallPlanes();
 
         /**
-         * @brief Reassociates semantically classified planes if they get closer after optimization
-         */
-        void reAssociateSemanticPlanes();
-
-        /**
          * @brief Filters the ground plane to remove points that are too far from the plane
          * @param groundPlane the main ground plane that is the reference
          */

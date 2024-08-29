@@ -231,11 +231,14 @@ namespace ORB_SLAM3
         // To (de)activate LC
         bool mbActiveLC = true;
 
+        // System parameters
+        SystemParams *sysParams;
+
 #ifdef REGISTER_LOOP
         string mstrFolderLoop;
 #endif
     };
 
-} // namespace ORB_SLAM
+}
 
-#endif // LOOPCLOSING_H
+#endif

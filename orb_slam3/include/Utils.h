@@ -5,6 +5,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include "Atlas.h"
 #include "Tracking.h"
 #include "Thirdparty/pcl_custom/WeightedSACSegmentation.hpp"
 
@@ -159,7 +160,14 @@ namespace ORB_SLAM3
          * @param threshold the threshold value for association
          * @return the plane id of the mapped plane
          */
-        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose, const float threshold);
+        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane,
+                                   const Eigen::Matrix4d &kfPose, const float threshold);
+
+        /**
+         * @brief Re-associates semantically classified planes if they get closer after optimization
+         * @param mpAtlas a pointer to the Atlas
+         */
+        static void reAssociateSemanticPlanes(Atlas *mpAtlas);
 
         /**
          * @brief Gets the planeVariant type from the class id

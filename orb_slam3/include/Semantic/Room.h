@@ -76,8 +76,8 @@ namespace ORB_SLAM3
         Eigen::Vector3d getRoomCenter() const;
         void setRoomCenter(Eigen::Vector3d value);
 
-        Map *GetMap();
-        void SetMap(Map *pMap);
+        Map *getMap();
+        void setMap(Map *pMap);
 
     protected:
         Map *mpMap;

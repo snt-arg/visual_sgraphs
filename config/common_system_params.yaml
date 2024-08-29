@@ -92,7 +92,7 @@ sem_seg:
 
   # Whether to reassociate planes with the semantic labels - after optimization, some planes may get close
   reassociate:
-    enabled: false
+    enabled: true
     association_thresh: 0.1
 
   ############################## Room Segmentation Parameters ####################################

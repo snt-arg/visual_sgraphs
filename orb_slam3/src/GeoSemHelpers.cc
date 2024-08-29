@@ -13,19 +13,19 @@ namespace ORB_SLAM3
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
         newMapPlane->setId(mpAtlas->GetAllPlanes().size());
         newMapPlane->refKeyFrame = pKF;
-        
+
         // The observation of the plane
         ORB_SLAM3::Plane::Observation obs;
-        
+
         // the observation of the plane equation
         obs.localPlane = estimatedPlane;
-        
+
         // the observation of the plane point cloud (measurement)
         Eigen::Matrix4d Gij;
         Gij.setZero();
         if (SystemParams::GetParams()->optimization.plane_point.enabled)
         {
-            for (auto &point: planeCloud->points)
+            for (auto &point : planeCloud->points)
             {
                 Eigen::Vector4d pointVec;
                 pointVec << point.x, point.y, point.z, 1;
@@ -43,7 +43,7 @@ namespace ORB_SLAM3
 
         // Set the global equation of the plane
         g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
-                                                                     estimatedPlane);
+                                                              estimatedPlane);
         newMapPlane->setGlobalEquation(globalEquation);
 
         // Fill the plane with the pointcloud
@@ -66,19 +66,19 @@ namespace ORB_SLAM3
     {
         // Find the matched plane among all planes of the map
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
-        
+
         // The observation of the plane
         ORB_SLAM3::Plane::Observation obs;
-        
+
         // the observation of the plane equation
         obs.localPlane = estimatedPlane;
-        
+
         // the observation of the plane point cloud (measurement)
         Eigen::Matrix4d Gij;
         Gij.setZero();
         if (SystemParams::GetParams()->optimization.plane_point.enabled)
         {
-            for (auto &point: planeCloud->points)
+            for (auto &point : planeCloud->points)
             {
                 Eigen::Vector4d pointVec;
                 pointVec << point.x, point.y, point.z, 1;
@@ -150,7 +150,7 @@ namespace ORB_SLAM3
             // If the marker is not in the map, add it
             if (!mCurrentMarker->isMarkerInGMap())
             {
-                mCurrentMarker->SetMap(mpAtlas->GetCurrentMap());
+                mCurrentMarker->setMap(mpAtlas->GetCurrentMap());
                 mCurrentMarker->setGlobalPose(pKF->GetPoseInverse() * mCurrentMarker->getLocalPose());
                 mCurrentMarker->setMarkerInGMap(true);
 
@@ -193,7 +193,7 @@ namespace ORB_SLAM3
         ORB_SLAM3::Marker *newMapMarker = new ORB_SLAM3::Marker();
 
         newMapMarker->setId(visitedMarker->getId());
-        newMapMarker->SetMap(mpAtlas->GetCurrentMap());
+        newMapMarker->setMap(mpAtlas->GetCurrentMap());
         newMapMarker->setOpId(visitedMarker->getOpId());
         newMapMarker->setTime(visitedMarker->getTime());
         newMapMarker->setLocalPose(visitedMarker->getLocalPose());
@@ -225,7 +225,7 @@ namespace ORB_SLAM3
 
         newMapDoor->setName(doorName);
         newMapDoor->setMarker(attachedMarker);
-        newMapDoor->SetMap(mpAtlas->GetCurrentMap());
+        newMapDoor->setMap(mpAtlas->GetCurrentMap());
         newMapDoor->setId(mpAtlas->GetAllDoors().size());
         newMapDoor->setLocalPose(attachedMarker->getLocalPose());
         newMapDoor->setGlobalPose(attachedMarker->getGlobalPose());
@@ -291,7 +291,7 @@ namespace ORB_SLAM3
         newMapRoomCandidate->setIsCandidate(true);
         newMapRoomCandidate->setMetaMarker(attachedMarker);
         newMapRoomCandidate->setName(matchedRoom->getName());
-        newMapRoomCandidate->SetMap(mpAtlas->GetCurrentMap());
+        newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
         newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
         newMapRoomCandidate->setIsCorridor(matchedRoom->getIsCorridor());
         newMapRoomCandidate->setMetaMarkerId(matchedRoom->getMetaMarkerId());
@@ -325,7 +325,7 @@ namespace ORB_SLAM3
         // Fill the room entity
         newMapRoomCandidate->setIsCandidate(true);
         newMapRoomCandidate->setIsCorridor(isCorridor);
-        newMapRoomCandidate->SetMap(mpAtlas->GetCurrentMap());
+        newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
         newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
         newMapRoomCandidate->setName(isCorridor ? "Unknown Corridor" : "Unknown Room");
 

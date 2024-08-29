@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /planes1/Namespaces1
+        - /Free-Space Clusters1
       Splitter Ratio: 0.5078651905059814
     Tree Height: 404
   - Class: rviz/Selection
@@ -316,17 +317,13 @@ Visualization Manager:
       Unreliable: false
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /voxblox_skeletonizer/sparse_graph
       Name: voxblox skeleton
       Namespaces:
-        closed_spaces: true
-        connected_edges_0: true
-        connected_vertices_0: true
-        edges: true
-        vertices: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /orb_slam3/camera_pose_vis
@@ -335,7 +332,7 @@ Visualization Manager:
         camera_pose: true
       Queue Size: 100
       Value: true
-    - Alpha: 1
+    - Alpha: 0.699999988079071
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 10
@@ -357,7 +354,7 @@ Visualization Manager:
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.10000000149011612
-      Style: Flat Squares
+      Style: Spheres
       Topic: /orb_slam3/freespace_clusters
       Unreliable: false
       Use Fixed Frame: true
@@ -391,7 +388,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.075531005859375
+      Distance: 8.930085182189941
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -407,9 +404,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7302024960517883
+      Pitch: 0.34520286321640015
       Target Frame: <Fixed Frame>
-      Yaw: 5.090405464172363
+      Yaw: 3.81541109085083
     Saved: ~
 Window Geometry:
   Displays:

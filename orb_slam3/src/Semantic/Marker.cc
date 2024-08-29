@@ -99,13 +99,13 @@ namespace ORB_SLAM3
         observations.insert({pKF, localPose});
     }
 
-    Map *Marker::GetMap()
+    Map *Marker::getMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Marker::SetMap(Map *pMap)
+    void Marker::setMap(Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;

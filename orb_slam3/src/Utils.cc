@@ -409,6 +409,77 @@ namespace ORB_SLAM3
         return -1;
     }
 
+    void Utils::reAssociateSemanticPlanes(Atlas *mpAtlas)
+    {
+        // Variables
+        SystemParams *sysParams = SystemParams::GetParams();
+        const std::vector<Plane *> planes = mpAtlas->GetAllPlanes();
+
+        for (const auto &plane : planes)
+        {
+            // Only consider planes with a semantic type and not excluded from association
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED || plane->excludedFromAssoc)
+                continue;
+
+            // Get plane information
+            int planeId = plane->getId();
+
+            // Get the vector of all other planes with the same semantic type
+            std::vector<Plane *> otherPlanes;
+            for (const auto &otherPlane : planes)
+                if (otherPlane->getId() != planeId && otherPlane->getPlaneType() == plane->getPlaneType())
+                    otherPlanes.push_back(otherPlane);
+
+            // Skip if there are no other planes with the same semantic type
+            if (otherPlanes.empty())
+                return;
+
+            // Check if the plane is associated with any other plane
+            int matchedPlaneId = associatePlanes(otherPlanes,
+                                                 plane->getGlobalEquation(),
+                                                 Eigen::Matrix4d::Identity(),
+                                                 sysParams->sem_seg.reassociate.association_thresh);
+
+            // if a match is found, then add the smaller planecloud to the larger plane
+            // set the smaller plane type to undefined and remove it from future associations
+            if (matchedPlaneId != -1)
+            {
+                // Variables
+                Plane *smallPlane, *bigPlane;
+                Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
+
+                if (plane->getMapClouds()->points.size() < matchedPlane->getMapClouds()->points.size())
+                {
+                    smallPlane = plane;
+                    bigPlane = matchedPlane;
+                }
+                else
+                {
+                    smallPlane = matchedPlane;
+                    bigPlane = plane;
+                }
+
+                // Add the smaller planecloud to the bigger plane
+                bigPlane->setMapClouds(smallPlane->getMapClouds());
+
+                // Add all map points of the smaller plane to the bigger plane
+                for (const auto &mapPoint : smallPlane->getMapPoints())
+                    bigPlane->setMapPoints(mapPoint);
+
+                // Push all observations of the smaller plane to the bigger plane
+                for (const auto &obs : smallPlane->getObservations())
+                    bigPlane->addObservation(obs.first, obs.second);
+
+                // Reset the smaller plane semantics
+                smallPlane->resetPlaneSemantics();
+                smallPlane->excludedFromAssoc = true;
+
+                std::cout << "- Plane " << smallPlane->getId() << " merged with Plane " << bigPlane->getId()
+                          << "." << std::endl;
+            }
+        }
+    }
+
     double Utils::calcSoftMin(vector<double> &values)
     {
         // parameter controlling the softness/sharpness of the soft-min

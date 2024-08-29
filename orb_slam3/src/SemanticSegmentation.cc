@@ -307,9 +307,9 @@ namespace ORB_SLAM3
             filterWallPlanes();
         }
 
-        // reassociate semantic planes if they get close to each other :)) after optimization
+        // Re-associate semantic planes if they get close to each other :)) after optimization
         if (sysParams->sem_seg.reassociate.enabled)
-            reAssociateSemanticPlanes();
+            Utils::reAssociateSemanticPlanes(mpAtlas);
     }
 
     void SemanticSegmentation::updatePlaneSemantics(int planeId, int clsId, double confidence)
@@ -338,70 +338,6 @@ namespace ORB_SLAM3
                 // threshold should be leniently set (ideally with correct ground plane reference, this value should be close to 0.00)
                 if (abs(transformedPlaneCoefficients(1)) > sysParams->sem_seg.max_tilt_wall)
                     plane->resetPlaneSemantics();
-            }
-        }
-    }
-
-    void SemanticSegmentation::reAssociateSemanticPlanes()
-    {
-        // loop through all the planes to look for associations after possible update by the optimization
-        const std::vector<Plane *> planes = mpAtlas->GetAllPlanes();
-        for (const auto &plane : planes)
-        {
-            // consider planes that have a semantic type and are not excluded from association
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED || plane->excludedFromAssoc)
-                continue;
-
-            // get plane information
-            int planeId = plane->getId();
-
-            // get the vector of all other planes with the same semantic type
-            std::vector<Plane *> otherPlanes;
-            for (const auto &otherPlane : planes)
-                if (otherPlane->getId() != planeId && otherPlane->getPlaneType() == plane->getPlaneType())
-                    otherPlanes.push_back(otherPlane);
-            if (otherPlanes.empty())
-                return;
-
-            // check if the plane is associated with any other plane
-            int matchedPlaneId = Utils::associatePlanes(otherPlanes,
-                                                        plane->getGlobalEquation(),
-                                                        Eigen::Matrix4d::Identity(),
-                                                        sysParams->sem_seg.reassociate.association_thresh);
-
-            // if a match is found, then add the smaller planecloud to the larger plane
-            // set the smaller plane type to undefined and remove it from future associations
-            if (matchedPlaneId != -1)
-            {
-                Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
-                Plane *smallPlane, *bigPlane;
-                if (plane->getMapClouds()->points.size() < matchedPlane->getMapClouds()->points.size())
-                {
-                    smallPlane = plane;
-                    bigPlane = matchedPlane;
-                }
-                else
-                {
-                    smallPlane = matchedPlane;
-                    bigPlane = plane;
-                }
-
-                // add the smaller planecloud to the bigger plane
-                bigPlane->setMapClouds(smallPlane->getMapClouds());
-
-                // add all map points of the smaller plane to the bigger plane
-                for (const auto &mapPoint : smallPlane->getMapPoints())
-                    bigPlane->setMapPoints(mapPoint);
-
-                // push all observations of the smaller plane to the bigger plane
-                for (const auto &obs : smallPlane->getObservations())
-                    bigPlane->addObservation(obs.first, obs.second);
-
-                // reset the smaller plane semantics
-                smallPlane->resetPlaneSemantics();
-                smallPlane->excludedFromAssoc = true;
-
-                std::cout << "Plane " << smallPlane->getId() << " merged with Plane " << bigPlane->getId() << std::endl;
             }
         }
     }

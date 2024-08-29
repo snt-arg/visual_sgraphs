@@ -147,13 +147,13 @@ namespace ORB_SLAM3
         doorMarkerIds.push_back(value);
     }
 
-    Map *Room::GetMap()
+    Map *Room::getMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Room::SetMap(Map *pMap)
+    void Room::setMap(Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;

@@ -89,13 +89,13 @@ namespace ORB_SLAM3
         globalPose = value;
     }
 
-    Map *Door::GetMap()
+    Map *Door::getMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Door::SetMap(Map *pMap)
+    void Door::setMap(Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;

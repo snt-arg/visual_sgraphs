@@ -115,7 +115,7 @@ namespace ORB_SLAM3
 
     void Atlas::AddMapMarker(Marker *marker)
     {
-        Map *pMapMP = marker->GetMap();
+        Map *pMapMP = marker->getMap();
         pMapMP->AddMapMarker(marker);
     }
 
@@ -128,19 +128,19 @@ namespace ORB_SLAM3
 
     void Atlas::AddMapDoor(Door *door)
     {
-        Map *pMapMP = door->GetMap();
+        Map *pMapMP = door->getMap();
         pMapMP->AddMapDoor(door);
     }
 
     void Atlas::AddDetectedMapRoom(Room *room)
     {
-        Map *pMapMP = room->GetMap();
+        Map *pMapMP = room->getMap();
         pMapMP->AddDetectedMapRoom(room);
     }
 
     void Atlas::AddMarkerBasedMapRoom(Room *room)
     {
-        Map *pMapMP = room->GetMap();
+        Map *pMapMP = room->getMap();
         pMapMP->AddMarkerBasedMapRoom(room);
     }
 
