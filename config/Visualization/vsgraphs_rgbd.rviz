@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /planes1/Namespaces1
-        - /Free-Space Clusters1
       Splitter Ratio: 0.5078651905059814
     Tree Height: 404
   - Class: rviz/Selection
@@ -388,7 +387,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 8.930085182189941
+      Distance: 7.629229545593262
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -404,9 +403,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.34520286321640015
+      Pitch: 0.9452024698257446
       Target Frame: <Fixed Frame>
-      Yaw: 3.81541109085083
+      Yaw: 3.4654078483581543
     Saved: ~
 Window Geometry:
   Displays:

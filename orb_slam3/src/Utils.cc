@@ -288,6 +288,9 @@ namespace ORB_SLAM3
                 {
                     // Fill the point cloud
                     PointT inPoint;
+                    inPoint.r = cloud->points[idx].r;
+                    inPoint.g = cloud->points[idx].g;
+                    inPoint.b = cloud->points[idx].b;
                     inPoint.x = cloud->points[idx].x;
                     inPoint.y = cloud->points[idx].y;
                     inPoint.z = cloud->points[idx].z;

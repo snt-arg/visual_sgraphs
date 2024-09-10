@@ -3,6 +3,8 @@
     <arg name="offline" default="true" />
     <!-- Flag to launch rviz -->
     <arg name="launch_rviz" default="true" />
+    <!-- Flag to color the point cloud in visualization -->
+    <arg name="colored_pointcloud" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
 
@@ -24,11 +26,12 @@
         <param name="yaw" type="double" value="1.5697" />
         <param name="pitch" type="double" value="-1.5697" />
         <param name="frame_map"    type="string"   value="map" />
+        <param name="publish_pointclouds" type="bool" value="true" />
         <param name="enable_pangolin"   type="bool"     value="false" />
         <param name="world_frame_id"    type="string"   value="world" />        
         <param name="cam_frame_id"      type="string"   value="camera" />
         <param name="publish_static_transform" type="bool" value="true" />
-        <param name="publish_pointclouds" type="bool" value="true" />
+        <param name="colored_pointcloud" type="bool" value="$(arg colored_pointcloud)" />
     </node>
 
     <!-- Transformation parameters -->

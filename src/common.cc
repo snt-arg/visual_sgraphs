@@ -9,6 +9,7 @@ ORB_SLAM3::System *pSLAM;
 ORB_SLAM3::System::eSensor sensorType = ORB_SLAM3::System::NOT_SET;
 
 // Variables for ROS
+bool colorPointcloud = true;
 double roll = 0, pitch = 0, yaw = 0;
 bool pubStaticTransform, pubPointClouds;
 image_transport::Publisher pubTrackingImage;
@@ -697,6 +698,9 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.x = point.x;
             newPoint.y = point.y;
             newPoint.z = point.z;
+            newPoint.r = point.r;
+            newPoint.g = point.g;
+            newPoint.b = point.b;
 
             // // Compute from plane equation - y for ground, z for wall
             // if (planeType == ORB_SLAM3::Plane::planeVariant::GROUND)
@@ -704,11 +708,16 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             // else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
             //     newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
-            // Set color according to type of plane
-            std::vector<uint8_t> color = plane->getColor();
-            newPoint.r = color[0];
-            newPoint.g = color[1];
-            newPoint.b = color[2];
+            // Override color according to type of plane
+            if (colorPointcloud)
+            {
+                std::vector<uint8_t> color = plane->getColor();
+                newPoint.r = color[0];
+                newPoint.g = color[1];
+                newPoint.b = color[2];
+            }
+
+            // Add the point to the aggregated cloud
             aggregatedCloud->push_back(newPoint);
         }
     }

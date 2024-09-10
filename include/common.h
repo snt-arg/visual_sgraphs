@@ -66,6 +66,7 @@ class ORB_SLAM3::SystemParams;
 extern ORB_SLAM3::System *pSLAM;
 extern ORB_SLAM3::System::eSensor sensorType;
 
+extern bool colorPointcloud;
 extern double roll, pitch, yaw;
 extern bool pubStaticTransform, pubPointClouds;
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
@@ -83,10 +84,10 @@ extern ros::Publisher pubTrackedMappoints, pubAllMappoints, pubSegmentedPointclo
 
 struct MapPointStruct
 {
+    int clusterId;
     Eigen::Vector3f coordinates;
-    int cluster_id;
 
-    MapPointStruct(Eigen::Vector3f coords) : coordinates(coords), cluster_id(-1) {}
+    MapPointStruct(Eigen::Vector3f coords) : coordinates(coords), clusterId(-1) {}
 };
 
 void setupServices(ros::NodeHandle &, std::string);
