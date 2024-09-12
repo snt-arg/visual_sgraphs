@@ -1168,12 +1168,8 @@ namespace ORB_SLAM3
         {
             if (!mStrSaveAtlasToFile.empty())
             {
-                // clock_t start = clock();
-
                 // Save the current session
-                // cout << "Starting presave operation" << endl;
                 mpAtlas->PreSave();
-                // cout << "Finished presave operation" << endl;
 
                 string pathSaveFileName = "./";
                 pathSaveFileName = pathSaveFileName.append(mStrSaveAtlasToFile);

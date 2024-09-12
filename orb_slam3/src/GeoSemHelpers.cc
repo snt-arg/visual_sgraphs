@@ -68,7 +68,7 @@ namespace ORB_SLAM3
     }
 
     void GeoSemHelpers::updateMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
-                                       pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId, 
+                                       pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId,
                                        ORB_SLAM3::Plane::planeVariant semanticType, double confidence)
     {
         // Find the matched plane among all planes of the map
@@ -378,6 +378,7 @@ namespace ORB_SLAM3
     void GeoSemHelpers::augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
                                                 bool isMarkerBasedMapped)
     {
+        std::cout << "\n[GeoSeg]" << std::endl;
         if (isMarkerBasedMapped)
         {
             // Augment the already detected marker-based room with the cluster-based room information
@@ -394,7 +395,7 @@ namespace ORB_SLAM3
             }
             // Create a room candidate for it
             std::cout << "- Marker-based room candidate #" << markerBasedRoom->getId()
-                      << " has been upgraded to room (walls added)!" << std::endl;
+                      << " has been validated (walls added)!" << std::endl;
         }
         else
         {
@@ -410,7 +411,7 @@ namespace ORB_SLAM3
                 clusterBasedRoom->setDoorMarkerIds(markerId);
             // Create a room candidate for it
             std::cout << "- Cluster-based room candidate #" << clusterBasedRoom->getId()
-                      << " has been upgraded to room (semantic info added)!" << std::endl;
+                      << " has been validated (semantic info added)!" << std::endl;
         }
     }
 

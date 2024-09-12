@@ -221,9 +221,10 @@ namespace ORB_SLAM3
                         vdPR_MatchedTime.push_back(mpLoopMatchedKF->mTimeStamp);
                         vnPR_TypeRecogn.push_back(0);
 
-                        Verbose::PrintMess("*Loop detected", Verbose::VERBOSITY_QUIET);
+                        std::cout << "\n[Optimizer]" << std::endl;
+                        std::cout << "- Loop detected! Correcting the map ..." << std::endl;
 
-                        mg2oLoopScw = mg2oLoopSlw; //*mvg2oSim3LoopTcw[nCurrentIndex];
+                        mg2oLoopScw = mg2oLoopSlw;
                         if (mpCurrentKF->GetMap()->IsInertial())
                         {
                             Sophus::SE3d Twc = mpCurrentKF->GetPoseInverse().cast<double>();
@@ -231,32 +232,28 @@ namespace ORB_SLAM3
                             g2o::Sim3 g2oSww_new = g2oTwc * mg2oLoopScw;
 
                             Eigen::Vector3d phi = LogSO3(g2oSww_new.rotation().toRotationMatrix());
-                            cout << "phi = " << phi.transpose() << endl;
                             if (fabs(phi(0)) < 0.008f && fabs(phi(1)) < 0.008f && fabs(phi(2)) < 0.349f)
                             {
-                                if (mpCurrentKF->GetMap()->IsInertial())
+                                if ((mpTracker->mSensor == System::IMU_MONOCULAR ||
+                                     mpTracker->mSensor == System::IMU_STEREO ||
+                                     mpTracker->mSensor == System::IMU_RGBD) &&
+                                    mpCurrentKF->GetMap()->GetIniertialBA2())
                                 {
-                                    // If inertial, force only yaw
-                                    if ((mpTracker->mSensor == System::IMU_MONOCULAR || mpTracker->mSensor == System::IMU_STEREO || mpTracker->mSensor == System::IMU_RGBD) &&
-                                        mpCurrentKF->GetMap()->GetIniertialBA2())
-                                    {
-                                        phi(0) = 0;
-                                        phi(1) = 0;
-                                        g2oSww_new = g2o::Sim3(ExpSO3(phi), g2oSww_new.translation(), 1.0);
-                                        mg2oLoopScw = g2oTwc.inverse() * g2oSww_new;
-                                    }
+                                    phi(0) = 0;
+                                    phi(1) = 0;
+                                    g2oSww_new = g2o::Sim3(ExpSO3(phi), g2oSww_new.translation(), 1.0);
+                                    mg2oLoopScw = g2oTwc.inverse() * g2oSww_new;
                                 }
                             }
                             else
                             {
-                                cout << "BAD LOOP!!!" << endl;
+                                std::cout << "- Bad Loop! Not taking action ..." << std::endl;
                                 bGoodLoop = false;
                             }
                         }
 
                         if (bGoodLoop)
                         {
-
                             mvpLoopMapPoints = mvpLoopMPs;
 
 #ifdef REGISTER_TIMES
@@ -388,11 +385,6 @@ namespace ORB_SLAM3
 
                 mbLoopDetected = mnLoopNumCoincidences >= 3;
                 mnLoopNumNotFound = 0;
-
-                if (!mbLoopDetected)
-                {
-                    cout << "PR: Loop detected with Reffine Sim3" << endl;
-                }
             }
             else
             {

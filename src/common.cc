@@ -17,7 +17,7 @@ rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
-ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, kf_markers_pub, pubKFImage, kf_list_pub;
+ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker, pubKFImage, pubKeyFrameList;
 std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
 ros::Publisher pubTrackedMappoints, pubSegmentedPointcloud, pubPlanePointcloud, pubDoor,
     pubAllMappoints, pubFiducialMarker, pubRoom, pubFreespaceCluster;
@@ -72,11 +72,11 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
 {
     // Basic
     pubTrackingImage = image_transport.advertise(node_name + "/tracking_image", 1);
-    kf_list_pub = nodeHandler.advertise<nav_msgs::Path>(node_name + "/keyframe_list", 2);
+    pubKeyFrameList = nodeHandler.advertise<nav_msgs::Path>(node_name + "/keyframe_list", 2);
     pubAllMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     pubCameraPose = nodeHandler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
     pubKFImage = nodeHandler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 10); // rate of keyframe generation is higher
-    kf_markers_pub = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
+    pubKeyFrameMarker = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
     pubPlanePointcloud = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     pubTrackedMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
     pubFreespaceCluster = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/freespace_clusters", 1);
@@ -523,8 +523,8 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
     }
     markerArray.markers.push_back(kf_markers);
     // markerArray.markers.push_back(kf_lines);
-    kf_markers_pub.publish(markerArray);
-    kf_list_pub.publish(kf_list);
+    pubKeyFrameMarker.publish(markerArray);
+    pubKeyFrameList.publish(kf_list);
 }
 
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msgTime)
@@ -739,7 +739,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
 
 void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
 {
-    // Publish the rooms, if any
+    // Publish rooms, if any
     int numRooms = rooms.size();
     if (numRooms == 0)
         return;
@@ -786,9 +786,9 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         room.mesh_resource = roomMesh;
         room.lifetime = ros::Duration();
         room.id = roomArray.markers.size();
-        room.header.frame_id = frameArchitecturalComp;
         room.header.stamp = ros::Time().now();
         room.mesh_use_embedded_materials = true;
+        room.header.frame_id = frameArchitecturalComp;
         room.type = visualization_msgs::Marker::MESH_RESOURCE;
 
         // Rotation and displacement of the room for better visualization

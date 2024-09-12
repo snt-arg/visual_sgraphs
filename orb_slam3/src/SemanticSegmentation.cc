@@ -268,7 +268,7 @@ namespace ORB_SLAM3
                 else
                 {
                     if (!mGeoRuns)
-                        GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud, 
+                        GeoSemHelpers::updateMapPlane(mpAtlas, pKF, detectedPlane, planeCloud,
                                                       matchedPlaneId, semanticType, conf);
                     else
                     {
@@ -653,10 +653,10 @@ namespace ORB_SLAM3
                 ORB_SLAM3::Room *foundDetectedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllDetectedMapRooms());
                 if (foundDetectedRoom == nullptr)
                 {
-                    // If the room already exists, update the existing room candidate with the new information
+                    std::cout << "\n[SemSeg]" << std::endl;
                     std::cout
-                        << "- New room detected: Room#" << newClusterBasedRoom->getId()
-                        << " using the free-space!" << std::endl;
+                        << "- New free-space cluster room detected! Mapping Room#" << newClusterBasedRoom->getId()
+                        << "!" << std::endl;
                     mpAtlas->AddDetectedMapRoom(newClusterBasedRoom);
                 }
             }

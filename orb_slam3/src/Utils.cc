@@ -443,7 +443,7 @@ namespace ORB_SLAM3
                                                  Eigen::Matrix4d::Identity(),
                                                  sysParams->sem_seg.reassociate.association_thresh);
 
-            // if a match is found, then add the smaller planecloud to the larger plane
+            // If a match is found, then add the smaller planecloud to the larger plane
             // set the smaller plane type to undefined and remove it from future associations
             if (matchedPlaneId != -1)
             {
@@ -477,8 +477,8 @@ namespace ORB_SLAM3
                 smallPlane->resetPlaneSemantics();
                 smallPlane->excludedFromAssoc = true;
 
-                std::cout << "- Plane " << smallPlane->getId() << " merged with Plane " << bigPlane->getId()
-                          << "." << std::endl;
+                std::cout << "- Two semantic planes have been re-associated! (#"
+                          << smallPlane->getId() << " & #" << bigPlane->getId() << ")." << std::endl;
             }
         }
     }

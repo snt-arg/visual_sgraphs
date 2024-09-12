@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /TF1/Frames1
         - /planes1/Namespaces1
-      Splitter Ratio: 0.5078651905059814
+      Splitter Ratio: 0.720588207244873
     Tree Height: 404
   - Class: rviz/Selection
     Name: Selection
@@ -116,7 +116,7 @@ Visualization Manager:
       Color: 78; 154; 6
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -131,7 +131,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: false
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -144,7 +144,7 @@ Visualization Manager:
       Color: 211; 215; 207
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -159,7 +159,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /orb_slam3/kf_markers
@@ -264,7 +264,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -279,7 +279,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -387,7 +387,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 7.629229545593262
+      Distance: 13.952186584472656
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -395,17 +395,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.0630128383636475
-        Y: -0.8191097378730774
-        Z: 1.818121314048767
+        X: -0.37849798798561096
+        Y: -1.0863025188446045
+        Z: 0.8769470453262329
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9452024698257446
+      Pitch: 0.46520352363586426
       Target Frame: <Fixed Frame>
-      Yaw: 3.4654078483581543
+      Yaw: 2.5654067993164062
     Saved: ~
 Window Geometry:
   Displays:

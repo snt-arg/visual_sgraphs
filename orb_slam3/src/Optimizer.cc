@@ -1922,7 +1922,6 @@ namespace ORB_SLAM3
                         vpEdgesPlane.push_back(e);
                         vpEdgeKFPlane.push_back(pKFi);
                         vpPlaneEdgePlane.push_back(pMapPlane);
-
                     }
 
                     // adding plane-point constraints
@@ -2115,7 +2114,7 @@ namespace ORB_SLAM3
 
         vector<pair<KeyFrame *, MapPoint *>> vToErase;
         vToErase.reserve(vpEdgesMono.size() + vpEdgesBody.size() + vpEdgesStereo.size());
-        
+
         vector<pair<KeyFrame *, Plane *>> vToErasePlane;
         vToErasePlane.reserve(vpEdgesPlane.size() * 2);
 
@@ -2215,8 +2214,6 @@ namespace ORB_SLAM3
                 KeyFrame *pKFi = vToErasePlane[i].first;
                 Plane *pPlane = vToErasePlane[i].second;
                 pPlane->eraseObservation(pKFi);
-
-                std::cout << "Observation of plane " << pPlane->getId() << " erased from KF " << pKFi->mnId << std::endl;
             }
         }
 
@@ -2840,7 +2837,7 @@ namespace ORB_SLAM3
 
         // Loop over non-fixed KeyFrames to correct them
         // [hint] Sim3 [sR t | 0 1] --> SE3 [R t/s| 0 1]
-        std::cout << "-- Aligning the poses of KeyFrames ..." << std::endl;
+        std::cout << "- Correcting the poses of KeyFrames ..." << std::endl;
         for (KeyFrame *pKFi : vpNonFixedKFs)
         {
             if (pKFi->isBad())
@@ -2879,7 +2876,7 @@ namespace ORB_SLAM3
         }
 
         // Transform to "non-optimized" reference keyframe pose and transform back with optimized pose
-        std::cout << "-- Aligning the poses of 3D mapped points ..." << std::endl;
+        std::cout << "- Correcting the poses of 3D mapped points ..." << std::endl;
         for (MapPoint *pMPi : vpNonCorrectedMPs)
         {
             if (pMPi->isBad())
@@ -2911,7 +2908,7 @@ namespace ORB_SLAM3
         }
 
         // Correct the pose of the detected planes in the new map
-        std::cout << "-- Aligning the poses of planes ..." << std::endl;
+        std::cout << "- Correcting the poses of planes ..." << std::endl;
         for (Plane *pPlane : vpCurrentMapPlanes)
         {
             // Get a reference KeyFrame related to the plane
@@ -2956,11 +2953,16 @@ namespace ORB_SLAM3
 
                 // Update the global equation of the plane
                 pPlane->setGlobalEquation(globalEquation);
+
+                // Update the plane centroid
+                Eigen::Vector4f centroid;
+                pcl::compute3DCentroid(*planeCloud, centroid);
+                pPlane->setCentroid(centroid.head<3>());
             }
         }
 
         // Correct the pose of the detected markers in the new map
-        std::cout << "-- Aligning the poses of markers ..." << std::endl;
+        std::cout << "- Correcting the poses of markers ..." << std::endl;
         for (Marker *pMarker : vpCurrentMapMarkers)
         {
             // Get a reference KeyFrame related to the marker
@@ -3004,7 +3006,7 @@ namespace ORB_SLAM3
         }
 
         // Correct the pose of the detected doors in the new map
-        std::cout << "-- Aligning the poses of doors ..." << std::endl;
+        std::cout << "- Correcting the poses of doors ..." << std::endl;
         for (Door *pDoor : vpCurrentMapDoors)
         {
             // Get the marker related to the door
@@ -3019,7 +3021,7 @@ namespace ORB_SLAM3
         }
 
         // Correct the pose of the marker-based rooms in the new map
-        std::cout << "-- Aligning the poses of the marker-based room candidates ..." << std::endl;
+        std::cout << "- Correcting the poses of the marker-based room candidates ..." << std::endl;
         for (Room *pRoom : vpCurrentMrkMapRooms)
         {
             // Get the marker related to the room
@@ -3034,7 +3036,7 @@ namespace ORB_SLAM3
         }
 
         // Correct the pose of the detected rooms in the new map
-        std::cout << "-- Aligning the poses of the detected rooms ..." << std::endl;
+        std::cout << "- Correcting the poses of the detected rooms ..." << std::endl;
         for (Room *pRoom : vpCurrentDetMapRooms)
         {
             // Get the current room center
@@ -3054,13 +3056,12 @@ namespace ORB_SLAM3
                 pRoom->setRoomCenter(correctedRoomCenter);
             }
             else
-                std::cout << "--- Skipped fixing room#" << pRoom->getId()
+                std::cout << "-- Skipped fixing room#" << pRoom->getId()
                           << " due to improper reference KeyFrame!" << std::endl;
         }
 
         // Correct the pose of the cluster points in the new map
-        std::cout << "-- Aligning the poses of cluster points ..." << std::endl;
-
+        std::cout << "- Correcting the poses of cluster points ..." << std::endl;
         // Then, use the KeyFrame to get the corrected pose of cluster points
         if (pSampleRefKF)
         {
@@ -3076,7 +3077,7 @@ namespace ORB_SLAM3
                 }
         }
         else
-            std::cout << "--- Skipped fixing cluster points due to improper reference KeyFrame!" << std::endl;
+            std::cout << "-- Skipped fixing cluster points due to improper reference KeyFrame!" << std::endl;
 
         std::cout << "- Corrections finished!" << std::endl;
     }

@@ -82,7 +82,7 @@ namespace ORB_SLAM3
         for (const auto &point : value->points)
             planeCloud->points.push_back(point);
 
-        // update the plane centroid
+        // Update the plane centroid
         Eigen::Vector4f centroid;
         pcl::compute3DCentroid(*planeCloud, centroid);
         setCentroid(centroid.head<3>());
@@ -193,14 +193,14 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexFeatures);
         observations.insert({pKF, obs});
     }
-    
+
     void Plane::eraseObservation(KeyFrame *pKF)
     {
         unique_lock<mutex> lock(mMutexFeatures);
         Observation obs = observations[pKF];
 
         // [TODO] - remove the plane from the keyframe if that is significant
-        // remove the vote casted 
+        // remove the vote casted
         castWeightedVote(obs.semanticType, -obs.confidence);
 
         // remove the observation
