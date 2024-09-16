@@ -70,6 +70,7 @@ namespace ORB_SLAM3
             unsigned int pointclouds_thresh = 200;
             float plane_association_thresh = 0.2f;
             float plane_point_dist_thresh = 0.2f;
+            float plane_cutting_threshold = 2.0f;
 
             struct ransac
             {

@@ -40,6 +40,7 @@ These parameters are combined in the `seg` category and cover configurations for
 | `seg`    | `pointclouds_thresh`       |                   | minimum number of points needed to fit a plane             |
 | `seg`    | `plane_association_thresh` |                   | minimum ominus threshold for considering two planes as one |
 | `seg`    | `plane_point_dist_thresh`  |                   | maximum distance for point to be considered on a plane     |
+| `seg`    | `plane_cutting_threshold`  |                   | maximum spatial distance between two planes to stay uncut  |
 | `seg`    | `ransac`                   | `max_planes`      | maximum number of planes extracted from a pointcloud       |
 | `seg`    | `ransac`                   | `distance_thresh` | maximum distance for a point to be considered as inlier    |
 | `seg`    | `ransac`                   | `max_iterations`  | maximum number of RANSAC iterations                        |

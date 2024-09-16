@@ -40,6 +40,9 @@ seg:
   # The maximum distance for point to be considered part of a plane
   plane_point_dist_thresh: 0.01
 
+  # The maximum spatial distance between two planes to stay uncut (in meters)
+  plane_cutting_threshold: 2.0
+
   ransac:
     # The maximum number of planes to be detected in one pointcloud
     max_planes: 2

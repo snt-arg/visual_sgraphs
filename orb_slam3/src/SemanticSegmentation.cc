@@ -228,7 +228,6 @@ namespace ORB_SLAM3
                                                                                  Eigen::Vector4d>>> &clsPlanes)
     {
         for (size_t clsId = 0; clsId < clsPlanes.size(); clsId++)
-        {
             for (auto planePoint : clsPlanes[clsId])
             {
                 // Get the plane equation
@@ -245,14 +244,14 @@ namespace ORB_SLAM3
                                                             pKF->GetPose().matrix().cast<double>(),
                                                             sysParams->seg.plane_association_thresh);
 
-                // pointcloud processing - compute the average confidence across all pixels in the plane observation
+                // Compute the average confidence across all pixels in the plane observation
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
                 std::vector<double> confidences;
                 for (size_t i = 0; i < planeCloud->size(); i++)
                     confidences.push_back(static_cast<int>(planeCloud->points[i].a) / 255.0);
                 double conf = Utils::calcSoftMin(confidences);
 
-                // the semantic type of the observation
+                // Get the semantic type of the observation
                 ORB_SLAM3::Plane::planeVariant semanticType = Utils::getPlaneTypeFromClassId(clsId);
 
                 if (matchedPlaneId == -1)
@@ -297,7 +296,6 @@ namespace ORB_SLAM3
                     }
                 }
             }
-        }
 
         // Update the ground plane, as it might have been updated
         // even when semantic segmentation did not detect any planes
