@@ -313,10 +313,10 @@ namespace ORB_SLAM3
 
     Plane *Map::GetBiggestGroundPlane()
     {
-        unique_lock<mutex> lock(mMutexMap);
         Plane *biggestGroundPlane = nullptr;
         size_t maxPoints = 0;
-        for (set<Plane *>::iterator sit = mspPlanes.begin(); sit != mspPlanes.end(); sit++)
+        vector<Plane *> planes = GetAllPlanes();
+        for (auto sit = planes.begin(); sit != planes.end(); sit++)
         {
             Plane *pPlane = *sit;
             if (pPlane->getPlaneType() == Plane::planeVariant::GROUND)

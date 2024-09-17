@@ -1243,6 +1243,94 @@ namespace ORB_SLAM3
         if (nInitialCorrespondences < 3)
             return 0;
 
+        // use plane-mappoint constraints to optimize the map points
+        KeyFrame *refKF = pFrame->mpReferenceKF;
+        if (refKF)
+        {
+            // Setup optimizer (Local Optimization)
+            g2o::SparseOptimizer optPp;
+            g2o::BlockSolverX::LinearSolverType *linSolver;
+
+            linSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
+
+            g2o::BlockSolverX *solptr = new g2o::BlockSolverX(linSolver);
+
+            g2o::OptimizationAlgorithmLevenberg *sol = new g2o::OptimizationAlgorithmLevenberg(solptr);
+
+            optPp.setAlgorithm(sol);
+            optPp.setVerbose(false);
+
+            // build the graph
+            list<MapPoint *> vpMPs;
+            vector<Plane *> vpPlanes = refKF->GetMapPlanes();
+            size_t numPlanes = vpPlanes.size();
+            for (size_t i = 0; i < numPlanes; i++)
+            {
+                Plane *pPlane = vpPlanes[i];
+                if (pPlane->getPlaneType() == Plane::planeVariant::UNDEFINED)
+                    continue;
+
+                // add a fixed vertex for the plane
+                g2o::VertexPlane *vPlane = new g2o::VertexPlane();
+                vPlane->setEstimate(pPlane->getGlobalEquation());
+                vPlane->setId(i + 1);
+                vPlane->setFixed(true);
+                optPp.addVertex(vPlane);
+
+                // for each map point in the frame, check if it is on the plane
+                for (size_t j = 0; j < pFrame->N; j++)
+                {
+                    MapPoint *pMP = pFrame->mvpMapPoints[j];
+                    if (!pMP)
+                        continue;
+
+                    if (pFrame->mvbOutlier[j])
+                        continue;
+
+                    if (pMP->isBad())
+                        continue;
+
+                    if (Utils::pointOnPlane(pPlane->getGlobalEquation().coeffs(), pMP))
+                    {
+                        // set a map point vertex if it is not already set
+                        if (!optPp.vertex(pMP->mnId + numPlanes + 2))
+                        {
+                            g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
+                            vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
+                            vPoint->setId(pMP->mnId + numPlanes + 2);
+                            optPp.addVertex(vPoint);
+                            vpMPs.push_back(pMP);
+                        }
+
+                        // set an edge between the plane and the map point
+                        ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ *e = new ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ();
+                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optPp.vertex(pMP->mnId + numPlanes + 2)));
+                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optPp.vertex(i + 1)));
+                        e->setInformation(Eigen::Matrix<double, 1, 1>::Identity());
+
+                        g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                        e->setRobustKernel(rk);
+                        rk->setDelta(1.0);
+                        optPp.addEdge(e);
+                    }
+                }
+            }
+            if (vpMPs.size() > 3)
+            {
+                optPp.initializeOptimization();
+                optPp.optimize(10);
+
+                // recover optimized map points
+                for (list<MapPoint *>::iterator lit = vpMPs.begin(), lend = vpMPs.end(); lit != lend; lit++)
+                {
+                    MapPoint *pMP = *lit;
+                    g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optPp.vertex(pMP->mnId + numPlanes + 2));
+                    pMP->SetWorldPos(vPoint->estimate().cast<float>());
+                    pMP->UpdateNormalAndDepth();
+                }
+            }
+        }
+
         // We perform 4 optimizations, after each optimization we classify observation as inlier/outlier
         // At the next optimization, outliers are not included, but at the end they can be classified as inliers again.
         const float chi2Mono[4] = {5.991, 5.991, 5.991, 5.991};
@@ -1915,7 +2003,7 @@ namespace ORB_SLAM3
 
                         g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                         e->setRobustKernel(rk);
-                        rk->setDelta(thHuberMono);
+                        rk->setDelta(1.0);
                         optimizer.addEdge(e);
                         nEdges++;
 
@@ -1940,7 +2028,7 @@ namespace ORB_SLAM3
 
                             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                             e->setRobustKernel(rk);
-                            rk->setDelta(thHuberMono);
+                            rk->setDelta(1.0);
                             optimizer.addEdge(e);
                             nEdges++;
 
@@ -2169,7 +2257,7 @@ namespace ORB_SLAM3
             ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = vpEdgesPlane[i];
             Plane *vpPlane = vpPlaneEdgePlane[i];
 
-            if (e->chi2() > 5.991 || !e->isDistanceCorrect())
+            if (e->chi2() > 1.0 || !e->isDistanceCorrect())
             {
 
                 // if not already in ToErase, add it

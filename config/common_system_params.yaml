@@ -32,13 +32,13 @@ optimization:
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
   # Also, the number of points needed to detect a plane in the pointcloud
-  pointclouds_thresh: 400
+  pointclouds_thresh: 600
 
   # Plane association threshold (ominus)
   plane_association_thresh: 0.20
 
   # The maximum distance for point to be considered part of a plane
-  plane_point_dist_thresh: 0.01
+  plane_point_dist_thresh: 0.02
 
   # The maximum spatial distance between two planes to stay uncut (in meters)
   plane_cutting_threshold: 2.0
@@ -48,7 +48,7 @@ seg:
     max_planes: 2
 
     # The maximum distance for a point to be considered an inlier of the plane model
-    distance_thresh: 0.01
+    distance_thresh: 0.02
 
     # The maximum number of iterations for the RANSAC algorithm
     max_iterations: 500
@@ -91,7 +91,7 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
-  min_votes: 2.5
+  min_votes: 3.2
 
   # Whether to reassociate planes with the semantic labels - after optimization, some planes may get close
   reassociate:

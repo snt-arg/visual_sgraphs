@@ -262,7 +262,7 @@ namespace ORB_SLAM3
 
                 // Fill the values of the segmentation object
                 seg.setInputCloud(cloud);
-                seg.setNumberOfThreads(8);
+                seg.setNumberOfThreads(16);
                 seg.setMaxIterations(sysParams->seg.ransac.max_iterations);
                 seg.setDistanceThreshold(sysParams->seg.ransac.distance_thresh);
                 seg.setOptimizeCoefficients(true);

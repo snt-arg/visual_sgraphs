@@ -333,7 +333,6 @@ namespace ORB_SLAM3
 
     Plane *Atlas::GetBiggestGroundPlane()
     {
-        unique_lock<mutex> lock(mMutexAtlas);
         return mpCurrentMap->GetBiggestGroundPlane();
     }
 
