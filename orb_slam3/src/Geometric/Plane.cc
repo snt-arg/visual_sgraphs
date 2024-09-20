@@ -9,6 +9,7 @@ namespace ORB_SLAM3
     Plane::Plane()
     {
         planeCloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBA>>();
+        octree = boost::make_shared<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>>(0.02);
         excludedFromAssoc = false;
     }
     Plane::~Plane() {}
@@ -86,12 +87,42 @@ namespace ORB_SLAM3
         Eigen::Vector4f centroid;
         pcl::compute3DCentroid(*planeCloud, centroid);
         setCentroid(centroid.head<3>());
+
+        // Update the octree
+        octree->setInputCloud(planeCloud);
+        octree->addPointsFromInputCloud();
     }
 
     void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexFeatures);
         pcl::copyPointCloud(*value, *planeCloud);
+
+        // Update the plane centroid
+        Eigen::Vector4f centroid;
+        pcl::compute3DCentroid(*planeCloud, centroid);
+        setCentroid(centroid.head<3>());
+
+        // Update the octree
+        octree->setInputCloud(planeCloud);
+        octree->addPointsFromInputCloud();
+    }
+
+    bool Plane::isPointinPlaneCloud(const Eigen::Vector3d &point)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        pcl::PointXYZRGBA pointPCL;
+        pointPCL.x = point(0);
+        pointPCL.y = point(1);
+        pointPCL.z = point(2);
+
+        float searchRadius = 0.03;
+        std::vector<int> pointIdxRadiusSearch;
+        std::vector<float> pointRadiusSquaredDistance;
+
+        if (octree->radiusSearch(pointPCL, searchRadius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0)
+            return true;
+        return false;
     }
 
     Plane::planeVariant Plane::getPlaneType()

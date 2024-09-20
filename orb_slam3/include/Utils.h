@@ -53,6 +53,14 @@ namespace ORB_SLAM3
         static bool arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2);
 
         /**
+         * @brief Calculates the intersection point of a line and a plane
+         * @param plane the plane equation
+         * @param lineStart the start point of the line
+         * @param lineEnd the end point of the line
+         */
+        static Eigen::Vector3d lineIntersectsPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &lineStart, const Eigen::Vector3d &lineEnd);
+
+        /**
          * @brief Checks to see if two planes are perpendicular to each other or not
          * @param plane1 first plane
          * @param plane2 second plane

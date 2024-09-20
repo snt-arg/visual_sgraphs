@@ -71,6 +71,9 @@ namespace ORB_SLAM3
                                        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId,
                                        ORB_SLAM3::Plane::planeVariant semanticType, double confidence)
     {
+        if (planeCloud->points.empty())
+            return;
+
         // Find the matched plane among all planes of the map
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
 
@@ -108,7 +111,6 @@ namespace ORB_SLAM3
         pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
         // Update the pointcloud of the plane
-        if (!planeCloud->points.empty())
             currentPlane->setMapClouds(planeCloud);
 
         // for (const auto &mapPoint : pKF->GetMapPoints())

@@ -123,18 +123,19 @@ void publishTopics(ros::Time msgTime, Eigen::Vector3f Wbb)
     // Setup publishers
     publishDoors(pSLAM->GetAllDoors(), msgTime);
     publishRooms(pSLAM->GetAllRooms(), msgTime);
-    publishAllPoints(pSLAM->GetAllMapPoints(), msgTime);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msgTime);
     publishTrackingImage(pSLAM->GetCurrentFrame(), msgTime);
     publishKeyFrameImages(pSLAM->GetAllKeyFrames(), msgTime);
     publishKeyFrameMarkers(pSLAM->GetAllKeyFrames(), msgTime);
-    publishTrackedPoints(pSLAM->GetTrackedMapPoints(), msgTime);
-    publishFreeSpaceClusters(pSLAM->getSkeletonCluster(), msgTime);
+    
     // Publish pointclouds
     if (pubPointClouds)
     {
+        publishAllPoints(pSLAM->GetAllMapPoints(), msgTime);
         publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msgTime);
         publishPlanes(pSLAM->GetAllPlanes(), msgTime);
+        publishTrackedPoints(pSLAM->GetTrackedMapPoints(), msgTime);
+        publishFreeSpaceClusters(pSLAM->getSkeletonCluster(), msgTime);
     }
 
     // IMU-specific topics
@@ -994,7 +995,7 @@ sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *>
 
     // Populate the point cloud with the map points
     for (unsigned int idx = 0; idx < cloud.width; idx++)
-        if (mapPoints[idx])
+        if (mapPoints[idx] && !mapPoints[idx]->isBad())
         {
             Eigen::Vector3d P3Dw = mapPoints[idx]->GetWorldPos().cast<double>();
 

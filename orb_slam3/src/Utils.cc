@@ -16,6 +16,16 @@ namespace ORB_SLAM3
         return fabs(plane.head<3>().dot(point) + plane(3));
     }
 
+    Eigen::Vector3d Utils::lineIntersectsPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &lineStart, const Eigen::Vector3d &lineEnd)
+    {
+        // Calculate the direction vector of the line
+        Eigen::Vector3d lineDirection = lineEnd - lineStart;
+
+        // Calculate the intersection point
+        double t = -(plane.head<3>().dot(lineStart) + plane(3)) / plane.head<3>().dot(lineDirection);
+        return lineStart + t * lineDirection;
+    }
+
     bool Utils::arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2)
     {
         // Get the normal vectors of the planes

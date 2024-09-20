@@ -1315,7 +1315,7 @@ namespace ORB_SLAM3
                     }
                 }
             }
-            if (vpMPs.size() > 3)
+            if (vpMPs.size() > 0)
             {
                 optPp.initializeOptimization();
                 optPp.optimize(10);
@@ -1343,6 +1343,51 @@ namespace ORB_SLAM3
             Tcw = pFrame->GetPose();
             vSE3->setEstimate(g2o::SE3Quat(Tcw.unit_quaternion().cast<double>(), Tcw.translation().cast<double>()));
 
+            // before the last step, remove bad map points
+            if (it == 3 && refKF)
+            {
+                int nDeleted = 0;
+                Eigen::Vector3d camCenter = pFrame->GetCameraCenter().cast<double>();
+                // check all the planes of the reference keyframe
+                vector<Plane *> vpPlanes = refKF->GetMapPlanes();
+                size_t numPlanes = vpPlanes.size();
+                for (size_t i = 0; i < numPlanes; i++)
+                {
+                    Plane *pPlane = vpPlanes[i];
+                    if (pPlane->getPlaneType() == Plane::planeVariant::UNDEFINED)
+                        continue;
+
+                    Eigen::Vector4d planeEq = pPlane->getGlobalEquation().coeffs();
+                    // for each map point in the frame, check if it is on the plane
+                    for (size_t j = 0; j < pFrame->N; j++)
+                    {
+                        MapPoint *pMP = pFrame->mvpMapPoints[j];
+                        if (!pMP || pMP->isBad())
+                            continue;
+
+                        // calculate distance from the map point to the plane
+                        Eigen::Vector3d pMPw = pMP->GetWorldPos().cast<double>();
+                        double distance = planeEq.head<3>().dot(pMPw) + planeEq(3);
+
+                        if (distance < -0.08)
+                        {
+                            // get the intersection point of the line joining the camera center and the map point with the plane
+                            Eigen::Vector3d intersect = Utils::lineIntersectsPlane(planeEq, camCenter, pMPw);
+                            
+                            // check if the map point is in the plane cloud
+                            if (pPlane->isPointinPlaneCloud(intersect))
+                            {
+                                pMP->SetBadFlag();
+                                pFrame->mvbOutlier[j] = true;
+                                nDeleted++;
+                            }
+                        }
+                    }
+                }
+                if (nDeleted > 0)
+                    std::cout << "Deleted " << nDeleted << " map points" << std::endl;
+            }
+
             optimizer.initializeOptimization(0);
             optimizer.optimize(its[it]);
 
@@ -1352,10 +1397,18 @@ namespace ORB_SLAM3
                 ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose *e = vpEdgesMono[i];
 
                 const size_t idx = vnIndexEdgeMono[i];
+                if (it == 2)
+                    e->setRobustKernel(0);
 
                 if (pFrame->mvbOutlier[idx])
                 {
                     e->computeError();
+                    if (pFrame->mvpMapPoints[idx]->isBad())
+                    {
+                        e->setLevel(1);
+                        nBad++;
+                        continue;
+                    }
                 }
 
                 const float chi2 = e->chi2();
@@ -1371,9 +1424,6 @@ namespace ORB_SLAM3
                     pFrame->mvbOutlier[idx] = false;
                     e->setLevel(0);
                 }
-
-                if (it == 2)
-                    e->setRobustKernel(0);
             }
 
             for (size_t i = 0, iend = vpEdgesMono_FHR.size(); i < iend; i++)
@@ -1381,10 +1431,18 @@ namespace ORB_SLAM3
                 ORB_SLAM3::EdgeSE3ProjectXYZOnlyPoseToBody *e = vpEdgesMono_FHR[i];
 
                 const size_t idx = vnIndexEdgeRight[i];
+                if (it == 2)
+                    e->setRobustKernel(0);
 
                 if (pFrame->mvbOutlier[idx])
                 {
                     e->computeError();
+                    if (pFrame->mvpMapPoints[idx]->isBad())
+                    {
+                        e->setLevel(1);
+                        nBad++;
+                        continue;
+                    }
                 }
 
                 const float chi2 = e->chi2();
@@ -1400,9 +1458,6 @@ namespace ORB_SLAM3
                     pFrame->mvbOutlier[idx] = false;
                     e->setLevel(0);
                 }
-
-                if (it == 2)
-                    e->setRobustKernel(0);
             }
 
             for (size_t i = 0, iend = vpEdgesStereo.size(); i < iend; i++)
@@ -1410,10 +1465,18 @@ namespace ORB_SLAM3
                 g2o::EdgeStereoSE3ProjectXYZOnlyPose *e = vpEdgesStereo[i];
 
                 const size_t idx = vnIndexEdgeStereo[i];
+                if (it == 2)
+                    e->setRobustKernel(0);
 
                 if (pFrame->mvbOutlier[idx])
                 {
                     e->computeError();
+                    if (pFrame->mvpMapPoints[idx]->isBad())
+                    {
+                        e->setLevel(1);
+                        nBad++;
+                        continue;
+                    }
                 }
 
                 const float chi2 = e->chi2();
@@ -1429,9 +1492,6 @@ namespace ORB_SLAM3
                     e->setLevel(0);
                     pFrame->mvbOutlier[idx] = false;
                 }
-
-                if (it == 2)
-                    e->setRobustKernel(0);
             }
 
             if (optimizer.edges().size() < 10)

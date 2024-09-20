@@ -14,6 +14,7 @@
 
 #include <pcl/common/io.h>
 #include <pcl/common/centroid.h>
+#include <pcl/octree/octree_search.h>
 
 namespace ORB_SLAM3
 {
@@ -60,6 +61,7 @@ namespace ORB_SLAM3
         std::map<planeVariant, double> semanticVotes;       // The votes for the semantic type of the plane
         std::map<KeyFrame *, Observation> observations;    // Plane's observations in keyFrames
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud; // The point cloud of the plane
+        boost::shared_ptr<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>> octree; // The octree for the plane cloud
 
     public:
         Plane();
@@ -99,6 +101,7 @@ namespace ORB_SLAM3
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr getMapClouds();
         void setMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value);
         void replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value);
+        bool isPointinPlaneCloud(const Eigen::Vector3d &point);
 
         void castWeightedVote(planeVariant semanticType, double voteWeight);
         void resetPlaneSemantics();
