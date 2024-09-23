@@ -2056,7 +2056,7 @@ namespace ORB_SLAM3
                 if (pKFi->isBad())
                 {
                     std::cout << "KF is bad" << std::endl;
-                    vPlane->eraseObservation(pKFi);
+                    pMapPlane->eraseObservation(pKFi);
                     continue;
                 }
 
