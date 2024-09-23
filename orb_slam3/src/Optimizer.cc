@@ -333,6 +333,14 @@ namespace ORB_SLAM3
             {
                 KeyFrame *pKFi = obsId->first;
                 ORB_SLAM3::Plane::Observation obs = obsId->second;
+
+                if (pKFi->isBad())
+                {
+                    std::cout << "KF is bad" << std::endl;
+                    vpPlane->eraseObservation(pKFi);
+                    continue;
+                }
+
                 g2o::Plane3D planeLocalEquation = obs.localPlane;
                 ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
 
@@ -1343,8 +1351,11 @@ namespace ORB_SLAM3
             Tcw = pFrame->GetPose();
             vSE3->setEstimate(g2o::SE3Quat(Tcw.unit_quaternion().cast<double>(), Tcw.translation().cast<double>()));
 
+            optimizer.initializeOptimization(0);
+            optimizer.optimize(its[it]);
+
             // before the last step, remove bad map points
-            if (it == 3 && refKF)
+            if (it == 2 && refKF)
             {
                 int nDeleted = 0;
                 Eigen::Vector3d camCenter = pFrame->GetCameraCenter().cast<double>();
@@ -1377,7 +1388,7 @@ namespace ORB_SLAM3
                             // check if the map point is in the plane cloud
                             if (pPlane->isPointinPlaneCloud(intersect))
                             {
-                                pMP->SetBadFlag();
+                                pFrame->mvpMapPoints[j] = static_cast<MapPoint *>(NULL);
                                 pFrame->mvbOutlier[j] = true;
                                 nDeleted++;
                             }
@@ -1387,9 +1398,6 @@ namespace ORB_SLAM3
                 if (nDeleted > 0)
                     std::cout << "Deleted " << nDeleted << " map points" << std::endl;
             }
-
-            optimizer.initializeOptimization(0);
-            optimizer.optimize(its[it]);
 
             nBad = 0;
             for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++)
@@ -1402,13 +1410,13 @@ namespace ORB_SLAM3
 
                 if (pFrame->mvbOutlier[idx])
                 {
-                    e->computeError();
-                    if (pFrame->mvpMapPoints[idx]->isBad())
+                    if (!pFrame->mvpMapPoints[idx])
                     {
-                        e->setLevel(1);
+                        optimizer.removeEdge(e);
                         nBad++;
                         continue;
                     }
+                    e->computeError();
                 }
 
                 const float chi2 = e->chi2();
@@ -1436,13 +1444,13 @@ namespace ORB_SLAM3
 
                 if (pFrame->mvbOutlier[idx])
                 {
-                    e->computeError();
-                    if (pFrame->mvpMapPoints[idx]->isBad())
+                    if (!pFrame->mvpMapPoints[idx])
                     {
-                        e->setLevel(1);
+                        optimizer.removeEdge(e);
                         nBad++;
                         continue;
                     }
+                    e->computeError();
                 }
 
                 const float chi2 = e->chi2();
@@ -1470,13 +1478,13 @@ namespace ORB_SLAM3
 
                 if (pFrame->mvbOutlier[idx])
                 {
-                    e->computeError();
-                    if (pFrame->mvpMapPoints[idx]->isBad())
+                    if (!pFrame->mvpMapPoints[idx])
                     {
-                        e->setLevel(1);
+                        optimizer.removeEdge(e);
                         nBad++;
                         continue;
                     }
+                    e->computeError();
                 }
 
                 const float chi2 = e->chi2();
@@ -2045,9 +2053,16 @@ namespace ORB_SLAM3
                 KeyFrame *pKFi = obsId->first;
                 ORB_SLAM3::Plane::Observation obs = obsId->second;
 
-                if (pKFi->isBad() || pKFi->GetMap() != pCurrentMap)
+                if (pKFi->isBad())
                 {
-                    std::cout << "KF is bad or not in the current map" << std::endl;
+                    std::cout << "KF is bad" << std::endl;
+                    vPlane->eraseObservation(pKFi);
+                    continue;
+                }
+
+                if (pKFi->GetMap() != pCurrentMap)
+                {
+                    std::cout << "KF is not in the current map" << std::endl;
                     continue;
                 }
 

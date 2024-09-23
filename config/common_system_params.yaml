@@ -21,18 +21,18 @@ optimization:
   marginalize_planes: false
   # plane equation to keyframe factor
   plane_kf:
-    enabled: true
+    enabled: false
     information_gain: 0.5
   # point to plane factor
   plane_point:
-    enabled: false
-    information_gain: 0.2
+    enabled: true
+    information_gain: 0.3
 
 ################################ Common Segmentation Parameters ##################################
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
   # Also, the number of points needed to detect a plane in the pointcloud
-  pointclouds_thresh: 600
+  pointclouds_thresh: 400
 
   # Plane association threshold (ominus)
   plane_association_thresh: 0.20
@@ -91,7 +91,7 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
-  min_votes: 3.2
+  min_votes: 3.5
 
   # Whether to reassociate planes with the semantic labels - after optimization, some planes may get close
   reassociate:
