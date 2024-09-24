@@ -146,6 +146,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/src/Types/SystemParams.cc
   orb_slam3/src/GeometricSegmentation.cc
   orb_slam3/src/SemanticSegmentation.cc
+  orb_slam3/src/SemanticsManager.cc
   orb_slam3/include/System.h
   orb_slam3/include/Tracking.h
   orb_slam3/include/LocalMapping.h
@@ -187,6 +188,7 @@ add_library(${PROJECT_NAME} SHARED
   orb_slam3/include/Types/SystemParams.h
   orb_slam3/include/GeometricSegmentation.h
   orb_slam3/include/SemanticSegmentation.h
+  orb_slam3/include/SemanticsManager.h
 )
 
 target_link_libraries(${PROJECT_NAME}

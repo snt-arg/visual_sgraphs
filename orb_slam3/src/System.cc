@@ -208,8 +208,12 @@ namespace ORB_SLAM3
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
         // [TODO] - launch threads based on flags
-        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas, envDoors, envRooms);
+        mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
         mptSemanticSegmentation = new thread(&SemanticSegmentation::Run, mpSemanticSegmentation);
+
+        // 🚀 [vS-Graphs v.2.0] Initialize Semantics Manager thread and launch
+        mpSemanticsManager = new SemanticsManager(mpAtlas);
+        mptSemanticsManager = new thread(&SemanticsManager::Run, mpSemanticsManager);
 
         // Set pointers between threads
         mpTracker->SetLoopClosing(mpLoopCloser);
@@ -272,7 +276,7 @@ namespace ORB_SLAM3
     {
         // Adding the skeleton cluster to the SemanticSegmentation
         mpAtlas->SetSkeletonClusterPoints(skeletonClusterPoints);
-        mpSemanticSegmentation->setLatestSkeletonCluster();
+        mpSemanticsManager->setLatestSkeletonCluster();
     }
 
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,

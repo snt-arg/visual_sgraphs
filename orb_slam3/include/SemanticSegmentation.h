@@ -25,13 +25,8 @@ namespace ORB_SLAM3
         bool mGeoRuns;
         Atlas *mpAtlas;
         std::mutex mMutexNewKFs;
-        std::mutex mMutexNewRooms;
-        Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
         const uint8_t bytesPerClassProb = 4; // Four bytes per class probability - refer to scene_segment_ros
-        std::vector<ORB_SLAM3::Door *> envDoors;
-        std::vector<ORB_SLAM3::Room *> envRooms;
         unsigned long int mLastProcessedKeyFrameId = 0;
-        std::vector<std::vector<Eigen::Vector3d *>> latestSkeletonCluster;
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> segmentedImageBuffer;
 
         // System parameters
@@ -39,22 +34,11 @@ namespace ORB_SLAM3
 
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        SemanticSegmentation(Atlas *pAtlas, std::vector<ORB_SLAM3::Door *> envDoors,
-                             std::vector<ORB_SLAM3::Room *> envRooms);
+        SemanticSegmentation(Atlas *pAtlas);
 
         // Semantic segmentation frame buffer processing
         std::list<std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr>> GetSegmentedFrameBuffer();
         void AddSegmentedFrameToBuffer(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
-
-        /**
-         * @brief Gets the latest skeleton cluster acquired from voxblox
-         */
-        std::vector<std::vector<Eigen::Vector3d *>> getLatestSkeletonCluster();
-
-        /**
-         * @brief Updates the skeleton cluster acquired from the current map (set by voxblox)
-         */
-        void setLatestSkeletonCluster();
 
         /**
          * @brief Segments the point cloud into class specific point clouds and enriches them with the current keyframe point cloud
@@ -92,71 +76,6 @@ namespace ORB_SLAM3
          * @param confidence the confidence of the class predictions
          */
         void updatePlaneSemantics(int planeId, int clsId, double confidence);
-
-        /**
-         * @brief Filters the wall planes to remove heavily tilted walls
-         */
-        void filterWallPlanes();
-
-        /**
-         * @brief Filters the ground plane to remove points that are too far from the plane
-         * @param groundPlane the main ground plane that is the reference
-         */
-        void filterGroundPlanes(Plane *groundPlane);
-
-        /**
-         * @brief Transforms the plane equation to the ground reference defined by mPlanePoseMat
-         * @param planeEq the plane equation
-         * @return the transformed plane equation
-         */
-        Eigen::Vector3f transformPlaneEqToGroundReference(const Eigen::Vector4d &planeEq);
-
-        /**
-         * @brief Gets the median height of a ground plane after transformation to referece by mPlanePoseMat
-         * @param groundPlane the ground plane
-         * @return the median height of the ground plane
-         */
-        float computeGroundPlaneHeight(Plane *groundPlane);
-
-        /**
-         * @brief Computes the transformation matrix from the ground plane to the horizontal (y-inverted)
-         * @param plane the plane
-         * @return the transformation matrix
-         */
-        Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
-
-        /**
-         * @brief Gets the only rectangular room from the facing walls list (if exists, returns true)
-         * @param givenRoom the address of the given room
-         * @param facingWalls the facing walls list
-         * @param perpThreshDeg the perpendicular threshold in degrees
-         */
-        bool getRectangularRoom(std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> &givenRoom,
-                                const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
-                                double perpThreshDeg = 5.0);
-
-        /**
-         * @brief Checks for the association of a given room
-         * @param givenRoom the address of the given room
-         * @param givenRoomList the list of rooms to be checked
-         */
-        Room *roomAssociation(const ORB_SLAM3::Room *givenRoom, const vector<Room *> &givenRoomList);
-
-        /**
-         * @brief Converts mapped room candidates to rooms using geometric constraints
-         * 🚧 [vS-Graphs v.2.0] This solution is not very reliable. It is recommended to use Voxblox version.
-         */
-        void updateMapRoomCandidateToRoomGeo(KeyFrame *pKF);
-
-        /**
-         * @brief Converts mapped room candidates to rooms using voxmap and freespace clusters
-         */
-        void detectMapRoomCandidateVoxblox();
-
-        /**
-         * @brief Converts mapped room candidates to rooms using a GNN
-         */
-        void detectMapRoomCandidateGNN();
 
         // Running the thread
         void Run();

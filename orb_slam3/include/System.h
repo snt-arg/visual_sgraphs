@@ -46,6 +46,7 @@
 #include "Geometric/Plane.h"
 #include "Types/SystemParams.h"
 #include "SemanticSegmentation.h"
+#include "SemanticsManager.h"
 #include "GeometricSegmentation.h"
 #include "DatabaseParser.h"
 
@@ -89,6 +90,7 @@ namespace ORB_SLAM3
     class Settings;
     class SemanticSegmentation;
     class GeometricSegmentation;
+    class SemanticsManager;
 
     class System
     {
@@ -318,6 +320,7 @@ namespace ORB_SLAM3
 
         // Geometric & Semantic Segmentation
         SemanticSegmentation *mpSemanticSegmentation;
+        SemanticsManager *mpSemanticsManager;
         GeometricSegmentation *mpGeometricSegmentation;
 
         // List of rooms and doors in the environment
@@ -331,6 +334,7 @@ namespace ORB_SLAM3
         std::thread *mptLoopClosing;
         std::thread *mptLocalMapping;
         std::thread *mptSemanticSegmentation;
+        std::thread *mptSemanticsManager;
         std::thread *mptGeometricSegmentation;
 
         // Reset flag
