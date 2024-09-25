@@ -218,18 +218,24 @@ namespace ORB_SLAM3
                 g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
                                                                       detectedPlane);
 
-                // Check if we need to add the wall to the map or not
-                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(),
-                                                            detectedPlane,
-                                                            pKF->GetPose().matrix().cast<double>(),
-                                                            sysParams->seg.plane_association_thresh);
-
                 // Compute the average confidence across all pixels in the plane observation
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud = planePoint.first;
                 std::vector<double> confidences;
                 for (size_t i = 0; i < planeCloud->size(); i++)
                     confidences.push_back(static_cast<int>(planeCloud->points[i].a) / 255.0);
                 double conf = Utils::calcSoftMin(confidences);
+
+                // temp global plane cloud
+                pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+                pcl::copyPointCloud(*planeCloud, *globalPlaneCloud);
+                pcl::transformPointCloud(*globalPlaneCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
+
+                // Check if we need to add the wall to the map or not
+                int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(),
+                                                            detectedPlane,
+                                                            globalPlaneCloud,
+                                                            pKF->GetPose().matrix().cast<double>(),
+                                                            sysParams->seg.plane_association.ominus_thresh);
 
                 // Get the semantic type of the observation
                 ORB_SLAM3::Plane::planeVariant semanticType = Utils::getPlaneTypeFromClassId(clsId);

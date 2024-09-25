@@ -1064,6 +1064,8 @@ namespace ORB_SLAM3
 
     int Optimizer::PoseOptimization(Frame *pFrame)
     {
+        SystemParams *sysParams = SystemParams::GetParams();
+
         g2o::SparseOptimizer optimizer;
         g2o::BlockSolver_6_3::LinearSolverType *linearSolver;
 
@@ -1253,7 +1255,7 @@ namespace ORB_SLAM3
 
         // use plane-mappoint constraints to optimize the map points
         KeyFrame *refKF = pFrame->mpReferenceKF;
-        if (refKF)
+        if (sysParams->refine_tracking.enabled && refKF)
         {
             // Setup optimizer (Local Optimization)
             g2o::SparseOptimizer optPp;
@@ -1355,7 +1357,7 @@ namespace ORB_SLAM3
             optimizer.optimize(its[it]);
 
             // before the last step, remove bad map points
-            if (it == 2 && refKF)
+            if (sysParams->refine_tracking.enabled && it == 2 && refKF)
             {
                 int nDeleted = 0;
                 Eigen::Vector3d camCenter = pFrame->GetCameraCenter().cast<double>();
@@ -1380,7 +1382,7 @@ namespace ORB_SLAM3
                         Eigen::Vector3d pMPw = pMP->GetWorldPos().cast<double>();
                         double distance = planeEq.head<3>().dot(pMPw) + planeEq(3);
 
-                        if (distance < -0.08)
+                        if (distance < -1 * sysParams->refine_tracking.max_distance_for_delete)
                         {
                             // get the intersection point of the line joining the camera center and the map point with the plane
                             Eigen::Vector3d intersect = Utils::lineIntersectsPlane(planeEq, camCenter, pMPw);
@@ -1395,8 +1397,6 @@ namespace ORB_SLAM3
                         }
                     }
                 }
-                if (nDeleted > 0)
-                    std::cout << "Deleted " << nDeleted << " map points" << std::endl;
             }
 
             nBad = 0;
@@ -2103,7 +2103,7 @@ namespace ORB_SLAM3
 
                             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                             e->setRobustKernel(rk);
-                            rk->setDelta(1.0);
+                            rk->setDelta(thHuberMono);
                             optimizer.addEdge(e);
                             nEdges++;
 

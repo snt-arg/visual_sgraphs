@@ -28,20 +28,34 @@ optimization:
     enabled: true
     information_gain: 0.3
 
+################################ Tracking Refinement Parameters ##################################
+refine_tracking:
+  enabled: true
+  max_distance_for_delete: 0.1
+  octree:
+    resolution: 0.02
+    search_radius: 0.03
+
 ################################ Common Segmentation Parameters ##################################
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
   # Also, the number of points needed to detect a plane in the pointcloud
   pointclouds_thresh: 400
 
-  # Plane association threshold (ominus)
-  plane_association_thresh: 0.20
+  # Plane association
+  plane_association:
+    ominus_thresh: 0.20
+    distance_thresh: 0.15 # meters
+    centroid_thresh: 2.0 # meters
+    cluster_separation:
+      enabled: true
+      tolerance: 2.0 # euclidean distance for cutting planes
+      downsample:
+        leaf_size: 0.10
+        min_points_per_voxel: 20
 
   # The maximum distance for point to be considered part of a plane
   plane_point_dist_thresh: 0.02
-
-  # The maximum spatial distance between two planes to stay uncut (in meters)
-  plane_cutting_threshold: 2.0
 
   ransac:
     # The maximum number of planes to be detected in one pointcloud
@@ -59,7 +73,7 @@ geo_seg:
     # pointcloud downsampling parmeters
     downsample:
       leaf_size: 0.05
-      min_points_per_voxel: 20
+      min_points_per_voxel: 10
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
@@ -71,7 +85,7 @@ sem_seg:
     # pointcloud downsampling parmeters
     downsample:
       leaf_size: 0.03
-      min_points_per_voxel: 20
+      min_points_per_voxel: 10
     # Pointcloud outlier removal
     outlier_removal:
       mean_threshold: 50
@@ -95,7 +109,7 @@ sem_seg:
 
   # Whether to reassociate planes with the semantic labels - after optimization, some planes may get close
   reassociate:
-    enabled: true
+    enabled: false
     association_thresh: 0.1
 
   ############################## Room Segmentation Parameters ####################################

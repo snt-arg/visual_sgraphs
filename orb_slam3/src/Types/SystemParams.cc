@@ -41,13 +41,24 @@ namespace ORB_SLAM3
             // Marker Parameters
             markers.impact = mConfig["markers"]["impact"].as<float>();
 
+            // Tracking Refinement Parameters
+            refine_tracking.enabled = mConfig["refine_tracking"]["enabled"].as<bool>();
+            refine_tracking.max_distance_for_delete = mConfig["refine_tracking"]["max_distance_for_delete"].as<float>();
+            refine_tracking.octree.resolution = mConfig["refine_tracking"]["octree"]["resolution"].as<float>();
+            refine_tracking.octree.search_radius = mConfig["refine_tracking"]["octree"]["search_radius"].as<float>();
+
             // Common Segmentation Parameters
             seg.pointclouds_thresh = mConfig["seg"]["pointclouds_thresh"].as<unsigned int>();
-            seg.ransac.max_planes = mConfig["seg"]["ransac"]["max_planes"].as<unsigned int>();
             seg.plane_point_dist_thresh = mConfig["seg"]["plane_point_dist_thresh"].as<float>();
-            seg.plane_cutting_threshold = mConfig["seg"]["plane_cutting_threshold"].as<float>();
+            seg.plane_association.ominus_thresh = mConfig["seg"]["plane_association"]["ominus_thresh"].as<float>();
+            seg.plane_association.distance_thresh = mConfig["seg"]["plane_association"]["distance_thresh"].as<float>();
+            seg.plane_association.centroid_thresh = mConfig["seg"]["plane_association"]["centroid_thresh"].as<float>();
+            seg.plane_association.cluster_separation.enabled = mConfig["seg"]["plane_association"]["cluster_separation"]["enabled"].as<bool>();
+            seg.plane_association.cluster_separation.tolerance = mConfig["seg"]["plane_association"]["cluster_separation"]["tolerance"].as<float>();
+            seg.plane_association.cluster_separation.downsample.leaf_size = mConfig["seg"]["plane_association"]["cluster_separation"]["downsample"]["leaf_size"].as<float>();
+            seg.plane_association.cluster_separation.downsample.min_points_per_voxel = mConfig["seg"]["plane_association"]["cluster_separation"]["downsample"]["min_points_per_voxel"].as<unsigned int>();
+            seg.ransac.max_planes = mConfig["seg"]["ransac"]["max_planes"].as<unsigned int>();
             seg.ransac.distance_thresh = mConfig["seg"]["ransac"]["distance_thresh"].as<float>();
-            seg.plane_association_thresh = mConfig["seg"]["plane_association_thresh"].as<float>();
             seg.ransac.max_iterations = mConfig["seg"]["ransac"]["max_iterations"].as<unsigned int>();
 
             // Optimization Parameters

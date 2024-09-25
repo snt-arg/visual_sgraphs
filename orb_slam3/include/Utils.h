@@ -18,6 +18,7 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
+#include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 
@@ -168,8 +169,15 @@ namespace ORB_SLAM3
          * @param threshold the threshold value for association
          * @return the plane id of the mapped plane
          */
-        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane,
+        static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud,
                                    const Eigen::Matrix4d &kfPose, const float threshold);
+
+        /**
+         * @brief Clusters the point cloud into separate clouds based on the plane detection
+        * @param cloud the point cloud to be clustered
+        * @param clusterIndices the vector of point indices for each cluster
+        */
+        static void clusterPlaneClouds(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud, std::vector<pcl::PointIndices> &clusterIndices);
 
         /**
          * @brief Re-associates semantically classified planes if they get closer after optimization

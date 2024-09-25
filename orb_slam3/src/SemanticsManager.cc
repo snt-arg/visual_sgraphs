@@ -43,7 +43,8 @@ namespace ORB_SLAM3
             // wait until its intervalTime to run the next iteration
             auto end = std::chrono::high_resolution_clock::now();
             std::chrono::duration<double> elapsed = end - start;
-            std::this_thread::sleep_for(std::chrono::seconds(runInterval) - elapsed);
+            if (elapsed.count() < runInterval)
+                std::this_thread::sleep_for(std::chrono::seconds(runInterval) - elapsed);
         }
     }
 

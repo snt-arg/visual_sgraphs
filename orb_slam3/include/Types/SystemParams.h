@@ -65,12 +65,36 @@ namespace ORB_SLAM3
             } plane_point;
         } optimization;
 
+        struct refine_tracking
+        {
+            bool enabled = false;
+            float max_distance_for_delete = 0.5f;
+            struct octree
+            {
+                float resolution = 0.1f;
+                float search_radius = 0.5f;
+            } octree;
+        } refine_tracking;
+
         struct seg
         {
             unsigned int pointclouds_thresh = 200;
-            float plane_association_thresh = 0.2f;
             float plane_point_dist_thresh = 0.2f;
-            float plane_cutting_threshold = 2.0f;
+
+            struct plane_association
+            {
+                float ominus_thresh = 0.1f;
+                float distance_thresh = 0.2f;
+                float centroid_thresh = 3.2f;
+                
+                struct cluster_separation
+                {
+                    bool enabled = false;
+                    float tolerance = 2.5f;
+                    Downsample downsample;
+                } cluster_separation;
+
+            } plane_association;
 
             struct ransac
             {

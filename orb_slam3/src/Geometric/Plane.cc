@@ -9,7 +9,8 @@ namespace ORB_SLAM3
     Plane::Plane()
     {
         planeCloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBA>>();
-        octree = boost::make_shared<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>>(0.02);
+        octree = boost::make_shared<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>>(SystemParams::GetParams()->refine_tracking.octree.resolution);
+        centroid.setZero();
         excludedFromAssoc = false;
     }
     Plane::~Plane() {}
@@ -80,13 +81,19 @@ namespace ORB_SLAM3
     void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexFeatures);
+        
+        // store the old centroid for updating
+        Eigen::Vector3f oldCentroid = getCentroid();
+        oldCentroid *= planeCloud->points.size();
+
+        // add the new points to the plane cloud
         for (const auto &point : value->points)
             planeCloud->points.push_back(point);
 
         // Update the plane centroid
-        Eigen::Vector4f centroid;
-        pcl::compute3DCentroid(*planeCloud, centroid);
-        setCentroid(centroid.head<3>());
+        for (const auto &point : value->points)
+            oldCentroid += Eigen::Vector3f(point.x, point.y, point.z);
+        setCentroid(oldCentroid / planeCloud->points.size());
 
         // Update the octree
         octree->setInputCloud(planeCloud);
@@ -96,12 +103,15 @@ namespace ORB_SLAM3
     void Plane::replaceMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexFeatures);
+        planeCloud->clear();
         pcl::copyPointCloud(*value, *planeCloud);
 
         // Update the plane centroid
-        Eigen::Vector4f centroid;
-        pcl::compute3DCentroid(*planeCloud, centroid);
-        setCentroid(centroid.head<3>());
+        Eigen::Vector3f newCentroid;
+        newCentroid.setZero();
+        for (const auto &point : planeCloud->points)
+            newCentroid += Eigen::Vector3f(point.x, point.y, point.z);
+        setCentroid(newCentroid / planeCloud->points.size());
 
         // Update the octree
         octree->setInputCloud(planeCloud);
@@ -116,7 +126,7 @@ namespace ORB_SLAM3
         pointPCL.y = point(1);
         pointPCL.z = point(2);
 
-        float searchRadius = 0.03;
+        float searchRadius = SystemParams::GetParams()->refine_tracking.octree.search_radius;
         std::vector<int> pointIdxRadiusSearch;
         std::vector<float> pointRadiusSquaredDistance;
 

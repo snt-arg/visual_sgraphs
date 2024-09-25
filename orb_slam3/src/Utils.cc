@@ -374,39 +374,70 @@ namespace ORB_SLAM3
         return false;
     }
 
-    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, const Eigen::Matrix4d &kfPose, const float threshold)
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud, const Eigen::Matrix4d &kfPose, const float threshold)
     {
         int planeId = -1;
 
         // Initialize difference value
         double minDiff = 100.0;
 
+        // Candidate planes for clustering check
+        std::vector<std::pair<Plane *, double>> checksForCluster;
+
         // Check if mappedPlanes is empty
         if (mappedPlanes.empty())
             return planeId;
 
-        // Loop over all walls
+        // Get the centroid of the given plane
+        if (givenCloud->empty())
+            return planeId;
+        Eigen::Vector3d givenCentroid;
+        givenCentroid.setZero();
+        for (const auto &point : *givenCloud)
+        {
+            Eigen::Vector3d pointVec(point.x, point.y, point.z);
+            givenCentroid += pointVec;
+        }
+        givenCentroid /= givenCloud->size();
+
+        SystemParams *sysParams = SystemParams::GetParams();
+
+        // Loop over all planes
         for (const auto &mPlane : mappedPlanes)
         {
             // Skip the plane if it's excluded from association
-            if (mPlane->excludedFromAssoc)
+            if (mPlane->excludedFromAssoc || mPlane->getMapClouds()->empty())
                 continue;
 
-            // Preparing a plane for feeding the detector
-            g2o::Plane3D mappedPlane = mPlane->getGlobalEquation();
+            // convert mapped plane to local frame of given plane
+            g2o::Plane3D mappedPlane = Utils::applyPoseToPlane(kfPose, mPlane->getGlobalEquation());
 
-            // convert to local frame of given plane
-            mappedPlane = Utils::applyPoseToPlane(kfPose, mappedPlane);
-
-            // Calculate difference vector based on walls' equations
+            // Calculate difference vector based on plane equations
             // given plane is assumed to be in the frame represented by kfPose
             Eigen::Vector3d diffVector = givenPlane.ominus(mappedPlane);
 
+            // a maximum distance threshold - last element of the diffVector
+            if (diffVector(2) > sysParams->seg.plane_association.distance_thresh)
+                continue;
+
             // Create a single number determining the difference vector
-            // [before] double planeDiff = diffVector.transpose() * Eigen::Matrix3d::Identity() * diffVector;
             double planeDiff = diffVector.norm();
 
-            // Comparing the with minimum acceptable value
+            // check ominus threshold
+            if (planeDiff > threshold)
+                continue;
+
+            // check if centroid is far enough to check for clustering
+            Eigen::Vector3d mappedCentroid = mPlane->getCentroid().cast<double>();
+            double centroidDiff = (givenCentroid - mappedCentroid).norm();
+            if (sysParams->seg.plane_association.cluster_separation.enabled
+                && centroidDiff > sysParams->seg.plane_association.centroid_thresh)
+            {
+                checksForCluster.push_back(std::make_pair(mPlane, planeDiff));
+                continue;
+            }
+
+            // Comparing the with minimum value
             if (planeDiff < minDiff)
             {
                 minDiff = planeDiff;
@@ -414,12 +445,63 @@ namespace ORB_SLAM3
             }
         }
 
-        // If the difference is not large, no need to add the plane
-        if (minDiff < threshold)
-            return planeId;
+        // check for clustering only if no plane is found - reduces unnecessary expensive clustering
+        if (sysParams->seg.plane_association.cluster_separation.enabled 
+            && planeId == -1 && !checksForCluster.empty())
+        {
+            for (const auto &check : checksForCluster)
+            {
+                Plane *mPlane = check.first;
+                double planeDiff = check.second;
 
-        // Otherwise, return -1 so that the the plane gets added to the map
-        return -1;
+                // check if it's a different cluster
+                pcl::PointCloud<pcl::PointXYZRGBA>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+                pcl::copyPointCloud(*mPlane->getMapClouds(), *aggregatedCloud);
+                if (givenCloud->size() < 1000)
+                    aggregatedCloud = pointcloudDownsample<pcl::PointXYZRGBA>(aggregatedCloud,
+                                                                             sysParams->seg.plane_association.cluster_separation.downsample.leaf_size,
+                                                                             sysParams->seg.plane_association.cluster_separation.downsample.min_points_per_voxel);
+                for (const auto &point : *givenCloud)
+                {
+                    pcl::PointXYZRGBA newPoint;
+                    pcl::copyPoint(point, newPoint);
+                    aggregatedCloud->push_back(newPoint);
+                }
+                if (givenCloud->size() >= 1000)
+                    aggregatedCloud = pointcloudDownsample<pcl::PointXYZRGBA>(aggregatedCloud,
+                                                                             sysParams->seg.plane_association.cluster_separation.downsample.leaf_size,
+                                                                             sysParams->seg.plane_association.cluster_separation.downsample.min_points_per_voxel);
+                if (aggregatedCloud->empty())
+                    continue;
+
+                std::vector<pcl::PointIndices> clusterIndices;
+                clusterPlaneClouds(aggregatedCloud, clusterIndices);
+                if (clusterIndices.size() > 1)
+                    continue;
+
+                // check the difference
+                if (planeDiff < minDiff)
+                {
+                    minDiff = planeDiff;
+                    planeId = mPlane->getId();
+                }
+            }
+        }
+
+        return planeId;
+    }
+
+    void Utils::clusterPlaneClouds(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud, std::vector<pcl::PointIndices> &clusterIndices)
+    {
+        pcl::search::KdTree<pcl::PointXYZRGBA>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZRGBA>);
+        tree->setInputCloud(cloud);
+        pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
+        ec.setClusterTolerance(SystemParams::GetParams()->seg.plane_association.cluster_separation.tolerance);
+        ec.setMinClusterSize(50);
+        ec.setMaxClusterSize(2500000);
+        ec.setSearchMethod(tree);
+        ec.setInputCloud(cloud);
+        ec.extract(clusterIndices);
     }
 
     void Utils::reAssociateSemanticPlanes(Atlas *mpAtlas)
@@ -450,6 +532,7 @@ namespace ORB_SLAM3
             // Check if the plane is associated with any other plane
             int matchedPlaneId = associatePlanes(otherPlanes,
                                                  plane->getGlobalEquation(),
+                                                 plane->getMapClouds(),
                                                  Eigen::Matrix4d::Identity(),
                                                  sysParams->sem_seg.reassociate.association_thresh);
 

@@ -74,11 +74,17 @@ namespace ORB_SLAM3
             // convert planeCloud to global coordinates
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr emptyPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
             
+            // temp global plane cloud
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
+            pcl::copyPointCloud(*planePoint.first, *globalPlaneCloud);
+            pcl::transformPointCloud(*globalPlaneCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
+
             // Check if we need to add the wall to the map or not
             int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), 
                                                         detectedPlane,
+                                                        globalPlaneCloud,
                                                         pKF->GetPose().matrix().cast<double>(),
-                                                        sysParams->seg.plane_association_thresh);
+                                                        sysParams->seg.plane_association.ominus_thresh);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
                 GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane, emptyPlaneCloud);
