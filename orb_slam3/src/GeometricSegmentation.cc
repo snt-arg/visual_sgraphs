@@ -84,6 +84,7 @@ namespace ORB_SLAM3
                                                         detectedPlane,
                                                         globalPlaneCloud,
                                                         pKF->GetPose().matrix().cast<double>(),
+                                                        ORB_SLAM3::Plane::planeVariant::UNDEFINED,
                                                         sysParams->seg.plane_association.ominus_thresh);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one

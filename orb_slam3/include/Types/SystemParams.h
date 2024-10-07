@@ -13,6 +13,11 @@ namespace ORB_SLAM3
         void SetParams(const std::string &strConfigFile);
 
         // Common struct definitions
+        struct Constraint
+        {
+            bool enabled = false;
+            float information_gain = 0.1f;
+        };
         struct Downsample
         {
             float leaf_size = 0.03f;
@@ -51,21 +56,12 @@ namespace ORB_SLAM3
         struct optimization
         {
             bool marginalize_planes = false;
-
-            struct plane_kf
-            {
-                bool enabled = false;
-                float information_gain = 0.1f;
-            } plane_kf;
-
-            struct plane_point
-            {
-                bool enabled = false;
-                float information_gain = 0.09f;
-            } plane_point;
+            Constraint plane_map_point;
+            Constraint plane_kf;
+            Constraint plane_point;
         } optimization;
 
-        struct refine_tracking
+        struct refine_map_points
         {
             bool enabled = false;
             float max_distance_for_delete = 0.5f;
@@ -73,8 +69,16 @@ namespace ORB_SLAM3
             {
                 float resolution = 0.1f;
                 float search_radius = 0.5f;
+                unsigned int min_neighbors = 2;
             } octree;
-        } refine_tracking;
+        } refine_map_points;
+
+        struct plane_based_covisibility
+        {
+            bool enabled = true;
+            unsigned int max_keyframes = 75;
+            unsigned int score_per_plane = 60;
+        } plane_based_covisibility;
 
         struct seg
         {

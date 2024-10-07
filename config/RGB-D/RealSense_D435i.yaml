@@ -37,7 +37,7 @@ Stereo.b: 0.0745
 # RGBD parameters
 RGBD.DepthMapFactor: 1000.0
 RGBD.NearThresh: 0.3
-RGBD.FarThresh: 3.5
+RGBD.FarThresh: 4.5
 
 #--------------------------------------------------------------------------------------------
 # ORB Parameters

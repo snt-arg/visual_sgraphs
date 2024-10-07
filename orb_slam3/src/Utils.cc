@@ -213,8 +213,9 @@ namespace ORB_SLAM3
                      std::back_inserter(filteredCloud->points),
                      [&](const PointT &p)
                      {
-                         distance = p.getVector3fMap().norm();
-                         return distance > thresholdNear && distance < thresholdFar;
+                        //  distance = p.getVector3fMap().norm();
+                        distance = p.z;
+                        return distance > thresholdNear && distance < thresholdFar;
                      });
 
         filteredCloud->height = 1;
@@ -374,7 +375,11 @@ namespace ORB_SLAM3
         return false;
     }
 
-    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud, const Eigen::Matrix4d &kfPose, const float threshold)
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, 
+                               g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud, 
+                               const Eigen::Matrix4d &kfPose, 
+                               const Plane::planeVariant obsPlaneType,
+                               const float threshold)
     {
         int planeId = -1;
 
@@ -409,6 +414,9 @@ namespace ORB_SLAM3
             if (mPlane->excludedFromAssoc || mPlane->getMapClouds()->empty())
                 continue;
 
+            if ((obsPlaneType != Plane::planeVariant::UNDEFINED) && (mPlane->getExpectedPlaneType() != obsPlaneType))
+                continue;
+
             // convert mapped plane to local frame of given plane
             g2o::Plane3D mappedPlane = Utils::applyPoseToPlane(kfPose, mPlane->getGlobalEquation());
 
@@ -431,6 +439,7 @@ namespace ORB_SLAM3
             Eigen::Vector3d mappedCentroid = mPlane->getCentroid().cast<double>();
             double centroidDiff = (givenCentroid - mappedCentroid).norm();
             if (sysParams->seg.plane_association.cluster_separation.enabled
+                && obsPlaneType == Plane::planeVariant::WALL // perform clustering only for walls
                 && centroidDiff > sysParams->seg.plane_association.centroid_thresh)
             {
                 checksForCluster.push_back(std::make_pair(mPlane, planeDiff));
@@ -534,6 +543,7 @@ namespace ORB_SLAM3
                                                  plane->getGlobalEquation(),
                                                  plane->getMapClouds(),
                                                  Eigen::Matrix4d::Identity(),
+                                                 plane->getPlaneType(),
                                                  sysParams->sem_seg.reassociate.association_thresh);
 
             // If a match is found, then add the smaller planecloud to the larger plane
@@ -544,15 +554,17 @@ namespace ORB_SLAM3
                 Plane *smallPlane, *bigPlane;
                 Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
 
-                if (plane->getMapClouds()->points.size() < matchedPlane->getMapClouds()->points.size())
-                {
-                    smallPlane = plane;
-                    bigPlane = matchedPlane;
-                }
-                else
+                // if one of them has a plane type, then it is automatically the bigger plane
+                if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED ||
+                    plane->getMapClouds()->points.size() > matchedPlane->getMapClouds()->points.size())
                 {
                     smallPlane = matchedPlane;
                     bigPlane = plane;
+                }
+                else
+                {
+                    smallPlane = plane;
+                    bigPlane = matchedPlane;
                 }
 
                 // Add the smaller planecloud to the bigger plane

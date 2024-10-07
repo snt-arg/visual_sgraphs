@@ -42,10 +42,16 @@ namespace ORB_SLAM3
             markers.impact = mConfig["markers"]["impact"].as<float>();
 
             // Tracking Refinement Parameters
-            refine_tracking.enabled = mConfig["refine_tracking"]["enabled"].as<bool>();
-            refine_tracking.max_distance_for_delete = mConfig["refine_tracking"]["max_distance_for_delete"].as<float>();
-            refine_tracking.octree.resolution = mConfig["refine_tracking"]["octree"]["resolution"].as<float>();
-            refine_tracking.octree.search_radius = mConfig["refine_tracking"]["octree"]["search_radius"].as<float>();
+            refine_map_points.enabled = mConfig["refine_map_points"]["enabled"].as<bool>();
+            refine_map_points.max_distance_for_delete = mConfig["refine_map_points"]["max_distance_for_delete"].as<float>();
+            refine_map_points.octree.resolution = mConfig["refine_map_points"]["octree"]["resolution"].as<float>();
+            refine_map_points.octree.search_radius = mConfig["refine_map_points"]["octree"]["search_radius"].as<float>();
+            refine_map_points.octree.min_neighbors = mConfig["refine_map_points"]["octree"]["min_neighbors"].as<unsigned int>();
+
+            // Plane based Covisibility Parameters
+            plane_based_covisibility.enabled = mConfig["plane_based_covisibility"]["enabled"].as<bool>();
+            plane_based_covisibility.max_keyframes = mConfig["plane_based_covisibility"]["max_keyframes"].as<unsigned int>();
+            plane_based_covisibility.score_per_plane = mConfig["plane_based_covisibility"]["score_per_plane"].as<unsigned int>();
 
             // Common Segmentation Parameters
             seg.pointclouds_thresh = mConfig["seg"]["pointclouds_thresh"].as<unsigned int>();
@@ -67,6 +73,8 @@ namespace ORB_SLAM3
             optimization.plane_kf.information_gain = mConfig["optimization"]["plane_kf"]["information_gain"].as<float>();
             optimization.plane_point.enabled = mConfig["optimization"]["plane_point"]["enabled"].as<bool>();
             optimization.plane_point.information_gain = mConfig["optimization"]["plane_point"]["information_gain"].as<float>();
+            optimization.plane_map_point.enabled = mConfig["optimization"]["plane_map_point"]["enabled"].as<bool>();
+            optimization.plane_map_point.information_gain = mConfig["optimization"]["plane_map_point"]["information_gain"].as<float>();
 
             // Geometric Segmentation Parameters
             geo_seg.pointcloud.downsample.leaf_size = mConfig["geo_seg"]["pointcloud"]["downsample"]["leaf_size"].as<float>();
@@ -100,6 +108,7 @@ namespace ORB_SLAM3
         catch (YAML::Exception &e)
         {
             std::cerr << "Error loading system parameters. Make sure all parameters are defined properly: " << e.what() << std::endl;
+            exit(1);
         }
     }
 }

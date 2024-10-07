@@ -35,10 +35,22 @@ namespace ORB_SLAM3
                 Utils::reAssociateSemanticPlanes(mpAtlas);
 
             // Check for possible room candidates
+            // [TODO] - Check compatibility with the geometric method
             // if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
                 // updateMapRoomCandidateToRoomGeo(thisKF);
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
                 detectMapRoomCandidateVoxblox();
+
+            // remove bad map points
+            if (sysParams->refine_map_points.enabled)
+                removeBadMapPointsUsingSemantics();
+
+            // // count non-bad map points
+            // int numMapPoints = 0;
+            // for (const auto &mp: mpAtlas->GetAllMapPoints())
+            //     if (mp && !mp->isBad())
+            //         numMapPoints++;
+            // std::cout << "[Semantics Manager] Number of non-bad map points: " << numMapPoints << std::endl;
 
             // wait until its intervalTime to run the next iteration
             auto end = std::chrono::high_resolution_clock::now();
@@ -46,6 +58,65 @@ namespace ORB_SLAM3
             if (elapsed.count() < runInterval)
                 std::this_thread::sleep_for(std::chrono::seconds(runInterval) - elapsed);
         }
+    }
+
+    void SemanticsManager::removeBadMapPointsUsingSemantics()
+    {
+        // get all semantic planes only
+        std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
+        std::vector<Plane *> semanticPlanes;
+        for (const auto &plane : allPlanes)
+            if (plane->getPlaneType() != ORB_SLAM3::Plane::planeVariant::UNDEFINED)
+                semanticPlanes.push_back(plane);
+
+        size_t nDeleted = 0;
+        for (const auto &plane : allPlanes)
+        {
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
+                continue;
+
+            // get the global equation of the plane
+            const Eigen::Vector4d planeEq = plane->getGlobalEquation().coeffs();
+            
+            // check across all observations of the plane
+            const std::map<KeyFrame *, Plane::Observation> observations = plane->getObservations();
+            for (const auto &obs : observations)
+            {
+                KeyFrame *pKF = obs.first;
+                if (pKF->isBad())
+                    continue;
+                
+                // get the camera center of the keyframe
+                const Eigen::Vector3d camCenter = pKF->GetCameraCenter().cast<double>();
+
+                // get the map points observed by the keyframe
+                const std::set<MapPoint *> mapPoints = pKF->GetMapPoints();
+
+                for (const auto &mp : mapPoints)
+                {
+                    if (mp->isBad())
+                        continue;
+
+                    // get the 3D position of the map point
+                    const Eigen::Vector3d mpPos = mp->GetWorldPos().cast<double>();
+                    const double dist = planeEq.head<3>().dot(mpPos) + planeEq(3);
+
+                    if (dist < -sysParams->refine_map_points.max_distance_for_delete)
+                    {
+                        // check if intersect is in the plane cloud
+                        Eigen::Vector3d intersect = Utils::lineIntersectsPlane(planeEq, camCenter, mpPos);
+                        if (plane->isPointinPlaneCloud(intersect))
+                        {
+                            mp->SetBadFlag();
+                            nDeleted++;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (nDeleted > 10)
+            std::cout << "[Semantics Manager] Number of bad map points removed: " << nDeleted << std::endl;
     }
 
     void SemanticsManager::setLatestSkeletonCluster()

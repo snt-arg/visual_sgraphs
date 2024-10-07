@@ -111,6 +111,8 @@ namespace ORB_SLAM3
          */
         void detectMapRoomCandidateGNN();
 
+        void removeBadMapPointsUsingSemantics();
+
         // Running the thread
         void Run();
     };

@@ -128,6 +128,7 @@ namespace ORB_SLAM3
                 maxKFid = pKF->mnId;
         }
 
+        const float thHuber1D = sqrt(3.841);
         const float thHuber2D = sqrt(5.99);
         const float thHuber3D = sqrt(7.815);
 
@@ -356,7 +357,7 @@ namespace ORB_SLAM3
 
                         g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                         e->setRobustKernel(rk);
-                        rk->setDelta(thHuber2D);
+                        rk->setDelta(thHuber3D);
                         optimizer.addEdge(e);
                     }
 
@@ -376,7 +377,7 @@ namespace ORB_SLAM3
 
                             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                             e->setRobustKernel(rk);
-                            rk->setDelta(thHuber2D);
+                            rk->setDelta(thHuber1D);
                             optimizer.addEdge(e);
                         }
                     }
@@ -1253,94 +1254,6 @@ namespace ORB_SLAM3
         if (nInitialCorrespondences < 3)
             return 0;
 
-        // use plane-mappoint constraints to optimize the map points
-        KeyFrame *refKF = pFrame->mpReferenceKF;
-        if (sysParams->refine_tracking.enabled && refKF)
-        {
-            // Setup optimizer (Local Optimization)
-            g2o::SparseOptimizer optPp;
-            g2o::BlockSolverX::LinearSolverType *linSolver;
-
-            linSolver = new g2o::LinearSolverEigen<g2o::BlockSolverX::PoseMatrixType>();
-
-            g2o::BlockSolverX *solptr = new g2o::BlockSolverX(linSolver);
-
-            g2o::OptimizationAlgorithmLevenberg *sol = new g2o::OptimizationAlgorithmLevenberg(solptr);
-
-            optPp.setAlgorithm(sol);
-            optPp.setVerbose(false);
-
-            // build the graph
-            list<MapPoint *> vpMPs;
-            vector<Plane *> vpPlanes = refKF->GetMapPlanes();
-            size_t numPlanes = vpPlanes.size();
-            for (size_t i = 0; i < numPlanes; i++)
-            {
-                Plane *pPlane = vpPlanes[i];
-                if (pPlane->getPlaneType() == Plane::planeVariant::UNDEFINED)
-                    continue;
-
-                // add a fixed vertex for the plane
-                g2o::VertexPlane *vPlane = new g2o::VertexPlane();
-                vPlane->setEstimate(pPlane->getGlobalEquation());
-                vPlane->setId(i + 1);
-                vPlane->setFixed(true);
-                optPp.addVertex(vPlane);
-
-                // for each map point in the frame, check if it is on the plane
-                for (size_t j = 0; j < pFrame->N; j++)
-                {
-                    MapPoint *pMP = pFrame->mvpMapPoints[j];
-                    if (!pMP)
-                        continue;
-
-                    if (pFrame->mvbOutlier[j])
-                        continue;
-
-                    if (pMP->isBad())
-                        continue;
-
-                    if (Utils::pointOnPlane(pPlane->getGlobalEquation().coeffs(), pMP))
-                    {
-                        // set a map point vertex if it is not already set
-                        if (!optPp.vertex(pMP->mnId + numPlanes + 2))
-                        {
-                            g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
-                            vPoint->setEstimate(pMP->GetWorldPos().cast<double>());
-                            vPoint->setId(pMP->mnId + numPlanes + 2);
-                            optPp.addVertex(vPoint);
-                            vpMPs.push_back(pMP);
-                        }
-
-                        // set an edge between the plane and the map point
-                        ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ *e = new ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ();
-                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optPp.vertex(pMP->mnId + numPlanes + 2)));
-                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optPp.vertex(i + 1)));
-                        e->setInformation(Eigen::Matrix<double, 1, 1>::Identity());
-
-                        g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                        e->setRobustKernel(rk);
-                        rk->setDelta(1.0);
-                        optPp.addEdge(e);
-                    }
-                }
-            }
-            if (vpMPs.size() > 0)
-            {
-                optPp.initializeOptimization();
-                optPp.optimize(10);
-
-                // recover optimized map points
-                for (list<MapPoint *>::iterator lit = vpMPs.begin(), lend = vpMPs.end(); lit != lend; lit++)
-                {
-                    MapPoint *pMP = *lit;
-                    g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optPp.vertex(pMP->mnId + numPlanes + 2));
-                    pMP->SetWorldPos(vPoint->estimate().cast<float>());
-                    pMP->UpdateNormalAndDepth();
-                }
-            }
-        }
-
         // We perform 4 optimizations, after each optimization we classify observation as inlier/outlier
         // At the next optimization, outliers are not included, but at the end they can be classified as inliers again.
         const float chi2Mono[4] = {5.991, 5.991, 5.991, 5.991};
@@ -1348,6 +1261,9 @@ namespace ORB_SLAM3
         const int its[4] = {10, 10, 10, 10};
 
         int nBad = 0;
+        KeyFrame *refKF = pFrame->mpReferenceKF;
+        vector<Plane *> vpPlanes;
+        std::unordered_map<int, bool> planeCheck;
         for (size_t it = 0; it < 4; it++)
         {
             Tcw = pFrame->GetPose();
@@ -1357,16 +1273,33 @@ namespace ORB_SLAM3
             optimizer.optimize(its[it]);
 
             // before the last step, remove bad map points
-            if (sysParams->refine_tracking.enabled && it == 2 && refKF)
+            if (sysParams->refine_map_points.enabled && refKF && it == 2)
             {
-                int nDeleted = 0;
-                Eigen::Vector3d camCenter = pFrame->GetCameraCenter().cast<double>();
-                // check all the planes of the reference keyframe
-                vector<Plane *> vpPlanes = refKF->GetMapPlanes();
-                size_t numPlanes = vpPlanes.size();
-                for (size_t i = 0; i < numPlanes; i++)
+                // populate the vector of planes using the covisibility graph of the reference keyframe
+                vector<KeyFrame *> vpRefCovKFs = refKF->GetBestCovisibilityKeyFrames(sysParams->plane_based_covisibility.max_keyframes);
+                vpRefCovKFs.push_back(refKF);
+                for (const auto &pKFi : vpRefCovKFs)
                 {
-                    Plane *pPlane = vpPlanes[i];
+                    for (const auto &plane : pKFi->GetMapPlanes())
+                    {
+                        if (!plane)
+                            continue;
+                        if (plane->getPlaneType() != Plane::planeVariant::UNDEFINED)
+                        {
+                            if (planeCheck.find(plane->getId()) == planeCheck.end())
+                            {
+                                vpPlanes.push_back(plane);
+                                planeCheck[plane->getId()] = true;
+                            }
+                        }
+                    }
+                }
+
+                g2o::VertexSE3Expmap *vSE3_recov = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(0));
+                Eigen::Isometry3d framePose = vSE3_recov->estimate();
+                Eigen::Vector3d camCenter = framePose.inverse().translation();
+                for (const auto &pPlane : vpPlanes)
+                {
                     if (pPlane->getPlaneType() == Plane::planeVariant::UNDEFINED)
                         continue;
 
@@ -1381,8 +1314,7 @@ namespace ORB_SLAM3
                         // calculate distance from the map point to the plane
                         Eigen::Vector3d pMPw = pMP->GetWorldPos().cast<double>();
                         double distance = planeEq.head<3>().dot(pMPw) + planeEq(3);
-
-                        if (distance < -1 * sysParams->refine_tracking.max_distance_for_delete)
+                        if (distance < -sysParams->refine_map_points.max_distance_for_delete)
                         {
                             // get the intersection point of the line joining the camera center and the map point with the plane
                             Eigen::Vector3d intersect = Utils::lineIntersectsPlane(planeEq, camCenter, pMPw);
@@ -1390,9 +1322,9 @@ namespace ORB_SLAM3
                             // check if the map point is in the plane cloud
                             if (pPlane->isPointinPlaneCloud(intersect))
                             {
+                                pFrame->mvpMapPoints[j]->SetBadFlag();
                                 pFrame->mvpMapPoints[j] = static_cast<MapPoint *>(NULL);
                                 pFrame->mvbOutlier[j] = true;
-                                nDeleted++;
                             }
                         }
                     }
@@ -1545,7 +1477,11 @@ namespace ORB_SLAM3
         pKF->mnBALocalForKF = pKF->mnId;
         Map *pCurrentMap = pKF->GetMap();
 
-        const vector<KeyFrame *> vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
+        vector<KeyFrame *> vNeighKFs;
+        if (sysParams->plane_based_covisibility.enabled)
+            vNeighKFs = pKF->GetBestCovisibilityKeyFrames(sysParams->plane_based_covisibility.max_keyframes);
+        else
+            vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
         for (int i = 0, iend = vNeighKFs.size(); i < iend; i++)
         {
             KeyFrame *pKFi = vNeighKFs[i];
@@ -1605,6 +1541,8 @@ namespace ORB_SLAM3
             for (vector<Plane *>::iterator idx = vpPlanes.begin(), vend = vpPlanes.end(); idx != vend; idx++)
             {
                 Plane *plane = *idx;
+                if (!plane)
+                    continue;
                 // If the plane is not known, do not add it to the local map
                 if (plane->getPlaneType() == Plane::planeVariant::UNDEFINED)
                     continue;
@@ -1726,9 +1664,11 @@ namespace ORB_SLAM3
             }
         }
 
+        // const size_t maxNewFixed = 5;
         // // Fixed KeyFrames for Planes (Keyframes that see Local Planes but that are not Local Keyframes)
         // for (list<Plane *>::iterator lit = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); lit != lend; lit++)
         // {
+        //     size_t newFixed = 0;
         //     map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = (*lit)->getObservations();
         //     for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
         //     {
@@ -1738,9 +1678,16 @@ namespace ORB_SLAM3
         //         {
         //             pKFi->mnBAFixedForKF = pKF->mnId;
         //             if (!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
+        //             {
         //                 lFixedCameras.push_back(pKFi);
+        //                 newFixed++;
+        //             }
+        //             if (newFixed >= maxNewFixed)
+        //                 break;
         //         }
         //     }
+        //     if (newFixed >= maxNewFixed)
+        //         break;
         // }
 
         num_fixedKF = lFixedCameras.size() + num_fixedKF;
@@ -1857,6 +1804,7 @@ namespace ORB_SLAM3
         vector<Plane *> vpPlaneEdgePlanePoint;
         vpPlaneEdgePlanePoint.reserve(nExpectedSizePlane);
 
+        const float thHuber1D = sqrt(3.841);
         const float thHuberMono = sqrt(5.991);
         const float thHuberStereo = sqrt(7.815);
 
@@ -2046,6 +1994,33 @@ namespace ORB_SLAM3
             // Setting the local optimization ID for the plane
             pMapPlane->setOpId(opId);
 
+            // Adding edge between plane and MapPoints
+            if (sysParams->optimization.plane_map_point.enabled && !sysParams->optimization.marginalize_planes)
+            {
+                set<MapPoint *> sMPs = pMapPlane->getMapPoints();
+                for (set<MapPoint *>::iterator lit = sMPs.begin(), lend = sMPs.end(); lit != lend; lit++)
+                {
+                    MapPoint *pMP = *lit;
+
+                    if (!pMP || pMP->isBad())
+                        continue;
+
+                    if (optimizer.vertex(opId) && optimizer.vertex(pMP->mnId + maxKFid + 1))
+                    {
+                        ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ *e = new ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ();
+                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pMP->mnId + maxKFid + 1)));
+                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                        e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * sysParams->optimization.plane_map_point.information_gain);
+
+                        g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                        e->setRobustKernel(rk);
+                        rk->setDelta(thHuber1D);
+                        optimizer.addEdge(e);
+                        nEdges++;
+                    }
+                }
+            }
+
             // Adding an edge between the plane and the keyframes
             const map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = pMapPlane->getObservations();
             for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
@@ -2078,7 +2053,7 @@ namespace ORB_SLAM3
 
                         g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                         e->setRobustKernel(rk);
-                        rk->setDelta(1.0);
+                        rk->setDelta(thHuberStereo);
                         optimizer.addEdge(e);
                         nEdges++;
 
@@ -2103,7 +2078,7 @@ namespace ORB_SLAM3
 
                             g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
                             e->setRobustKernel(rk);
-                            rk->setDelta(thHuberMono);
+                            rk->setDelta(thHuber1D);
                             optimizer.addEdge(e);
                             nEdges++;
 
@@ -2332,7 +2307,7 @@ namespace ORB_SLAM3
             ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = vpEdgesPlane[i];
             Plane *vpPlane = vpPlaneEdgePlane[i];
 
-            if (e->chi2() > 1.0 || !e->isDistanceCorrect())
+            if (e->chi2() > 7.815 || !e->isDistanceCorrect())
             {
 
                 // if not already in ToErase, add it
@@ -2347,7 +2322,7 @@ namespace ORB_SLAM3
             ORB_SLAM3::EdgeSE3KFPointToPlane *e = vpEdgesPlanePoint[i];
             Plane *vpPlane = vpPlaneEdgePlanePoint[i];
 
-            if (e->chi2() > 5.991 || !e->isDistanceCorrect())
+            if (e->chi2() > 3.841 || !e->isDistanceCorrect())
             {
                 // if not already in ToErase, add it
                 std::pair<KeyFrame *, Plane *> pKFPlane = make_pair(vpEdgeKFPlanePoint[i], vpPlane);
@@ -2377,6 +2352,7 @@ namespace ORB_SLAM3
                 KeyFrame *pKFi = vToErasePlane[i].first;
                 Plane *pPlane = vToErasePlane[i].second;
                 pPlane->eraseObservation(pKFi);
+                pKFi->RemoveMapPlane(pPlane);
             }
         }
 

@@ -170,7 +170,7 @@ namespace ORB_SLAM3
          * @return the plane id of the mapped plane
          */
         static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud,
-                                   const Eigen::Matrix4d &kfPose, const float threshold);
+                                   const Eigen::Matrix4d &kfPose, const Plane::planeVariant obsPlaneType, const float threshold); 
 
         /**
          * @brief Clusters the point cloud into separate clouds based on the plane detection

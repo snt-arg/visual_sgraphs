@@ -357,6 +357,22 @@ namespace ORB_SLAM3
         mvpMapPlanes.push_back(plane);
     }
 
+    void KeyFrame::RemoveMapPlane(Plane *plane)
+    {
+        unique_lock<mutex> lock(mMutexFeatures);
+        
+        // find the index of the plane using the ID
+        int planeId = plane->getId();
+
+        for (vector<Plane *>::iterator it = mvpMapPlanes.begin(); it != mvpMapPlanes.end(); it++)
+        {
+            if ((*it)->getId() == planeId)
+            {
+                mvpMapPlanes[it - mvpMapPlanes.begin()] = static_cast<Plane *>(NULL);
+            }
+        }
+    }
+
     void KeyFrame::AddMapDoor(Door *door)
     {
         unique_lock<mutex> lock(mMutexFeatures);
@@ -466,6 +482,34 @@ namespace ORB_SLAM3
             unique_lock<mutex> lockMPs(mMutexFeatures);
             vpMP = mvpMapPoints;
         }
+
+        // for all plane observations in the keyframe check in which other keyframes are they seen
+        // increase counter for those keyframes
+        if (SystemParams::GetParams()->plane_based_covisibility.enabled)
+        {
+            unsigned int scorePerPlane = SystemParams::GetParams()->plane_based_covisibility.score_per_plane;
+            for (vector<Plane *>::iterator vit = mvpMapPlanes.begin(), vend = mvpMapPlanes.end(); vit != vend; vit++)
+            {
+                Plane *pPlane = *vit;
+                
+                if (!pPlane)
+                    continue;
+
+                map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = pPlane->getObservations();
+
+                for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
+                {
+                    if (mit->first->mnId == mnId || mit->first->isBad() || mit->first->GetMap() != mpMap)
+                        continue;
+
+                    if (pPlane->getPlaneType() == Plane::planeVariant::UNDEFINED)
+                        KFcounter[mit->first] += static_cast<int>(scorePerPlane * 0.2); // undefined planes have less weight
+                    else
+                        KFcounter[mit->first] += scorePerPlane;
+                }
+            }
+        }
+        
 
         // For all map points in keyframe check in which other keyframes are they seen
         // Increase counter for those keyframes

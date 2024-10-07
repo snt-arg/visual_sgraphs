@@ -80,6 +80,7 @@ namespace ORB_SLAM3
         std::vector<uint8_t> getColor() const;
 
         planeVariant getPlaneType();
+        planeVariant getExpectedPlaneType();
         void setPlaneType(planeVariant newType);
 
         void setMapPoints(MapPoint *value);

@@ -19,6 +19,11 @@ markers:
 ################################## Optimization Parameters #######################################
 optimization:
   marginalize_planes: false
+  
+  # plane to map point factor (needs marginalize_planes to be false) 
+  plane_map_point:
+    enabled: false
+    information_gain: 1.0
   # plane equation to keyframe factor
   plane_kf:
     enabled: false
@@ -28,19 +33,26 @@ optimization:
     enabled: true
     information_gain: 0.3
 
-################################ Tracking Refinement Parameters ##################################
-refine_tracking:
-  enabled: true
+################################ Refining map points using semantics Parameters ##################
+refine_map_points:
+  enabled: false
   max_distance_for_delete: 0.1
   octree:
     resolution: 0.02
     search_radius: 0.03
+    min_neighbors: 2
+
+############################### Plane based covisibility graph Parameters #########################
+plane_based_covisibility:
+  enabled: false
+  max_keyframes: 80 # the maximum number of keyframes to be considered for the covisibility graph
+  score_per_plane: 80 # the score each semantic plane contributes to the covisibility graph
 
 ################################ Common Segmentation Parameters ##################################
 seg:
   # Number of points (after filtering) needed to detect geometric objects (e.g., planes)
   # Also, the number of points needed to detect a plane in the pointcloud
-  pointclouds_thresh: 400
+  pointclouds_thresh: 250
 
   # Plane association
   plane_association:
@@ -95,7 +107,7 @@ sem_seg:
   prob_thresh: 0.5
 
   # The threshold for semantic segmentation confidence validation (rejects confidence below this)
-  conf_thresh: 0.2
+  conf_thresh: 0.1
 
   # The maximum height above the main ground to be a valid stepped ground plane (in meters)
   max_step_elevation: 0.5
@@ -105,11 +117,11 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
-  min_votes: 3.5
+  min_votes: 1.8
 
   # Whether to reassociate planes with the semantic labels - after optimization, some planes may get close
   reassociate:
-    enabled: false
+    enabled: true
     association_thresh: 0.1
 
   ############################## Room Segmentation Parameters ####################################

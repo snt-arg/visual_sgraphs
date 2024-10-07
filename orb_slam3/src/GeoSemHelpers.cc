@@ -56,10 +56,12 @@ namespace ORB_SLAM3
         if (!planeCloud->points.empty())
             newMapPlane->setMapClouds(planeCloud);
 
-        // Loop to find the points lying on wall
-        // for (const auto &mapPoint : mpAtlas->GetAllMapPoints())
-        //     if (Utils::pointOnPlane(newMapPlane->getGlobalEquation().coeffs(), mapPoint))
-        //         newMapPlane->setMapPoints(mapPoint);
+        if (SystemParams::GetParams()->optimization.plane_map_point.enabled)
+        {
+            for (const auto &mapPoint : pKF->GetMapPoints())
+                if (newMapPlane->isPointinPlaneCloud(mapPoint->GetWorldPos().cast<double>()))
+                    newMapPlane->setMapPoints(mapPoint);
+        }
 
         pKF->AddMapPlane(newMapPlane);
         mpAtlas->AddMapPlane(newMapPlane);
@@ -111,9 +113,12 @@ namespace ORB_SLAM3
         if (!planeCloud->points.empty())
             currentPlane->setMapClouds(planeCloud);
 
-        // for (const auto &mapPoint : pKF->GetMapPoints())
-        //     if (Utils::pointOnPlane(currentPlane->getGlobalEquation().coeffs(), mapPoint))
-        //         currentPlane->setMapPoints(mapPoint);
+        if (SystemParams::GetParams()->optimization.plane_map_point.enabled)
+        {
+            for (const auto &mapPoint : pKF->GetMapPoints())
+                if (currentPlane->isPointinPlaneCloud(mapPoint->GetWorldPos().cast<double>()))
+                    currentPlane->setMapPoints(mapPoint);
+        }
     }
 
     std::pair<bool, std::string> GeoSemHelpers::checkIfMarkerIsDoor(const int &markerId,

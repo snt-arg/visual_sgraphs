@@ -9,7 +9,7 @@ namespace ORB_SLAM3
     Plane::Plane()
     {
         planeCloud = boost::make_shared<pcl::PointCloud<pcl::PointXYZRGBA>>();
-        octree = boost::make_shared<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>>(SystemParams::GetParams()->refine_tracking.octree.resolution);
+        octree = boost::make_shared<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>>(SystemParams::GetParams()->refine_map_points.octree.resolution);
         centroid.setZero();
         excludedFromAssoc = false;
     }
@@ -126,11 +126,15 @@ namespace ORB_SLAM3
         pointPCL.y = point(1);
         pointPCL.z = point(2);
 
-        float searchRadius = SystemParams::GetParams()->refine_tracking.octree.search_radius;
+        SystemParams *sysParams = SystemParams::GetParams();
         std::vector<int> pointIdxRadiusSearch;
         std::vector<float> pointRadiusSquaredDistance;
 
-        if (octree->radiusSearch(pointPCL, searchRadius, pointIdxRadiusSearch, pointRadiusSquaredDistance) > 0)
+        if (octree->radiusSearch(pointPCL, 
+                                 sysParams->refine_map_points.octree.search_radius, 
+                                 pointIdxRadiusSearch, 
+                                 pointRadiusSquaredDistance) 
+                                 >= sysParams->refine_map_points.octree.min_neighbors)
             return true;
         return false;
     }
@@ -139,6 +143,24 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexType);
         return planeType;
+    }
+
+    Plane::planeVariant Plane::getExpectedPlaneType()
+    {
+        unique_lock<mutex> lock(mMutexType);
+        
+        // get the maximum vote
+        double maxVotes = 0;
+        planeVariant maxType = planeVariant::UNDEFINED;
+        for (const auto &vote : semanticVotes)
+        {
+            if (vote.second > maxVotes)
+            {
+                maxVotes = vote.second;
+                maxType = vote.first;
+            }
+        }
+        return maxType;
     }
 
     void Plane::castWeightedVote(Plane::planeVariant semanticType, double voteWeight)
@@ -240,7 +262,6 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexFeatures);
         Observation obs = observations[pKF];
 
-        // [TODO] - remove the plane from the keyframe if that is significant
         // remove the vote casted
         castWeightedVote(obs.semanticType, -obs.confidence);
 

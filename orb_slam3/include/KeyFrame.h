@@ -267,7 +267,8 @@ namespace ORB_SLAM3
 
         // MapPlane observation functions
         void AddMapPlane(Plane *plane);
-        std::vector<Plane *> GetMapPlanes();
+        std::vector<Plane *> GetMapPlanes(); // After getting planes, need to check for NULLs
+        void RemoveMapPlane(Plane *plane);
 
         // MapDoor observation functions
         void AddMapDoor(Door *door);

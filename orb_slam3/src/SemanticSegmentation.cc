@@ -146,15 +146,15 @@ namespace ORB_SLAM3
                     point.b = origPoint.b;
 
                     // confidence as the squared inverse depth - interpolated between near and far thresholds
-                    // confidence = 255 for near, 25 for far, and interpolated according to squared distance
+                    // confidence = 255 for near, 45 for far, and interpolated according to squared distance
                     const float thresholdNear = sysParams->pointcloud.distance_thresh.first;
                     const float thresholdFar = sysParams->pointcloud.distance_thresh.second;
                     if (point.z < thresholdNear)
                         point.a = 255;
                     else if (point.z > thresholdFar)
-                        point.a = 25;
+                        point.a = 45;
                     else
-                        point.a = 255 - static_cast<int>(230 * sqrt((point.z - thresholdNear) / (thresholdFar - thresholdNear)));
+                        point.a = 255 - static_cast<int>(210 * sqrt((point.z - thresholdNear) / (thresholdFar - thresholdNear)));
 
                     // add the point to the respective class specific point cloud
                     clsCloudPtrs[j]->push_back(point);
@@ -223,22 +223,26 @@ namespace ORB_SLAM3
                 std::vector<double> confidences;
                 for (size_t i = 0; i < planeCloud->size(); i++)
                     confidences.push_back(static_cast<int>(planeCloud->points[i].a) / 255.0);
-                double conf = Utils::calcSoftMin(confidences);
+                // [Note] - use softmin when dealing with semantic confidences
+                // double conf = Utils::calcSoftMin(confidences);
+                // [Note] - use average when dealing with geometric (in this case depth) confidences
+                double conf = std::accumulate(confidences.begin(), confidences.end(), 0.0) / confidences.size();
 
                 // temp global plane cloud
                 pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
                 pcl::copyPointCloud(*planeCloud, *globalPlaneCloud);
                 pcl::transformPointCloud(*globalPlaneCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
+                // Get the semantic type of the observation
+                ORB_SLAM3::Plane::planeVariant semanticType = Utils::getPlaneTypeFromClassId(clsId);
+
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(),
                                                             detectedPlane,
                                                             globalPlaneCloud,
                                                             pKF->GetPose().matrix().cast<double>(),
+                                                            semanticType,
                                                             sysParams->seg.plane_association.ominus_thresh);
-
-                // Get the semantic type of the observation
-                ORB_SLAM3::Plane::planeVariant semanticType = Utils::getPlaneTypeFromClassId(clsId);
 
                 if (matchedPlaneId == -1)
                 {
