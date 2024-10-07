@@ -75,7 +75,7 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
     pubKeyFrameList = nodeHandler.advertise<nav_msgs::Path>(node_name + "/keyframe_list", 2);
     pubAllMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     pubCameraPose = nodeHandler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
-    pubKFImage = nodeHandler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 10); // rate of keyframe generation is higher
+    pubKFImage = nodeHandler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 50); // rate of keyframe generation is higher
     pubKeyFrameMarker = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
     pubPlanePointcloud = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     pubTrackedMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
@@ -446,13 +446,13 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
     kf_markers.color.a = 1.0;
 
     visualization_msgs::Marker kf_lines;
-    kf_lines.color.a = 0.2;
+    kf_lines.color.a = 0.15;
     kf_lines.color.r = 0.0;
     kf_lines.color.g = 0.0;
     kf_lines.color.b = 0.0;
-    kf_lines.scale.x = 0.005;
-    kf_lines.scale.y = 0.005;
-    kf_lines.scale.z = 0.005;
+    kf_lines.scale.x = 0.003;
+    kf_lines.scale.y = 0.003;
+    kf_lines.scale.z = 0.003;
     kf_lines.action = kf_lines.ADD;
     kf_lines.ns = "kf_lines";
     kf_lines.lifetime = ros::Duration();
@@ -488,12 +488,29 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         pose.pose.orientation.z = kf_pose.unit_quaternion().z();
         kf_list.poses.push_back(pose);
 
+        // // add lines to all keyframes in the covisibility graph
+        // std::vector<ORB_SLAM3::KeyFrame *> covisibility = keyframe->GetBestCovisibilityKeyFrames(75);
+        // // std::vector<ORB_SLAM3::KeyFrame *> covisibility = keyframe->GetVectorCovisibleKeyFrames();
+
+        // for (auto &covis : covisibility)
+        // {
+        //     geometry_msgs::Point covis_marker;
+        //     Sophus::SE3f covis_pose = pSLAM->GetKeyFramePose(covis);
+        //     covis_marker.x = covis_pose.translation().x();
+        //     covis_marker.y = covis_pose.translation().y();
+        //     covis_marker.z = covis_pose.translation().z();
+        //     kf_lines.points.push_back(kf_marker);
+        //     kf_lines.points.push_back(covis_marker);
+        // }
+
         // // get all planes from the keyframe
         // std::vector<ORB_SLAM3::Plane *> planes = keyframe->GetMapPlanes();
 
         // // attach lines to centroids of planes
         // for (auto &plane : planes)
         // {
+        //     if (!plane)
+        //         continue;
         //     // show only connections of planes with semantic types
         //     if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
         //         continue;

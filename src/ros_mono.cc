@@ -66,14 +66,14 @@ int main(int argc, char **argv)
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensorType, enable_pangolin);
 
     // Subscribe to get raw images
-    ros::Subscriber sub_img = nodeHandler.subscribe("/camera/image_raw", 1, &ImageGrabber::GrabImage, &igb);
+    ros::Subscriber sub_img = nodeHandler.subscribe("/camera/image_raw", 500, &ImageGrabber::GrabImage, &igb);
 
     // Subscribe to the markers detected by `aruco_ros` library
     ros::Subscriber sub_aruco = nodeHandler.subscribe("/aruco_marker_publisher/markers",
                                                       1, &ImageGrabber::GrabArUcoMarker, &igb);
 
     // Subscriber for images obtained from the Semantic Segmentater
-    ros::Subscriber sub_segmented_img = nodeHandler.subscribe("/camera/color/image_segment", 10,
+    ros::Subscriber sub_segmented_img = nodeHandler.subscribe("/camera/color/image_segment", 50,
                                                               &ImageGrabber::GrabSegmentation, &igb);
 
     // Subscriber to get the mesh from voxblox

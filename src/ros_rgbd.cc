@@ -73,16 +73,16 @@ int main(int argc, char **argv)
     pSLAM = new ORB_SLAM3::System(vocFile, settingsFile, sysParamsFile, sensorType, enablePangolin);
 
     // Subscribe to get raw images
-    message_filters::Subscriber<sensor_msgs::Image> subImgRGB(nodeHandler, "/camera/rgb/image_raw", 100);
-    message_filters::Subscriber<sensor_msgs::Image> subImgDepth(nodeHandler, "/camera/depth_registered/image_raw", 100);
+    message_filters::Subscriber<sensor_msgs::Image> subImgRGB(nodeHandler, "/camera/rgb/image_raw", 500);
+    message_filters::Subscriber<sensor_msgs::Image> subImgDepth(nodeHandler, "/camera/depth_registered/image_raw", 500);
 
     // Subscribe to get pointcloud from the depth sensor
-    message_filters::Subscriber<sensor_msgs::PointCloud2> subPointcloud(nodeHandler, "/camera/depth/points", 100);
+    message_filters::Subscriber<sensor_msgs::PointCloud2> subPointcloud(nodeHandler, "/camera/depth/points", 500);
 
     // Synchronization of raw and depth images
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image, sensor_msgs::PointCloud2>
         syncPolicy;
-    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(10), subImgRGB, subImgDepth, subPointcloud);
+    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(500), subImgRGB, subImgDepth, subPointcloud);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabRGBD, &igb, _1, _2, _3));
 
     // Subscribe to the markers detected by `aruco_ros` library
@@ -90,7 +90,7 @@ int main(int argc, char **argv)
                                                      &ImageGrabber::GrabArUcoMarker, &igb);
 
     // Subscriber for images obtained from the Semantic Segmentater
-    ros::Subscriber subSegmentedImage = nodeHandler.subscribe("/camera/color/image_segment", 10,
+    ros::Subscriber subSegmentedImage = nodeHandler.subscribe("/camera/color/image_segment", 50,
                                                               &ImageGrabber::GrabSegmentation, &igb);
 
     // Subscriber to get the mesh from voxblox

@@ -68,12 +68,12 @@ int main(int argc, char **argv)
     pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensorType, enable_pangolin);
 
     // Subscribe to get raw images
-    message_filters::Subscriber<sensor_msgs::Image> sub_img_left(nodeHandler, "/camera/left/image_raw", 100);
-    message_filters::Subscriber<sensor_msgs::Image> sub_img_right(nodeHandler, "/camera/right/image_raw", 100);
+    message_filters::Subscriber<sensor_msgs::Image> sub_img_left(nodeHandler, "/camera/left/image_raw", 500);
+    message_filters::Subscriber<sensor_msgs::Image> sub_img_right(nodeHandler, "/camera/right/image_raw", 500);
 
     // Synchronization of stereo images
     typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> syncPolicy;
-    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(10), sub_img_left, sub_img_right);
+    message_filters::Synchronizer<syncPolicy> sync(syncPolicy(500), sub_img_left, sub_img_right);
     sync.registerCallback(boost::bind(&ImageGrabber::GrabStereo, &igb, _1, _2));
 
     // Subscribe to the markers detected by `aruco_ros` library
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
                                                       &ImageGrabber::GrabArUcoMarker, &igb);
 
     // Subscriber for images obtained from the Semantic Segmentater
-    ros::Subscriber sub_segmented_img = nodeHandler.subscribe("/camera/color/image_segment", 10,
+    ros::Subscriber sub_segmented_img = nodeHandler.subscribe("/camera/color/image_segment", 50,
                                                               &ImageGrabber::GrabSegmentation, &igb);
 
     // Subscriber to get the mesh from voxblox

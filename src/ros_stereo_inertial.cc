@@ -91,15 +91,15 @@ int main(int argc, char **argv)
     // Subscribe to get raw images and IMU data
     // Maximum delay, 5 seconds * 200Hz = 1000 samples
     ros::Subscriber sub_imu = nodeHandler.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb);
-    ros::Subscriber sub_img_left = nodeHandler.subscribe("/camera/left/image_raw", 100, &ImageGrabber::GrabImageLeft, &igb);
-    ros::Subscriber sub_img_right = nodeHandler.subscribe("/camera/right/image_raw", 100, &ImageGrabber::GrabImageRight, &igb);
+    ros::Subscriber sub_img_left = nodeHandler.subscribe("/camera/left/image_raw", 500, &ImageGrabber::GrabImageLeft, &igb);
+    ros::Subscriber sub_img_right = nodeHandler.subscribe("/camera/right/image_raw", 500, &ImageGrabber::GrabImageRight, &igb);
 
     // Subscribe to the markers detected by `aruco_ros` library
     ros::Subscriber sub_aruco = nodeHandler.subscribe("/aruco_marker_publisher/markers", 1,
                                                       &ImageGrabber::GrabArUcoMarker, &igb);
 
     // Subscriber for images obtained from the Semantic Segmentater
-    ros::Subscriber sub_segmented_img = nodeHandler.subscribe("/camera/color/image_segment", 10,
+    ros::Subscriber sub_segmented_img = nodeHandler.subscribe("/camera/color/image_segment", 50,
                                                               &ImageGrabber::GrabSegmentation, &igb);
 
     // Subscriber to get the mesh from voxblox
