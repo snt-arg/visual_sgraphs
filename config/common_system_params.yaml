@@ -35,10 +35,10 @@ optimization:
 
 ################################ Refining map points using semantics Parameters ##################
 refine_map_points:
-  enabled: false
+  enabled: true
   max_distance_for_delete: 0.1
   octree:
-    resolution: 0.02
+    resolution: 0.03
     search_radius: 0.03
     min_neighbors: 2
 
@@ -63,7 +63,7 @@ seg:
       enabled: true
       tolerance: 2.0 # euclidean distance for cutting planes
       downsample:
-        leaf_size: 0.10
+        leaf_size: 0.12
         min_points_per_voxel: 20
 
   # The maximum distance for point to be considered part of a plane
@@ -77,14 +77,14 @@ seg:
     distance_thresh: 0.02
 
     # The maximum number of iterations for the RANSAC algorithm
-    max_iterations: 500
+    max_iterations: 800
 
 ############################ Geometric Segmentation Parameters ####################################
 geo_seg:
   pointcloud:
     # pointcloud downsampling parmeters
     downsample:
-      leaf_size: 0.05
+      leaf_size: 0.08
       min_points_per_voxel: 10
     # Pointcloud outlier removal
     outlier_removal:
@@ -96,7 +96,7 @@ sem_seg:
   pointcloud:
     # pointcloud downsampling parmeters
     downsample:
-      leaf_size: 0.03
+      leaf_size: 0.04
       min_points_per_voxel: 10
     # Pointcloud outlier removal
     outlier_removal:

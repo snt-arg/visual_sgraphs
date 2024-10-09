@@ -221,6 +221,11 @@ namespace ORB_SLAM3
 
     void KeyFrame::clearClsClouds()
     {
+        for (auto &clsCloud : mCurrentClsCloudPtrs)
+        {
+            clsCloud->clear();
+            clsCloud = nullptr;
+        }
         mCurrentClsCloudPtrs.clear();
     }
 
@@ -361,6 +366,12 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexFeatures);
         
+        if (!plane)
+        {
+            std::cerr << "ERROR: KeyFrame::RemoveMapPlane: plane is NULL" << std::endl;
+            return;
+        }
+
         // find the index of the plane using the ID
         int planeId = plane->getId();
 
@@ -368,7 +379,8 @@ namespace ORB_SLAM3
         {
             if ((*it)->getId() == planeId)
             {
-                mvpMapPlanes[it - mvpMapPlanes.begin()] = static_cast<Plane *>(NULL);
+                mvpMapPlanes.erase(it);
+                break;
             }
         }
     }

@@ -38,6 +38,7 @@ namespace ORB_SLAM3
             if (thisKFPointCloud == nullptr)
             {
                 std::cout << "SemSeg: skipping KF ID: " << thisKF->mnId << ". Missing pointcloud..." << std::endl;
+                exit(1);
                 continue;
             }
 
@@ -51,14 +52,17 @@ namespace ORB_SLAM3
             // also clear pointclouds from the keyframes that might have been skipped
             // always keep last few keyframes as there can be minor misordering in keyframe processing
             thisKF->clearPointCloud();
-            int buffer = 3;
+            int buffer = 5;
             if (thisKF->mnId - mLastProcessedKeyFrameId > buffer)
             {
                 for (unsigned long int i = mLastProcessedKeyFrameId + 1; i < thisKF->mnId - buffer; i++)
                 {
                     KeyFrame *pKF = mpAtlas->GetKeyFrameById(i);
                     if (pKF != nullptr && pKF->getCurrentFramePointCloud() != nullptr)
+                    {
                         pKF->clearPointCloud();
+                        pKF->clearClsClouds();
+                    }
                 }
                 mLastProcessedKeyFrameId = thisKF->mnId - buffer;
             }

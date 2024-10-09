@@ -81,6 +81,7 @@ extern ros::Publisher pubKFImage;
 extern image_transport::Publisher pubTrackingImage;
 extern ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker;
 extern ros::Publisher pubTrackedMappoints, pubAllMappoints, pubSegmentedPointcloud;
+extern ros::Time lastPlanePublishTime;
 
 struct MapPointStruct
 {
@@ -108,6 +109,8 @@ void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>>, ros::Time);
+
+void clearKFClsClouds(std::vector<ORB_SLAM3::KeyFrame *>);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);

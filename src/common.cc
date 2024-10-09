@@ -21,6 +21,7 @@ ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker, 
 std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
 ros::Publisher pubTrackedMappoints, pubSegmentedPointcloud, pubPlanePointcloud, pubDoor,
     pubAllMappoints, pubFiducialMarker, pubRoom, pubFreespaceCluster;
+ros::Time lastPlanePublishTime = ros::Time(0);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
@@ -120,23 +121,28 @@ void publishTopics(ros::Time msgTime, Eigen::Vector3f Wbb)
     if (pubStaticTransform)
         publishStaticTFTransform(world_frame_id, frameMap, msgTime);
 
+    // get the keyframes
+    std::vector<ORB_SLAM3::KeyFrame *> keyframes = pSLAM->GetAllKeyFrames();
+
     // Setup publishers
     publishDoors(pSLAM->GetAllDoors(), msgTime);
     publishRooms(pSLAM->GetAllRooms(), msgTime);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msgTime);
     publishTrackingImage(pSLAM->GetCurrentFrame(), msgTime);
-    publishKeyFrameImages(pSLAM->GetAllKeyFrames(), msgTime);
-    publishKeyFrameMarkers(pSLAM->GetAllKeyFrames(), msgTime);
+    publishKeyFrameImages(keyframes, msgTime);
+    publishKeyFrameMarkers(keyframes, msgTime);
     
     // Publish pointclouds
     if (pubPointClouds)
     {
         publishAllPoints(pSLAM->GetAllMapPoints(), msgTime);
-        publishSegmentedCloud(pSLAM->GetAllKeyFrames(), msgTime);
+        publishSegmentedCloud(keyframes, msgTime);
         publishPlanes(pSLAM->GetAllPlanes(), msgTime);
         publishTrackedPoints(pSLAM->GetTrackedMapPoints(), msgTime);
         publishFreeSpaceClusters(pSLAM->getSkeletonCluster(), msgTime);
     }
+    else
+        clearKFClsClouds(keyframes);
 
     // IMU-specific topics
     if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
@@ -343,6 +349,12 @@ void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
         pubKFImage.publish(vsGraphPublisher);
         keyframe->isPublished = true;
     }
+}
+
+void clearKFClsClouds(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec)
+{
+    for (auto &keyframe : keyframe_vec)
+        keyframe->clearClsClouds();
 }
 
 void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msgTime)
@@ -691,9 +703,14 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     if (numPlanes == 0)
         return;
 
+    // check if sufficient time has passed since the last plane publication
+    if ((msgTime - lastPlanePublishTime).toSec() < 3)
+        return;
+    lastPlanePublishTime = msgTime;
+
     // Aggregate pointcloud XYZRGB for all planes
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-    for (ORB_SLAM3::Plane *plane : planes)
+    for (const auto &plane : planes)
     {
         // If the plane is undefined, skip it
         ORB_SLAM3::Plane::planeVariant planeType = plane->getPlaneType();

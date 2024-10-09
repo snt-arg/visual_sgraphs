@@ -273,7 +273,7 @@ namespace ORB_SLAM3
 
                 // Fill the values of the segmentation object
                 seg.setInputCloud(cloud);
-                seg.setNumberOfThreads(16);
+                seg.setNumberOfThreads(4);
                 seg.setMaxIterations(sysParams->seg.ransac.max_iterations);
                 seg.setDistanceThreshold(sysParams->seg.ransac.distance_thresh);
                 seg.setOptimizeCoefficients(true);
@@ -439,7 +439,7 @@ namespace ORB_SLAM3
             Eigen::Vector3d mappedCentroid = mPlane->getCentroid().cast<double>();
             double centroidDiff = (givenCentroid - mappedCentroid).norm();
             if (sysParams->seg.plane_association.cluster_separation.enabled
-                && obsPlaneType == Plane::planeVariant::WALL // perform clustering only for walls
+                // && obsPlaneType == Plane::planeVariant::WALL // perform clustering only for walls
                 && centroidDiff > sysParams->seg.plane_association.centroid_thresh)
             {
                 checksForCluster.push_back(std::make_pair(mPlane, planeDiff));
@@ -531,7 +531,7 @@ namespace ORB_SLAM3
             // Get the vector of all other planes with the same semantic type
             std::vector<Plane *> otherPlanes;
             for (const auto &otherPlane : planes)
-                if (otherPlane->getId() != planeId && otherPlane->getPlaneType() == plane->getPlaneType())
+                if (otherPlane->getId() != planeId && otherPlane->getExpectedPlaneType() == plane->getPlaneType())
                     otherPlanes.push_back(otherPlane);
 
             // Skip if there are no other planes with the same semantic type

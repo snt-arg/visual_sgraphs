@@ -1261,9 +1261,6 @@ namespace ORB_SLAM3
         const int its[4] = {10, 10, 10, 10};
 
         int nBad = 0;
-        KeyFrame *refKF = pFrame->mpReferenceKF;
-        vector<Plane *> vpPlanes;
-        std::unordered_map<int, bool> planeCheck;
         for (size_t it = 0; it < 4; it++)
         {
             Tcw = pFrame->GetPose();
@@ -1273,10 +1270,14 @@ namespace ORB_SLAM3
             optimizer.optimize(its[it]);
 
             // before the last step, remove bad map points
+            KeyFrame *refKF = pFrame->mpReferenceKF;
             if (sysParams->refine_map_points.enabled && refKF && it == 2)
             {
+                vector<Plane *> vpPlanes;
+                std::unordered_map<int, bool> planeCheck;
+
                 // populate the vector of planes using the covisibility graph of the reference keyframe
-                vector<KeyFrame *> vpRefCovKFs = refKF->GetBestCovisibilityKeyFrames(sysParams->plane_based_covisibility.max_keyframes);
+                vector<KeyFrame *> vpRefCovKFs = refKF->GetBestCovisibilityKeyFrames(25);
                 vpRefCovKFs.push_back(refKF);
                 for (const auto &pKFi : vpRefCovKFs)
                 {
@@ -1304,6 +1305,11 @@ namespace ORB_SLAM3
                         continue;
 
                     Eigen::Vector4d planeEq = pPlane->getGlobalEquation().coeffs();
+                    
+                    // if the camera center is behind the plane, skip the plane
+                    if (planeEq.head<3>().dot(camCenter) + planeEq(3) < 0)
+                        continue;                    
+                    
                     // for each map point in the frame, check if it is on the plane
                     for (size_t j = 0; j < pFrame->N; j++)
                     {

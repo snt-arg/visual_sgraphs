@@ -135,7 +135,7 @@ namespace ORB_SLAM3
     {
         for (const auto &plane : mpAtlas->GetAllPlanes())
         {
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+            if (plane->getExpectedPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
             {
                 // wall validation based on the mPlanePoseMat
                 // only works if the ground plane is set, needs the correction matrix: mPlanePoseMat
@@ -161,7 +161,7 @@ namespace ORB_SLAM3
         int groundPlaneId = groundPlane->getId();
         for (const auto &plane : mpAtlas->GetAllPlanes())
         {
-            if (plane->getPlaneType() != ORB_SLAM3::Plane::planeVariant::GROUND || plane->getId() == groundPlaneId)
+            if (plane->getExpectedPlaneType() != ORB_SLAM3::Plane::planeVariant::GROUND || plane->getId() == groundPlaneId)
                 continue;
 
             // if the plane is above the threshold (inverted y), then reset the plane semantics

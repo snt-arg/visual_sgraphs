@@ -27,7 +27,7 @@ namespace ORB_SLAM3
         std::mutex mMutexNewRooms;
         Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
         std::vector<std::vector<Eigen::Vector3d *>> latestSkeletonCluster;
-        const uint8_t runInterval = 2;      // The main Run() function runs every runInterval seconds
+        const uint8_t runInterval = 3;      // The main Run() function runs every runInterval seconds
 
         // System parameters
         SystemParams *sysParams;

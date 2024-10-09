@@ -133,8 +133,9 @@ namespace ORB_SLAM3
         if (octree->radiusSearch(pointPCL, 
                                  sysParams->refine_map_points.octree.search_radius, 
                                  pointIdxRadiusSearch, 
-                                 pointRadiusSquaredDistance) 
-                                 >= sysParams->refine_map_points.octree.min_neighbors)
+                                 pointRadiusSquaredDistance,
+                                 sysParams->refine_map_points.octree.min_neighbors) 
+                                 == sysParams->refine_map_points.octree.min_neighbors)
             return true;
         return false;
     }
@@ -205,8 +206,12 @@ namespace ORB_SLAM3
     void Plane::resetPlaneSemantics()
     {
         unique_lock<mutex> lock(mMutexType);
+        unique_lock<mutex> lock2(mMutexFeatures);
         semanticVotes.clear();
         planeType = planeVariant::UNDEFINED;
+        planeCloud->clear();
+        octree->deleteTree();
+        observations.clear();
     }
 
     g2o::Plane3D Plane::getLocalEquation() const
