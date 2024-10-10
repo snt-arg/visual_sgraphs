@@ -273,7 +273,7 @@ namespace ORB_SLAM3
 
                 // Fill the values of the segmentation object
                 seg.setInputCloud(cloud);
-                seg.setNumberOfThreads(4);
+                seg.setNumberOfThreads(8);
                 seg.setMaxIterations(sysParams->seg.ransac.max_iterations);
                 seg.setDistanceThreshold(sysParams->seg.ransac.distance_thresh);
                 seg.setOptimizeCoefficients(true);
@@ -531,7 +531,7 @@ namespace ORB_SLAM3
             // Get the vector of all other planes with the same semantic type
             std::vector<Plane *> otherPlanes;
             for (const auto &otherPlane : planes)
-                if (otherPlane->getId() != planeId && otherPlane->getExpectedPlaneType() == plane->getPlaneType())
+                if (otherPlane->getId() != planeId && otherPlane->getPlaneType() == plane->getPlaneType())
                     otherPlanes.push_back(otherPlane);
 
             // Skip if there are no other planes with the same semantic type
