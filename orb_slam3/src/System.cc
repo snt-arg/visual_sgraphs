@@ -1414,4 +1414,42 @@ namespace ORB_SLAM3
         return false;
     }
 
+    bool System::SaveMapPointsAsPCD(const string &filename)
+    {
+        try
+        {
+            // make a pointcloud out of all map points
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+            vector<MapPoint *> vpMPs = mpAtlas->GetCurrentMap()->GetAllMapPoints();
+            for (size_t i = 0; i < vpMPs.size(); i++)
+            {
+                MapPoint *pMP = vpMPs[i];
+                if (pMP->isBad())
+                    continue;
+             
+                Eigen::Vector3d P3Dw = pMP->GetWorldPos().cast<double>();
+                pcl::PointXYZ point;
+                point.x = P3Dw.x();
+                point.y = P3Dw.y();
+                point.z = P3Dw.z();
+                cloud->push_back(point);
+            }
+
+            // save the pointcloud
+            pcl::io::savePCDFileBinary(filename + ".pcd", *cloud);
+
+            return true;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << e.what() << std::endl;
+            return false;
+        }
+        catch (...)
+        {
+            std::cerr << "Unknows exeption" << std::endl;
+            return false;
+        }
+    }
+
 }

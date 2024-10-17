@@ -506,7 +506,7 @@ namespace ORB_SLAM3
         tree->setInputCloud(cloud);
         pcl::EuclideanClusterExtraction<pcl::PointXYZRGBA> ec;
         ec.setClusterTolerance(SystemParams::GetParams()->seg.plane_association.cluster_separation.tolerance);
-        ec.setMinClusterSize(50);
+        ec.setMinClusterSize(10);
         ec.setMaxClusterSize(2500000);
         ec.setSearchMethod(tree);
         ec.setInputCloud(cloud);

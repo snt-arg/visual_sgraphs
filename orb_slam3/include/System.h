@@ -25,6 +25,7 @@
 #include <string>
 #include <thread>
 #include <opencv2/core/core.hpp>
+#include <pcl/io/pcd_io.h>
 
 // JSON library
 #include "Thirdparty/nlohmann/json.hpp"
@@ -219,6 +220,7 @@ namespace ORB_SLAM3
 
         // TODO: Save/Load functions
         bool SaveMap(const string &filename);
+        bool SaveMapPointsAsPCD(const string &filename);
         // LoadMap(const string &filename);
 
         // Information from most recent processed frame

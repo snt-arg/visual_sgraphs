@@ -114,6 +114,7 @@ void clearKFClsClouds(std::vector<ORB_SLAM3::KeyFrame *>);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
+bool saveMapPointsAsPCDService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 
 /**
  * @brief Converts a SE3f to a cv::Mat

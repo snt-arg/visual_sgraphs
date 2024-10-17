@@ -35,6 +35,18 @@ bool saveMapService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap
     return res.success;
 }
 
+bool saveMapPointsAsPCDService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
+{
+    res.success = pSLAM->SaveMapPointsAsPCD(req.name);
+
+    if (res.success)
+        ROS_INFO("Map points were saved as %s.pcd", req.name.c_str());
+    else
+        ROS_ERROR("Map points could not be saved.");
+
+    return res.success;
+}
+
 bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &req, orb_slam3_ros::SaveMap::Response &res)
 {
     const string cameraTrajectoryFile = req.name + "_cam_traj.txt";
@@ -67,6 +79,7 @@ void setupServices(ros::NodeHandle &nodeHandler, std::string node_name)
 {
     static ros::ServiceServer save_map_service = nodeHandler.advertiseService(node_name + "/save_map", saveMapService);
     static ros::ServiceServer save_traj_service = nodeHandler.advertiseService(node_name + "/save_traj", saveTrajectoryService);
+    static ros::ServiceServer save_map_points_service = nodeHandler.advertiseService(node_name + "/save_map_points", saveMapPointsAsPCDService);
 }
 
 void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTransport &image_transport, std::string node_name)
