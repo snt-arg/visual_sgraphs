@@ -33,13 +33,44 @@ namespace ORB_SLAM3
         Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
 
         // Calculate the dot product of the normals
-        float dotProduct = normal1.dot(normal2);
+        double dotProduct = normal1.normalized().dot(normal2.normalized());
 
-        // Check if the dot product is close to -1
-        if (dotProduct < SystemParams::GetParams()->room_seg.plane_facing_dot_thresh)
-            return true;
-        else
-            return false;
+        // Check if the dot product is close to -1, indicating opposite directions
+        return dotProduct < SystemParams::GetParams()->room_seg.plane_facing_dot_thresh;
+    }
+
+    bool Utils::arePlanesApartEnough(const Plane *plane1, const Plane *plane2, const double &threshold)
+    {
+        // Variables
+        Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
+
+        // Check if planes are parallel
+        if (Utils::arePlanesParallel(plane1, plane2, threshold))
+        {
+            // Get the plane equations
+            g2o::Plane3D planeEq1 = plane1->getGlobalEquation();
+            g2o::Plane3D planeEq2 = plane2->getGlobalEquation();
+
+            // Calculate the perpendicular distance between the planes
+            double distance = std::abs(planeEq1.distance() - planeEq2.distance()) / normal1.norm();
+
+            // Check if distance is greater than the threshold
+            return distance > threshold;
+        }
+
+        // If the planes are not parallel, return false
+        return false;
+    }
+
+    bool Utils::arePlanesParallel(const Plane *plane1, const Plane *plane2, const double &threshold)
+    {
+        // Calculate the dot product of the normal vectors of the planes
+        Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
+        Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
+        double dotProduct = normal1.normalized().dot(normal2.normalized());
+
+        // Check if the absolute value of the dot product is close to 1 (parallel)
+        return std::abs(std::abs(dotProduct) - 1.0) < threshold;
     }
 
     bool Utils::arePlanesPerpendicular(const Plane *plane1, const Plane *plane2, const double &threshold)
@@ -213,9 +244,9 @@ namespace ORB_SLAM3
                      std::back_inserter(filteredCloud->points),
                      [&](const PointT &p)
                      {
-                        //  distance = p.getVector3fMap().norm();
-                        distance = p.z;
-                        return distance > thresholdNear && distance < thresholdFar;
+                         //  distance = p.getVector3fMap().norm();
+                         distance = p.z;
+                         return distance > thresholdNear && distance < thresholdFar;
                      });
 
         filteredCloud->height = 1;
@@ -375,9 +406,9 @@ namespace ORB_SLAM3
         return false;
     }
 
-    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes, 
-                               g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud, 
-                               const Eigen::Matrix4d &kfPose, 
+    int Utils::associatePlanes(const vector<Plane *> &mappedPlanes,
+                               g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud,
+                               const Eigen::Matrix4d &kfPose,
                                const Plane::planeVariant obsPlaneType,
                                const float threshold)
     {
@@ -455,8 +486,7 @@ namespace ORB_SLAM3
         }
 
         // check for clustering only if no plane is found - reduces unnecessary expensive clustering
-        if (sysParams->seg.plane_association.cluster_separation.enabled 
-            && planeId == -1 && !checksForCluster.empty())
+        if (sysParams->seg.plane_association.cluster_separation.enabled && planeId == -1 && !checksForCluster.empty())
         {
             for (const auto &check : checksForCluster)
             {
@@ -468,8 +498,8 @@ namespace ORB_SLAM3
                 pcl::copyPointCloud(*mPlane->getMapClouds(), *aggregatedCloud);
                 if (givenCloud->size() < 1000)
                     aggregatedCloud = pointcloudDownsample<pcl::PointXYZRGBA>(aggregatedCloud,
-                                                                             sysParams->seg.plane_association.cluster_separation.downsample.leaf_size,
-                                                                             sysParams->seg.plane_association.cluster_separation.downsample.min_points_per_voxel);
+                                                                              sysParams->seg.plane_association.cluster_separation.downsample.leaf_size,
+                                                                              sysParams->seg.plane_association.cluster_separation.downsample.min_points_per_voxel);
                 for (const auto &point : *givenCloud)
                 {
                     pcl::PointXYZRGBA newPoint;
@@ -478,8 +508,8 @@ namespace ORB_SLAM3
                 }
                 if (givenCloud->size() >= 1000)
                     aggregatedCloud = pointcloudDownsample<pcl::PointXYZRGBA>(aggregatedCloud,
-                                                                             sysParams->seg.plane_association.cluster_separation.downsample.leaf_size,
-                                                                             sysParams->seg.plane_association.cluster_separation.downsample.min_points_per_voxel);
+                                                                              sysParams->seg.plane_association.cluster_separation.downsample.leaf_size,
+                                                                              sysParams->seg.plane_association.cluster_separation.downsample.min_points_per_voxel);
                 if (aggregatedCloud->empty())
                     continue;
 

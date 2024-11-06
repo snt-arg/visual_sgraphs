@@ -90,7 +90,7 @@ namespace ORB_SLAM3
                 float ominus_thresh = 0.1f;
                 float distance_thresh = 0.2f;
                 float centroid_thresh = 3.2f;
-                
+
                 struct cluster_separation
                 {
                     bool enabled = false;
@@ -151,6 +151,7 @@ namespace ORB_SLAM3
 
             float center_distance_thresh = 1.5f;
             float plane_facing_dot_thresh = -0.8f;
+            float min_wall_distance_thresh = 1.0f;
             float walls_perpendicularity_thresh = 10.0;
 
             unsigned int min_cluster_vertices = 5;

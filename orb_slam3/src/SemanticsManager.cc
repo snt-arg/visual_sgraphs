@@ -35,7 +35,6 @@ namespace ORB_SLAM3
                 Utils::reAssociateSemanticPlanes(mpAtlas);
 
             // Check for possible room candidates
-            // [TODO] - Check compatibility with the geometric method
             // if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
             // updateMapRoomCandidateToRoomGeo(thisKF);
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
@@ -314,7 +313,7 @@ namespace ORB_SLAM3
         // Get the skeleton clusters
         std::vector<std::vector<Eigen::Vector3d *>> clusters = getLatestSkeletonCluster();
 
-        // Get all the mapped planes and rooms
+        // Get all the mapped planes
         std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
 
         // Filter the planes to get only the walls
@@ -322,7 +321,7 @@ namespace ORB_SLAM3
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
                 allWalls.push_back(plane);
 
-        // Find the walls closest to the cluster points
+        // Find the walls within the threshold distance to the cluster points
         for (auto cluster : clusters)
         {
             // Initializations
@@ -347,9 +346,17 @@ namespace ORB_SLAM3
                 }
             }
 
+            // If there is only one wall, no need to check for a room/corridor
+            if (closestWalls.size() < 2)
+                continue;
+
             // Get all the facing walls
             std::vector<std::pair<Plane *, Plane *>> facingWalls =
                 Utils::getAllPlanesFacingEachOther(closestWalls);
+
+            // Print the facing walls
+            for (const auto &facingWall : facingWalls)
+                std::cout << "* Facing walls: " << facingWall.first->getId() << " & " << facingWall.second->getId() << std::endl;
 
             // If no facing walls are found, continue to the next cluster
             if (facingWalls.size() == 0)
@@ -358,6 +365,18 @@ namespace ORB_SLAM3
             // Check wall conditions if they shape a square room (with perpendicularity threshold)
             bool isRectRoomFound = getRectangularRoom(rectangularRoom, facingWalls,
                                                       sysParams->room_seg.walls_perpendicularity_thresh);
+
+            // Print the rectangular room
+            if (isRectRoomFound)
+            {
+                std::cout << "* Rectangular room: " << rectangularRoom.first.first->getId() << ", "
+                          << rectangularRoom.first.second->getId() << ", "
+                          << rectangularRoom.second.first->getId() << ", "
+                          << rectangularRoom.second.second->getId() << std::endl;
+            }
+            else
+                std::cout << "* No rectangular room found!" << std::endl;
+
             // Create room candidates for them
             if (isRectRoomFound)
             {
@@ -372,6 +391,10 @@ namespace ORB_SLAM3
                 // [TODO] What if we have more than one facing wall?
                 // Get the walls
                 std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
+                // Check if the walls are apart beyond a threshold
+                double minValidDistance = sysParams->room_seg.min_wall_distance_thresh;
+                if (!Utils::arePlanesApartEnough(walls[0], walls[1], minValidDistance))
+                    continue;
                 // Create a corridor
                 newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls,
                                                                                        Utils::getClusterCenteroid(cluster));

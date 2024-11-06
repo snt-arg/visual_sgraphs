@@ -47,19 +47,29 @@ namespace ORB_SLAM3
         static double calculateDistancePointToPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &point);
 
         /**
-         * @brief Checks to see if two planes are facing each other or not
-         * @param plane1 first plane
-         * @param plane2 second plane
-         */
-        static bool arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2);
-
-        /**
          * @brief Calculates the intersection point of a line and a plane
          * @param plane the plane equation
          * @param lineStart the start point of the line
          * @param lineEnd the end point of the line
          */
-        static Eigen::Vector3d lineIntersectsPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &lineStart, const Eigen::Vector3d &lineEnd);
+        static Eigen::Vector3d lineIntersectsPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &lineStart,
+                                                   const Eigen::Vector3d &lineEnd);
+
+        /**
+         * @brief Checks to see if two planes are apart enough from each other, given a threshold
+         * @param plane1 first plane
+         * @param plane2 second plane
+         * @param threshold the threshold value for perpendicularity
+         */
+        static bool arePlanesApartEnough(const Plane *plane1, const Plane *plane2, const double &threshold);
+
+        /**
+         * @brief Checks to see if two planes are parallel to each other or not
+         * @param plane1 first plane
+         * @param plane2 second plane
+         * @param threshold the threshold value for perpendicularity
+         */
+        static bool arePlanesParallel(const Plane *plane1, const Plane *plane2, const double &threshold);
 
         /**
          * @brief Checks to see if two planes are perpendicular to each other or not
@@ -68,6 +78,13 @@ namespace ORB_SLAM3
          * @param threshold the threshold value for perpendicularity
          */
         static bool arePlanesPerpendicular(const Plane *plane1, const Plane *plane2, const double &threshold);
+
+        /**
+         * @brief Checks to see if two planes are facing each other or not
+         * @param plane1 first plane
+         * @param plane2 second plane
+         */
+        static bool arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2);
 
         /**
          * @brief Returns the planes that are facing each other from the given list
@@ -170,13 +187,13 @@ namespace ORB_SLAM3
          * @return the plane id of the mapped plane
          */
         static int associatePlanes(const vector<Plane *> &mappedPlanes, g2o::Plane3D givenPlane, pcl::PointCloud<pcl::PointXYZRGBA>::Ptr givenCloud,
-                                   const Eigen::Matrix4d &kfPose, const Plane::planeVariant obsPlaneType, const float threshold); 
+                                   const Eigen::Matrix4d &kfPose, const Plane::planeVariant obsPlaneType, const float threshold);
 
         /**
          * @brief Clusters the point cloud into separate clouds based on the plane detection
-        * @param cloud the point cloud to be clustered
-        * @param clusterIndices the vector of point indices for each cluster
-        */
+         * @param cloud the point cloud to be clustered
+         * @param clusterIndices the vector of point indices for each cluster
+         */
         static void clusterPlaneClouds(const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &cloud, std::vector<pcl::PointIndices> &clusterIndices);
 
         /**

@@ -132,8 +132,11 @@ room_seg:
   # 2: Segment based on GNN
   method: 1
 
+  # The minimum space between two given walls of a corridor/room (in meters) to be valid
+  min_wall_distance_thresh: 1.0
+
   # The maximum threshold for the dot product of the plane normals to be considered facing each other
-  plane_facing_dot_thresh: -0.5
+  plane_facing_dot_thresh: -0.9
 
   # Threshold for perpendicularity of wall pairs to be considered a square room (in degrees)
   perpendicularity_thresh: 10.0
