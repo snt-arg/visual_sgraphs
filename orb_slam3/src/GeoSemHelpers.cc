@@ -303,7 +303,7 @@ namespace ORB_SLAM3
         ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
 
         // Fill the room entity
-        newMapRoomCandidate->setIsCandidate(true);
+        newMapRoomCandidate->setHasKnownLabel(true);
         newMapRoomCandidate->setMetaMarker(attachedMarker);
         newMapRoomCandidate->setName(matchedRoom->getName());
         newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
@@ -338,11 +338,15 @@ namespace ORB_SLAM3
         ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
 
         // Fill the room entity
-        newMapRoomCandidate->setIsCandidate(true);
+        newMapRoomCandidate->setHasKnownLabel(false);
         newMapRoomCandidate->setIsCorridor(isCorridor);
         newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
         newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
-        newMapRoomCandidate->setName(isCorridor ? "Unknown Corridor" : "Unknown Room");
+
+        // Set name based on ID
+        int roomId = newMapRoomCandidate->getId();
+        std::string roomType = isCorridor ? "Corridor" : "Room";
+        newMapRoomCandidate->setName(roomType + "#" + std::to_string(roomId));
 
         // Connect the walls to the room
         for (ORB_SLAM3::Plane *wall : walls)
@@ -387,17 +391,10 @@ namespace ORB_SLAM3
         if (isMarkerBasedMapped)
         {
             // Augment the already detected marker-based room with the cluster-based room information
-            markerBasedRoom->setIsCandidate(false);
             markerBasedRoom->setRoomCenter(clusterBasedRoom->getRoomCenter());
             // Connect the walls to the room
             for (ORB_SLAM3::Plane *wall : clusterBasedRoom->getWalls())
                 markerBasedRoom->setWalls(wall);
-            // Check for any information mismatch
-            if ((markerBasedRoom->getIsCorridor() && clusterBasedRoom->getWalls().size() != 2) ||
-                (!markerBasedRoom->getIsCorridor() && clusterBasedRoom->getWalls().size() != 4))
-            {
-                markerBasedRoom->setIsCandidate(true);
-            }
             // Create a room candidate for it
             std::cout << "- Marker-based room candidate #" << markerBasedRoom->getId()
                       << " has been validated (walls added)!" << std::endl;
@@ -405,6 +402,7 @@ namespace ORB_SLAM3
         else
         {
             // Augment the already detected cluster-based room with the marker-based room information
+            clusterBasedRoom->setHasKnownLabel(true);
             clusterBasedRoom->setName(markerBasedRoom->getName());
             clusterBasedRoom->setIsCorridor(markerBasedRoom->getIsCorridor());
             clusterBasedRoom->setMetaMarker(markerBasedRoom->getMetaMarker());

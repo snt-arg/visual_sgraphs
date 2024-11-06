@@ -144,7 +144,7 @@ void publishTopics(ros::Time msgTime, Eigen::Vector3f Wbb)
     publishTrackingImage(pSLAM->GetCurrentFrame(), msgTime);
     publishKeyFrameImages(keyframes, msgTime);
     publishKeyFrameMarkers(keyframes, msgTime);
-    
+
     // Publish pointclouds
     if (pubPointClouds)
     {
@@ -799,19 +799,15 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
     for (int idx = 0; idx < numRooms; idx++)
     {
         // Variables
+        string roomName = rooms[idx]->getName();
         string definedRoom = "package://orb_slam3_ros/config/Assets/room.dae";
         string undefinedRoom = "package://orb_slam3_ros/config/Assets/qmark.dae";
-        string roomMesh = rooms[idx]->getIsCandidate() ? undefinedRoom : definedRoom;
-
-        // Define proper room name
-        string roomName = rooms[idx]->getName();
-        if (rooms[idx]->getIsCandidate())
-            roomName += " (Candidate)";
+        string roomMesh = rooms[idx]->getHasKnownLabel() ? definedRoom : undefinedRoom;
 
         // Create color for room (orange for candidate, magenta for corridor, violet for normal room)
         std::vector<double>
             color = {1.0, 0.5, 0.0};
-        if (!rooms[idx]->getIsCandidate())
+        if (rooms[idx]->getHasKnownLabel())
             if (rooms[idx]->getIsCorridor())
                 color = {0.6, 0.0, 0.3};
             else

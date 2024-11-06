@@ -82,14 +82,14 @@ namespace ORB_SLAM3
         isCorridor = value;
     }
 
-    bool Room::getIsCandidate() const
+    bool Room::getHasKnownLabel() const
     {
-        return isCandidate;
+        return hasKnownLabel;
     }
 
-    void Room::setIsCandidate(bool value)
+    void Room::setHasKnownLabel(bool value)
     {
-        isCandidate = value;
+        hasKnownLabel = value;
     }
 
     std::vector<Plane *> Room::getWalls() const

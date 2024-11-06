@@ -19,8 +19,8 @@ markers:
 ################################## Optimization Parameters #######################################
 optimization:
   marginalize_planes: false
-  
-  # plane to map point factor (needs marginalize_planes to be false) 
+
+  # plane to map point factor (needs marginalize_planes to be false)
   plane_map_point:
     enabled: false
     information_gain: 1.0
@@ -141,7 +141,7 @@ room_seg:
   # The maximum distance between two room centroids to be considered the same room (in meters)
   center_distance_thresh: 1.0
 
-  # Parameters for the geometrically-based closest walls room segmentation
+  # [deprecated] Parameters for the geometrically-based closest walls room segmentation
   geo_based:
     # The maximum distance from a marker to a wall to be considered part of the room
     marker_wall_distance_thresh: 6.0

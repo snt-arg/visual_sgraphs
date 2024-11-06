@@ -407,10 +407,6 @@ namespace ORB_SLAM3
         // Set Room vertices (Global Optimization)
         for (const auto &vpRoom : vpRooms)
         {
-            // Optimize it only if it is not a candidate
-            if (vpRoom->getIsCandidate())
-                continue;
-
             // Adding a vertex for each room
             g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
 
@@ -1305,11 +1301,11 @@ namespace ORB_SLAM3
                         continue;
 
                     Eigen::Vector4d planeEq = pPlane->getGlobalEquation().coeffs();
-                    
+
                     // if the camera center is behind the plane, skip the plane
                     if (planeEq.head<3>().dot(camCenter) + planeEq(3) < 0)
-                        continue;                    
-                    
+                        continue;
+
                     // for each map point in the frame, check if it is on the plane
                     for (size_t j = 0; j < pFrame->N; j++)
                     {
@@ -1324,7 +1320,7 @@ namespace ORB_SLAM3
                         {
                             // get the intersection point of the line joining the camera center and the map point with the plane
                             Eigen::Vector3d intersect = Utils::lineIntersectsPlane(planeEq, camCenter, pMPw);
-                            
+
                             // check if the map point is in the plane cloud
                             if (pPlane->isPointinPlaneCloud(intersect))
                             {
@@ -2124,7 +2120,7 @@ namespace ORB_SLAM3
         // {
         //     // Optimize it only if it is not a candidate
         //     Room *pMapRoom = *idx;
-        //     if (pMapRoom->getIsCandidate())
+        //     if (pMapRoom->getHasKnownLabel())
         //         continue;
 
         //     // Adding a vertex for each room

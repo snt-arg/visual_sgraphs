@@ -3,6 +3,8 @@
     <arg name="launch_rviz" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="true" />
+    <!-- Flag to color the point cloud in visualization -->
+    <arg name="colored_pointcloud" default="true" />
 
     <!-- Main node -->
     <node name="orb_slam3" pkg="orb_slam3_ros" cwd="node" type="ros_rgbd" output="screen">
@@ -26,6 +28,7 @@
         <param name="world_frame_id"    type="string"   value="world" />        
         <param name="cam_frame_id"      type="string"   value="camera" />
         <param name="publish_static_transform" type="bool" value="true" />
+        <param name="colored_pointcloud" type="bool" value="$(arg colored_pointcloud)" />
     </node>
 
     <!-- Transformation parameters -->

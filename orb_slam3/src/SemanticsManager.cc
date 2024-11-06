@@ -37,7 +37,7 @@ namespace ORB_SLAM3
             // Check for possible room candidates
             // [TODO] - Check compatibility with the geometric method
             // if (sysParams->room_seg.method == SystemParams::room_seg::Method::GEOMETRIC)
-                // updateMapRoomCandidateToRoomGeo(thisKF);
+            // updateMapRoomCandidateToRoomGeo(thisKF);
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
                 detectMapRoomCandidateVoxblox();
 
@@ -244,6 +244,7 @@ namespace ORB_SLAM3
             for (auto roomCandidate : allRooms)
             {
                 // Fetch parameters of the room candidate
+                roomCandidate->setHasKnownLabel(true);
                 Sophus::SE3f metaMarkerPose = roomCandidate->getMetaMarker()->getGlobalPose();
 
                 // Find the closest facing walls to the room center
@@ -301,9 +302,6 @@ namespace ORB_SLAM3
 
                 // [TODO] Check the isCorridor and the number of walls we connected
                 // If it is more than 4 four 4-wall room or 2 for corridor, we should take only the ones closest to the room
-
-                // Finally, update the room candidate to a room
-                roomCandidate->setIsCandidate(false);
             }
     }
 
@@ -408,7 +406,7 @@ namespace ORB_SLAM3
     }
 
     ORB_SLAM3::Room *SemanticsManager::roomAssociation(const ORB_SLAM3::Room *givenRoom,
-                                                           const vector<Room *> &givenRoomList)
+                                                       const vector<Room *> &givenRoomList)
     {
         // Variables
         ORB_SLAM3::Room *foundMappedRoom = nullptr;

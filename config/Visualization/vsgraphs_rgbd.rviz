@@ -25,7 +25,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: all points
+    SyncSource: Tracking img
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -236,7 +236,7 @@ Visualization Manager:
       Color: 255; 255; 255
       Color Transformer: RGB8
       Decay Time: 0
-      Enabled: true
+      Enabled: false
       Invert Rainbow: false
       Max Color: 255; 255; 255
       Min Color: 0; 0; 0
@@ -251,7 +251,7 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
-      Value: true
+      Value: false
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -309,12 +309,12 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: voxblox_rviz_plugin/VoxbloxMesh
-      Enabled: true
+      Enabled: false
       Name: voxblox mesh
       Queue Size: 10
       Topic: /voxblox_skeletonizer/mesh
       Unreliable: false
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /voxblox_skeletonizer/sparse_graph
@@ -387,7 +387,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 13.952186584472656
+      Distance: 17.709293365478516
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -395,17 +395,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.37849798798561096
-        Y: -1.0863025188446045
-        Z: 0.8769470453262329
+        X: 1.0197721719741821
+        Y: -1.2857729196548462
+        Z: 2.7187767028808594
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.46520352363586426
+      Pitch: 1.5697963237762451
       Target Frame: <Fixed Frame>
-      Yaw: 2.5654067993164062
+      Yaw: 0.057278797030448914
     Saved: ~
 Window Geometry:
   Displays:
