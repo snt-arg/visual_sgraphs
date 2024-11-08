@@ -306,12 +306,11 @@ namespace ORB_SLAM3
 
     void SemanticsManager::detectMapRoomCandidateVoxblox()
     {
+        unique_lock<std::mutex> lock(mMutexNewRooms);
         // Variables
         std::vector<Plane *> allWalls, closestWalls;
         ORB_SLAM3::Room *newClusterBasedRoom = nullptr;
-
-        // Get the skeleton clusters
-        std::vector<std::vector<Eigen::Vector3d *>> clusters = getLatestSkeletonCluster();
+        double minValidSpace = sysParams->room_seg.min_wall_distance_thresh;
 
         // Get all the mapped planes
         std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
@@ -322,7 +321,8 @@ namespace ORB_SLAM3
                 allWalls.push_back(plane);
 
         // Find the walls within the threshold distance to the cluster points
-        for (auto cluster : clusters)
+        int counter = 0;
+        for (const auto &cluster : latestSkeletonCluster)
         {
             // Initializations
             closestWalls.clear();
@@ -332,7 +332,7 @@ namespace ORB_SLAM3
             for (const auto &wall : allWalls)
             {
                 // Loop over all cluster points
-                for (const auto &point : cluster)
+                for (const auto point : cluster)
                 {
                     // Calculate distance between wall centroid and cluster centroid
                     double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), *point);
@@ -345,6 +345,14 @@ namespace ORB_SLAM3
                     }
                 }
             }
+
+            lock.unlock();
+
+            // Print the closest walls
+            for (const auto &wall : closestWalls)
+                std::cout << "* Closest walls: " << wall->getId() << " for cluster#" << counter << std::endl;
+            std::cout << std::endl;
+            counter++;
 
             // If there is only one wall, no need to check for a room/corridor
             if (closestWalls.size() < 2)
@@ -392,8 +400,7 @@ namespace ORB_SLAM3
                 // Get the walls
                 std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
                 // Check if the walls are apart beyond a threshold
-                double minValidDistance = sysParams->room_seg.min_wall_distance_thresh;
-                if (!Utils::arePlanesApartEnough(walls[0], walls[1], minValidDistance))
+                if (!Utils::arePlanesApartEnough(walls[0], walls[1], minValidSpace))
                     continue;
                 // Create a corridor
                 newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls,

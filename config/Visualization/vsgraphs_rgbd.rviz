@@ -309,12 +309,12 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: voxblox_rviz_plugin/VoxbloxMesh
-      Enabled: false
+      Enabled: true
       Name: voxblox mesh
       Queue Size: 10
       Topic: /voxblox_skeletonizer/mesh
       Unreliable: false
-      Value: false
+      Value: true
     - Class: rviz/MarkerArray
       Enabled: false
       Marker Topic: /voxblox_skeletonizer/sparse_graph
@@ -358,6 +358,14 @@ Visualization Manager:
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /orb_slam3/plane_labels
+      Name: plane labels
+      Namespaces:
+        {}
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:

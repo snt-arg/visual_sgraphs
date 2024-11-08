@@ -33,7 +33,9 @@ namespace ORB_SLAM3
         Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
 
         // Calculate the dot product of the normals
-        double dotProduct = normal1.normalized().dot(normal2.normalized());
+        double dotProduct = normal1.dot(normal2);
+
+        std::cout << "Dot product: " << dotProduct << std::endl;
 
         // Check if the dot product is close to -1, indicating opposite directions
         return dotProduct < SystemParams::GetParams()->room_seg.plane_facing_dot_thresh;
@@ -42,24 +44,15 @@ namespace ORB_SLAM3
     bool Utils::arePlanesApartEnough(const Plane *plane1, const Plane *plane2, const double &threshold)
     {
         // Variables
-        Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
+        Eigen::Vector4d v1 = plane1->getGlobalEquation().coeffs();
+        Eigen::Vector4d v2 = plane2->getGlobalEquation().coeffs();
 
-        // Check if planes are parallel
-        if (Utils::arePlanesParallel(plane1, plane2, threshold))
-        {
-            // Get the plane equations
-            g2o::Plane3D planeEq1 = plane1->getGlobalEquation();
-            g2o::Plane3D planeEq2 = plane2->getGlobalEquation();
+        // Calculate the perpendicular distance between the planes
+        Eigen::Vector3d normal1 = v1.head<3>();
+        double distance = std::abs(v1(3) - v2(3)) / normal1.norm();
 
-            // Calculate the perpendicular distance between the planes
-            double distance = std::abs(planeEq1.distance() - planeEq2.distance()) / normal1.norm();
-
-            // Check if distance is greater than the threshold
-            return distance > threshold;
-        }
-
-        // If the planes are not parallel, return false
-        return false;
+        // Check if the calculated distance is greater than the threshold
+        return distance > threshold;
     }
 
     bool Utils::arePlanesParallel(const Plane *plane1, const Plane *plane2, const double &threshold)
@@ -612,8 +605,8 @@ namespace ORB_SLAM3
                 smallPlane->resetPlaneSemantics();
                 smallPlane->excludedFromAssoc = true;
 
-                std::cout << "- Two semantic planes have been re-associated! (#"
-                          << smallPlane->getId() << " & #" << bigPlane->getId() << ")." << std::endl;
+                std::cout << "- Re-associating planes #" << smallPlane->getId() << " & #"
+                          << bigPlane->getId() << " ..." << std::endl;
             }
         }
     }

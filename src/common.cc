@@ -19,7 +19,7 @@ std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
 ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker, pubKFImage, pubKeyFrameList;
 std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
-ros::Publisher pubTrackedMappoints, pubSegmentedPointcloud, pubPlanePointcloud, pubDoor,
+ros::Publisher pubTrackedMappoints, pubSegmentedPointcloud, pubPlanePointcloud, pubPlaneLabel, pubDoor,
     pubAllMappoints, pubFiducialMarker, pubRoom, pubFreespaceCluster;
 ros::Time lastPlanePublishTime = ros::Time(0);
 
@@ -100,6 +100,7 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
     // Semantic
     pubDoor = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
     pubRoom = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
+    pubPlaneLabel = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/plane_labels", 1);
     pubFiducialMarker = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Get body odometry if IMU data is also available
@@ -716,6 +717,10 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     if (numPlanes == 0)
         return;
 
+    // Visualization markers
+    visualization_msgs::MarkerArray planeLabelArray;
+    planeLabelArray.markers.resize(numPlanes);
+
     // check if sufficient time has passed since the last plane publication
     if ((msgTime - lastPlanePublishTime).toSec() < 3)
         return;
@@ -725,6 +730,13 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     for (const auto &plane : planes)
     {
+        // Variables
+        std::vector<uint8_t> color = plane->getColor();
+        Eigen::Vector3f centroid = plane->getCentroid();
+        visualization_msgs::Marker planeLabel, planeNormal;
+        Eigen::Vector3d normal = plane->getGlobalEquation().normal();
+        const std::string planeLabelText = "Plane#" + std::to_string(plane->getId());
+
         // If the plane is undefined, skip it
         ORB_SLAM3::Plane::planeVariant planeType = plane->getPlaneType();
         if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
@@ -759,7 +771,6 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             // Override color according to type of plane
             if (colorPointcloud)
             {
-                std::vector<uint8_t> color = plane->getColor();
                 newPoint.r = color[0];
                 newPoint.g = color[1];
                 newPoint.b = color[2];
@@ -768,6 +779,55 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             // Add the point to the aggregated cloud
             aggregatedCloud->push_back(newPoint);
         }
+
+        // Print the plane ID on the center of the plane
+        planeLabel.id = numPlanes;
+        planeLabel.color.a = 1.0;
+        planeLabel.scale.z = 0.2;
+        planeLabel.ns = "planeLabel";
+        planeLabel.text = planeLabelText;
+        planeLabel.header.stamp = msgTime;
+        planeLabel.action = planeLabel.ADD;
+        planeLabel.color.r = color[0] / 255.0;
+        planeLabel.color.g = color[1] / 255.0;
+        planeLabel.color.b = color[2] / 255.0;
+        planeLabel.lifetime = ros::Duration();
+        planeLabel.pose.position.x = centroid.x();
+        planeLabel.pose.position.z = centroid.z();
+        planeLabel.pose.position.y = centroid.y() - 1.5;
+        planeLabel.header.frame_id = frameBuildingComp;
+        planeLabel.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+
+        // Create a marker for the plane normal (as an arrow)
+        planeNormal.color.a = 1.0;
+        planeNormal.scale.x = 0.01; // Shaft diameter
+        planeNormal.scale.y = 0.05; // Arrowhead diameter
+        planeNormal.scale.z = 0.05; // Arrowhead length
+        planeNormal.ns = "planeNormal";
+        planeNormal.header.stamp = msgTime;
+        planeNormal.lifetime = ros::Duration();
+        planeNormal.color.r = color[0] / 255.0;
+        planeNormal.color.g = color[1] / 255.0;
+        planeNormal.color.b = color[2] / 255.0;
+        planeNormal.id = plane->getId() + numPlanes;
+        planeNormal.header.frame_id = frameBuildingComp;
+        planeNormal.type = visualization_msgs::Marker::ARROW;
+
+        // Set the arrow's start and end points
+        geometry_msgs::Point normalStartPoint, normalEndPoint;
+        normalStartPoint.x = centroid.x();
+        normalStartPoint.y = centroid.y();
+        normalStartPoint.z = centroid.z();
+        normalEndPoint.x = normalStartPoint.x + normal.x() * 0.2;
+        normalEndPoint.y = normalStartPoint.y + normal.y() * 0.2;
+        normalEndPoint.z = normalStartPoint.z + normal.z() * 0.2;
+
+        planeNormal.points.push_back(normalStartPoint);
+        planeNormal.points.push_back(normalEndPoint);
+
+        // Add the normal marker to the marker array
+        planeLabelArray.markers.push_back(planeLabel);
+        planeLabelArray.markers.push_back(planeNormal);
     }
 
     if (aggregatedCloud->empty())
@@ -783,6 +843,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
 
     // Publish the point cloud
     pubPlanePointcloud.publish(cloud_msg);
+    pubPlaneLabel.publish(planeLabelArray);
 }
 
 void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
@@ -817,7 +878,6 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         visualization_msgs::Marker room, roomWallLine, roomDoorLine, roomMarkerLine, roomLabel;
 
         // Room values
-        room.color.a = 0;
         room.ns = "rooms";
         room.scale.x = 0.6;
         room.scale.y = 0.6;

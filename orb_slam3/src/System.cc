@@ -1426,7 +1426,7 @@ namespace ORB_SLAM3
                 MapPoint *pMP = vpMPs[i];
                 if (pMP->isBad())
                     continue;
-             
+
                 Eigen::Vector3d P3Dw = pMP->GetWorldPos().cast<double>();
                 pcl::PointXYZ point;
                 point.x = P3Dw.x();
