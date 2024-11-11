@@ -364,7 +364,8 @@ Visualization Manager:
       Marker Topic: /orb_slam3/plane_labels
       Name: plane labels
       Namespaces:
-        {}
+        planeLabel: true
+        planeNormal: true
       Queue Size: 100
       Value: true
   Enabled: true

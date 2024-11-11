@@ -90,18 +90,20 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
     pubAllMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/all_points", 1);
     pubCameraPose = nodeHandler.advertise<geometry_msgs::PoseStamped>(node_name + "/camera_pose", 1);
     pubKFImage = nodeHandler.advertise<segmenter_ros::VSGraphDataMsg>(node_name + "/keyframe_image", 50); // rate of keyframe generation is higher
-    pubKeyFrameMarker = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
-    pubPlanePointcloud = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
     pubTrackedMappoints = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/tracked_points", 1);
+    pubKeyFrameMarker = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/kf_markers", 1);
     pubFreespaceCluster = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/freespace_clusters", 1);
     pubCameraPoseVis = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/camera_pose_vis", 1);
+
+    // Building Components
+    pubDoor = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
+    pubPlaneLabel = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/plane_labels", 1);
+    pubPlanePointcloud = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/plane_point_clouds", 1);
+    pubFiducialMarker = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
     pubSegmentedPointcloud = nodeHandler.advertise<sensor_msgs::PointCloud2>(node_name + "/segmented_point_clouds", 1);
 
-    // Semantic
-    pubDoor = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/doors", 1);
+    // Structural Elements
     pubRoom = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
-    pubPlaneLabel = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/plane_labels", 1);
-    pubFiducialMarker = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Get body odometry if IMU data is also available
     if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
@@ -621,6 +623,7 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msgTime)
     if (numDoors == 0)
         return;
 
+    // Variables
     visualization_msgs::MarkerArray doorArray;
     doorArray.markers.resize(numDoors);
 
@@ -717,23 +720,26 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     if (numPlanes == 0)
         return;
 
-    // Visualization markers
-    visualization_msgs::MarkerArray planeLabelArray;
-    planeLabelArray.markers.resize(numPlanes);
-
-    // check if sufficient time has passed since the last plane publication
+    // Check if sufficient time has passed since the last plane publication
     if ((msgTime - lastPlanePublishTime).toSec() < 3)
         return;
     lastPlanePublishTime = msgTime;
 
+    // Variables
+    visualization_msgs::MarkerArray planeLabelArray;
+    planeLabelArray.markers.resize(numPlanes);
+    visualization_msgs::Marker planeLabel, planeNormal;
+    geometry_msgs::Point normalStartPoint, normalEndPoint;
+
     // Aggregate pointcloud XYZRGB for all planes
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr aggregatedCloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+    // Loop through all the planes
     for (const auto &plane : planes)
     {
         // Variables
         std::vector<uint8_t> color = plane->getColor();
         Eigen::Vector3f centroid = plane->getCentroid();
-        visualization_msgs::Marker planeLabel, planeNormal;
         Eigen::Vector3d normal = plane->getGlobalEquation().normal();
         const std::string planeLabelText = "Plane#" + std::to_string(plane->getId());
 
@@ -750,10 +756,6 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         Eigen::Vector4d planeCoeffs = plane->getGlobalEquation().coeffs();
         for (const auto &point : planeClouds->points)
         {
-            // // Skip some points randomly
-            // if (rand() % 10 != 0)
-            //     continue;
-
             pcl::PointXYZRGB newPoint;
             newPoint.x = point.x;
             newPoint.y = point.y;
@@ -781,10 +783,10 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         }
 
         // Print the plane ID on the center of the plane
-        planeLabel.id = numPlanes;
         planeLabel.color.a = 1.0;
         planeLabel.scale.z = 0.2;
         planeLabel.ns = "planeLabel";
+        planeLabel.id = plane->getId();
         planeLabel.text = planeLabelText;
         planeLabel.header.stamp = msgTime;
         planeLabel.action = planeLabel.ADD;
@@ -814,7 +816,6 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         planeNormal.type = visualization_msgs::Marker::ARROW;
 
         // Set the arrow's start and end points
-        geometry_msgs::Point normalStartPoint, normalEndPoint;
         normalStartPoint.x = centroid.x();
         normalStartPoint.y = centroid.y();
         normalStartPoint.z = centroid.z();
