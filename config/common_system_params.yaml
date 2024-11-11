@@ -154,4 +154,4 @@ room_seg:
     # The minimum number of points needed to form a cluster
     min_cluster_vertices: 5
     # The maximum distance from a point of a cluster to a wall to be considered part of the room
-    cluster_point_wall_distance_thresh: 0.3
+    cluster_point_wall_distance_thresh: 0.666

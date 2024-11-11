@@ -275,13 +275,13 @@ namespace ORB_SLAM3
         return mnBigChangeIdx;
     }
 
-    std::vector<std::vector<Eigen::Vector3d *>> Map::GetSkeletoClusterPoints()
+    std::vector<std::vector<Eigen::Vector3d>> Map::GetSkeletoClusterPoints()
     {
         unique_lock<mutex> lock(mMutexMap);
         return skeletonClusterPoints;
     }
 
-    void Map::SetSkeletonClusterPoints(const std::vector<std::vector<Eigen::Vector3d *>> &newClusterPoints)
+    void Map::SetSkeletonClusterPoints(const std::vector<std::vector<Eigen::Vector3d>> &newClusterPoints)
     {
         unique_lock<mutex> lock(mMutexMap);
         skeletonClusterPoints = newClusterPoints;

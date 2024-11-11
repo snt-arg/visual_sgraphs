@@ -212,7 +212,7 @@ namespace ORB_SLAM3
     {
         for (size_t clsId = 0; clsId < clsPlanes.size(); clsId++)
         {
-            for (auto planePoint : clsPlanes[clsId])
+            for (const auto &planePoint : clsPlanes[clsId])
             {
                 // Get the plane equation
                 Eigen::Vector4d estimatedPlane = planePoint.second;

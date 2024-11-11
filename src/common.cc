@@ -16,7 +16,7 @@ image_transport::Publisher pubTrackingImage;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
-std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
+std::vector<std::vector<Eigen::Vector3d>> skeletonClusterPoints;
 ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker, pubKFImage, pubKeyFrameList;
 std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
 ros::Publisher pubTrackedMappoints, pubSegmentedPointcloud, pubPlanePointcloud, pubPlaneLabel, pubDoor,
@@ -286,7 +286,7 @@ void publishStaticTFTransform(string parentFrameId, string childFrameId, ros::Ti
     broadcaster.sendTransform(transformStamped);
 }
 
-void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>> clusterPoints, ros::Time msgTime)
+void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d>> clusterPoints, ros::Time msgTime)
 {
     // Check if the cluster points are empty
     if (clusterPoints.empty())
@@ -307,9 +307,9 @@ void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>> cluste
         for (const auto &point : cluster)
         {
             pcl::PointXYZRGB newPoint;
-            newPoint.x = point->x();
-            newPoint.y = point->y();
-            newPoint.z = point->z();
+            newPoint.x = point.x();
+            newPoint.y = point.y();
+            newPoint.z = point.z();
             newPoint.r = color[0];
             newPoint.g = color[1];
             newPoint.b = color[2];
@@ -331,7 +331,7 @@ void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>> cluste
 
     // Set message header
     cloudMsg.header.stamp = msgTime;
-    cloudMsg.header.frame_id = frameMap;
+    cloudMsg.header.frame_id = world_frame_id;
 
     // Publish the point cloud
     pubFreespaceCluster.publish(cloudMsg);
@@ -1210,7 +1210,7 @@ void setVoxbloxSkeletonCluster(const visualization_msgs::MarkerArray &skeletonAr
     for (const auto &skeleton : skeletonArray.markers)
     {
         // Take the points of the current cluster
-        std::vector<Eigen::Vector3d *> clusterPoints;
+        std::vector<Eigen::Vector3d> clusterPoints;
 
         // Pick only the messages starting with name "connected_vertices_[x]"
         if (skeleton.ns.compare(0, strlen("connected_vertices"), "connected_vertices") == 0)
@@ -1220,7 +1220,16 @@ void setVoxbloxSkeletonCluster(const visualization_msgs::MarkerArray &skeletonAr
                 // Add the points of the cluster to the buffer
                 for (const auto &point : skeleton.points)
                 {
-                    Eigen::Vector3d *newPoint = new Eigen::Vector3d(point.x, point.y, point.z);
+                    // transform from map frame to world frame
+                    geometry_msgs::PointStamped pointIn, pointOut;
+                    pointIn.header.frame_id = frameMap;
+                    pointIn.header.stamp = ros::Time(0);
+                    pointIn.point = point;
+                    transformListener->transformPoint(world_frame_id, pointIn, pointOut);
+
+                    // Add the point to the cluster
+                    Eigen::Vector3d newPoint(pointOut.point.x, pointOut.point.y, pointOut.point.z);
+
                     clusterPoints.push_back(newPoint);
                 }
 

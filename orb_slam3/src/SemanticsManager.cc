@@ -55,16 +55,11 @@ namespace ORB_SLAM3
         }
     }
 
-    void SemanticsManager::setLatestSkeletonCluster()
+    std::vector<std::vector<Eigen::Vector3d>> SemanticsManager::getLatestSkeletonCluster()
     {
         unique_lock<std::mutex> lock(mMutexNewRooms);
         // Get the latest skeleton cluster from Atlas
-        latestSkeletonCluster = mpAtlas->GetSkeletoClusterPoints();
-    }
-
-    std::vector<std::vector<Eigen::Vector3d *>> SemanticsManager::getLatestSkeletonCluster()
-    {
-        return latestSkeletonCluster;
+        return mpAtlas->GetSkeletoClusterPoints();
     }
 
     void SemanticsManager::filterWallPlanes()
@@ -306,36 +301,38 @@ namespace ORB_SLAM3
 
     void SemanticsManager::detectMapRoomCandidateVoxblox()
     {
-        unique_lock<std::mutex> lock(mMutexNewRooms);
         // Variables
-        std::vector<Plane *> allWalls, closestWalls;
+        std::vector<Plane *> allWalls;
         ORB_SLAM3::Room *newClusterBasedRoom = nullptr;
         double minValidSpace = sysParams->room_seg.min_wall_distance_thresh;
+
+        // Get the skeleton clusters
+        std::vector<std::vector<Eigen::Vector3d>> clusters = getLatestSkeletonCluster();
 
         // Get all the mapped planes
         std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
 
         // Filter the planes to get only the walls
-        for (auto plane : allPlanes)
+        for (const auto &plane : allPlanes)
             if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
                 allWalls.push_back(plane);
 
         // Find the walls within the threshold distance to the cluster points
         int counter = 0;
-        for (const auto &cluster : latestSkeletonCluster)
+        for (const auto &cluster : clusters)
         {
             // Initializations
-            closestWalls.clear();
+            std::vector<Plane *> closestWalls;
             std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> rectangularRoom;
 
             // Loop over all walls
             for (const auto &wall : allWalls)
             {
                 // Loop over all cluster points
-                for (const auto point : cluster)
+                for (const auto &point : cluster)
                 {
                     // Calculate distance between wall centroid and cluster centroid
-                    double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), *point);
+                    const double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(), point);
                     // If the distance is smaller than the threshold, add the wall to closestWalls
                     if (distance < sysParams->room_seg.cluster_point_wall_distance_thresh)
                     {
@@ -346,11 +343,9 @@ namespace ORB_SLAM3
                 }
             }
 
-            lock.unlock();
-
             // Print the closest walls
             for (const auto &wall : closestWalls)
-                std::cout << "* Closest walls: " << wall->getId() << " for cluster#" << counter << std::endl;
+                std::cout << "* Closest walls: " << wall->getId() << " for cluster #" << counter << std::endl;
             std::cout << std::endl;
             counter++;
 

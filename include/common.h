@@ -75,13 +75,13 @@ extern std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBu
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 
 // List of white space cluster points obtained from `voxblox_skeleton`
-extern std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
+extern std::vector<std::vector<Eigen::Vector3d>> skeletonClusterPoints;
 
 extern ros::Publisher pubKFImage;
+extern ros::Time lastPlanePublishTime;
 extern image_transport::Publisher pubTrackingImage;
 extern ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker;
 extern ros::Publisher pubTrackedMappoints, pubAllMappoints, pubSegmentedPointcloud;
-extern ros::Time lastPlanePublishTime;
 
 struct MapPointStruct
 {
@@ -108,7 +108,6 @@ void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
-void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d *>>, ros::Time);
 
 void clearKFClsClouds(std::vector<ORB_SLAM3::KeyFrame *>);
 
@@ -147,6 +146,14 @@ sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *>
  * @param msgTime The timestamp for the transformation message
  */
 void publishStaticTFTransform(string parentFrameId, string childFrameId, ros::Time msgTime);
+
+/**
+ * @brief Publishes the free space clusters obtained from `voxblox_skeleton` as a PointCloud2 message
+ *
+ * @param skeletonClusterPoints The list of free space cluster points
+ * @param msgTime The timestamp for the PointCloud2 message
+ */
+void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d>>, ros::Time);
 
 /**
  * @brief Adds the markers to the buffer to be processed

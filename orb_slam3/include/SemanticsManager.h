@@ -25,9 +25,8 @@ namespace ORB_SLAM3
         bool mGeoRuns;
         Atlas *mpAtlas;
         std::mutex mMutexNewRooms;
-        Eigen::Matrix4f mPlanePoseMat;       // The transformation matrix from ground plane to horizontal
-        std::vector<std::vector<Eigen::Vector3d *>> latestSkeletonCluster;
-        const uint8_t runInterval = 3;      // The main Run() function runs every runInterval seconds
+        Eigen::Matrix4f mPlanePoseMat; // The transformation matrix from ground plane to horizontal
+        const uint8_t runInterval = 3; // The main Run() function runs every runInterval seconds
 
         // System parameters
         SystemParams *sysParams;
@@ -39,12 +38,7 @@ namespace ORB_SLAM3
         /**
          * @brief Gets the latest skeleton cluster acquired from voxblox
          */
-        std::vector<std::vector<Eigen::Vector3d *>> getLatestSkeletonCluster();
-
-        /**
-         * @brief Updates the skeleton cluster acquired from the current map (set by voxblox)
-         */
-        void setLatestSkeletonCluster();
+        std::vector<std::vector<Eigen::Vector3d>> getLatestSkeletonCluster();
 
         /**
          * @brief Filters the wall planes to remove heavily tilted walls

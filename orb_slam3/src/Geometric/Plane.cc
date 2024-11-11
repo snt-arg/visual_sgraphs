@@ -81,7 +81,7 @@ namespace ORB_SLAM3
     void Plane::setMapClouds(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr value)
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        
+
         // store the old centroid for updating
         Eigen::Vector3f oldCentroid = getCentroid();
         oldCentroid *= planeCloud->points.size();
@@ -130,12 +130,11 @@ namespace ORB_SLAM3
         std::vector<int> pointIdxRadiusSearch;
         std::vector<float> pointRadiusSquaredDistance;
 
-        if (octree->radiusSearch(pointPCL, 
-                                 sysParams->refine_map_points.octree.search_radius, 
-                                 pointIdxRadiusSearch, 
+        if (octree->radiusSearch(pointPCL,
+                                 sysParams->refine_map_points.octree.search_radius,
+                                 pointIdxRadiusSearch,
                                  pointRadiusSquaredDistance,
-                                 sysParams->refine_map_points.octree.min_neighbors) 
-                                 == sysParams->refine_map_points.octree.min_neighbors)
+                                 sysParams->refine_map_points.octree.min_neighbors) == sysParams->refine_map_points.octree.min_neighbors)
             return true;
         return false;
     }
@@ -149,7 +148,7 @@ namespace ORB_SLAM3
     Plane::planeVariant Plane::getExpectedPlaneType()
     {
         unique_lock<mutex> lock(mMutexType);
-        
+
         // get the maximum vote
         double maxVotes = 0;
         planeVariant maxType = planeVariant::UNDEFINED;
@@ -258,6 +257,8 @@ namespace ORB_SLAM3
 
     void Plane::addObservation(KeyFrame *pKF, Plane::Observation obs)
     {
+        if (pKF == nullptr || pKF->isBad())
+            return;
         unique_lock<mutex> lock(mMutexFeatures);
         observations.insert({pKF, obs});
     }

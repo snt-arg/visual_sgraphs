@@ -267,16 +267,15 @@ namespace ORB_SLAM3
         mpSemanticSegmentation->AddSegmentedFrameToBuffer(tuple);
     }
 
-    std::vector<std::vector<Eigen::Vector3d *>> System::getSkeletonCluster()
+    std::vector<std::vector<Eigen::Vector3d>> System::getSkeletonCluster()
     {
         return mpAtlas->GetSkeletoClusterPoints();
     }
 
-    void System::setSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints)
+    void System::setSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d>> &skeletonClusterPoints)
     {
         // Adding the skeleton cluster to the SemanticSegmentation
         mpAtlas->SetSkeletonClusterPoints(skeletonClusterPoints);
-        mpSemanticsManager->setLatestSkeletonCluster();
     }
 
     Sophus::SE3f System::TrackStereo(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timestamp,

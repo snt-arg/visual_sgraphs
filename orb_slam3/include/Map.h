@@ -115,13 +115,13 @@ namespace ORB_SLAM3
         /**
          * @brief Get the cluster points of the map set by `voxblox_skeleton`
          */
-        std::vector<std::vector<Eigen::Vector3d *>> GetSkeletoClusterPoints();
+        std::vector<std::vector<Eigen::Vector3d>> GetSkeletoClusterPoints();
 
         /**
          * @brief Set the cluster points of the map set by `voxblox_skeleton`
          * @param newClusterPoints The new cluster points to set
          */
-        void SetSkeletonClusterPoints(const std::vector<std::vector<Eigen::Vector3d *>> &newClusterPoints);
+        void SetSkeletonClusterPoints(const std::vector<std::vector<Eigen::Vector3d>> &newClusterPoints);
 
         long unsigned KeyFramesInMap();
         long unsigned int MarkersInMap();
@@ -207,7 +207,7 @@ namespace ORB_SLAM3
         std::set<Room *> mspMarkerBasedRooms;
 
         // Skeleton cluster points of the map set by `voxblox_skeleton`
-        std::vector<std::vector<Eigen::Vector3d *>> skeletonClusterPoints;
+        std::vector<std::vector<Eigen::Vector3d>> skeletonClusterPoints;
 
         // Hashmaps and indices for fetching elements
         std::unordered_map<int, Door *> mDoorIndex;

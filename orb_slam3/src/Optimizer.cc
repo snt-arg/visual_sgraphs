@@ -2703,7 +2703,7 @@ namespace ORB_SLAM3
                                            vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
                                            vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
                                            vector<Room *> &vpCurrentDetMapRooms, vector<Room *> &vpCurrentMrkMapRooms,
-                                           vector<vector<Eigen::Vector3d *>> &vpClusterPoints)
+                                           vector<vector<Eigen::Vector3d>> &vpClusterPoints)
     {
         // Variables
         g2o::SparseOptimizer optimizer;
@@ -3206,15 +3206,15 @@ namespace ORB_SLAM3
         // Then, use the KeyFrame to get the corrected pose of cluster points
         if (pSampleRefKF)
         {
-            for (std::vector<Eigen::Vector3d *> &cluster : vpClusterPoints)
-                for (Eigen::Vector3d *pPoint : cluster)
+            for (std::vector<Eigen::Vector3d> &cluster : vpClusterPoints)
+                for (Eigen::Vector3d &pPoint : cluster)
                 {
                     // Apply the transformation to each point
-                    Eigen::Vector4d homogeneousPoint(pPoint->x(), pPoint->y(), pPoint->z(), 1.0);
+                    Eigen::Vector4d homogeneousPoint(pPoint.x(), pPoint.y(), pPoint.z(), 1.0);
                     Eigen::Vector4d transformedPoint = TCorectedSampleKF.matrix().cast<double>() * homogeneousPoint;
 
                     // Update the original point with the transformed coordinates
-                    *pPoint = transformedPoint.head<3>();
+                    pPoint = transformedPoint.head<3>();
                 }
         }
         else

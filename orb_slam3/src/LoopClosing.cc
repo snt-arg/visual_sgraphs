@@ -1555,7 +1555,7 @@ namespace ORB_SLAM3
         vector<Marker *> vpCurrentMapMarkers = pCurrentMap->GetAllMarkers();
         vector<Room *> vpCurrentDetectedMapRooms = pCurrentMap->GetAllDetectedMapRooms();
         vector<Room *> vpCurrentMarkerBasedMapRooms = pCurrentMap->GetAllMarkerBasedMapRooms();
-        std::vector<std::vector<Eigen::Vector3d *>> vpClusterPoints = pCurrentMap->GetSkeletoClusterPoints();
+        std::vector<std::vector<Eigen::Vector3d>> vpClusterPoints = pCurrentMap->GetSkeletoClusterPoints();
 
         if (vpCurrentMapKFs.size() != 0)
         {

@@ -269,13 +269,13 @@ namespace ORB_SLAM3
         /**
          * @brief Get the skeleton cluster coming from the current map
          */
-        std::vector<std::vector<Eigen::Vector3d *>> getSkeletonCluster();
+        std::vector<std::vector<Eigen::Vector3d>> getSkeletonCluster();
 
         /**
          * @brief Update the skeleton cluster coming from `voxblox_skeleton` in the map
          * @param skeletonClusterPoints the skeleton cluster points
          */
-        void setSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d *>> &skeletonClusterPoints);
+        void setSkeletonCluster(const std::vector<std::vector<Eigen::Vector3d>> &skeletonClusterPoints);
 
 #ifdef REGISTER_TIMES
         void InsertRectTime(double &time);

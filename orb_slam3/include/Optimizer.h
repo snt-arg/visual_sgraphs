@@ -104,7 +104,7 @@ namespace ORB_SLAM3
                                            vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
                                            vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
                                            vector<Room *> &vpCurrentDetMapRooms, vector<Room *> &vpCurrentMrkMapRooms,
-                                           vector<vector<Eigen::Vector3d *>> &vpClusterPoints);
+                                           vector<vector<Eigen::Vector3d>> &vpClusterPoints);
 
         // For inertial loopclosing
         void static OptimizeEssentialGraph4DoF(Map *pMap, KeyFrame *pLoopKF, KeyFrame *pCurKF, const LoopClosing::KeyFrameAndPose &NonCorrectedSim3, const LoopClosing::KeyFrameAndPose &CorrectedSim3, const map<KeyFrame *, set<KeyFrame *>> &LoopConnections);

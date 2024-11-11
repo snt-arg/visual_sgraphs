@@ -21,6 +21,8 @@ namespace ORB_SLAM3
         // Calculate the direction vector of the line
         Eigen::Vector3d lineDirection = lineEnd - lineStart;
 
+        // [TODO] - check if the line is parallel to the plane
+
         // Calculate the intersection point
         double t = -(plane.head<3>().dot(lineStart) + plane(3)) / plane.head<3>().dot(lineDirection);
         return lineStart + t * lineDirection;
@@ -117,26 +119,21 @@ namespace ORB_SLAM3
         return g2o::Plane3D(v2);
     }
 
-    Eigen::Vector3d Utils::getClusterCenteroid(const std::vector<Eigen::Vector3d *> &points)
+    Eigen::Vector3d Utils::getClusterCenteroid(const std::vector<Eigen::Vector3d> &points)
     {
+        // Check if there are points in the vector
+        if (points.empty())
+            return Eigen::Vector3d(0.0, 0.0, 0.0);
+
         // Variables
-        int count = 0;
         Eigen::Vector3d sum(0.0, 0.0, 0.0);
 
-        // Calculate the count and sum of the points
-        for (const auto &pointPtr : points)
-            if (pointPtr)
-            {
-                sum += *pointPtr;
-                ++count;
-            }
+        // Calculate the sum of the points
+        for (const auto &point : points)
+            sum += point;
 
         // Return the centroid of the cluster
-        if (count > 0)
-            return sum / count;
-        else
-            // Handle the case where there are no points to avoid division by zero
-            return Eigen::Vector3d(0.0, 0.0, 0.0);
+        return sum / points.size();
     }
 
     Eigen::Vector3d Utils::getRoomCenter(const Eigen::Vector3d &givenPoint,
