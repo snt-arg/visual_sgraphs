@@ -64,14 +64,6 @@ namespace ORB_SLAM3
         static bool arePlanesApartEnough(const Plane *plane1, const Plane *plane2, const double &threshold);
 
         /**
-         * @brief Checks to see if two planes are parallel to each other or not
-         * @param plane1 first plane
-         * @param plane2 second plane
-         * @param threshold the threshold value for perpendicularity
-         */
-        static bool arePlanesParallel(const Plane *plane1, const Plane *plane2, const double &threshold);
-
-        /**
          * @brief Checks to see if two planes are perpendicular to each other or not
          * @param plane1 first plane
          * @param plane2 second plane

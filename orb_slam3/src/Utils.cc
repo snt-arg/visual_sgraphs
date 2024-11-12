@@ -46,27 +46,34 @@ namespace ORB_SLAM3
 
     bool Utils::arePlanesApartEnough(const Plane *plane1, const Plane *plane2, const double &threshold)
     {
-        // Variables
-        Eigen::Vector4d v1 = plane1->getGlobalEquation().coeffs();
-        Eigen::Vector4d v2 = plane2->getGlobalEquation().coeffs();
+        // Correct the directions of both planes to ensure consistent orientation
+        Eigen::Vector4d v1 = correctPlaneDirection(plane1->getGlobalEquation().coeffs());
+        Eigen::Vector4d v2 = correctPlaneDirection(plane2->getGlobalEquation().coeffs());
 
-        // Calculate the perpendicular distance between the planes
+        // Extract normals after correction
         Eigen::Vector3d normal1 = v1.head<3>();
-        double distance = std::abs(v1(3) - v2(3)) / normal1.norm();
+        Eigen::Vector3d normal2 = v2.head<3>();
 
-        // Check if the calculated distance is greater than the threshold
-        return distance > threshold;
-    }
+        // Check if planes are parallel by evaluating the dot product of their normals
+        double dotProduct = normal1.dot(normal2) / (normal1.norm() * normal2.norm());
+        if (std::abs(dotProduct) > 0.99) // Threshold close to 1 for near-parallel normals
+        {
+            // Calculate the perpendicular distance between the planes
+            double distance = std::abs(v1(3) - v2(3)) / normal1.norm();
 
-    bool Utils::arePlanesParallel(const Plane *plane1, const Plane *plane2, const double &threshold)
-    {
-        // Calculate the dot product of the normal vectors of the planes
-        Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
-        Eigen::Vector3d normal2 = plane2->getGlobalEquation().normal();
-        double dotProduct = normal1.normalized().dot(normal2.normalized());
+            // Print distance and threshold
+            std::cout << "- Distance between walls #" << plane1->getId() << " and #" << plane2->getId() << ": "
+                      << distance << std::endl;
 
-        // Check if the absolute value of the dot product is close to 1 (parallel)
-        return std::abs(std::abs(dotProduct) - 1.0) < threshold;
+            // Check if the calculated distance is greater than the threshold
+            return distance > threshold;
+        }
+        else
+        {
+            // Planes are not parallel (they intersect), so return false
+            std::cout << "- Planes #" << plane1->getId() << " and #" << plane2->getId() << " are not parallel." << std::endl;
+            return false;
+        }
     }
 
     bool Utils::arePlanesPerpendicular(const Plane *plane1, const Plane *plane2, const double &threshold)
@@ -85,17 +92,26 @@ namespace ORB_SLAM3
 
     std::vector<std::pair<Plane *, Plane *>> Utils::getAllPlanesFacingEachOther(const std::vector<Plane *> &planes)
     {
+        // Variables
+        SystemParams *sysParams = SystemParams::GetParams();
         std::vector<std::pair<Plane *, Plane *>> facingPlanes;
+        double minValidSpace = sysParams->room_seg.min_wall_distance_thresh;
+
+        // Loop through all the planes
         for (size_t idx1 = 0; idx1 < planes.size(); ++idx1)
         {
             Plane *plane1 = planes[idx1];
             for (size_t idx2 = idx1 + 1; idx2 < planes.size(); ++idx2)
             {
+                // Variables
                 Plane *plane2 = planes[idx2];
                 // Check if the planes are facing each other
                 bool isFacing = Utils::arePlanesFacingEachOther(plane1, plane2);
                 if (isFacing)
-                    facingPlanes.push_back(std::make_pair(plane1, plane2));
+                {
+                    if (Utils::arePlanesApartEnough(plane1, plane2, minValidSpace))
+                        facingPlanes.push_back(std::make_pair(plane1, plane2));
+                }
             }
         }
         return facingPlanes;
