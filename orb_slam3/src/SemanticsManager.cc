@@ -344,9 +344,9 @@ namespace ORB_SLAM3
             }
 
             // Print the closest walls
+            std::cout << "\nCluster#" << counter << std::endl;
             for (const auto &wall : closestWalls)
-                std::cout << "* Closest walls: " << wall->getId() << " for cluster #" << counter << std::endl;
-            std::cout << std::endl;
+                std::cout << "- Wall#" << wall->getId() << " is close enough ..." << std::endl;
             counter++;
 
             // If there is only one wall, no need to check for a room/corridor
@@ -359,7 +359,7 @@ namespace ORB_SLAM3
 
             // Print the facing walls
             for (const auto &facingWall : facingWalls)
-                std::cout << "* Facing walls: " << facingWall.first->getId() << " & " << facingWall.second->getId() << std::endl;
+                std::cout << "- Facing walls: " << facingWall.first->getId() << " & " << facingWall.second->getId() << std::endl;
 
             // If no facing walls are found, continue to the next cluster
             if (facingWalls.size() == 0)
@@ -368,17 +368,6 @@ namespace ORB_SLAM3
             // Check wall conditions if they shape a square room (with perpendicularity threshold)
             bool isRectRoomFound = getRectangularRoom(rectangularRoom, facingWalls,
                                                       sysParams->room_seg.walls_perpendicularity_thresh);
-
-            // Print the rectangular room
-            if (isRectRoomFound)
-            {
-                std::cout << "* Rectangular room: " << rectangularRoom.first.first->getId() << ", "
-                          << rectangularRoom.first.second->getId() << ", "
-                          << rectangularRoom.second.first->getId() << ", "
-                          << rectangularRoom.second.second->getId() << std::endl;
-            }
-            else
-                std::cout << "* No rectangular room found!" << std::endl;
 
             // Create room candidates for them
             if (isRectRoomFound)

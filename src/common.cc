@@ -815,6 +815,9 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         planeNormal.header.frame_id = frameBuildingComp;
         planeNormal.type = visualization_msgs::Marker::ARROW;
 
+        // Clear previous points from planeNormal
+        planeNormal.points.clear();
+
         // Set the arrow's start and end points
         normalStartPoint.x = centroid.x();
         normalStartPoint.y = centroid.y();

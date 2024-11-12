@@ -4,7 +4,7 @@
     <!-- Flag to launch rviz -->
     <arg name="launch_rviz" default="true" />
     <!-- Flag to color the point cloud in visualization -->
-    <arg name="colored_pointcloud" default="false" />
+    <arg name="colored_pointcloud" default="true" />
     <!-- Check to see if loads ORB-SLAM's TF values or not -->
     <param name="use_sim_time" value="$(arg offline)" />
 
