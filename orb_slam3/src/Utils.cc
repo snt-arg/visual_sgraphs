@@ -37,9 +37,6 @@ namespace ORB_SLAM3
         // Calculate the dot product of the normals
         double dotProduct = normal1.dot(normal2);
 
-        std::cout << "- Dot-product of walls #" << plane1->getId() << " and #" << plane2->getId() << ": "
-                  << dotProduct << std::endl;
-
         // Check if the dot product is close to -1, indicating opposite directions
         return dotProduct < SystemParams::GetParams()->room_seg.plane_facing_dot_thresh;
     }

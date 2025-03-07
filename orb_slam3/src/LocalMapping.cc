@@ -146,8 +146,7 @@ namespace ORB_SLAM3
                         {
                             Optimizer::LocalBundleAdjustment(mpCurrentKeyFrame, &mbAbortBA, mpCurrentKeyFrame->GetMap(),
                                                              num_FixedKF_BA, num_OptKF_BA, num_MPs_BA, num_edges_BA,
-                                                             mlDetRooms, SystemParams::GetParams()->markers.impact);
-                            mlDetRooms.clear();
+                                                             SystemParams::GetParams()->markers.impact);
                             b_doneLBA = true;
                         }
                     }
@@ -283,12 +282,6 @@ namespace ORB_SLAM3
         unique_lock<mutex> lock(mMutexNewKFs);
         mlNewKeyFrames.push_back(pKF);
         mbAbortBA = true;
-    }
-
-    void LocalMapping::InsertRoom(Room *pRoom)
-    {
-        unique_lock<mutex> lock(mMutexNewRooms);
-        mlDetRooms.push_back(pRoom);
     }
 
     bool LocalMapping::CheckNewKeyFrames()
@@ -871,7 +864,6 @@ namespace ORB_SLAM3
         for (list<KeyFrame *>::iterator lit = mlNewKeyFrames.begin(), lend = mlNewKeyFrames.end(); lit != lend; lit++)
             delete *lit;
         mlNewKeyFrames.clear();
-        mlDetRooms.clear();
     }
 
     bool LocalMapping::AcceptKeyFrames()
@@ -1111,7 +1103,6 @@ namespace ORB_SLAM3
                 cout << "Reseting Atlas in Local Mapping ..." << endl;
                 mlNewKeyFrames.clear();
                 mlpRecentAddedMapPoints.clear();
-                mlDetRooms.clear();
                 mbResetRequested = false;
                 mbResetRequestedActiveMap = false;
 
@@ -1130,7 +1121,6 @@ namespace ORB_SLAM3
 
                 mlNewKeyFrames.clear();
                 mlpRecentAddedMapPoints.clear();
-                mlDetRooms.clear();
 
                 // Inertial parameters
                 mTinit = 0.f;

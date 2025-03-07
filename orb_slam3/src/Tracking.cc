@@ -3408,9 +3408,6 @@ namespace ORB_SLAM3
 
         mpLocalMapper->InsertKeyFrame(pKF);
 
-        // Add the rooms to the local mapper
-        // mpLocalMapper->InsertRoom(room);
-
         mpLocalMapper->SetNotStop(false);
 
         mnLastKeyFrameId = mCurrentFrame.mnId;

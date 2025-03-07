@@ -59,8 +59,8 @@ namespace ORB_SLAM3
                                    bool *pbStopFlag = NULL, bool bInit = false, float priorG = 1e2, float priorA = 1e6,
                                    Eigen::VectorXd *vSingVal = NULL, bool *bHess = NULL);
 
-        void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF,
-                                          int &num_MPs, int &num_edges, std::list<Room *> vpRooms, double markerImpact = 0.1);
+        void static LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &countFixedKF, int &num_OptKF,
+                                          int &num_MPs, int &num_edges, double markerImpact = 0.1);
 
         /**
          * @brief Local Bundle Adjustment for loop closure detection
@@ -116,7 +116,7 @@ namespace ORB_SLAM3
 
         // For inertial systems
 
-        void static LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF, int &num_MPs, int &num_edges, bool bLarge = false, bool bRecInit = false);
+        void static LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &countFixedKF, int &num_OptKF, int &num_MPs, int &num_edges, bool bLarge = false, bool bRecInit = false);
         void static MergeInertialBA(KeyFrame *pCurrKF, KeyFrame *pMergeKF, bool *pbStopFlag, Map *pMap, LoopClosing::KeyFrameAndPose &corrPoses);
 
         // Marginalize block element (start:end,start:end). Perform Schur complement.

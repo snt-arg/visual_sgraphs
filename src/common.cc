@@ -929,13 +929,13 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         roomArray.markers.push_back(roomLabel);
 
         // Room to Plane (Wall) connection line
-        roomWallLine.color.a = 0.5;
+        roomWallLine.color.a = 0.8;
         roomWallLine.color.r = 0.0;
         roomWallLine.color.g = 0.0;
         roomWallLine.color.b = 0.0;
-        roomWallLine.scale.x = 0.005;
-        roomWallLine.scale.y = 0.005;
-        roomWallLine.scale.z = 0.005;
+        roomWallLine.scale.x = 0.04;
+        roomWallLine.scale.y = 0.04;
+        roomWallLine.scale.z = 0.04;
         roomWallLine.ns = "room_wall_lines";
         roomWallLine.action = roomWallLine.ADD;
         roomWallLine.lifetime = ros::Duration();

@@ -43,22 +43,23 @@ namespace ORB_SLAM3
     }
 
     void Optimizer::GlobalBundleAdjustemnt(Map *pMap, int nIterations, bool *pbStopFlag,
-                                           const unsigned long nLoopKF, const bool bRobust, double markerImpact)
+                                           const unsigned long nLoopKF, const bool bRobust,
+                                           double markerImpact)
     {
-        vector<MapPoint *> vpMP = pMap->GetAllMapPoints();
-        vector<KeyFrame *> vpKFs = pMap->GetAllKeyFrames();
-        vector<Marker *> vpMarkers = pMap->GetAllMarkers();
-        vector<Plane *> vpPlanes = pMap->GetAllPlanes();
-        vector<Door *> vpDoors = pMap->GetAllDoors();
-        vector<Room *> vpRooms = pMap->GetAllRooms();
+        std::vector<ORB_SLAM3::Door *> allDoors = pMap->GetAllDoors();
+        std::vector<ORB_SLAM3::Room *> allRooms = pMap->GetAllRooms();
+        std::vector<ORB_SLAM3::Plane *> allPlanes = pMap->GetAllPlanes();
+        std::vector<ORB_SLAM3::Marker *> allMarkers = pMap->GetAllMarkers();
+        std::vector<ORB_SLAM3::MapPoint *> allMapPoints = pMap->GetAllMapPoints();
+        std::vector<ORB_SLAM3::KeyFrame *> allKeyFrames = pMap->GetAllKeyFrames();
 
-        BundleAdjustment(vpKFs, vpMP, vpMarkers, vpPlanes, vpDoors, vpRooms, nIterations, pbStopFlag,
-                         nLoopKF, bRobust, markerImpact);
+        BundleAdjustment(allKeyFrames, allMapPoints, allMarkers, allPlanes, allDoors,
+                         allRooms, nIterations, pbStopFlag, nLoopKF, bRobust, markerImpact);
     }
 
     void Optimizer::BundleAdjustment(const vector<KeyFrame *> &vpKFs, const vector<MapPoint *> &vpMP,
-                                     const vector<Marker *> &vpMarkers, const vector<Plane *> &vpPlanes,
-                                     const vector<Door *> &vpDoors, const vector<Room *> &vpRooms, int nIterations,
+                                     const vector<Marker *> &allMarkersVec, const vector<Plane *> &allPlanesVec,
+                                     const vector<Door *> &allDoorsVec, const vector<Room *> &vpRooms, int nIterations,
                                      bool *pbStopFlag, const unsigned long nLoopKF, const bool bRobust, double markerImpact)
     {
         SystemParams *sysParams = SystemParams::GetParams();
@@ -286,7 +287,7 @@ namespace ORB_SLAM3
         }
 
         // Markers (Global Optimization)
-        for (const auto &vpMarker : vpMarkers)
+        for (const auto &vpMarker : allMarkersVec)
         {
             // Adding a vertex for each marker
             g2o::VertexSE3Expmap *vMarker = new g2o::VertexSE3Expmap();
@@ -310,7 +311,7 @@ namespace ORB_SLAM3
         maxOpId += nMarkers;
 
         // Planes (Global Optimization)
-        for (const auto &vpPlane : vpPlanes)
+        for (const auto &vpPlane : allPlanesVec)
         {
             // Skip undefined planes (if not wall for now)
             if (vpPlane->getPlaneType() == Plane::planeVariant::UNDEFINED)
@@ -408,13 +409,13 @@ namespace ORB_SLAM3
         for (const auto &vpRoom : vpRooms)
         {
             // Adding a vertex for each room
-            g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
+            g2o::VertexSE3Expmap *vrtxRoom = new g2o::VertexSE3Expmap();
 
             int opIdG = maxOpId + nRooms;
-            vRoom->setId(opIdG);
-            vRoom->setEstimate(g2o::SE3Quat(Eigen::Quaterniond::Identity(),
-                                            vpRoom->getRoomCenter().cast<double>()));
-            optimizer.addVertex(vRoom);
+            vrtxRoom->setId(opIdG);
+            vrtxRoom->setEstimate(g2o::SE3Quat(Eigen::Quaterniond::Identity(),
+                                               vpRoom->getRoomCenter().cast<double>()));
+            optimizer.addVertex(vrtxRoom);
             nRooms++;
 
             // Setting the global optimization ID for the room
@@ -609,7 +610,7 @@ namespace ORB_SLAM3
         }
 
         // Globally Optimized Markers
-        for (auto &vpMarker : vpMarkers)
+        for (auto &vpMarker : allMarkersVec)
         {
             g2o::VertexSE3Expmap *vMarker = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(vpMarker->getOpIdG()));
             g2o::SE3Quat SE3quat = vMarker->estimate();
@@ -618,7 +619,7 @@ namespace ORB_SLAM3
         }
 
         // Globally Optimized Planes
-        for (auto &vpPlane : vpPlanes)
+        for (auto &vpPlane : allPlanesVec)
         {
             if (optimizer.vertex(vpPlane->getOpIdG()))
             {
@@ -1450,67 +1451,219 @@ namespace ORB_SLAM3
         return nInitialCorrespondences - nBad;
     }
 
-    void Optimizer::LocalBundleAdjustment(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF,
-                                          int &num_OptKF, int &num_MPs, int &num_edges, std::list<Room *> vpRooms,
-                                          double markerImpact)
+    void Optimizer::LocalBundleAdjustment(ORB_SLAM3::KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &countFixedKF,
+                                          int &num_OptKF, int &num_MPs, int &num_edges, double markerImpact)
     {
         // System parameters
         SystemParams *sysParams = SystemParams::GetParams();
 
         // Variables
-        list<Door *> lLocalMapDoors;
-        list<Room *> lLocalMapRooms;
-        list<Plane *> lLocalMapPlanes;
-        list<Marker *> lLocalMapMarkers;
-        list<KeyFrame *> lLocalKeyFrames;
-        list<MapPoint *> lLocalMapPoints;
+        countFixedKF = 0;
+        std::list<ORB_SLAM3::Door *> localDoorList;
+        std::list<ORB_SLAM3::Room *> localRoomList;
+        ORB_SLAM3::Map *pCurrentMap = pKF->GetMap();
+        std::list<ORB_SLAM3::Plane *> localPlaneList;
+        std::list<ORB_SLAM3::Marker *> localMarkerList;
+        std::list<ORB_SLAM3::KeyFrame *> localKeyFrameList;
+        std::list<ORB_SLAM3::MapPoint *> localMapPointList;
+        std::vector<ORB_SLAM3::KeyFrame *> neighborKeyFrameVec;
+        std::vector<ORB_SLAM3::Room *> allRooms = pCurrentMap->GetAllRooms();
 
-        // unorderd maps to keep track of IDs
-        std::unordered_map<int, bool> mpLocalKFid;
-        std::unordered_map<int, bool> mpLocalMPid;
-        std::unordered_map<int, bool> mpLocalPlaneid;
-        std::unordered_map<int, bool> mpLocalMarkerid;
-        std::unordered_map<int, bool> mpLocalDoorid;
-        std::unordered_map<int, bool> mpLocalRoomid;
+        // Unorderd maps to keep track of the local entities
+        std::unordered_map<int, bool> mpLocalDoorId;
+        std::unordered_map<int, bool> mpLocalPlaneId;
+        std::unordered_map<int, bool> mpLocalMarkerId;
+        std::unordered_map<int, bool> mpLocalMapPointId;
+        std::unordered_map<int, bool> mpLocalKeyFrameId;
 
-        // Local KeyFrames: First Breath Search from Current Keyframe
-        lLocalKeyFrames.push_back(pKF);
-        mpLocalKFid[pKF->mnId] = true;
+        // [LBA] Initialize the KeyFrame-related variables
+        localKeyFrameList.push_back(pKF);
+        mpLocalKeyFrameId[pKF->mnId] = true;
         pKF->mnBALocalForKF = pKF->mnId;
-        Map *pCurrentMap = pKF->GetMap();
 
-        vector<KeyFrame *> vNeighKFs;
+        // [LBA] Fill in the neighbor KeyFrames
         if (sysParams->plane_based_covisibility.enabled)
-            vNeighKFs = pKF->GetBestCovisibilityKeyFrames(sysParams->plane_based_covisibility.max_keyframes);
+            // Get the KeyFrames that see the same planes
+            neighborKeyFrameVec = pKF->GetBestCovisibilityKeyFrames(sysParams->plane_based_covisibility.max_keyframes);
         else
-            vNeighKFs = pKF->GetVectorCovisibleKeyFrames();
-        for (int i = 0, iend = vNeighKFs.size(); i < iend; i++)
+            // Get the KeyFrames that see the same MapPoints
+            neighborKeyFrameVec = pKF->GetVectorCovisibleKeyFrames();
+
+        // Iterate through all neighboring KeyFrames
+        for (int idx = 0, idxEnd = neighborKeyFrameVec.size(); idx < idxEnd; idx++)
         {
-            KeyFrame *pKFi = vNeighKFs[i];
+            // Get the current KeyFrame's neighbors
+            ORB_SLAM3::KeyFrame *pKFi = neighborKeyFrameVec[idx];
+            // Mark the KeyFrame as a part of the current LBA
             pKFi->mnBALocalForKF = pKF->mnId;
+            // If the KeyFrame is proper, add it to the list of local KeyFrames for LBA
             if (!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
             {
-                lLocalKeyFrames.push_back(pKFi);
-                mpLocalKFid[pKFi->mnId] = true;
+                localKeyFrameList.push_back(pKFi);
+                mpLocalKeyFrameId[pKFi->mnId] = true;
             }
         }
 
-        // Local MapPoints seen in Local KeyFrames
-        num_fixedKF = 0;
-        set<MapPoint *> sNumObsMP;
-
-        for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
+        // [LBA] Loop through the local KeyFrames
+        for (std::list<ORB_SLAM3::KeyFrame *>::iterator lit = localKeyFrameList.begin(),
+                                                        lend = localKeyFrameList.end();
+             lit != lend; lit++)
         {
-            // Get the reference to the KF (Local Optimization)
-            KeyFrame *pKFi = *lit;
+            // Variables
+            ORB_SLAM3::KeyFrame *pKFi = *lit;
+            std::vector<ORB_SLAM3::Door *> localDoorsVec = pKFi->GetMapDoors();
+            std::vector<ORB_SLAM3::Plane *> localPlanesVec = pKFi->GetMapPlanes();
+            std::vector<ORB_SLAM3::Marker *> localMarkersVec = pKFi->GetMapMarkers();
+            std::vector<ORB_SLAM3::MapPoint *> localMapPointsVec = pKFi->GetMapPointMatches();
+
+            // If the KeyFrame is the initial KeyFrame of the map, mark that as a fixed KeyFrame
             if (pKFi->mnId == pMap->GetInitKFid())
+                countFixedKF = 1;
+
+            // [LBA] Loop through all the MapPoints and prepare them for LBA
+            for (std::vector<ORB_SLAM3::MapPoint *>::iterator vit = localMapPointsVec.begin(), vend = localMapPointsVec.end();
+                 vit != vend; vit++)
             {
-                num_fixedKF = 1;
+                // Variables
+                ORB_SLAM3::MapPoint *pMP = *vit;
+
+                // If the MapPoint is proper, add it to the list of local MapPoints for LBA
+                if (pMP)
+                    if (!pMP->isBad() && pMP->GetMap() == pCurrentMap)
+                    {
+                        if (pMP->mnBALocalForKF != pKF->mnId)
+                        {
+                            localMapPointList.push_back(pMP);
+                            mpLocalMapPointId[pMP->mnId] = true;
+                            pMP->mnBALocalForKF = pKF->mnId;
+                        }
+                    }
             }
 
-            // Get all the MapPoints of the KF (Local Optimization)
-            vector<MapPoint *> vpMPs = pKFi->GetMapPointMatches();
+            // [LBA] Loop through all the Markers and prepare them for LBA
+            for (std::vector<ORB_SLAM3::Marker *>::iterator idx = localMarkersVec.begin(), vend = localMarkersVec.end();
+                 idx != vend; idx++)
+            {
+                if (mpLocalMarkerId.find((*idx)->getId()) == mpLocalMarkerId.end())
+                {
+                    ORB_SLAM3::Marker *marker = *idx;
+                    localMarkerList.push_back(marker);
+                    mpLocalMarkerId[marker->getId()] = true;
+                }
+            }
 
+            // [LBA] Loop through all the Planes and prepare them for LBA
+            for (std::vector<ORB_SLAM3::Plane *>::iterator idx = localPlanesVec.begin(), vend = localPlanesVec.end();
+                 idx != vend; idx++)
+            {
+                ORB_SLAM3::Plane *plane = *idx;
+                // If the plane does not exist, skip it
+                if (!plane)
+                    continue;
+                // If the plane is not known, do not add it to the local map
+                if (plane->getPlaneType() == Plane::planeVariant::UNDEFINED)
+                    continue;
+                // Otherwise, add the plane to the local map
+                if (mpLocalPlaneId.find(plane->getId()) == mpLocalPlaneId.end())
+                {
+                    localPlaneList.push_back(plane);
+                    mpLocalPlaneId[plane->getId()] = true;
+                }
+            }
+
+            // [LBA] Loop through all the Doors and prepare them for LBA
+            for (std::vector<ORB_SLAM3::Door *>::iterator idx = localDoorsVec.begin(), vend = localDoorsVec.end();
+                 idx != vend; idx++)
+            {
+                if (mpLocalDoorId.find((*idx)->getId()) == mpLocalDoorId.end())
+                {
+                    ORB_SLAM3::Door *door = *idx;
+                    localDoorList.push_back(door);
+                    mpLocalDoorId[door->getId()] = true;
+                }
+            }
+        }
+
+        // [LBA] Among all rooms, filter only the ones with a wall in LBA
+        for (const auto &room : allRooms)
+        {
+            // Get the walls of the room
+            std::vector<ORB_SLAM3::Plane *> roomWalls = room->getWalls();
+            // Add the room to the local map if any of the walls are in the local map
+            for (const auto &wall : roomWalls)
+                if (mpLocalPlaneId.find(wall->getId()) != mpLocalPlaneId.end())
+                {
+                    localRoomList.push_back(room);
+                    break;
+                }
+        }
+
+        // If localRoomList is not empty, print its ID
+        if (!localRoomList.empty())
+        {
+            std::cout << "Local Room List: ";
+            for (const auto &room : localRoomList)
+                std::cout << room->getId() << " ";
+            std::cout << std::endl;
+        }
+
+        // [LBA] Loop through all the local Rooms to add all their walls to LBA
+        list<Plane *> lRecentLocalMapPlanes;
+        for (list<Room *>::iterator idx = localRoomList.begin(), vend = localRoomList.end(); idx != vend; idx++)
+        {
+            vector<Plane *> roomWalls = (*idx)->getWalls();
+            for (const auto &roomWall : roomWalls)
+            {
+                if (mpLocalPlaneId.find(roomWall->getId()) == mpLocalPlaneId.end())
+                {
+                    localPlaneList.push_back(roomWall);
+                    mpLocalPlaneId[roomWall->getId()] = true;
+                    lRecentLocalMapPlanes.push_back(roomWall);
+                }
+            }
+        }
+
+        // Loop through the recently added planes, get all the map points and add them
+        // list<MapPoint *> lRecentLocalMapPoints;
+        // for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
+        // {
+        //     set<MapPoint *> mapPoints = (*idx)->getMapPoints();
+        //     for (const auto &mapPoint : mapPoints)
+        //     {
+        //         if (mpLocalMapPointId.find(mapPoint->mnId) == mpLocalMapPointId.end())
+        //         {
+        //             localMapPointList.push_back(mapPoint);
+        //             lRecentLocalMapPoints.push_back(mapPoint);
+        //             mpLocalMapPointId[mapPoint->mnId] = true;
+        //         }
+        //     }
+        // }
+
+        // Loop through the recently added planes, get all the keyframes and add them
+        std::list<ORB_SLAM3::KeyFrame *> lRecentLocalMapKeyFrames;
+        for (list<ORB_SLAM3::Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
+        {
+            std::map<KeyFrame *, ORB_SLAM3::Plane::Observation> planeObservations = (*idx)->getObservations();
+            for (std::map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
+            {
+                KeyFrame *pKFi = obsId->first;
+                if (!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
+                {
+                    if (mpLocalKeyFrameId.find(pKFi->mnId) == mpLocalKeyFrameId.end())
+                    {
+                        localKeyFrameList.push_back(pKFi);
+                        mpLocalKeyFrameId[pKFi->mnId] = true;
+                        pKFi->mnBALocalForKF = pKF->mnId;
+                        lRecentLocalMapKeyFrames.push_back(pKFi);
+                    }
+                }
+            }
+        }
+
+        // Loop through the recently added keyframes, get all the map points and add them
+        for (list<KeyFrame *>::iterator idx = lRecentLocalMapKeyFrames.begin(), vend = lRecentLocalMapKeyFrames.end(); idx != vend; idx++)
+        {
+            vector<MapPoint *> vpMPs = (*idx)->GetMapPointMatches();
             for (vector<MapPoint *>::iterator vit = vpMPs.begin(), vend = vpMPs.end(); vit != vend; vit++)
             {
                 MapPoint *pMP = *vit;
@@ -1519,138 +1672,31 @@ namespace ORB_SLAM3
                     {
                         if (pMP->mnBALocalForKF != pKF->mnId)
                         {
-                            lLocalMapPoints.push_back(pMP);
-                            mpLocalMPid[pMP->mnId] = true;
+                            localMapPointList.push_back(pMP);
+                            mpLocalMapPointId[pMP->mnId] = true;
                             pMP->mnBALocalForKF = pKF->mnId;
                         }
                     }
             }
-
-            // Get all the Markers of the KF (Local Optimization)
-            vector<Marker *> vpMarkers = pKFi->GetMapMarkers();
-            for (vector<Marker *>::iterator idx = vpMarkers.begin(), vend = vpMarkers.end(); idx != vend; idx++)
-            {
-                if (mpLocalMarkerid.find((*idx)->getId()) == mpLocalMarkerid.end())
-                {
-                    Marker *marker = *idx;
-                    lLocalMapMarkers.push_back(marker);
-                    mpLocalMarkerid[marker->getId()] = true;
-                }
-            }
-
-            // Get all the Planes of the KF (Local Optimization)
-            vector<Plane *> vpPlanes = pKFi->GetMapPlanes();
-            for (vector<Plane *>::iterator idx = vpPlanes.begin(), vend = vpPlanes.end(); idx != vend; idx++)
-            {
-                Plane *plane = *idx;
-                if (!plane)
-                    continue;
-                // If the plane is not known, do not add it to the local map
-                if (plane->getPlaneType() == Plane::planeVariant::UNDEFINED)
-                    continue;
-                if (mpLocalPlaneid.find(plane->getId()) == mpLocalPlaneid.end())
-                {
-                    lLocalMapPlanes.push_back(plane);
-                    mpLocalPlaneid[plane->getId()] = true;
-                }
-            }
-
-            // Get all the Doors of the KF (Local Optimization)
-            vector<Door *> vpDoors = pKFi->GetMapDoors();
-            for (vector<Door *>::iterator idx = vpDoors.begin(), vend = vpDoors.end(); idx != vend; idx++)
-            {
-                if (mpLocalDoorid.find((*idx)->getId()) == mpLocalDoorid.end())
-                {
-                    Door *door = *idx;
-                    lLocalMapDoors.push_back(door);
-                    mpLocalDoorid[door->getId()] = true;
-                }
-            }
         }
 
-        // Get all the currently detected Rooms (Local Optimization)
-        lLocalMapRooms = vpRooms;
-
-        // Loop through the recently added rooms, get all the planes and add them
-        list<Plane *> lRecentLocalMapPlanes;
-        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), vend = lLocalMapRooms.end(); idx != vend; idx++)
-        {
-            vector<Plane *> roomWalls = (*idx)->getWalls();
-            for (const auto &roomWall : roomWalls)
-            {
-                if (mpLocalPlaneid.find(roomWall->getId()) == mpLocalPlaneid.end())
-                {
-                    lLocalMapPlanes.push_back(roomWall);
-                    lRecentLocalMapPlanes.push_back(roomWall);
-                    mpLocalPlaneid[roomWall->getId()] = true;
-                }
-            }
-        }
-
-        // Loop through the recently added planes, get all the markers and add them
-        // list<Marker *> lRecentLocalMapMarkers;
-        // for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
+        // Loop through the recently added map points, get all the keyframes and add them
+        // for (list<MapPoint *>::iterator idx = lRecentLocalMapPoints.begin(), vend = lRecentLocalMapPoints.end(); idx != vend; idx++)
         // {
-        //     vector<Marker *> planeMarkers = (*idx)->getMarkers();
-        //     for (const auto &planeMarker : planeMarkers)
+        //     std::map<KeyFrame *, std::tuple<int, int>> mapPointObservations = (*idx)->GetObservations();
+        //     for (std::map<KeyFrame *, std::tuple<int, int>>::const_iterator obsId = mapPointObservations.begin(), obLast = mapPointObservations.end(); obsId != obLast; obsId++)
         //     {
-        //         auto foundMarker = std::find_if(lLocalMapMarkers.begin(), lLocalMapMarkers.end(), boost::bind(&Marker::getId, _1) == planeMarker->getId());
-        //         if (foundMarker == lLocalMapMarkers.end())
+        //         if (mpLocalKeyFrameId.find(obsId->first->mnId) == mpLocalKeyFrameId.end())
         //         {
-        //             lLocalMapMarkers.push_back(planeMarker);
-        //             lRecentLocalMapMarkers.push_back(planeMarker);
+        //             localKeyFrameList.push_back(obsId->first);
+        //             mpLocalKeyFrameId[obsId->first->mnId] = true;
         //         }
         //     }
         // }
 
-        // Loop through the recently added planes, get all the map points and add them
-        list<MapPoint *> lRecentLocalMapPoints;
-        for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
-        {
-            set<MapPoint *> mapPoints = (*idx)->getMapPoints();
-            for (const auto &mapPoint : mapPoints)
-            {
-                if (mpLocalMPid.find(mapPoint->mnId) == mpLocalMPid.end())
-                {
-                    lLocalMapPoints.push_back(mapPoint);
-                    lRecentLocalMapPoints.push_back(mapPoint);
-                    mpLocalMPid[mapPoint->mnId] = true;
-                }
-            }
-        }
-
-        // Loop through the recently added planes, get all the keyframes and add them
-        for (list<Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
-        {
-            std::map<KeyFrame *, ORB_SLAM3::Plane::Observation> planeObservations = (*idx)->getObservations();
-            for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
-            {
-                KeyFrame *pKFi = obsId->first;
-                if (mpLocalKFid.find(pKFi->mnId) == mpLocalKFid.end())
-                {
-                    lLocalKeyFrames.push_back(pKFi);
-                    mpLocalKFid[pKFi->mnId] = true;
-                }
-            }
-        }
-
-        // Loop through the recently added map points, get all the keyframes and add them
-        for (list<MapPoint *>::iterator idx = lRecentLocalMapPoints.begin(), vend = lRecentLocalMapPoints.end(); idx != vend; idx++)
-        {
-            std::map<KeyFrame *, std::tuple<int, int>> mapPointObservations = (*idx)->GetObservations();
-            for (std::map<KeyFrame *, std::tuple<int, int>>::const_iterator obsId = mapPointObservations.begin(), obLast = mapPointObservations.end(); obsId != obLast; obsId++)
-            {
-                if (mpLocalKFid.find(obsId->first->mnId) == mpLocalKFid.end())
-                {
-                    lLocalKeyFrames.push_back(obsId->first);
-                    mpLocalKFid[obsId->first->mnId] = true;
-                }
-            }
-        }
-
         // Fixed Keyframes for MPs (Keyframes that see Local MapPoints but that are not Local Keyframes)
         list<KeyFrame *> lFixedCameras;
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             map<KeyFrame *, tuple<int, int>> observations = (*lit)->GetObservations();
             for (map<KeyFrame *, tuple<int, int>>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
@@ -1668,7 +1714,7 @@ namespace ORB_SLAM3
 
         // const size_t maxNewFixed = 5;
         // // Fixed KeyFrames for Planes (Keyframes that see Local Planes but that are not Local Keyframes)
-        // for (list<Plane *>::iterator lit = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); lit != lend; lit++)
+        // for (list<Plane *>::iterator lit = localPlaneList.begin(), lend = localPlaneList.end(); lit != lend; lit++)
         // {
         //     size_t newFixed = 0;
         //     map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = (*lit)->getObservations();
@@ -1692,9 +1738,9 @@ namespace ORB_SLAM3
         //         break;
         // }
 
-        num_fixedKF = lFixedCameras.size() + num_fixedKF;
+        countFixedKF = lFixedCameras.size() + countFixedKF;
 
-        if (num_fixedKF == 0)
+        if (countFixedKF == 0)
         {
             Verbose::PrintMess("LM-LBA: There are 0 fixed KF in the optimizations, LBA aborted", Verbose::VERBOSITY_NORMAL);
             return;
@@ -1725,7 +1771,7 @@ namespace ORB_SLAM3
         pCurrentMap->msFixedKFs.clear();
 
         // Local KeyFrame vertices (Local Optimization)
-        for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
+        for (list<KeyFrame *>::iterator lit = localKeyFrameList.begin(), lend = localKeyFrameList.end(); lit != lend; lit++)
         {
             KeyFrame *pKFi = *lit;
             g2o::VertexSE3Expmap *vSE3 = new g2o::VertexSE3Expmap();
@@ -1739,7 +1785,7 @@ namespace ORB_SLAM3
             // DEBUG LBA
             pCurrentMap->msOptKFs.insert(pKFi->mnId);
         }
-        num_OptKF = lLocalKeyFrames.size();
+        num_OptKF = localKeyFrameList.size();
 
         // Fixed KeyFrame vertices (Local Optimization)
         for (list<KeyFrame *>::iterator lit = lFixedCameras.begin(), lend = lFixedCameras.end(); lit != lend; lit++)
@@ -1758,7 +1804,7 @@ namespace ORB_SLAM3
         }
 
         // MapPoint vertices (Local Optimization)
-        const int nExpectedSize = (lLocalKeyFrames.size() + lFixedCameras.size()) * lLocalMapPoints.size();
+        const int nExpectedSize = (localKeyFrameList.size() + lFixedCameras.size()) * localMapPointList.size();
 
         vector<ORB_SLAM3::EdgeSE3ProjectXYZ *> vpEdgesMono;
         vpEdgesMono.reserve(nExpectedSize);
@@ -1787,7 +1833,7 @@ namespace ORB_SLAM3
         vector<MapPoint *> vpMapPointEdgeStereo;
         vpMapPointEdgeStereo.reserve(nExpectedSize);
 
-        const int nExpectedSizePlane = (lLocalKeyFrames.size() + lFixedCameras.size()) * lLocalMapPlanes.size();
+        const int nExpectedSizePlane = (localKeyFrameList.size() + lFixedCameras.size()) * localPlaneList.size();
         vector<EdgeVertexPlaneProjectSE3KF *> vpEdgesPlane;
         vpEdgesPlane.reserve(nExpectedSizePlane);
 
@@ -1819,7 +1865,7 @@ namespace ORB_SLAM3
         int nEdges = 0;
         int maxOpId = 0;
 
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             MapPoint *pMP = *lit;
             g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
@@ -1956,7 +2002,7 @@ namespace ORB_SLAM3
         num_edges = nEdges;
 
         // Markers (Local Optimization)
-        for (list<Marker *>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
+        for (list<Marker *>::iterator idx = localMarkerList.begin(), lend = localMarkerList.end(); idx != lend; idx++)
         {
             // Adding a vertex for each marker
             Marker *pMapMarker = *idx;
@@ -1979,7 +2025,7 @@ namespace ORB_SLAM3
         maxOpId += nMarkers;
 
         // Planes (Local Optimization)
-        for (list<Plane *>::iterator idx = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); idx != lend; idx++)
+        for (list<Plane *>::iterator idx = localPlaneList.begin(), lend = localPlaneList.end(); idx != lend; idx++)
         {
             // Adding a vertex for each plane
             Plane *pMapPlane = *idx;
@@ -2116,11 +2162,10 @@ namespace ORB_SLAM3
         maxOpId += nPlanes;
 
         // Rooms (Local Optimization)
-        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
+        for (list<Room *>::iterator idx = localRoomList.begin(), lend = localRoomList.end(); idx != lend; idx++)
         {
             // Variables
             Room *pMapRoom = *idx;
-            bool hasMarkerData = pMapRoom->getHasKnownLabel();
             std::vector<Plane *> walls = pMapRoom->getWalls();
 
             // No need to optimize if there are no walls
@@ -2128,79 +2173,75 @@ namespace ORB_SLAM3
                 continue;
 
             // Adding a vertex for each room
-            g2o::VertexSE3Expmap *vRoom = new g2o::VertexSE3Expmap();
+            g2o::VertexSE3Expmap *vrtxRoom = new g2o::VertexSE3Expmap();
 
             int opId = maxOpId + nRooms;
-            // vRoom->setId(opId);
-            vRoom->setEstimate(g2o::SE3Quat(Eigen::Quaterniond::Identity(),
-                                            pMapRoom->getRoomCenter().cast<double>()));
-            optimizer.addVertex(vRoom);
+            vrtxRoom->setId(opId);
+            vrtxRoom->setEstimate(g2o::SE3Quat(Eigen::Quaterniond::Identity(),
+                                               pMapRoom->getRoomCenter().cast<double>()));
+            optimizer.addVertex(vrtxRoom);
             nRooms++;
 
             // Setting the local optimization ID for the room
             pMapRoom->setOpId(opId);
 
-            // If the room is verified with a marker, use the marker data
-            if (hasMarkerData)
+            if (pMapRoom->getIsCorridor())
             {
-                if (pMapRoom->getIsCorridor())
+                if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()))
                 {
-                    if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()))
-                    {
-                        // Adding an edge between the room and the two walls
-                        ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
-                        e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                        e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
-                        e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
-                        e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+                    // Adding an edge between the room and the two walls
+                    ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
+                    e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
+                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
 
-                        g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                        e->setRobustKernel(rk);
-                        rk->setDelta(thHuberMono);
-                        optimizer.addEdge(e);
-                    }
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberStereo);
+                    optimizer.addEdge(e);
                 }
-                else
+            }
+            else
+            {
+                if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()) && optimizer.vertex(walls[2]->getOpId()) && optimizer.vertex(walls[2]->getOpId()))
                 {
-                    //             if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()) && optimizer.vertex(walls[2]->getOpId()) && optimizer.vertex(walls[2]->getOpId()))
-                    //             {
-                    //                 // Adding an edge between the room and the two walls
-                    //                 ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
-                    //                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-                    //                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
-                    //                 e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
-                    //                 e->setVertex(3, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[2]->getOpId())));
-                    //                 e->setVertex(4, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[3]->getOpId())));
-                    //                 e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
+                    // Adding an edge between the room and the four walls
+                    ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
+                    e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+                    e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
+                    e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
+                    e->setVertex(3, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[2]->getOpId())));
+                    e->setVertex(4, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[3]->getOpId())));
+                    e->setInformation(Eigen::Matrix<double, 3, 3>::Identity());
 
-                    //                 g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-                    //                 e->setRobustKernel(rk);
-                    //                 rk->setDelta(thHuberMono);
-                    //                 optimizer.addEdge(e);
-                    //             }
+                    g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+                    e->setRobustKernel(rk);
+                    rk->setDelta(thHuberStereo);
+                    optimizer.addEdge(e);
                 }
             }
 
-            //     // [TODO] Adding an edge between the Room and the Meta-marker
-            //     // Marker *metaMarker = pMapRoom->getMetaMarker();
-            //     // if (optimizer.vertex(opId) && optimizer.vertex(metaMarker->getOpId()))
-            //     // {
-            //     //     // Adding an edge between the Plane and the Marker
-            //     //     ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker *e = new ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker();
-            //     //     // e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
-            //     //     // e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(metaMarker->getOpId())));
-            //     //     // e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
+            // [TODO] Adding an edge between the Room and the Meta-marker
+            // Marker *metaMarker = pMapRoom->getMetaMarker();
+            // if (optimizer.vertex(opId) && optimizer.vertex(metaMarker->getOpId()))
+            // {
+            //     // Adding an edge between the Plane and the Marker
+            //     ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker *e = new ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker();
+            //     // e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
+            //     // e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(metaMarker->getOpId())));
+            //     // e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
 
-            //     //     // g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
-            //     //     // e->setRobustKernel(rk);
-            //     //     // rk->setDelta(thHuberMono);
-            //     //     // optimizer.addEdge(e);
-            //     // }
+            //     // g2o::RobustKernelHuber *rk = new g2o::RobustKernelHuber;
+            //     // e->setRobustKernel(rk);
+            //     // rk->setDelta(thHuberMono);
+            //     // optimizer.addEdge(e);
+            // }
         }
         maxOpId += nRooms;
 
         // // Doors (Local Optimization)
-        // for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
+        // for (list<Room *>::iterator idx = localRoomList.begin(), lend = localRoomList.end(); idx != lend; idx++)
         // {
         //     Room *pMapRoom = *idx;
         //     vector<Door *> doors = pMapRoom->getDoors();
@@ -2363,7 +2404,7 @@ namespace ORB_SLAM3
 
         // Recovering optimized data (Local Optimization)
         // Locally Optimized Keyframes
-        for (list<KeyFrame *>::iterator lit = lLocalKeyFrames.begin(), lend = lLocalKeyFrames.end(); lit != lend; lit++)
+        for (list<KeyFrame *>::iterator lit = localKeyFrameList.begin(), lend = localKeyFrameList.end(); lit != lend; lit++)
         {
             KeyFrame *pKFi = *lit;
             g2o::VertexSE3Expmap *vSE3 = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pKFi->mnId));
@@ -2373,7 +2414,7 @@ namespace ORB_SLAM3
         }
 
         // Locally Optimized Points
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             MapPoint *pMP = *lit;
             g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + maxKFid + 1));
@@ -2382,7 +2423,7 @@ namespace ORB_SLAM3
         }
 
         // Locally Optimized Markers
-        for (list<Marker *>::iterator idx = lLocalMapMarkers.begin(), lend = lLocalMapMarkers.end(); idx != lend; idx++)
+        for (list<Marker *>::iterator idx = localMarkerList.begin(), lend = localMarkerList.end(); idx != lend; idx++)
         {
             Marker *pMapMarker = *idx;
             g2o::VertexSE3Expmap *vMarker = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapMarker->getOpId()));
@@ -2392,7 +2433,7 @@ namespace ORB_SLAM3
         }
 
         // Locally Optimized Planes
-        for (list<Plane *>::iterator idx = lLocalMapPlanes.begin(), lend = lLocalMapPlanes.end(); idx != lend; idx++)
+        for (list<Plane *>::iterator idx = localPlaneList.begin(), lend = localPlaneList.end(); idx != lend; idx++)
         {
             Plane *pMapPlane = *idx;
             g2o::VertexPlane *vPlane = static_cast<g2o::VertexPlane *>(optimizer.vertex(pMapPlane->getOpId()));
@@ -2401,11 +2442,11 @@ namespace ORB_SLAM3
         }
 
         // Locally Optimized Rooms
-        for (list<Room *>::iterator idx = lLocalMapRooms.begin(), lend = lLocalMapRooms.end(); idx != lend; idx++)
+        for (list<Room *>::iterator idx = localRoomList.begin(), lend = localRoomList.end(); idx != lend; idx++)
         {
             Room *pMapRoom = *idx;
-            g2o::VertexSE3Expmap *vRoom = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapRoom->getOpId()));
-            g2o::SE3Quat SE3quat = vRoom->estimate();
+            g2o::VertexSE3Expmap *vrtxRoom = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapRoom->getOpId()));
+            g2o::SE3Quat SE3quat = vrtxRoom->estimate();
             pMapRoom->setRoomCenter(SE3quat.translation());
 
             // Locally Optimized Doors
@@ -3496,7 +3537,7 @@ namespace ORB_SLAM3
         return nIn;
     }
 
-    void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &num_fixedKF, int &num_OptKF, int &num_MPs, int &num_edges, bool bLarge, bool bRecInit)
+    void Optimizer::LocalInertialBA(KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &countFixedKF, int &num_OptKF, int &num_MPs, int &num_edges, bool bLarge, bool bRecInit)
     {
         Map *pCurrentMap = pKF->GetMap();
 
@@ -3531,7 +3572,7 @@ namespace ORB_SLAM3
         int N = vpOptimizableKFs.size();
 
         // Optimizable points seen by temporal optimizable keyframes
-        list<MapPoint *> lLocalMapPoints;
+        list<MapPoint *> localMapPointList;
         for (int i = 0; i < N; i++)
         {
             vector<MapPoint *> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches();
@@ -3542,7 +3583,7 @@ namespace ORB_SLAM3
                     if (!pMP->isBad())
                         if (pMP->mnBALocalForKF != pKF->mnId)
                         {
-                            lLocalMapPoints.push_back(pMP);
+                            localMapPointList.push_back(pMP);
                             pMP->mnBALocalForKF = pKF->mnId;
                         }
             }
@@ -3586,7 +3627,7 @@ namespace ORB_SLAM3
                         if (!pMP->isBad())
                             if (pMP->mnBALocalForKF != pKF->mnId)
                             {
-                                lLocalMapPoints.push_back(pMP);
+                                localMapPointList.push_back(pMP);
                                 pMP->mnBALocalForKF = pKF->mnId;
                             }
                 }
@@ -3596,7 +3637,7 @@ namespace ORB_SLAM3
         // Fixed KFs which are not covisible optimizable
         const int maxFixKF = 200;
 
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             map<KeyFrame *, tuple<int, int>> observations = (*lit)->GetObservations();
             for (map<KeyFrame *, tuple<int, int>>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
@@ -3778,7 +3819,7 @@ namespace ORB_SLAM3
         }
 
         // Set MapPoint vertices
-        const int nExpectedSize = (N + lFixedKeyFrames.size()) * lLocalMapPoints.size();
+        const int nExpectedSize = (N + lFixedKeyFrames.size()) * localMapPointList.size();
 
         // Mono
         vector<EdgeMono *> vpEdgesMono;
@@ -3818,7 +3859,7 @@ namespace ORB_SLAM3
             mVisEdges[(*lit)->mnId] = 0;
         }
 
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             MapPoint *pMP = *lit;
             g2o::VertexSBAPointXYZ *vPoint = new g2o::VertexSBAPointXYZ();
@@ -3946,7 +3987,7 @@ namespace ORB_SLAM3
             }
         }
 
-        // cout << "Total map points: " << lLocalMapPoints.size() << endl;
+        // cout << "Total map points: " << localMapPointList.size() << endl;
         for (map<int, int>::iterator mit = mVisEdges.begin(), mend = mVisEdges.end(); mit != mend; mit++)
         {
             assert(mit->second >= 3);
@@ -4056,7 +4097,7 @@ namespace ORB_SLAM3
         }
 
         // Points
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             MapPoint *pMP = *lit;
             g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));
@@ -5129,21 +5170,21 @@ namespace ORB_SLAM3
         int N = vpOptimizableKFs.size();
 
         // Optimizable points seen by optimizable keyframes
-        list<MapPoint *> lLocalMapPoints;
+        list<MapPoint *> localMapPointList;
         map<MapPoint *, int> mLocalObs;
         for (int i = 0; i < N; i++)
         {
             vector<MapPoint *> vpMPs = vpOptimizableKFs[i]->GetMapPointMatches();
             for (vector<MapPoint *>::iterator vit = vpMPs.begin(), vend = vpMPs.end(); vit != vend; vit++)
             {
-                // Using mnBALocalForKF we avoid redundance here, one MP can not be added several times to lLocalMapPoints
+                // Using mnBALocalForKF we avoid redundance here, one MP can not be added several times to localMapPointList
                 MapPoint *pMP = *vit;
                 if (pMP)
                     if (!pMP->isBad())
                         if (pMP->mnBALocalForKF != pCurrKF->mnId)
                         {
                             mLocalObs[pMP] = 1;
-                            lLocalMapPoints.push_back(pMP);
+                            localMapPointList.push_back(pMP);
                             pMP->mnBALocalForKF = pCurrKF->mnId;
                         }
                         else
@@ -5345,7 +5386,7 @@ namespace ORB_SLAM3
         Verbose::PrintMess("end inserting inertial edges", Verbose::VERBOSITY_NORMAL);
 
         // Set MapPoint vertices
-        const int nExpectedSize = (N + Ncov + lFixedKeyFrames.size()) * lLocalMapPoints.size();
+        const int nExpectedSize = (N + Ncov + lFixedKeyFrames.size()) * localMapPointList.size();
 
         // Mono
         vector<EdgeMono *> vpEdgesMono;
@@ -5374,7 +5415,7 @@ namespace ORB_SLAM3
 
         const unsigned long iniMPid = maxKFid * 5;
 
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             MapPoint *pMP = *lit;
             if (!pMP)
@@ -5570,7 +5611,7 @@ namespace ORB_SLAM3
         }
 
         // Points
-        for (list<MapPoint *>::iterator lit = lLocalMapPoints.begin(), lend = lLocalMapPoints.end(); lit != lend; lit++)
+        for (list<MapPoint *>::iterator lit = localMapPointList.begin(), lend = localMapPointList.end(); lit != lend; lit++)
         {
             MapPoint *pMP = *lit;
             g2o::VertexSBAPointXYZ *vPoint = static_cast<g2o::VertexSBAPointXYZ *>(optimizer.vertex(pMP->mnId + iniMPid + 1));

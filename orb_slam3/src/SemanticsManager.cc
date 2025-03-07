@@ -317,7 +317,6 @@ namespace ORB_SLAM3
                 allWalls.push_back(plane);
 
         // Find the walls within the threshold distance to the cluster points
-        int counter = 0;
         for (const auto &cluster : clusters)
         {
             // Initializations
@@ -342,12 +341,6 @@ namespace ORB_SLAM3
                 }
             }
 
-            // Print the closest walls
-            std::cout << "\nCluster#" << counter << std::endl;
-            for (const auto &wall : closestWalls)
-                std::cout << "- Wall#" << wall->getId() << " is close enough ..." << std::endl;
-            counter++;
-
             // If there is only one wall, no need to check for a room/corridor
             if (closestWalls.size() < 2)
                 continue;
@@ -356,13 +349,13 @@ namespace ORB_SLAM3
             std::vector<std::pair<Plane *, Plane *>> facingWalls =
                 Utils::getAllPlanesFacingEachOther(closestWalls);
 
-            // Print the facing walls
-            for (const auto &facingWall : facingWalls)
-                std::cout << "- Facing walls: " << facingWall.first->getId() << " & " << facingWall.second->getId() << std::endl;
-
             // If no facing walls are found, continue to the next cluster
             if (facingWalls.size() == 0)
                 continue;
+
+            // Print the facing walls
+            for (const auto &facingWall : facingWalls)
+                std::cout << "- Facing walls: " << facingWall.first->getId() << " & " << facingWall.second->getId() << std::endl;
 
             // Check wall conditions if they shape a square room (with perpendicularity threshold)
             bool isRectRoomFound = getRectangularRoom(rectangularRoom, facingWalls,
@@ -379,7 +372,6 @@ namespace ORB_SLAM3
             }
             else
             {
-                // [TODO] What if we have more than one facing wall?
                 // Get the walls
                 std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
                 // Create a corridor

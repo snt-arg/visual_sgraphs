@@ -211,7 +211,6 @@ namespace ORB_SLAM3
 
         // clear images
         mImage.release();
-        
     }
 
     std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> KeyFrame::getClsCloudPtrs() const
@@ -365,7 +364,7 @@ namespace ORB_SLAM3
     void KeyFrame::RemoveMapPlane(Plane *plane)
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        
+
         if (!plane)
         {
             std::cerr << "ERROR: KeyFrame::RemoveMapPlane: plane is NULL" << std::endl;
@@ -503,7 +502,7 @@ namespace ORB_SLAM3
             for (vector<Plane *>::iterator vit = mvpMapPlanes.begin(), vend = mvpMapPlanes.end(); vit != vend; vit++)
             {
                 Plane *pPlane = *vit;
-                
+
                 if (!pPlane)
                     continue;
 
@@ -521,7 +520,6 @@ namespace ORB_SLAM3
                 }
             }
         }
-        
 
         // For all map points in keyframe check in which other keyframes are they seen
         // Increase counter for those keyframes
