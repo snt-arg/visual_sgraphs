@@ -17,8 +17,8 @@ rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
 std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
 std::vector<std::vector<Eigen::Vector3d>> skeletonClusterPoints;
+std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBC, frameSE;
 ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker, pubKFImage, pubKeyFrameList;
-std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
 ros::Publisher pubTrackedMappoints, pubSegmentedPointcloud, pubPlanePointcloud, pubPlaneLabel, pubDoor,
     pubAllMappoints, pubFiducialMarker, pubRoom, pubFreespaceCluster;
 ros::Time lastPlanePublishTime = ros::Time(0);
@@ -112,7 +112,7 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
 
     // Showing planes using RViz Visual Tools
     visualTools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-        frameBuildingComp, "/plane_visuals", nodeHandler);
+        frameBC, "/plane_visuals", nodeHandler);
     visualTools->setAlpha(0.5);
     visualTools->loadMarkerPub();
     visualTools->deleteAllMarkers();
@@ -552,11 +552,11 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         //     planePoint.setX(centroid[0]);
         //     planePoint.setY(centroid[1]);
         //     planePoint.setZ(centroid[2]);
-        //     planePoint.frame_id_ = frameBuildingComp;
+        //     planePoint.frame_id_ = frameBC;
 
         //     tf::Stamped<tf::Point> planePointTransformed;
         //     transform_listener->transformPoint(world_frame_id, ros::Time(0), planePoint,
-        //                                        frameBuildingComp, planePointTransformed);
+        //                                        frameBC, planePointTransformed);
 
         //     geometry_msgs::Point point1;
         //     point1.x = planePointTransformed.x();
@@ -597,7 +597,7 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time 
         fiducial_marker.id = markerArray.markers.size();
         fiducial_marker.header.stamp = ros::Time().now();
         fiducial_marker.mesh_use_embedded_materials = true;
-        fiducial_marker.header.frame_id = frameBuildingComp;
+        fiducial_marker.header.frame_id = frameBC;
         fiducial_marker.type = visualization_msgs::Marker::MESH_RESOURCE;
         fiducial_marker.mesh_resource =
             "package://orb_slam3_ros/config/Assets/aruco_marker.dae";
@@ -643,7 +643,7 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msgTime)
         door.id = doorArray.markers.size();
         door.header.stamp = ros::Time().now();
         door.mesh_use_embedded_materials = true;
-        door.header.frame_id = frameBuildingComp;
+        door.header.frame_id = frameBC;
         door.type = visualization_msgs::Marker::MESH_RESOURCE;
         door.mesh_resource =
             "package://orb_slam3_ros/config/Assets/door.dae";
@@ -672,7 +672,7 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msgTime)
         doorLabel.text = doors[idx]->getName();
         doorLabel.id = doorArray.markers.size();
         doorLabel.header.stamp = ros::Time().now();
-        doorLabel.header.frame_id = frameBuildingComp;
+        doorLabel.header.frame_id = frameBC;
         doorLabel.pose.position.x = door.pose.position.x;
         doorLabel.pose.position.z = door.pose.position.z;
         doorLabel.pose.position.y = door.pose.position.y - 1.2;
@@ -692,7 +692,7 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msgTime)
         doorLines.lifetime = ros::Duration();
         doorLines.id = doorArray.markers.size();
         doorLines.header.stamp = ros::Time().now();
-        doorLines.header.frame_id = frameBuildingComp;
+        doorLines.header.frame_id = frameBC;
         doorLines.type = visualization_msgs::Marker::LINE_LIST;
 
         geometry_msgs::Point point1;
@@ -797,7 +797,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         planeLabel.pose.position.x = centroid.x();
         planeLabel.pose.position.z = centroid.z();
         planeLabel.pose.position.y = centroid.y() - 1.5;
-        planeLabel.header.frame_id = frameBuildingComp;
+        planeLabel.header.frame_id = frameBC;
         planeLabel.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
 
         // Create a marker for the plane normal (as an arrow)
@@ -812,7 +812,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         planeNormal.color.g = color[1] / 255.0;
         planeNormal.color.b = color[2] / 255.0;
         planeNormal.id = plane->getId() + numPlanes;
-        planeNormal.header.frame_id = frameBuildingComp;
+        planeNormal.header.frame_id = frameBC;
         planeNormal.type = visualization_msgs::Marker::ARROW;
 
         // Clear previous points from planeNormal
@@ -843,7 +843,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
 
     // Set message header
     cloud_msg.header.stamp = msgTime;
-    cloud_msg.header.frame_id = frameBuildingComp;
+    cloud_msg.header.frame_id = frameBC;
 
     // Publish the point cloud
     pubPlanePointcloud.publish(cloud_msg);
@@ -896,7 +896,7 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         room.id = roomArray.markers.size();
         room.header.stamp = ros::Time().now();
         room.mesh_use_embedded_materials = true;
-        room.header.frame_id = frameArchitecturalComp;
+        room.header.frame_id = frameSE;
         room.type = visualization_msgs::Marker::MESH_RESOURCE;
 
         // Rotation and displacement of the room for better visualization
@@ -924,7 +924,7 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         roomLabel.pose.position.x = roomCenter.x();
         roomLabel.pose.position.z = roomCenter.z();
         roomLabel.pose.position.y = roomCenter.y() - 0.7;
-        roomLabel.header.frame_id = frameArchitecturalComp;
+        roomLabel.header.frame_id = frameSE;
         roomLabel.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
         roomArray.markers.push_back(roomLabel);
 
@@ -982,9 +982,9 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         roomPoint.setX(roomCenter.x());
         roomPoint.setY(roomCenter.y());
         roomPoint.setZ(roomCenter.z());
-        roomPoint.frame_id_ = frameArchitecturalComp;
+        roomPoint.frame_id_ = frameSE;
         transformListener->transformPoint(world_frame_id, ros::Time(0), roomPoint,
-                                          frameArchitecturalComp, roomPointTransformed);
+                                          frameSE, roomPointTransformed);
 
         // Room to Plane (Wall) connection line
         for (const auto wall : rooms[idx]->getWalls())
@@ -997,12 +997,12 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
             pointRoom.z = roomPointTransformed.z();
             roomWallLine.points.push_back(pointRoom);
 
-            pointWallInit.frame_id_ = frameBuildingComp;
+            pointWallInit.frame_id_ = frameBC;
             pointWallInit.setX(wall->getCentroid().x());
             pointWallInit.setY(wall->getCentroid().y());
             pointWallInit.setZ(wall->getCentroid().z());
             transformListener->transformPoint(world_frame_id, ros::Time(0), pointWallInit,
-                                              frameBuildingComp, pointWallTransform);
+                                              frameBC, pointWallTransform);
 
             pointWall.x = pointWallTransform.x();
             pointWall.y = pointWallTransform.y();
@@ -1021,12 +1021,12 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
             pointRoom.z = roomPointTransformed.z();
             roomDoorLine.points.push_back(pointRoom);
 
-            pointDoorInit.frame_id_ = frameBuildingComp;
+            pointDoorInit.frame_id_ = frameBC;
             pointDoorInit.setX(door->getGlobalPose().translation()(0));
             pointDoorInit.setY(door->getGlobalPose().translation()(1));
             pointDoorInit.setZ(door->getGlobalPose().translation()(2));
             transformListener->transformPoint(world_frame_id, ros::Time(0), pointDoorInit,
-                                              frameBuildingComp, pointDoorTransform);
+                                              frameBC, pointDoorTransform);
 
             pointDoor.x = pointDoorTransform.x();
             pointDoor.z = pointDoorTransform.z();
@@ -1047,12 +1047,12 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         // In free space-based room candidate detection, the metaMarker is not available
         if (metaMarker != nullptr)
         {
-            pointMarkerInit.frame_id_ = frameBuildingComp;
+            pointMarkerInit.frame_id_ = frameBC;
             pointMarkerInit.setX(metaMarker->getGlobalPose().translation()(0));
             pointMarkerInit.setY(metaMarker->getGlobalPose().translation()(1));
             pointMarkerInit.setZ(metaMarker->getGlobalPose().translation()(2));
             transformListener->transformPoint(world_frame_id, ros::Time(0), pointMarkerInit,
-                                              frameBuildingComp, pointMarkerTransform);
+                                              frameBC, pointMarkerTransform);
 
             pointMarker.x = pointMarkerTransform.x();
             pointMarker.z = pointMarkerTransform.z();

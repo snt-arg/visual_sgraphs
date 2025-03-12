@@ -62,9 +62,9 @@ int main(int argc, char **argv)
     nodeHandler.param<bool>(nodeName + "/publish_pointclouds", pubPointClouds, true);
     nodeHandler.param<std::string>(nodeName + "/cam_frame_id", cam_frame_id, "camera");
     nodeHandler.param<std::string>(nodeName + "/world_frame_id", world_frame_id, "world");
-    nodeHandler.param<bool>(nodeName + "/publish_static_transform", pubStaticTransform, false);
-    nodeHandler.param<std::string>(nodeName + "/frame_building_comp", frameBuildingComp, "plane");
-    nodeHandler.param<std::string>(nodeName + "/frame_architectural_comp", frameArchitecturalComp, "room");
+    nodeHandler.param<std::string>(nodeName + "/frame_building_component", frameBC, "plane");
+    nodeHandler.param<std::string>(nodeName + "/frame_structural_element", frameSE, "room");
+    nodeHandler.param<bool>(nodeName + "/static_transform", pubStaticTransform, false);
 
     // Initializing system threads and getting ready to process frames
     ImageGrabber igb;
@@ -140,14 +140,14 @@ void ImageGrabber::GrabRGBD(const sensor_msgs::ImageConstPtr &msgRGB, const sens
     if (minMarkerTimeDiff < 0.05)
     {
         pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud,
-                                            cv_ptrRGB->header.stamp.toSec(),
-                                            {}, "", matchedMarkers);
+                         cv_ptrRGB->header.stamp.toSec(),
+                         {}, "", matchedMarkers);
         markersBuffer.clear();
     }
     else
     {
         pSLAM->TrackRGBD(cv_ptrRGB->image, cv_ptrD->image, cloud,
-                                            cv_ptrRGB->header.stamp.toSec());
+                         cv_ptrRGB->header.stamp.toSec());
     }
 
     ros::Time msgTime = cv_ptrRGB->header.stamp;

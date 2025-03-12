@@ -77,9 +77,9 @@ int main(int argc, char **argv)
     nodeHandler.param<std::string>(node_name + "/imu_frame_id", imu_frame_id, "imu");
     nodeHandler.param<std::string>(node_name + "/cam_frame_id", cam_frame_id, "camera");
     nodeHandler.param<std::string>(node_name + "/world_frame_id", world_frame_id, "world");
-    nodeHandler.param<bool>(node_name + "/publish_static_transform", pubStaticTransform, false);
-    nodeHandler.param<std::string>(node_name + "/frame_building_comp", frameBuildingComp, "plane");
-    nodeHandler.param<std::string>(node_name + "/frame_architectural_comp", frameArchitecturalComp, "room");
+    nodeHandler.param<bool>(node_name + "/static_transform", pubStaticTransform, false);
+    nodeHandler.param<std::string>(node_name + "/frame_building_component", frameBC, "plane");
+    nodeHandler.param<std::string>(node_name + "/frame_structural_element", frameSE, "room");
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImuGrabber imugb;

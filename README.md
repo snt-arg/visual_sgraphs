@@ -284,7 +284,7 @@ Host unitree
 | `voc_file`                                                | path to ORB vocabulary file                                                                                    |
 | `settings_file`                                           | path to settings file                                                                                          |
 | `enable_pangolin`                                         | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
-| `publish_static_transform`                                | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
+| `static_transform`                                        | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
 | `roll`, `yaw`, and `pitch`                                | poses and dimensions of movement                                                                               |
 | `frame_map` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
 

@@ -69,7 +69,7 @@ extern ORB_SLAM3::System::eSensor sensorType;
 extern bool colorPointcloud;
 extern double roll, pitch, yaw;
 extern bool pubStaticTransform, pubPointClouds;
-extern std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBuildingComp, frameArchitecturalComp;
+extern std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBC, frameSE;
 
 // List of visited Fiducial Markers in different timestamps
 extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
