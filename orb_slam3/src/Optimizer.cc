@@ -2169,7 +2169,7 @@ namespace ORB_SLAM3
             std::vector<Plane *> walls = pMapRoom->getWalls();
 
             // No need to optimize if there are no walls
-            if (walls.size() == 0)
+            if (walls.size() < 2)
                 continue;
 
             // Adding a vertex for each room

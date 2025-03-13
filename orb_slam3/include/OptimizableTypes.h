@@ -293,19 +293,21 @@ namespace ORB_SLAM3
      * The edge used to connect a Plane vertex (VertexPlane) to a KeyFrame vertex (SE3)
      * [Note]: it creates constraint connecting the points in a plane observation to the plane
      */
-    class EdgeSE3KFPointToPlane: public g2o::BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3Expmap, g2o::VertexPlane> {
-        public:
+    class EdgeSE3KFPointToPlane : public g2o::BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3Expmap, g2o::VertexPlane>
+    {
+    public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        
+
         EdgeSE3KFPointToPlane();
-        virtual bool read(std::istream& is);
-        virtual bool write(std::ostream& os) const;
+        virtual bool read(std::istream &is);
+        virtual bool write(std::ostream &os) const;
 
-        void setMeasurement(const Eigen::Matrix4d& m) override { _measurement = m; }
+        void setMeasurement(const Eigen::Matrix4d &m) override { _measurement = m; }
 
-        void computeError(){
-            const g2o::VertexSE3Expmap* v1 = static_cast<const g2o::VertexSE3Expmap*>(_vertices[0]);
-            const g2o::VertexPlane* v2 = static_cast<const g2o::VertexPlane*>(_vertices[1]);
+        void computeError()
+        {
+            const g2o::VertexSE3Expmap *v1 = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
+            const g2o::VertexPlane *v2 = static_cast<const g2o::VertexPlane *>(_vertices[1]);
 
             Eigen::Matrix4d Ti = v1->estimate().inverse().to_homogeneous_matrix();
             Eigen::Vector4d Pj = v2->estimate().coeffs();
@@ -318,13 +320,12 @@ namespace ORB_SLAM3
         {
             const g2o::VertexSE3Expmap *vKeyFrameGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
             const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
-            
+
             // local plane equation
             Eigen::Isometry3d kfPose = vKeyFrameGP->estimate();
             g2o::Plane3D localPlane = kfPose * vPlaneGP->estimate();
 
             return (localPlane.coeffs()(3) > 0);
-
         }
     };
 
@@ -363,13 +364,12 @@ namespace ORB_SLAM3
         {
             const g2o::VertexSE3Expmap *vKeyFrameGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
             const g2o::VertexPlane *vPlaneGP = static_cast<const g2o::VertexPlane *>(_vertices[1]);
-            
+
             // local plane equation
             Eigen::Isometry3d kfPose = vKeyFrameGP->estimate();
             g2o::Plane3D localPlane = kfPose * vPlaneGP->estimate();
 
             return (localPlane.coeffs()(3) > 0);
-
         }
     };
 
@@ -454,7 +454,7 @@ namespace ORB_SLAM3
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        Eigen::Vector3d markerPosition;
+        // Eigen::Vector3d markerPosition;
 
         EdgeVertex2PlaneProjectSE3Room();
         EdgeVertex2PlaneProjectSE3Room(Eigen::Vector3d position);
@@ -488,9 +488,9 @@ namespace ORB_SLAM3
             }
 
             Eigen::Vector3d normal = vec / vec.norm();
-            Eigen::Vector3d finalPose = vec + (markerPosition - (markerPosition.dot(normal)) * normal);
+            // Eigen::Vector3d finalPose = vec + (markerPosition - (markerPosition.dot(normal)) * normal);
 
-            _error = roomPose - finalPose;
+            _error = roomPose - vec;
         }
 
     protected:

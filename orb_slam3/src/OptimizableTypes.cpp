@@ -364,9 +364,11 @@ namespace ORB_SLAM3
     bool EdgeSE3KFPointToPlane::read(std::istream &is)
     {
         for (int i = 0; i < information().rows(); ++i)
-            for (int j = i; j < information().cols(); ++j) {
+            for (int j = i; j < information().cols(); ++j)
+            {
                 is >> information()(i, j);
-                if (i != j) information()(j, i) = information()(i, j);
+                if (i != j)
+                    information()(j, i) = information()(i, j);
             }
         return true;
     }
@@ -378,7 +380,6 @@ namespace ORB_SLAM3
                 os << " " << information()(i, j);
         return os.good();
     }
-
 
     EdgeVertexPlaneProjectSE3KF::EdgeVertexPlaneProjectSE3KF() : g2o::BaseBinaryEdge<3, g2o::Plane3D, g2o::VertexSE3Expmap, g2o::VertexPlane>() {}
 
@@ -425,11 +426,14 @@ namespace ORB_SLAM3
         return os.good();
     }
 
-    EdgeVertex2PlaneProjectSE3Room::EdgeVertex2PlaneProjectSE3Room() : g2o::BaseMultiEdge<3, Eigen::Vector3d>() {}
+    EdgeVertex2PlaneProjectSE3Room::EdgeVertex2PlaneProjectSE3Room() : g2o::BaseMultiEdge<3, Eigen::Vector3d>()
+    {
+        resize(3);
+    }
 
     EdgeVertex2PlaneProjectSE3Room::EdgeVertex2PlaneProjectSE3Room(Eigen::Vector3d position) : g2o::BaseMultiEdge<3, Eigen::Vector3d>()
     {
-        markerPosition = position;
+        // markerPosition = position;
         resize(3);
     }
 

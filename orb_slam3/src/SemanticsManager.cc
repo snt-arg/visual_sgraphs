@@ -417,6 +417,43 @@ namespace ORB_SLAM3
         if (givenRoomList.empty())
             return nullptr;
 
+        // Get the walls of the given room
+        std::vector<Plane *> givenRoomWalls = givenRoom->getWalls();
+
+        // Search through all givenRoomList to find the same walls
+        for (const auto &mapRoom : givenRoomList)
+        {
+            // Get the walls of the map room
+            std::vector<Plane *> mapRoomWalls = mapRoom->getWalls();
+
+            // Check if the given room walls are the same as the map room walls
+            if (givenRoomWalls.size() <= mapRoomWalls.size())
+            {
+                bool isSameRoom = true;
+                for (size_t i = 0; i < givenRoomWalls.size(); ++i)
+                {
+                    bool isSameWall = false;
+                    for (size_t j = 0; j < mapRoomWalls.size(); ++j)
+                    {
+                        if (givenRoomWalls[i]->getId() == mapRoomWalls[j]->getId())
+                        {
+                            isSameWall = true;
+                            break;
+                        }
+                    }
+                    if (!isSameWall)
+                    {
+                        isSameRoom = false;
+                        break;
+                    }
+                }
+
+                // If the rooms are the same, return the map room
+                if (isSameRoom)
+                    return mapRoom;
+            }
+        }
+
         // Get the given room center
         Eigen::Vector3d detetedRoomCenter = givenRoom->getRoomCenter();
 
