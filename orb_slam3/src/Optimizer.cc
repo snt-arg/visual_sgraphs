@@ -1598,15 +1598,6 @@ namespace ORB_SLAM3
                 }
         }
 
-        // If localRoomList is not empty, print its ID
-        if (!localRoomList.empty())
-        {
-            std::cout << "Local Room List: ";
-            for (const auto &room : localRoomList)
-                std::cout << room->getId() << " ";
-            std::cout << std::endl;
-        }
-
         // [LBA] Loop through all the local Rooms to add all their walls to LBA
         list<Plane *> lRecentLocalMapPlanes;
         for (list<Room *>::iterator idx = localRoomList.begin(), vend = localRoomList.end(); idx != vend; idx++)

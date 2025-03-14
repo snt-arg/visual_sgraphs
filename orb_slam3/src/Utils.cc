@@ -59,8 +59,8 @@ namespace ORB_SLAM3
             double distance = std::abs(v1(3) - v2(3)) / normal1.norm();
 
             // Print distance and threshold
-            std::cout << "- Distance between walls #" << plane1->getId() << " and #" << plane2->getId() << ": "
-                      << distance << std::endl;
+            // std::cout << "- Distance between walls #" << plane1->getId() << " and #" << plane2->getId() << ": "
+            //           << distance << std::endl;
 
             // Check if the calculated distance is greater than the threshold
             return distance > threshold;

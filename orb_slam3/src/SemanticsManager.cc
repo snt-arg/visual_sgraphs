@@ -389,8 +389,8 @@ namespace ORB_SLAM3
             else
             {
                 // Otherwise, add the new room candidate to the map
-                ORB_SLAM3::Room *foundDetectedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllDetectedMapRooms());
-                if (foundDetectedRoom == nullptr)
+                ORB_SLAM3::Room *detectedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllDetectedMapRooms());
+                if (detectedRoom == nullptr)
                 {
                     std::cout << "\n[SemSeg]" << std::endl;
                     std::cout
@@ -429,27 +429,27 @@ namespace ORB_SLAM3
             // Check if the given room walls are the same as the map room walls
             if (givenRoomWalls.size() <= mapRoomWalls.size())
             {
-                bool isSameRoom = true;
+                bool isTheSameRoom = true;
                 for (size_t i = 0; i < givenRoomWalls.size(); ++i)
                 {
-                    bool isSameWall = false;
+                    bool isTheSameWall = false;
                     for (size_t j = 0; j < mapRoomWalls.size(); ++j)
                     {
                         if (givenRoomWalls[i]->getId() == mapRoomWalls[j]->getId())
                         {
-                            isSameWall = true;
+                            isTheSameWall = true;
                             break;
                         }
                     }
-                    if (!isSameWall)
+                    if (!isTheSameWall)
                     {
-                        isSameRoom = false;
+                        isTheSameRoom = false;
                         break;
                     }
                 }
 
                 // If the rooms are the same, return the map room
-                if (isSameRoom)
+                if (isTheSameRoom)
                     return mapRoom;
             }
         }
