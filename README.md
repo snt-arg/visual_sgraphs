@@ -2,11 +2,11 @@
 
 ![Visual S-Graphs](demo.gif "Visual S-Graphs")
 
-A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com/UZ-SLAMLab/VS_GRAPHS) (ROS implementation version introduced [here](https://github.com/thien94/orb_slam3_ros)) that supports adding semantic entities to the final map and adding hierarchical representations.
+**vS-Graphs** extends [ORB-SLAM 3.0](https://github.com/UZ-SLAMLab/VS_GRAPHS) by integrating Visual SLAM with 3D scene graphs, enhancing mapping and localization through hierarchical scene understanding. It improves scene representation with building components (_i.e.,_ wall and ground surfaces) and infering structural elements (_i.e.,_ rooms and corridors), making SLAM more robust and efficient.
 
-[![arXiv](https://img.shields.io/badge/arXiv-2309.10461-b31b1b.svg)](https://arxiv.org/abs/2309.10461)
+<!-- [![arXiv](https://img.shields.io/badge/arXiv-2309.10461-b31b1b.svg)](https://arxiv.org/abs/2309.10461) -->
 
-## 📃 Table of Content
+<!-- ## 📃 Table of Content
 
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
@@ -16,11 +16,9 @@ A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com
 - [ROS Topics, Params and Services](#ros)
 - [Maps](#maps)
 - [Evaluation](#eval)
-- [TODO](#todo)
+- [TODO](#todo) -->
 
 ## 📝 Prerequisites <a id="prerequisites"></a>
-
-Install the required libraries listed below:
 
 ### OpenCV <a id="opencv"></a>
 
@@ -72,18 +70,9 @@ sudo apt install ros-[DISTRO]-hector-trajectory-server
 
 ## ⚙️ Installation <a id="installation"></a>
 
-After installing the prerequisites, you can install the repository using commands below:
+After installing the prerequisites, you can clone the repository and follow the commands below:
 
-### I. Cloning the Repository <a id="cloning"></a>
-
-You should first create a workspace and clone the Visual S-Graphs repository in it:
-
-```
-cd ~/[workspace]/src
-git clone git@github.com:snt-arg/visual_sgraphs.git
-```
-
-### II. Cloning the `aruco_ros` Repository <a id="aruco"></a>
+### II. Cloning the `aruco_ros` Repository (optional) <a id="aruco"></a>
 
 This package (available [here](https://github.com/pal-robotics/aruco_ros)) enables you to detect ArUco Markers in cameras' field of view. Accordingly, install it using the commands below in **the same folder (i.e., [workspace]/src)**:
 
@@ -94,20 +83,22 @@ cd ~/catkin_ws/src/
 git clone -b noetic-devel git@github.com:pal-robotics/aruco_ros.git
 ```
 
-It is important to put the file in the same folder, as the Visual S-Graphs library depends on it. Instead of the original launch file, you can use the sample modified `marker_publisher.launch` file for this library available [here](doc/aruco_ros_marker_publisher.launch), which works fine with the _UniLu_ dataset and the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed based on the use case). Do not forget to set proper `ref_frame`, `markerSize`, `imageRaw`, and `cameraInfo` values in the launch file.
+Instead of the original launch file, you can use the sample modified `marker_publisher.launch` file for this library available [here](doc/aruco_ros_marker_publisher.launch), which works fine with the live feed for RealSense cameras (`imageRaw` and `cameraInfo` should be changed based on the use case). Do not forget to set proper `ref_frame`, `markerSize`, `imageRaw`, and `cameraInfo` values in the launch file.
 
-### III. Cloning the `scene_segment_ros` Repository <a id="segmenter"></a>
+### III. Cloning the Developed `scene_segment_ros` Repository <a id="segmenter"></a>
 
-This package (available [here](https://github.com/snt-arg/scene_segment_ros)) enables you to **segment the scene** and **detect semantic objects** in the scene. Accordingly, install it using the commands below in **the same folder (i.e., [workspace]/src)**:
+This package (in the open sourcing process) enables you to **segment the scene** and **detect semantic entities** in the scene. Accordingly, install it using the commands below in **the same folder (i.e., [workspace]/src)**:
+
+<!-- available [here](https://github.com/snt-arg/scene_segment_ros) -->
 
 ```
 cd ~/catkin_ws/src/
 
 # Cloning the latest code
-git clone git@github.com:snt-arg/scene_segment_ros.git
+git clone git@github.com:[repo]
 ```
 
-It is important to put the file in the same folder, as the Visual S-Graphs library depends on it. You can then run the scene semantic segmentor using the commands `roslaunch segmenter_ros segmenter_pFCN.launch` for using the **PanopticFCN** model. Reade more about available options in the [repo](https://github.com/snt-arg/scene_segment_ros).
+You can then run the scene semantic segmentor using the commands `roslaunch segmenter_ros segmenter_pFCN.launch` for using the **PanopticFCN** model or `roslaunch segmenter_ros segmenter_yoso.launch` for YOSO model.
 
 ### IV. 🦊 Installing Voxblox Skeleton <a id="voxblox"></a>
 
@@ -214,35 +205,17 @@ cameraInfo:=/camera/infra1/camera_info`
 
 3. Run realsense use the command `roslaunch realsense2_camera [rs_rgbd/rs_stereo].launch [align_depth:=true] [unite_imu_method:=linear_interpolation]`.
 
-#### 🔖 Using IMU <a id="imu"></a>
+<!-- #### 🔖 Using IMU <a id="imu"></a>
 
 Please note that in order to use inertial sensors (i.e., _IMU_) you need to initialize it first. As you can see in the animation below, the _IMU_ needs to move steady forward and backward for around 10 seconds while facing a scene with lots of visual features. The logs appeared in the console will show if the _IMU_ is initialized or not.
 
-![IMU Initialization](demo-IMU.gif "IMU Initialization")
+![IMU Initialization](demo-IMU.gif "IMU Initialization") -->
 
 ## 💾 Data Collection <a id="data"></a>
 
 ### I. Using a RealSense Camera
 
 Please refer to [this page](/doc/RealSense/README.md) for detailed description on how to use a RealSense D400 series camera for data collection.
-
-### II. Using the Handheld Device
-
-To record a `rosbag` file using the **Handheld Device** developed by the team, containing a RealSense D435i and a 3D LiDAR, you need to follow the below steps:
-
-- Create a `SSH` file to connect to the device. You just need to add the ssh information to the `config` file available in your `.ssh` folder. There, you need to add the following settings:
-
-```
-Host unitree
-    Hostname 10.42.0.1
-    User unitree-brain
-```
-
-- Connect to `unitree`'s Wi-Fi and run `ssh unitree`. You need to run the same thing for two `bash` areas. You will be connected to the `bash` control of the device.
-  - [Note] You need to have the password to connect.
-- In the first command area run `neurolink_mprocs`, so that you have access to all the commands required to run services. Run them all one by one.
-- In the second command, run the service provided for `rosbag` recording, which is `./rosbag_collection.sh .`. Note that the second dot is the location to save the rosbag file.
-- You can always connect to `unitree`'s Wi-Fi and check the address `10.42.0.1:8888` to see all the topics provided by the software.
 
 ## 🤖 ROS Topics, Params and Services <a id="ros"></a>
 
@@ -306,12 +279,12 @@ The map file will have `.osa` extension, and is located in the `ROS_HOME` folder
 rosservice call /orb_slam3/save_map [file_name]
 ```
 
-### Services <a id="maps-services"></a>
+<!-- ### Services <a id="maps-services"></a>
 
 - `rosservice call /orb_slam3/save_map [file_name]`: save the map as `[file_name].osa` in `ROS_HOME` folder.
-- `rosservice call /orb_slam3/save_traj [file_name]`: save the estimated trajectory of camera and keyframes as `[file_name]_cam_traj.txt` and `[file_name]_kf_traj.txt` in `ROS_HOME` folder.
+- `rosservice call /orb_slam3/save_traj [file_name]`: save the estimated trajectory of camera and keyframes as `[file_name]_cam_traj.txt` and `[file_name]_kf_traj.txt` in `ROS_HOME` folder. -->
 
-## 📊 Evaluation <a id="eval"></a>
+<!-- ## 📊 Evaluation <a id="eval"></a>
 
 In order to evaluate the current method with others, such as UcoSLAM, ORB-SLAM 3.0, etc., you need to follow the below instructions:
 
@@ -325,14 +298,4 @@ In order to evaluate the current method with others, such as UcoSLAM, ORB-SLAM 3
      - For `UcoSLAM` and `Semantic UcoSLAM`, we need to have the poses created in a new way. Accordingly, we need to put the poses created by the `S-Graphs` in `/tmp/timestamp.txt`, and then run the codes from the [ros-wrapper](https://github.com/snt-arg/ucoslam_ros_wrapper/tree/main/src):
        - UcoSLAM: `rosrun ucoslam_ros ucoslam_ros_video /[PATH]/vid.mp4 [PATH]/ucoslam_ros_wrapper/config/realsense_color_640_480_spot.yml -aruco-markerSize 0.78 -dict ARUCO -voc [PATH]/ucoslam_ros_wrapper/config/orb.fbow`
        - Semantic UcoSLAM: `rosrun ucoslam_ros ucoslam_ros_semantics_video /[PATH]/vid.mp4 [PATH]/ucoslam_ros_wrapper/config/realsense_color_640_480_spot.yml -aruco-markerSize 0.78 -dict ARUCO -voc [PATH]/ucoslam_ros_wrapper/config/orb.fbow`
-  3. Finally, when the ground-truth (S-Graphs) and SLAM pose (e.g., UcoSLAM, etc.) are ready, you can use the [`evo_ape`](https://github.com/MichaelGrupp/evo) for evaluation, like `evo_ape tum s_graphs_pose_seq05.txt slam_pose_semuco_seq05.txt -va > results.txt --plot --plot_mode xy`
-
-## 🗒️ TODO <a id="todo"></a>
-
-Here is the list of TODO tasks that can be integrated in the project:
-
-- Due to the sparse pointclouds in Mono and Stereo, calculate the depth from points using Machine Learning to get a better plane estimate (`Tracking::getPlanesFromPointClouds()`).
-- Subscribing to the robot's odometry for not getting lost
-- Semantic loop closure detection based on high-level entities
-- Change `common.h` to a Class and set the values in `ros_[x].cc`
-- Create a yaml config file for common launch parameters `vsgraphs_ros_[x].launch`
+  3. Finally, when the ground-truth (S-Graphs) and SLAM pose (e.g., UcoSLAM, etc.) are ready, you can use the [`evo_ape`](https://github.com/MichaelGrupp/evo) for evaluation, like `evo_ape tum s_graphs_pose_seq05.txt slam_pose_semuco_seq05.txt -va > results.txt --plot --plot_mode xy` -->
