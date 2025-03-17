@@ -5,8 +5,8 @@
 #include "common.h"
 
 // Variables for ORB-SLAM3
-ORB_SLAM3::System *pSLAM;
-ORB_SLAM3::System::eSensor sensorType = ORB_SLAM3::System::NOT_SET;
+VS_GRAPHS::System *pSLAM;
+VS_GRAPHS::System::eSensor sensorType = VS_GRAPHS::System::NOT_SET;
 
 // Variables for ROS
 bool colorPointcloud = true;
@@ -15,7 +15,7 @@ bool pubStaticTransform, pubPointClouds;
 image_transport::Publisher pubTrackingImage;
 rviz_visual_tools::RvizVisualToolsPtr visualTools;
 std::shared_ptr<tf::TransformListener> transformListener;
-std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
+std::vector<std::vector<VS_GRAPHS::Marker *>> markersBuffer;
 std::vector<std::vector<Eigen::Vector3d>> skeletonClusterPoints;
 std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBC, frameSE;
 ros::Publisher pubCameraPose, pubCameraPoseVis, pubOdometry, pubKeyFrameMarker, pubKFImage, pubKeyFrameList;
@@ -106,8 +106,8 @@ void setupPublishers(ros::NodeHandle &nodeHandler, image_transport::ImageTranspo
     pubRoom = nodeHandler.advertise<visualization_msgs::MarkerArray>(node_name + "/rooms", 1);
 
     // Get body odometry if IMU data is also available
-    if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
-        sensorType == ORB_SLAM3::System::IMU_RGBD)
+    if (sensorType == VS_GRAPHS::System::IMU_MONOCULAR || sensorType == VS_GRAPHS::System::IMU_STEREO ||
+        sensorType == VS_GRAPHS::System::IMU_RGBD)
         pubOdometry = nodeHandler.advertise<nav_msgs::Odometry>(node_name + "/body_odom", 1);
 
     // Showing planes using RViz Visual Tools
@@ -138,7 +138,7 @@ void publishTopics(ros::Time msgTime, Eigen::Vector3f Wbb)
         publishStaticTFTransform(world_frame_id, frameMap, msgTime);
 
     // get the keyframes
-    std::vector<ORB_SLAM3::KeyFrame *> keyframes = pSLAM->GetAllKeyFrames();
+    std::vector<VS_GRAPHS::KeyFrame *> keyframes = pSLAM->GetAllKeyFrames();
 
     // Setup publishers
     publishDoors(pSLAM->GetAllDoors(), msgTime);
@@ -161,8 +161,8 @@ void publishTopics(ros::Time msgTime, Eigen::Vector3f Wbb)
         clearKFClsClouds(keyframes);
 
     // IMU-specific topics
-    if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
-        sensorType == ORB_SLAM3::System::IMU_RGBD)
+    if (sensorType == VS_GRAPHS::System::IMU_MONOCULAR || sensorType == VS_GRAPHS::System::IMU_STEREO ||
+        sensorType == VS_GRAPHS::System::IMU_RGBD)
     {
         // Body pose and translational velocity can be obtained from ORB-SLAM3
         Sophus::SE3f Twb = pSLAM->GetImuTwb();
@@ -339,7 +339,7 @@ void publishFreeSpaceClusters(std::vector<std::vector<Eigen::Vector3d>> clusterP
     pubFreespaceCluster.publish(cloudMsg);
 }
 
-void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msgTime)
+void publishKeyFrameImages(std::vector<VS_GRAPHS::KeyFrame *> keyframe_vec, ros::Time msgTime)
 {
     // Check all keyframes and publish the ones that have not been published for Semantic Segmentation yet
     for (auto &keyframe : keyframe_vec)
@@ -367,16 +367,16 @@ void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros:
     }
 }
 
-void clearKFClsClouds(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec)
+void clearKFClsClouds(std::vector<VS_GRAPHS::KeyFrame *> keyframe_vec)
 {
     for (auto &keyframe : keyframe_vec)
         keyframe->clearClsClouds();
 }
 
-void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msgTime)
+void publishSegmentedCloud(std::vector<VS_GRAPHS::KeyFrame *> keyframe_vec, ros::Time msgTime)
 {
     // get the latest processed keyframe
-    ORB_SLAM3::KeyFrame *thisKF = nullptr;
+    VS_GRAPHS::KeyFrame *thisKF = nullptr;
     for (int i = keyframe_vec.size() - 1; i >= 0; i--)
     {
         if (keyframe_vec[i]->getClsCloudPtrs().size() > 0)
@@ -439,21 +439,21 @@ void publishTrackingImage(cv::Mat image, ros::Time msgTime)
     pubTrackingImage.publish(rendered_image_msg);
 }
 
-void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *> tracked_points, ros::Time msgTime)
+void publishTrackedPoints(std::vector<VS_GRAPHS::MapPoint *> tracked_points, ros::Time msgTime)
 {
     sensor_msgs::PointCloud2 cloud = mapPointToPointcloud(tracked_points, msgTime);
     pubTrackedMappoints.publish(cloud);
 }
 
-void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *> mapPoints, ros::Time msgTime)
+void publishAllPoints(std::vector<VS_GRAPHS::MapPoint *> mapPoints, ros::Time msgTime)
 {
     sensor_msgs::PointCloud2 cloud = mapPointToPointcloud(mapPoints, msgTime);
     pubAllMappoints.publish(cloud);
 }
 
-void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros::Time msgTime)
+void publishKeyFrameMarkers(std::vector<VS_GRAPHS::KeyFrame *> keyframe_vec, ros::Time msgTime)
 {
-    sort(keyframe_vec.begin(), keyframe_vec.end(), ORB_SLAM3::KeyFrame::lId);
+    sort(keyframe_vec.begin(), keyframe_vec.end(), VS_GRAPHS::KeyFrame::lId);
     if (keyframe_vec.size() == 0)
         return;
 
@@ -517,8 +517,8 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         kf_list.poses.push_back(pose);
 
         // // add lines to all keyframes in the covisibility graph
-        // std::vector<ORB_SLAM3::KeyFrame *> covisibility = keyframe->GetBestCovisibilityKeyFrames(75);
-        // // std::vector<ORB_SLAM3::KeyFrame *> covisibility = keyframe->GetVectorCovisibleKeyFrames();
+        // std::vector<VS_GRAPHS::KeyFrame *> covisibility = keyframe->GetBestCovisibilityKeyFrames(75);
+        // // std::vector<VS_GRAPHS::KeyFrame *> covisibility = keyframe->GetVectorCovisibleKeyFrames();
 
         // for (auto &covis : covisibility)
         // {
@@ -532,7 +532,7 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         // }
 
         // // get all planes from the keyframe
-        // std::vector<ORB_SLAM3::Plane *> planes = keyframe->GetMapPlanes();
+        // std::vector<VS_GRAPHS::Plane *> planes = keyframe->GetMapPlanes();
 
         // // attach lines to centroids of planes
         // for (auto &plane : planes)
@@ -540,7 +540,7 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
         //     if (!plane)
         //         continue;
         //     // show only connections of planes with semantic types
-        //     if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
+        //     if (plane->getPlaneType() == VS_GRAPHS::Plane::planeVariant::UNDEFINED)
         //         continue;
 
         //     // compute centroid of the plane from it's point cloud - point cloud already in world frame
@@ -573,7 +573,7 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, ros
     pubKeyFrameList.publish(kf_list);
 }
 
-void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time msgTime)
+void publishFiducialMarkers(std::vector<VS_GRAPHS::Marker *> markers, ros::Time msgTime)
 {
     int numMarkers = markers.size();
     if (numMarkers == 0)
@@ -616,7 +616,7 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, ros::Time 
     pubFiducialMarker.publish(markerArray);
 }
 
-void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msgTime)
+void publishDoors(std::vector<VS_GRAPHS::Door *> doors, ros::Time msgTime)
 {
     // If there are no doors, return
     int numDoors = doors.size();
@@ -713,7 +713,7 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors, ros::Time msgTime)
     pubDoor.publish(doorArray);
 }
 
-void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
+void publishPlanes(std::vector<VS_GRAPHS::Plane *> planes, ros::Time msgTime)
 {
     // Publish the planes, if any
     int numPlanes = planes.size();
@@ -744,8 +744,8 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
         const std::string planeLabelText = "Plane#" + std::to_string(plane->getId());
 
         // If the plane is undefined, skip it
-        ORB_SLAM3::Plane::planeVariant planeType = plane->getPlaneType();
-        if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
+        VS_GRAPHS::Plane::planeVariant planeType = plane->getPlaneType();
+        if (plane->getPlaneType() == VS_GRAPHS::Plane::planeVariant::UNDEFINED)
             continue;
 
         // Get the point clouds for the plane
@@ -765,9 +765,9 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
             newPoint.b = point.b;
 
             // // Compute from plane equation - y for ground, z for wall
-            // if (planeType == ORB_SLAM3::Plane::planeVariant::GROUND)
+            // if (planeType == VS_GRAPHS::Plane::planeVariant::GROUND)
             //     newPoint.y = (-planeCoeffs(0) * point.x - planeCoeffs(2) * point.z - planeCoeffs(3)) / planeCoeffs(1);
-            // else if (planeType == ORB_SLAM3::Plane::planeVariant::WALL)
+            // else if (planeType == VS_GRAPHS::Plane::planeVariant::WALL)
             //     newPoint.z = (-planeCoeffs(0) * point.x - planeCoeffs(1) * point.y - planeCoeffs(3)) / planeCoeffs(2);
 
             // Override color according to type of plane
@@ -850,7 +850,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, ros::Time msgTime)
     pubPlaneLabel.publish(planeLabelArray);
 }
 
-void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
+void publishRooms(std::vector<VS_GRAPHS::Room *> rooms, ros::Time msgTime)
 {
     // Publish rooms, if any
     int numRooms = rooms.size();
@@ -1037,7 +1037,7 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
         // Room to Marker connection line
         geometry_msgs::Point pointRoom, pointMarker;
         tf::Stamped<tf::Point> pointMarkerInit, pointMarkerTransform;
-        ORB_SLAM3::Marker *metaMarker = rooms[idx]->getMetaMarker();
+        VS_GRAPHS::Marker *metaMarker = rooms[idx]->getMetaMarker();
 
         pointRoom.x = roomPointTransformed.x();
         pointRoom.y = roomPointTransformed.y();
@@ -1069,7 +1069,7 @@ void publishRooms(std::vector<ORB_SLAM3::Room *> rooms, ros::Time msgTime)
     pubRoom.publish(roomArray);
 }
 
-sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *> mapPoints, ros::Time msgTime)
+sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<VS_GRAPHS::MapPoint *> mapPoints, ros::Time msgTime)
 {
     // Variables
     const int numChannels = 3;
@@ -1152,7 +1152,7 @@ tf::Transform SE3fToTFTransform(Sophus::SE3f data)
 void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray)
 {
     // The list of markers observed in the current frame
-    std::vector<ORB_SLAM3::Marker *> currentMarkers;
+    std::vector<VS_GRAPHS::Marker *> currentMarkers;
 
     // Process the received marker array
     for (const auto &marker : markerArray.markers)
@@ -1170,13 +1170,13 @@ void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray)
         Sophus::SE3f normalizedPose(markerQuaternion, markerTranslation);
 
         // Create a marker object of the currently visited marker
-        ORB_SLAM3::Marker *currentMarker = new ORB_SLAM3::Marker();
+        VS_GRAPHS::Marker *currentMarker = new VS_GRAPHS::Marker();
         currentMarker->setOpId(-1);
         currentMarker->setId(markerId);
         currentMarker->setTime(visitTime);
         currentMarker->setMarkerInGMap(false);
         currentMarker->setLocalPose(normalizedPose);
-        currentMarker->setMarkerType(ORB_SLAM3::Marker::markerVariant::UNKNOWN);
+        currentMarker->setMarkerType(VS_GRAPHS::Marker::markerVariant::UNKNOWN);
 
         // Add it to the list of observed markers
         currentMarkers.push_back(currentMarker);
@@ -1187,10 +1187,10 @@ void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray)
         markersBuffer.push_back(currentMarkers);
 }
 
-std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double frameTimestamp)
+std::pair<double, std::vector<VS_GRAPHS::Marker *>> findNearestMarker(double frameTimestamp)
 {
     double minTimeDifference = 100;
-    std::vector<ORB_SLAM3::Marker *> matchedMarkers;
+    std::vector<VS_GRAPHS::Marker *> matchedMarkers;
 
     // Loop through the markersBuffer
     for (const auto &markers : markersBuffer)
@@ -1220,7 +1220,7 @@ void setVoxbloxSkeletonCluster(const visualization_msgs::MarkerArray &skeletonAr
         if (skeleton.ns.compare(0, strlen("connected_vertices"), "connected_vertices") == 0)
         {
             // Skip small clusters
-            if (skeleton.points.size() > ORB_SLAM3::SystemParams::GetParams()->room_seg.min_cluster_vertices)
+            if (skeleton.points.size() > VS_GRAPHS::SystemParams::GetParams()->room_seg.min_cluster_vertices)
                 // Add the points of the cluster to the buffer
                 for (const auto &point : skeleton.points)
                 {

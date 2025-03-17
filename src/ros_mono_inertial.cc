@@ -33,7 +33,7 @@ public:
 private:
     // Marker detection
     double minMarkerTimeDiff;
-    std::vector<ORB_SLAM3::Marker *> matchedMarkers;
+    std::vector<VS_GRAPHS::Marker *> matchedMarkers;
 };
 
 int main(int argc, char **argv)
@@ -86,9 +86,9 @@ int main(int argc, char **argv)
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImuGrabber imugb;
     ImageGrabber igb(&imugb);
-    sensorType = ORB_SLAM3::System::IMU_MONOCULAR;
+    sensorType = VS_GRAPHS::System::IMU_MONOCULAR;
 
-    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensorType, enable_pangolin);
+    pSLAM = new VS_GRAPHS::System(voc_file, settings_file, sys_params_file, sensorType, enable_pangolin);
 
     // Subscribe to get raw images and IMU data
     ros::Subscriber sub_imu = nodeHandler.subscribe("/imu", 1000, &ImuGrabber::GrabImu, &imugb);
@@ -144,7 +144,7 @@ cv::Mat ImageGrabber::GetImage(const sensor_msgs::ImageConstPtr &img_msg)
     }
 
     // Find the marker with the minimum time difference compared to the current frame
-    std::pair<double, std::vector<ORB_SLAM3::Marker *>> result =
+    std::pair<double, std::vector<VS_GRAPHS::Marker *>> result =
         findNearestMarker(cv_ptr->header.stamp.toSec());
     minMarkerTimeDiff = result.first;
     matchedMarkers = result.second;
@@ -179,7 +179,7 @@ void ImageGrabber::SyncWithImu()
             img0Buf.pop();
             this->mBufMutex.unlock();
 
-            vector<ORB_SLAM3::IMU::Point> vImuMeas;
+            vector<VS_GRAPHS::IMU::Point> vImuMeas;
             Eigen::Vector3f Wbb;
             mpImuGb->mBufMutex.lock();
             if (!mpImuGb->imuBuf.empty())
@@ -191,7 +191,7 @@ void ImageGrabber::SyncWithImu()
                     double t = mpImuGb->imuBuf.front()->header.stamp.toSec();
                     cv::Point3f acc(mpImuGb->imuBuf.front()->linear_acceleration.x, mpImuGb->imuBuf.front()->linear_acceleration.y, mpImuGb->imuBuf.front()->linear_acceleration.z);
                     cv::Point3f gyr(mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z);
-                    vImuMeas.push_back(ORB_SLAM3::IMU::Point(acc, gyr, t));
+                    vImuMeas.push_back(VS_GRAPHS::IMU::Point(acc, gyr, t));
                     Wbb << mpImuGb->imuBuf.front()->angular_velocity.x, mpImuGb->imuBuf.front()->angular_velocity.y, mpImuGb->imuBuf.front()->angular_velocity.z;
                     mpImuGb->imuBuf.pop();
                 }

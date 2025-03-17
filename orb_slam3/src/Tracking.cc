@@ -35,7 +35,7 @@
 
 using namespace std;
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     Tracking::Tracking(System *pSys, ORBVocabulary *pVoc, FrameDrawer *pFrameDrawer, MapDrawer *pMapDrawer,
                        Atlas *pAtlas, KeyFrameDatabase *pKFDB, const string &strSettingPath, const int sensor,
@@ -4054,7 +4054,7 @@ namespace ORB_SLAM3
     {
         Map *pMap = pCurrentKeyFrame->GetMap();
         unsigned int index = mnFirstFrameId;
-        list<ORB_SLAM3::KeyFrame *>::iterator lRit = mlpReferences.begin();
+        list<VS_GRAPHS::KeyFrame *>::iterator lRit = mlpReferences.begin();
         list<bool>::iterator lbL = mlbLost.begin();
         for (auto lit = mlRelativeFramePoses.begin(), lend = mlRelativeFramePoses.end(); lit != lend; lit++, lRit++, lbL++)
         {

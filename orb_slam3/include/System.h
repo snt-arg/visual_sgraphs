@@ -51,7 +51,7 @@
 #include "GeometricSegmentation.h"
 #include "DatabaseParser.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class Verbose
@@ -175,7 +175,7 @@ namespace ORB_SLAM3
          * @brief Get the current active map in Atlas
          * @return the current active map
          */
-        ORB_SLAM3::Map *GetCurrentMap();
+        VS_GRAPHS::Map *GetCurrentMap();
 
         // Returns true if there have been a big map change (loop closure, global BA)
         // since last call to this function
@@ -326,8 +326,8 @@ namespace ORB_SLAM3
         GeometricSegmentation *mpGeometricSegmentation;
 
         // List of rooms and doors in the environment
-        std::vector<ORB_SLAM3::Room *> envRooms;
-        std::vector<ORB_SLAM3::Door *> envDoors;
+        std::vector<VS_GRAPHS::Room *> envRooms;
+        std::vector<VS_GRAPHS::Door *> envDoors;
 
         // System threads: Local Mapping, Loop Closing, Viewer.
         // 🚀 [vS-Graphs v.2.0] Two new threads: Geometric Segmentation and Semantic Segmentation

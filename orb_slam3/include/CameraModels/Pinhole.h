@@ -23,7 +23,7 @@
 #include "GeometricCamera.h"
 #include "TwoViewReconstruction.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Pinhole : public GeometricCamera
     {

@@ -28,7 +28,7 @@
 
 using namespace std;
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     const int ORBmatcher::TH_HIGH = 100;

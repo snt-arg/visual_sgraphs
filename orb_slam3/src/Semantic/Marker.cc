@@ -4,7 +4,7 @@
 
 #include "Semantic/Marker.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     Marker::Marker() {}
     Marker::~Marker() {}

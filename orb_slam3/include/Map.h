@@ -31,7 +31,7 @@
 #include <pangolin/pangolin.h>
 #include <boost/serialization/base_object.hpp>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Door;
     class Room;

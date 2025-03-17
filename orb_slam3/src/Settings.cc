@@ -30,7 +30,7 @@
 
 using namespace std;
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     template <>

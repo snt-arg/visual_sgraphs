@@ -1,10 +1,10 @@
 #include "GeometricSegmentation.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     GeometricSegmentation::GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud,
-                                                 std::vector<ORB_SLAM3::Door *> nEnvDoors,
-                                                 std::vector<ORB_SLAM3::Room *> nEvRooms)
+                                                 std::vector<VS_GRAPHS::Door *> nEnvDoors,
+                                                 std::vector<VS_GRAPHS::Room *> nEvRooms)
     {
         mpAtlas = pAtlas;
         envRooms = nEvRooms;
@@ -54,7 +54,7 @@ namespace ORB_SLAM3
         }
     }
 
-    void GeometricSegmentation::fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud)
+    void GeometricSegmentation::fetchPlanesFromKeyFrame(VS_GRAPHS::KeyFrame *pKF, bool hasDepthCloud)
     {
         // Get the plane equation from the points the camera is seeing
         std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> planePointVec;
@@ -69,22 +69,22 @@ namespace ORB_SLAM3
 
             // Convert the given plane to global coordinates
             g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
-                                                                         detectedPlane);
+                                                                  detectedPlane);
 
             // convert planeCloud to global coordinates
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr emptyPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
-            
+
             // temp global plane cloud
             pcl::PointCloud<pcl::PointXYZRGBA>::Ptr globalPlaneCloud(new pcl::PointCloud<pcl::PointXYZRGBA>);
             pcl::copyPointCloud(*planePoint.first, *globalPlaneCloud);
             pcl::transformPointCloud(*globalPlaneCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
             // Check if we need to add the wall to the map or not
-            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(), 
+            int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(),
                                                         detectedPlane,
                                                         globalPlaneCloud,
                                                         pKF->GetPose().matrix().cast<double>(),
-                                                        ORB_SLAM3::Plane::planeVariant::UNDEFINED,
+                                                        VS_GRAPHS::Plane::planeVariant::UNDEFINED,
                                                         sysParams->seg.plane_association.ominus_thresh);
             if (matchedPlaneId == -1)
                 // A wall with the same equation was not found in the map, creating a new one
@@ -99,7 +99,7 @@ namespace ORB_SLAM3
     }
 
     std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> GeometricSegmentation::getPlanesFromPointClouds(
-        ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud)
+        VS_GRAPHS::KeyFrame *pKF, bool hasDepthCloud)
     {
         // Variables
         std::vector<g2o::Plane3D> detectedPlanes;

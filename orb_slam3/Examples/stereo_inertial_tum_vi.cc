@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     cout << "IMU data in the sequence: " << nImu << endl << endl;*/
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_STEREO, true, 0, file_name);
+    VS_GRAPHS::System SLAM(argv[1], argv[2], VS_GRAPHS::System::IMU_STEREO, true, 0, file_name);
     float imageScale = SLAM.GetImageScale();
 
     double t_resize = 0.f;
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
         // Main loop
         cv::Mat imLeft, imRight;
-        vector<ORB_SLAM3::IMU::Point> vImuMeas;
+        vector<VS_GRAPHS::IMU::Point> vImuMeas;
         proccIm = 0;
         cv::Ptr<cv::CLAHE> clahe = cv::createCLAHE(3.0, cv::Size(8, 8));
         for (int ni = 0; ni < nImages[seq]; ni++, proccIm++)
@@ -188,8 +188,8 @@ int main(int argc, char **argv)
 
                 while (vTimestampsImu[seq][first_imu[seq]] <= vTimestampsCam[seq][ni])
                 {
-                    // vImuMeas.push_back(ORB_SLAM3::IMU::Point(vAcc[first_imu],vGyro[first_imu],vTimestampsImu[first_imu]));
-                    vImuMeas.push_back(ORB_SLAM3::IMU::Point(vAcc[seq][first_imu[seq]].x, vAcc[seq][first_imu[seq]].y, vAcc[seq][first_imu[seq]].z,
+                    // vImuMeas.push_back(VS_GRAPHS::IMU::Point(vAcc[first_imu],vGyro[first_imu],vTimestampsImu[first_imu]));
+                    vImuMeas.push_back(VS_GRAPHS::IMU::Point(vAcc[seq][first_imu[seq]].x, vAcc[seq][first_imu[seq]].y, vAcc[seq][first_imu[seq]].z,
                                                              vGyro[seq][first_imu[seq]].x, vGyro[seq][first_imu[seq]].y, vGyro[seq][first_imu[seq]].z,
                                                              vTimestampsImu[seq][first_imu[seq]]));
                     // cout << "t_imu = " << fixed << vImuMeas.back().t << endl;

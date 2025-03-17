@@ -30,7 +30,7 @@
 
 #include <vector>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     template <class Archive>
@@ -168,6 +168,6 @@ namespace ORB_SLAM3
         }
     }
 
-} // namespace ORB_SLAM3
+} // namespace VS_GRAPHS
 
 #endif // SERIALIZATION_UTILS_H

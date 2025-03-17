@@ -62,9 +62,9 @@
 
 using json = nlohmann::json;
 
-class ORB_SLAM3::SystemParams;
-extern ORB_SLAM3::System *pSLAM;
-extern ORB_SLAM3::System::eSensor sensorType;
+class VS_GRAPHS::SystemParams;
+extern VS_GRAPHS::System *pSLAM;
+extern VS_GRAPHS::System::eSensor sensorType;
 
 extern bool colorPointcloud;
 extern double roll, pitch, yaw;
@@ -72,7 +72,7 @@ extern bool pubStaticTransform, pubPointClouds;
 extern std::string world_frame_id, cam_frame_id, imu_frame_id, frameMap, frameBC, frameSE;
 
 // List of visited Fiducial Markers in different timestamps
-extern std::vector<std::vector<ORB_SLAM3::Marker *>> markersBuffer;
+extern std::vector<std::vector<VS_GRAPHS::Marker *>> markersBuffer;
 
 // List of white space cluster points obtained from `voxblox_skeleton`
 extern std::vector<std::vector<Eigen::Vector3d>> skeletonClusterPoints;
@@ -97,19 +97,19 @@ void setupPublishers(ros::NodeHandle &, image_transport::ImageTransport &, std::
 
 void publishTrackingImage(cv::Mat, ros::Time);
 void publishCameraPose(Sophus::SE3f, ros::Time);
-void publishRooms(std::vector<ORB_SLAM3::Room *>, ros::Time);
-void publishDoors(std::vector<ORB_SLAM3::Door *>, ros::Time);
-void publishPlanes(std::vector<ORB_SLAM3::Plane *>, ros::Time);
+void publishRooms(std::vector<VS_GRAPHS::Room *>, ros::Time);
+void publishDoors(std::vector<VS_GRAPHS::Door *>, ros::Time);
+void publishPlanes(std::vector<VS_GRAPHS::Plane *>, ros::Time);
 void publishTFTransform(Sophus::SE3f, string, string, ros::Time);
-void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
-void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, ros::Time);
-void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, ros::Time);
-void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
-void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
-void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *>, ros::Time);
+void publishAllPoints(std::vector<VS_GRAPHS::MapPoint *>, ros::Time);
+void publishTrackedPoints(std::vector<VS_GRAPHS::MapPoint *>, ros::Time);
+void publishFiducialMarkers(std::vector<VS_GRAPHS::Marker *>, ros::Time);
+void publishSegmentedCloud(std::vector<VS_GRAPHS::KeyFrame *>, ros::Time);
+void publishKeyFrameImages(std::vector<VS_GRAPHS::KeyFrame *>, ros::Time);
+void publishKeyFrameMarkers(std::vector<VS_GRAPHS::KeyFrame *>, ros::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, ros::Time);
 
-void clearKFClsClouds(std::vector<ORB_SLAM3::KeyFrame *>);
+void clearKFClsClouds(std::vector<VS_GRAPHS::KeyFrame *>);
 
 bool saveMapService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
 bool saveTrajectoryService(orb_slam3_ros::SaveMap::Request &, orb_slam3_ros::SaveMap::Response &);
@@ -135,7 +135,7 @@ tf::Transform SE3fToTFTransform(Sophus::SE3f data);
  * @param mapPoints The vector of MapPoints to be converted
  * @param msgTime The timestamp for the PointCloud2 message
  */
-sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *> mapPoints, ros::Time msgTime);
+sensor_msgs::PointCloud2 mapPointToPointcloud(std::vector<VS_GRAPHS::MapPoint *> mapPoints, ros::Time msgTime);
 
 /**
  * @brief Publishes a static transformation (TF) between two coordinate frames and define a
@@ -165,7 +165,7 @@ void addMarkersToBuffer(const aruco_msgs::MarkerArray &markerArray);
  * @brief Avoids adding duplicate markers to the buffer by checking the timestamp
  * @param frameTimestamp The timestamp of the frame that captured the marker
  */
-std::pair<double, std::vector<ORB_SLAM3::Marker *>> findNearestMarker(double frameTimestamp);
+std::pair<double, std::vector<VS_GRAPHS::Marker *>> findNearestMarker(double frameTimestamp);
 
 /**
  * @brief Gets skeleton voxels from `voxblox_skeleton` to be processed

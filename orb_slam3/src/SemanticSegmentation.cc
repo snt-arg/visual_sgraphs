@@ -1,6 +1,6 @@
 #include "SemanticSegmentation.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     SemanticSegmentation::SemanticSegmentation(Atlas *pAtlas)
     {
@@ -238,7 +238,7 @@ namespace ORB_SLAM3
                 pcl::transformPointCloud(*globalPlaneCloud, *globalPlaneCloud, pKF->GetPoseInverse().matrix().cast<float>());
 
                 // Get the semantic type of the observation
-                ORB_SLAM3::Plane::planeVariant semanticType = Utils::getPlaneTypeFromClassId(clsId);
+                VS_GRAPHS::Plane::planeVariant semanticType = Utils::getPlaneTypeFromClassId(clsId);
 
                 // Check if we need to add the wall to the map or not
                 int matchedPlaneId = Utils::associatePlanes(mpAtlas->GetAllPlanes(),
@@ -252,7 +252,7 @@ namespace ORB_SLAM3
                 {
                     if (!mGeoRuns)
                     {
-                        ORB_SLAM3::Plane *newMapPlane = GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane,
+                        VS_GRAPHS::Plane *newMapPlane = GeoSemHelpers::createMapPlane(mpAtlas, pKF, detectedPlane,
                                                                                       planeCloud, semanticType, conf);
                         // Cast a vote for the plane semantics
                         updatePlaneSemantics(newMapPlane->getId(), clsId, conf);
@@ -266,7 +266,7 @@ namespace ORB_SLAM3
                     else
                     {
                         pcl::transformPointCloud(*planeCloud, *planeCloud, pKF->GetPoseInverse().matrix().cast<float>());
-                        ORB_SLAM3::Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
+                        VS_GRAPHS::Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
                         // Add the plane cloud to the matched plane
                         if (!planeCloud->empty())
                             matchedPlane->setMapClouds(planeCloud);
@@ -285,7 +285,7 @@ namespace ORB_SLAM3
         Plane *matchedPlane = mpAtlas->GetPlaneById(planeId);
 
         // plane type compatible with the Plane class
-        ORB_SLAM3::Plane::planeVariant planeType = Utils::getPlaneTypeFromClassId(clsId);
+        VS_GRAPHS::Plane::planeVariant planeType = Utils::getPlaneTypeFromClassId(clsId);
 
         // cast a vote for the plane semantics
         matchedPlane->castWeightedVote(planeType, confidence);

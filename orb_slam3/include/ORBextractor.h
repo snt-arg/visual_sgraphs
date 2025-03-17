@@ -23,7 +23,7 @@
 #include <list>
 #include <opencv2/opencv.hpp>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class ExtractorNode

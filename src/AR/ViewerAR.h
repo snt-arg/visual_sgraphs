@@ -25,7 +25,7 @@
 #include <string>
 #include "System.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class Plane
@@ -62,7 +62,7 @@ namespace ORB_SLAM3
             mT = 1e3 / fps;
         }
 
-        void SetSLAM(ORB_SLAM3::System *pSystem)
+        void SetSLAM(VS_GRAPHS::System *pSystem)
         {
             mpSystem = pSystem;
         }
@@ -86,7 +86,7 @@ namespace ORB_SLAM3
 
     private:
         // SLAM
-        ORB_SLAM3::System *mpSystem;
+        VS_GRAPHS::System *mpSystem;
 
         void PrintStatus(const int &status, const bool &bLocMode, cv::Mat &im);
         void AddTextToImage(const std::string &s, cv::Mat &im, const int r = 0, const int g = 0, const int b = 0);

@@ -22,7 +22,7 @@
 #include <pangolin/pangolin.h>
 #include <mutex>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     MapDrawer::MapDrawer(Atlas *pAtlas, const string &strSettingPath, Settings *settings) : mpAtlas(pAtlas)

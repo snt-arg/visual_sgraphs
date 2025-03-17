@@ -1,6 +1,6 @@
 #include "Utils.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     double Utils::calculateEuclideanDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2)
     {
@@ -369,26 +369,26 @@ namespace ORB_SLAM3
     Utils::ransacPlaneFitting<pcl::PointXYZRGBA, pcl::WeightedSACSegmentation>(
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &);
 
-    ORB_SLAM3::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId)
+    VS_GRAPHS::Plane::planeVariant Utils::getPlaneTypeFromClassId(int clsId)
     {
         switch (clsId)
         {
         case 0:
-            return ORB_SLAM3::Plane::planeVariant::GROUND;
+            return VS_GRAPHS::Plane::planeVariant::GROUND;
         case 1:
-            return ORB_SLAM3::Plane::planeVariant::WALL;
+            return VS_GRAPHS::Plane::planeVariant::WALL;
         default:
-            return ORB_SLAM3::Plane::planeVariant::UNDEFINED;
+            return VS_GRAPHS::Plane::planeVariant::UNDEFINED;
         }
     }
 
-    int Utils::getClassIdFromPlaneType(ORB_SLAM3::Plane::planeVariant planeType)
+    int Utils::getClassIdFromPlaneType(VS_GRAPHS::Plane::planeVariant planeType)
     {
         switch (planeType)
         {
-        case ORB_SLAM3::Plane::planeVariant::GROUND:
+        case VS_GRAPHS::Plane::planeVariant::GROUND:
             return 0;
-        case ORB_SLAM3::Plane::planeVariant::WALL:
+        case VS_GRAPHS::Plane::planeVariant::WALL:
             return 1;
         default:
             return -1;
@@ -556,7 +556,7 @@ namespace ORB_SLAM3
         for (const auto &plane : planes)
         {
             // Only consider planes with a semantic type and not excluded from association
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED || plane->excludedFromAssoc)
+            if (plane->getPlaneType() == VS_GRAPHS::Plane::planeVariant::UNDEFINED || plane->excludedFromAssoc)
                 continue;
 
             // Get plane information
@@ -589,7 +589,7 @@ namespace ORB_SLAM3
                 Plane *matchedPlane = mpAtlas->GetPlaneById(matchedPlaneId);
 
                 // if one of them has a plane type, then it is automatically the bigger plane
-                if (matchedPlane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED ||
+                if (matchedPlane->getPlaneType() == VS_GRAPHS::Plane::planeVariant::UNDEFINED ||
                     plane->getMapClouds()->points.size() > matchedPlane->getMapClouds()->points.size())
                 {
                     smallPlane = matchedPlane;

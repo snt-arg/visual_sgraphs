@@ -2,7 +2,7 @@
 
 ![Visual S-Graphs](demo.gif "Visual S-Graphs")
 
-A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com/UZ-SLAMLab/ORB_SLAM3) (ROS implementation version introduced [here](https://github.com/thien94/orb_slam3_ros)) that supports adding semantic entities to the final map and adding hierarchical representations.
+A marker-based VSLAM framework built on top of [ORB-SLAM 3.0](https://github.com/UZ-SLAMLab/VS_GRAPHS) (ROS implementation version introduced [here](https://github.com/thien94/orb_slam3_ros)) that supports adding semantic entities to the final map and adding hierarchical representations.
 
 [![arXiv](https://img.shields.io/badge/arXiv-2309.10461-b31b1b.svg)](https://arxiv.org/abs/2309.10461)
 
@@ -24,7 +24,7 @@ Install the required libraries listed below:
 
 ### OpenCV <a id="opencv"></a>
 
-Check the OpenCV version on your computer (required [at least 3.0](https://github.com/UZ-SLAMLab/ORB_SLAM3)):
+Check the OpenCV version on your computer (required [at least 3.0](https://github.com/UZ-SLAMLab/VS_GRAPHS)):
 
 ```
 python3 -c "import cv2; print(cv2.__version__)"

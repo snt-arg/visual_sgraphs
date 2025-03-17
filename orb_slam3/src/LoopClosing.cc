@@ -27,7 +27,7 @@
 #include <mutex>
 #include <thread>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     LoopClosing::LoopClosing(Atlas *pAtlas, KeyFrameDatabase *pDB, ORBVocabulary *pVoc, const bool bFixScale, const bool bActiveLC) : mbResetRequested(false), mbResetActiveMapRequested(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas),

@@ -16,7 +16,7 @@
 #include <pcl/common/centroid.h>
 #include <pcl/octree/octree_search.h>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Map;
     class Marker;
@@ -37,10 +37,10 @@ namespace ORB_SLAM3
 
         struct Observation
         {
-            g2o::Plane3D localPlane;                        // The plane equation in the local frame
-            Eigen::Matrix4d Gij;                            // The aggregated point cloud measurement for point-plane constraint
-            double confidence;                              // The aggregated confidence of the plane
-            planeVariant semanticType = UNDEFINED;          // The semantic type of the plane
+            g2o::Plane3D localPlane;               // The plane equation in the local frame
+            Eigen::Matrix4d Gij;                   // The aggregated point cloud measurement for point-plane constraint
+            double confidence;                     // The aggregated confidence of the plane
+            planeVariant semanticType = UNDEFINED; // The semantic type of the plane
         };
 
         // Variables for bundle adjustment
@@ -49,18 +49,18 @@ namespace ORB_SLAM3
         g2o::Plane3D mPlaneGBA;            // The plane equation in the global map after the Global BA
 
     private:
-        int id;                                             // The plane's identifier
-        int opId;                                           // The plane's identifier in the local optimizer
-        int opIdG;                                          // The plane's identifier in the global optimizer
-        planeVariant planeType;                             // The plane's semantic type (e.g., wall, ground, etc.)
-        Eigen::Vector3f centroid;                           // The centroid of the plane
-        std::vector<uint8_t> color;                         // A color devoted for visualization
-        g2o::Plane3D localEquation;                         // The plane equation in the local map
-        g2o::Plane3D globalEquation;                        // The plane equation in the global map
-        std::set<MapPoint *> mapPoints;                     // The unique set of map points lying on the plane
-        std::map<planeVariant, double> semanticVotes;       // The votes for the semantic type of the plane
-        std::map<KeyFrame *, Observation> observations;    // Plane's observations in keyFrames
-        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud; // The point cloud of the plane
+        int id;                                                                           // The plane's identifier
+        int opId;                                                                         // The plane's identifier in the local optimizer
+        int opIdG;                                                                        // The plane's identifier in the global optimizer
+        planeVariant planeType;                                                           // The plane's semantic type (e.g., wall, ground, etc.)
+        Eigen::Vector3f centroid;                                                         // The centroid of the plane
+        std::vector<uint8_t> color;                                                       // A color devoted for visualization
+        g2o::Plane3D localEquation;                                                       // The plane equation in the local map
+        g2o::Plane3D globalEquation;                                                      // The plane equation in the global map
+        std::set<MapPoint *> mapPoints;                                                   // The unique set of map points lying on the plane
+        std::map<planeVariant, double> semanticVotes;                                     // The votes for the semantic type of the plane
+        std::map<KeyFrame *, Observation> observations;                                   // Plane's observations in keyFrames
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud;                               // The point cloud of the plane
         boost::shared_ptr<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>> octree; // The octree for the plane cloud
 
     public:

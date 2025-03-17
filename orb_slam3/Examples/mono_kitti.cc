@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     int nImages = vstrImageFilenames.size();
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, true);
+    VS_GRAPHS::System SLAM(argv[1], argv[2], VS_GRAPHS::System::MONOCULAR, true);
     float imageScale = SLAM.GetImageScale();
 
     // Vector for tracking time statistics
@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 #endif
 
         // Pass the image to the SLAM system
-        SLAM.TrackMonocular(im, tframe, vector<ORB_SLAM3::IMU::Point>(), vstrImageFilenames[ni]);
+        SLAM.TrackMonocular(im, tframe, vector<VS_GRAPHS::IMU::Point>(), vstrImageFilenames[ni]);
 
 #ifdef COMPILEDWITHC11
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();

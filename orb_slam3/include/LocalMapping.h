@@ -29,7 +29,7 @@
 
 #include <mutex>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class System;

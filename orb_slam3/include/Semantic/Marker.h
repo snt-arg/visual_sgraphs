@@ -8,7 +8,7 @@
 #include "Map.h"
 #include "KeyFrame.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Map;
     class KeyFrame;

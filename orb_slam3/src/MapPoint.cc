@@ -21,7 +21,7 @@
 
 #include <mutex>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     long unsigned int MapPoint::nNextId = 0;

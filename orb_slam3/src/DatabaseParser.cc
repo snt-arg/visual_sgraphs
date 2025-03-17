@@ -4,7 +4,7 @@
 
 #include "DatabaseParser.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     DBParser::DBParser() {}
     DBParser::~DBParser() {}

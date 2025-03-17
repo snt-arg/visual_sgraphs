@@ -4,7 +4,7 @@
 
 #include "Semantic/Door.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     Door::Door() {}
     Door::~Door() {}

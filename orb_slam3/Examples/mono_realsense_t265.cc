@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     cout << "IMU data in the sequence: " << nImu << endl << endl;*/
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, true);
+    VS_GRAPHS::System SLAM(argv[1], argv[2], VS_GRAPHS::System::MONOCULAR, true);
     float imageScale = SLAM.GetImageScale();
 
     cv::Mat imCV;

@@ -1,6 +1,6 @@
 #include "SemanticsManager.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     SemanticsManager::SemanticsManager(Atlas *pAtlas)
     {
@@ -66,7 +66,7 @@ namespace ORB_SLAM3
     {
         for (const auto &plane : mpAtlas->GetAllPlanes())
         {
-            if (plane->getExpectedPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+            if (plane->getExpectedPlaneType() == VS_GRAPHS::Plane::planeVariant::WALL)
             {
                 // wall validation based on the mPlanePoseMat
                 // only works if the ground plane is set, needs the correction matrix: mPlanePoseMat
@@ -92,7 +92,7 @@ namespace ORB_SLAM3
         int groundPlaneId = groundPlane->getId();
         for (const auto &plane : mpAtlas->GetAllPlanes())
         {
-            if (plane->getExpectedPlaneType() != ORB_SLAM3::Plane::planeVariant::GROUND || plane->getId() == groundPlaneId)
+            if (plane->getExpectedPlaneType() != VS_GRAPHS::Plane::planeVariant::GROUND || plane->getId() == groundPlaneId)
                 continue;
 
             // if the plane is above the threshold (inverted y), then reset the plane semantics
@@ -212,7 +212,7 @@ namespace ORB_SLAM3
         // Filter the planes to get only the walls
         std::vector<Plane *> allWalls;
         for (auto plane : allPlanes)
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+            if (plane->getPlaneType() == VS_GRAPHS::Plane::planeVariant::WALL)
                 allWalls.push_back(plane);
 
         // Get the closest walls to the current KeyFrame
@@ -303,7 +303,7 @@ namespace ORB_SLAM3
     {
         // Variables
         std::vector<Plane *> allWalls;
-        ORB_SLAM3::Room *newClusterBasedRoom = nullptr;
+        VS_GRAPHS::Room *newClusterBasedRoom = nullptr;
 
         // Get the skeleton clusters
         std::vector<std::vector<Eigen::Vector3d>> clusters = getLatestSkeletonCluster();
@@ -313,7 +313,7 @@ namespace ORB_SLAM3
 
         // Filter the planes to get only the walls
         for (const auto &plane : allPlanes)
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+            if (plane->getPlaneType() == VS_GRAPHS::Plane::planeVariant::WALL)
                 allWalls.push_back(plane);
 
         // Find the walls within the threshold distance to the cluster points
@@ -364,7 +364,7 @@ namespace ORB_SLAM3
             // Create room candidates for them
             if (isRectRoomFound)
             {
-                std::vector<ORB_SLAM3::Plane *> walls = {rectangularRoom.first.first, rectangularRoom.first.second,
+                std::vector<VS_GRAPHS::Plane *> walls = {rectangularRoom.first.first, rectangularRoom.first.second,
                                                          rectangularRoom.second.first, rectangularRoom.second.second};
                 // Search for a room candidate within the given range (marker-based)
                 // If found, augment information from new room to that one
@@ -373,14 +373,14 @@ namespace ORB_SLAM3
             else
             {
                 // Get the walls
-                std::vector<ORB_SLAM3::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
+                std::vector<VS_GRAPHS::Plane *> walls = {facingWalls[0].first, facingWalls[0].second};
                 // Create a corridor
                 newClusterBasedRoom = GeoSemHelpers::createMapRoomCandidateByFreeSpace(mpAtlas, true, walls,
                                                                                        Utils::getClusterCenteroid(cluster));
             }
 
             // Check if the room has not been created before
-            ORB_SLAM3::Room *foundMarkerBasedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllMarkerBasedMapRooms());
+            VS_GRAPHS::Room *foundMarkerBasedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllMarkerBasedMapRooms());
             if (foundMarkerBasedRoom != nullptr)
             {
                 // If the room already exists, update the existing room candidate with the new information
@@ -389,7 +389,7 @@ namespace ORB_SLAM3
             else
             {
                 // Otherwise, add the new room candidate to the map
-                ORB_SLAM3::Room *detectedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllDetectedMapRooms());
+                VS_GRAPHS::Room *detectedRoom = roomAssociation(newClusterBasedRoom, mpAtlas->GetAllDetectedMapRooms());
                 if (detectedRoom == nullptr)
                 {
                     std::cout << "\n[SemSeg]" << std::endl;
@@ -407,11 +407,11 @@ namespace ORB_SLAM3
         // [TODO] Needs to be implemented
     }
 
-    ORB_SLAM3::Room *SemanticsManager::roomAssociation(const ORB_SLAM3::Room *givenRoom,
+    VS_GRAPHS::Room *SemanticsManager::roomAssociation(const VS_GRAPHS::Room *givenRoom,
                                                        const vector<Room *> &givenRoomList)
     {
         // Variables
-        ORB_SLAM3::Room *foundMappedRoom = nullptr;
+        VS_GRAPHS::Room *foundMappedRoom = nullptr;
         double minDistance = sysParams->room_seg.center_distance_thresh;
 
         if (givenRoomList.empty())

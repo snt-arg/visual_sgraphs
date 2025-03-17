@@ -26,7 +26,7 @@
 #include <thread>
 
 using namespace std;
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     TwoViewReconstruction::TwoViewReconstruction(const Eigen::Matrix3f &k, float sigma, int iterations)
     {

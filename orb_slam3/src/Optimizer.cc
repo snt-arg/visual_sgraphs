@@ -35,7 +35,7 @@
 #include "Thirdparty/g2o/g2o/core/optimization_algorithm_levenberg.h"
 #include "Thirdparty/g2o/g2o/core/optimization_algorithm_gauss_newton.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     bool sortByVal(const pair<MapPoint *, int> &a, const pair<MapPoint *, int> &b)
     {
@@ -46,12 +46,12 @@ namespace ORB_SLAM3
                                            const unsigned long nLoopKF, const bool bRobust,
                                            double markerImpact)
     {
-        std::vector<ORB_SLAM3::Door *> allDoors = pMap->GetAllDoors();
-        std::vector<ORB_SLAM3::Room *> allRooms = pMap->GetAllRooms();
-        std::vector<ORB_SLAM3::Plane *> allPlanes = pMap->GetAllPlanes();
-        std::vector<ORB_SLAM3::Marker *> allMarkers = pMap->GetAllMarkers();
-        std::vector<ORB_SLAM3::MapPoint *> allMapPoints = pMap->GetAllMapPoints();
-        std::vector<ORB_SLAM3::KeyFrame *> allKeyFrames = pMap->GetAllKeyFrames();
+        std::vector<VS_GRAPHS::Door *> allDoors = pMap->GetAllDoors();
+        std::vector<VS_GRAPHS::Room *> allRooms = pMap->GetAllRooms();
+        std::vector<VS_GRAPHS::Plane *> allPlanes = pMap->GetAllPlanes();
+        std::vector<VS_GRAPHS::Marker *> allMarkers = pMap->GetAllMarkers();
+        std::vector<VS_GRAPHS::MapPoint *> allMapPoints = pMap->GetAllMapPoints();
+        std::vector<VS_GRAPHS::KeyFrame *> allKeyFrames = pMap->GetAllKeyFrames();
 
         BundleAdjustment(allKeyFrames, allMapPoints, allMarkers, allPlanes, allDoors,
                          allRooms, nIterations, pbStopFlag, nLoopKF, bRobust, markerImpact);
@@ -86,10 +86,10 @@ namespace ORB_SLAM3
 
         const int nExpectedSize = (vpKFs.size()) * vpMP.size();
 
-        vector<ORB_SLAM3::EdgeSE3ProjectXYZ *> vpEdgesMono;
+        vector<VS_GRAPHS::EdgeSE3ProjectXYZ *> vpEdgesMono;
         vpEdgesMono.reserve(nExpectedSize);
 
-        vector<ORB_SLAM3::EdgeSE3ProjectXYZToBody *> vpEdgesBody;
+        vector<VS_GRAPHS::EdgeSE3ProjectXYZToBody *> vpEdgesBody;
         vpEdgesBody.reserve(nExpectedSize);
 
         vector<KeyFrame *> vpEdgeKFMono;
@@ -178,7 +178,7 @@ namespace ORB_SLAM3
                     Eigen::Matrix<double, 2, 1> obs;
                     obs << kpUn.pt.x, kpUn.pt.y;
 
-                    ORB_SLAM3::EdgeSE3ProjectXYZ *e = new ORB_SLAM3::EdgeSE3ProjectXYZ();
+                    VS_GRAPHS::EdgeSE3ProjectXYZ *e = new VS_GRAPHS::EdgeSE3ProjectXYZ();
 
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKF->mnId)));
@@ -250,7 +250,7 @@ namespace ORB_SLAM3
                         cv::KeyPoint kp = pKF->mvKeysRight[rightIndex];
                         obs << kp.pt.x, kp.pt.y;
 
-                        ORB_SLAM3::EdgeSE3ProjectXYZToBody *e = new ORB_SLAM3::EdgeSE3ProjectXYZToBody();
+                        VS_GRAPHS::EdgeSE3ProjectXYZToBody *e = new VS_GRAPHS::EdgeSE3ProjectXYZToBody();
 
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
                         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKF->mnId)));
@@ -330,11 +330,11 @@ namespace ORB_SLAM3
             vpPlane->setOpIdG(opIdG);
 
             // Adding an edge between the plane and the keyframes
-            const map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = vpPlane->getObservations();
-            for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            const map<KeyFrame *, VS_GRAPHS::Plane::Observation> observations = vpPlane->getObservations();
+            for (map<KeyFrame *, VS_GRAPHS::Plane::Observation>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
-                ORB_SLAM3::Plane::Observation obs = obsId->second;
+                VS_GRAPHS::Plane::Observation obs = obsId->second;
 
                 if (pKFi->isBad())
                 {
@@ -344,13 +344,13 @@ namespace ORB_SLAM3
                 }
 
                 g2o::Plane3D planeLocalEquation = obs.localPlane;
-                ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+                VS_GRAPHS::EdgeVertexPlaneProjectSE3KF *e = new VS_GRAPHS::EdgeVertexPlaneProjectSE3KF();
 
                 if (optimizer.vertex(opIdG) && optimizer.vertex(pKFi->mnId))
                 {
                     if (sysParams->optimization.plane_kf.enabled)
                     {
-                        ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+                        VS_GRAPHS::EdgeVertexPlaneProjectSE3KF *e = new VS_GRAPHS::EdgeVertexPlaneProjectSE3KF();
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
                         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
                         e->setInformation(Eigen::Matrix<double, 3, 3>::Identity() * obs.confidence * sysParams->optimization.plane_kf.information_gain);
@@ -370,7 +370,7 @@ namespace ORB_SLAM3
                         if (clsCloudIdx != -1)
                         {
                             // add the plane-point constraint
-                            ORB_SLAM3::EdgeSE3KFPointToPlane *e = new ORB_SLAM3::EdgeSE3KFPointToPlane();
+                            VS_GRAPHS::EdgeSE3KFPointToPlane *e = new VS_GRAPHS::EdgeSE3KFPointToPlane();
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
                             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
                             e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * obs.confidence * sysParams->optimization.plane_point.information_gain);
@@ -391,7 +391,7 @@ namespace ORB_SLAM3
             // for (const auto &planeMarker : attachedMarkers)
             // {
             //     // Adding an edge between the Plane and the Marker
-            //     ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
+            //     VS_GRAPHS::EdgeVertexPlaneProjectSE3M *e = new VS_GRAPHS::EdgeVertexPlaneProjectSE3M();
             //     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
             //     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpIdG())));
             //     e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
@@ -427,7 +427,7 @@ namespace ORB_SLAM3
                 if (vpRoom->getIsCorridor())
                 {
                     // Adding an edge between the room and the two walls
-                    ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
+                    VS_GRAPHS::EdgeVertex2PlaneProjectSE3Room *e = new VS_GRAPHS::EdgeVertex2PlaneProjectSE3Room();
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpIdG())));
                     e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpIdG())));
@@ -441,7 +441,7 @@ namespace ORB_SLAM3
                 else
                 {
                     // Adding an edge between the room and the two walls
-                    ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
+                    VS_GRAPHS::EdgeVertex4PlaneProjectSE3Room *e = new VS_GRAPHS::EdgeVertex4PlaneProjectSE3Room();
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpIdG())));
                     e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpIdG())));
@@ -477,7 +477,7 @@ namespace ORB_SLAM3
                 door->setOpIdG(opIdG);
 
                 // Adding an edge between the room and the door
-                ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
+                VS_GRAPHS::EdgeSE3DoorProjectSE3Room *e = new VS_GRAPHS::EdgeSE3DoorProjectSE3Room();
                 e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opIdG)));
                 e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpIdG())));
                 e->setInformation(Eigen::MatrixXd::Identity(6, 6));
@@ -534,7 +534,7 @@ namespace ORB_SLAM3
 
                     for (size_t i2 = 0, iend = vpEdgesMono.size(); i2 < iend; i2++)
                     {
-                        ORB_SLAM3::EdgeSE3ProjectXYZ *e = vpEdgesMono[i2];
+                        VS_GRAPHS::EdgeSE3ProjectXYZ *e = vpEdgesMono[i2];
                         MapPoint *pMP = vpMapPointEdgeMono[i2];
                         KeyFrame *pKFedge = vpEdgeKFMono[i2];
 
@@ -1087,8 +1087,8 @@ namespace ORB_SLAM3
         // Set MapPoint vertices
         const int N = pFrame->N;
 
-        vector<ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose *> vpEdgesMono;
-        vector<ORB_SLAM3::EdgeSE3ProjectXYZOnlyPoseToBody *> vpEdgesMono_FHR;
+        vector<VS_GRAPHS::EdgeSE3ProjectXYZOnlyPose *> vpEdgesMono;
+        vector<VS_GRAPHS::EdgeSE3ProjectXYZOnlyPoseToBody *> vpEdgesMono_FHR;
         vector<size_t> vnIndexEdgeMono, vnIndexEdgeRight;
         vpEdgesMono.reserve(N);
         vpEdgesMono_FHR.reserve(N);
@@ -1124,7 +1124,7 @@ namespace ORB_SLAM3
                             const cv::KeyPoint &kpUn = pFrame->mvKeysUn[i];
                             obs << kpUn.pt.x, kpUn.pt.y;
 
-                            ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose *e = new ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose();
+                            VS_GRAPHS::EdgeSE3ProjectXYZOnlyPose *e = new VS_GRAPHS::EdgeSE3ProjectXYZOnlyPose();
 
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(0)));
                             e->setMeasurement(obs);
@@ -1194,7 +1194,7 @@ namespace ORB_SLAM3
                             Eigen::Matrix<double, 2, 1> obs;
                             obs << kpUn.pt.x, kpUn.pt.y;
 
-                            ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose *e = new ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose();
+                            VS_GRAPHS::EdgeSE3ProjectXYZOnlyPose *e = new VS_GRAPHS::EdgeSE3ProjectXYZOnlyPose();
 
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(0)));
                             e->setMeasurement(obs);
@@ -1222,7 +1222,7 @@ namespace ORB_SLAM3
 
                             pFrame->mvbOutlier[i] = false;
 
-                            ORB_SLAM3::EdgeSE3ProjectXYZOnlyPoseToBody *e = new ORB_SLAM3::EdgeSE3ProjectXYZOnlyPoseToBody();
+                            VS_GRAPHS::EdgeSE3ProjectXYZOnlyPoseToBody *e = new VS_GRAPHS::EdgeSE3ProjectXYZOnlyPoseToBody();
 
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(0)));
                             e->setMeasurement(obs);
@@ -1337,7 +1337,7 @@ namespace ORB_SLAM3
             nBad = 0;
             for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++)
             {
-                ORB_SLAM3::EdgeSE3ProjectXYZOnlyPose *e = vpEdgesMono[i];
+                VS_GRAPHS::EdgeSE3ProjectXYZOnlyPose *e = vpEdgesMono[i];
 
                 const size_t idx = vnIndexEdgeMono[i];
                 if (it == 2)
@@ -1371,7 +1371,7 @@ namespace ORB_SLAM3
 
             for (size_t i = 0, iend = vpEdgesMono_FHR.size(); i < iend; i++)
             {
-                ORB_SLAM3::EdgeSE3ProjectXYZOnlyPoseToBody *e = vpEdgesMono_FHR[i];
+                VS_GRAPHS::EdgeSE3ProjectXYZOnlyPoseToBody *e = vpEdgesMono_FHR[i];
 
                 const size_t idx = vnIndexEdgeRight[i];
                 if (it == 2)
@@ -1451,7 +1451,7 @@ namespace ORB_SLAM3
         return nInitialCorrespondences - nBad;
     }
 
-    void Optimizer::LocalBundleAdjustment(ORB_SLAM3::KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &countFixedKF,
+    void Optimizer::LocalBundleAdjustment(VS_GRAPHS::KeyFrame *pKF, bool *pbStopFlag, Map *pMap, int &countFixedKF,
                                           int &num_OptKF, int &num_MPs, int &num_edges, double markerImpact)
     {
         // System parameters
@@ -1459,15 +1459,15 @@ namespace ORB_SLAM3
 
         // Variables
         countFixedKF = 0;
-        std::list<ORB_SLAM3::Door *> localDoorList;
-        std::list<ORB_SLAM3::Room *> localRoomList;
-        ORB_SLAM3::Map *pCurrentMap = pKF->GetMap();
-        std::list<ORB_SLAM3::Plane *> localPlaneList;
-        std::list<ORB_SLAM3::Marker *> localMarkerList;
-        std::list<ORB_SLAM3::KeyFrame *> localKeyFrameList;
-        std::list<ORB_SLAM3::MapPoint *> localMapPointList;
-        std::vector<ORB_SLAM3::KeyFrame *> neighborKeyFrameVec;
-        std::vector<ORB_SLAM3::Room *> allRooms = pCurrentMap->GetAllRooms();
+        std::list<VS_GRAPHS::Door *> localDoorList;
+        std::list<VS_GRAPHS::Room *> localRoomList;
+        VS_GRAPHS::Map *pCurrentMap = pKF->GetMap();
+        std::list<VS_GRAPHS::Plane *> localPlaneList;
+        std::list<VS_GRAPHS::Marker *> localMarkerList;
+        std::list<VS_GRAPHS::KeyFrame *> localKeyFrameList;
+        std::list<VS_GRAPHS::MapPoint *> localMapPointList;
+        std::vector<VS_GRAPHS::KeyFrame *> neighborKeyFrameVec;
+        std::vector<VS_GRAPHS::Room *> allRooms = pCurrentMap->GetAllRooms();
 
         // Unorderd maps to keep track of the local entities
         std::unordered_map<int, bool> mpLocalDoorId;
@@ -1493,7 +1493,7 @@ namespace ORB_SLAM3
         for (int idx = 0, idxEnd = neighborKeyFrameVec.size(); idx < idxEnd; idx++)
         {
             // Get the current KeyFrame's neighbors
-            ORB_SLAM3::KeyFrame *pKFi = neighborKeyFrameVec[idx];
+            VS_GRAPHS::KeyFrame *pKFi = neighborKeyFrameVec[idx];
             // Mark the KeyFrame as a part of the current LBA
             pKFi->mnBALocalForKF = pKF->mnId;
             // If the KeyFrame is proper, add it to the list of local KeyFrames for LBA
@@ -1505,27 +1505,27 @@ namespace ORB_SLAM3
         }
 
         // [LBA] Loop through the local KeyFrames
-        for (std::list<ORB_SLAM3::KeyFrame *>::iterator lit = localKeyFrameList.begin(),
+        for (std::list<VS_GRAPHS::KeyFrame *>::iterator lit = localKeyFrameList.begin(),
                                                         lend = localKeyFrameList.end();
              lit != lend; lit++)
         {
             // Variables
-            ORB_SLAM3::KeyFrame *pKFi = *lit;
-            std::vector<ORB_SLAM3::Door *> localDoorsVec = pKFi->GetMapDoors();
-            std::vector<ORB_SLAM3::Plane *> localPlanesVec = pKFi->GetMapPlanes();
-            std::vector<ORB_SLAM3::Marker *> localMarkersVec = pKFi->GetMapMarkers();
-            std::vector<ORB_SLAM3::MapPoint *> localMapPointsVec = pKFi->GetMapPointMatches();
+            VS_GRAPHS::KeyFrame *pKFi = *lit;
+            std::vector<VS_GRAPHS::Door *> localDoorsVec = pKFi->GetMapDoors();
+            std::vector<VS_GRAPHS::Plane *> localPlanesVec = pKFi->GetMapPlanes();
+            std::vector<VS_GRAPHS::Marker *> localMarkersVec = pKFi->GetMapMarkers();
+            std::vector<VS_GRAPHS::MapPoint *> localMapPointsVec = pKFi->GetMapPointMatches();
 
             // If the KeyFrame is the initial KeyFrame of the map, mark that as a fixed KeyFrame
             if (pKFi->mnId == pMap->GetInitKFid())
                 countFixedKF = 1;
 
             // [LBA] Loop through all the MapPoints and prepare them for LBA
-            for (std::vector<ORB_SLAM3::MapPoint *>::iterator vit = localMapPointsVec.begin(), vend = localMapPointsVec.end();
+            for (std::vector<VS_GRAPHS::MapPoint *>::iterator vit = localMapPointsVec.begin(), vend = localMapPointsVec.end();
                  vit != vend; vit++)
             {
                 // Variables
-                ORB_SLAM3::MapPoint *pMP = *vit;
+                VS_GRAPHS::MapPoint *pMP = *vit;
 
                 // If the MapPoint is proper, add it to the list of local MapPoints for LBA
                 if (pMP)
@@ -1541,22 +1541,22 @@ namespace ORB_SLAM3
             }
 
             // [LBA] Loop through all the Markers and prepare them for LBA
-            for (std::vector<ORB_SLAM3::Marker *>::iterator idx = localMarkersVec.begin(), vend = localMarkersVec.end();
+            for (std::vector<VS_GRAPHS::Marker *>::iterator idx = localMarkersVec.begin(), vend = localMarkersVec.end();
                  idx != vend; idx++)
             {
                 if (mpLocalMarkerId.find((*idx)->getId()) == mpLocalMarkerId.end())
                 {
-                    ORB_SLAM3::Marker *marker = *idx;
+                    VS_GRAPHS::Marker *marker = *idx;
                     localMarkerList.push_back(marker);
                     mpLocalMarkerId[marker->getId()] = true;
                 }
             }
 
             // [LBA] Loop through all the Planes and prepare them for LBA
-            for (std::vector<ORB_SLAM3::Plane *>::iterator idx = localPlanesVec.begin(), vend = localPlanesVec.end();
+            for (std::vector<VS_GRAPHS::Plane *>::iterator idx = localPlanesVec.begin(), vend = localPlanesVec.end();
                  idx != vend; idx++)
             {
-                ORB_SLAM3::Plane *plane = *idx;
+                VS_GRAPHS::Plane *plane = *idx;
                 // If the plane does not exist, skip it
                 if (!plane)
                     continue;
@@ -1572,12 +1572,12 @@ namespace ORB_SLAM3
             }
 
             // [LBA] Loop through all the Doors and prepare them for LBA
-            for (std::vector<ORB_SLAM3::Door *>::iterator idx = localDoorsVec.begin(), vend = localDoorsVec.end();
+            for (std::vector<VS_GRAPHS::Door *>::iterator idx = localDoorsVec.begin(), vend = localDoorsVec.end();
                  idx != vend; idx++)
             {
                 if (mpLocalDoorId.find((*idx)->getId()) == mpLocalDoorId.end())
                 {
-                    ORB_SLAM3::Door *door = *idx;
+                    VS_GRAPHS::Door *door = *idx;
                     localDoorList.push_back(door);
                     mpLocalDoorId[door->getId()] = true;
                 }
@@ -1588,7 +1588,7 @@ namespace ORB_SLAM3
         for (const auto &room : allRooms)
         {
             // Get the walls of the room
-            std::vector<ORB_SLAM3::Plane *> roomWalls = room->getWalls();
+            std::vector<VS_GRAPHS::Plane *> roomWalls = room->getWalls();
             // Add the room to the local map if any of the walls are in the local map
             for (const auto &wall : roomWalls)
                 if (mpLocalPlaneId.find(wall->getId()) != mpLocalPlaneId.end())
@@ -1631,11 +1631,11 @@ namespace ORB_SLAM3
         // }
 
         // Loop through the recently added planes, get all the keyframes and add them
-        std::list<ORB_SLAM3::KeyFrame *> lRecentLocalMapKeyFrames;
-        for (list<ORB_SLAM3::Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
+        std::list<VS_GRAPHS::KeyFrame *> lRecentLocalMapKeyFrames;
+        for (list<VS_GRAPHS::Plane *>::iterator idx = lRecentLocalMapPlanes.begin(), vend = lRecentLocalMapPlanes.end(); idx != vend; idx++)
         {
-            std::map<KeyFrame *, ORB_SLAM3::Plane::Observation> planeObservations = (*idx)->getObservations();
-            for (std::map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
+            std::map<KeyFrame *, VS_GRAPHS::Plane::Observation> planeObservations = (*idx)->getObservations();
+            for (std::map<KeyFrame *, VS_GRAPHS::Plane::Observation>::const_iterator obsId = planeObservations.begin(), obLast = planeObservations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
                 if (!pKFi->isBad() && pKFi->GetMap() == pCurrentMap)
@@ -1708,8 +1708,8 @@ namespace ORB_SLAM3
         // for (list<Plane *>::iterator lit = localPlaneList.begin(), lend = localPlaneList.end(); lit != lend; lit++)
         // {
         //     size_t newFixed = 0;
-        //     map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = (*lit)->getObservations();
-        //     for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
+        //     map<KeyFrame *, VS_GRAPHS::Plane::Observation> observations = (*lit)->getObservations();
+        //     for (map<KeyFrame *, VS_GRAPHS::Plane::Observation>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
         //     {
         //         KeyFrame *pKFi = mit->first;
 
@@ -1797,10 +1797,10 @@ namespace ORB_SLAM3
         // MapPoint vertices (Local Optimization)
         const int nExpectedSize = (localKeyFrameList.size() + lFixedCameras.size()) * localMapPointList.size();
 
-        vector<ORB_SLAM3::EdgeSE3ProjectXYZ *> vpEdgesMono;
+        vector<VS_GRAPHS::EdgeSE3ProjectXYZ *> vpEdgesMono;
         vpEdgesMono.reserve(nExpectedSize);
 
-        vector<ORB_SLAM3::EdgeSE3ProjectXYZToBody *> vpEdgesBody;
+        vector<VS_GRAPHS::EdgeSE3ProjectXYZToBody *> vpEdgesBody;
         vpEdgesBody.reserve(nExpectedSize);
 
         vector<KeyFrame *> vpEdgeKFMono;
@@ -1889,7 +1889,7 @@ namespace ORB_SLAM3
                         Eigen::Matrix<double, 2, 1> obs;
                         obs << kpUn.pt.x, kpUn.pt.y;
 
-                        ORB_SLAM3::EdgeSE3ProjectXYZ *e = new ORB_SLAM3::EdgeSE3ProjectXYZ();
+                        VS_GRAPHS::EdgeSE3ProjectXYZ *e = new VS_GRAPHS::EdgeSE3ProjectXYZ();
 
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
                         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
@@ -1959,7 +1959,7 @@ namespace ORB_SLAM3
                             cv::KeyPoint kp = pKFi->mvKeysRight[rightIndex];
                             obs << kp.pt.x, kp.pt.y;
 
-                            ORB_SLAM3::EdgeSE3ProjectXYZToBody *e = new ORB_SLAM3::EdgeSE3ProjectXYZToBody();
+                            VS_GRAPHS::EdgeSE3ProjectXYZToBody *e = new VS_GRAPHS::EdgeSE3ProjectXYZToBody();
 
                             if (optimizer.vertex(id) && optimizer.vertex(pKFi->mnId))
                             {
@@ -2046,7 +2046,7 @@ namespace ORB_SLAM3
 
                     if (optimizer.vertex(opId) && optimizer.vertex(pMP->mnId + maxKFid + 1))
                     {
-                        ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ *e = new ORB_SLAM3::EdgeVertexPlaneProjectPointXYZ();
+                        VS_GRAPHS::EdgeVertexPlaneProjectPointXYZ *e = new VS_GRAPHS::EdgeVertexPlaneProjectPointXYZ();
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pMP->mnId + maxKFid + 1)));
                         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                         e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * sysParams->optimization.plane_map_point.information_gain);
@@ -2061,11 +2061,11 @@ namespace ORB_SLAM3
             }
 
             // Adding an edge between the plane and the keyframes
-            const map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = pMapPlane->getObservations();
-            for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
+            const map<KeyFrame *, VS_GRAPHS::Plane::Observation> observations = pMapPlane->getObservations();
+            for (map<KeyFrame *, VS_GRAPHS::Plane::Observation>::const_iterator obsId = observations.begin(), obLast = observations.end(); obsId != obLast; obsId++)
             {
                 KeyFrame *pKFi = obsId->first;
-                ORB_SLAM3::Plane::Observation obs = obsId->second;
+                VS_GRAPHS::Plane::Observation obs = obsId->second;
 
                 if (pKFi->isBad())
                 {
@@ -2084,7 +2084,7 @@ namespace ORB_SLAM3
                 {
                     if (sysParams->optimization.plane_kf.enabled)
                     {
-                        ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3KF();
+                        VS_GRAPHS::EdgeVertexPlaneProjectSE3KF *e = new VS_GRAPHS::EdgeVertexPlaneProjectSE3KF();
                         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
                         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                         e->setInformation(Eigen::Matrix<double, 3, 3>::Identity() * obs.confidence * sysParams->optimization.plane_kf.information_gain);
@@ -2109,7 +2109,7 @@ namespace ORB_SLAM3
                         if (clsCloudIdx != -1)
                         {
                             // add the plane-point constraint
-                            ORB_SLAM3::EdgeSE3KFPointToPlane *e = new ORB_SLAM3::EdgeSE3KFPointToPlane();
+                            VS_GRAPHS::EdgeSE3KFPointToPlane *e = new VS_GRAPHS::EdgeSE3KFPointToPlane();
                             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKFi->mnId)));
                             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                             e->setInformation(Eigen::Matrix<double, 1, 1>::Identity() * obs.confidence * sysParams->optimization.plane_point.information_gain);
@@ -2137,7 +2137,7 @@ namespace ORB_SLAM3
             //     if (optimizer.vertex(opId) && optimizer.vertex(planeMarker->getOpId()))
             //     {
             //         // Adding an edge between the Plane and the Marker
-            //         ORB_SLAM3::EdgeVertexPlaneProjectSE3M *e = new ORB_SLAM3::EdgeVertexPlaneProjectSE3M();
+            //         VS_GRAPHS::EdgeVertexPlaneProjectSE3M *e = new VS_GRAPHS::EdgeVertexPlaneProjectSE3M();
             //         e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
             //         e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(planeMarker->getOpId())));
             //         e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
@@ -2181,7 +2181,7 @@ namespace ORB_SLAM3
                 if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()))
                 {
                     // Adding an edge between the room and the two walls
-                    ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex2PlaneProjectSE3Room();
+                    VS_GRAPHS::EdgeVertex2PlaneProjectSE3Room *e = new VS_GRAPHS::EdgeVertex2PlaneProjectSE3Room();
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
                     e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
@@ -2198,7 +2198,7 @@ namespace ORB_SLAM3
                 if (optimizer.vertex(opId) && optimizer.vertex(walls[0]->getOpId()) && optimizer.vertex(walls[1]->getOpId()) && optimizer.vertex(walls[2]->getOpId()) && optimizer.vertex(walls[2]->getOpId()))
                 {
                     // Adding an edge between the room and the four walls
-                    ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room *e = new ORB_SLAM3::EdgeVertex4PlaneProjectSE3Room();
+                    VS_GRAPHS::EdgeVertex4PlaneProjectSE3Room *e = new VS_GRAPHS::EdgeVertex4PlaneProjectSE3Room();
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[0]->getOpId())));
                     e->setVertex(2, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(walls[1]->getOpId())));
@@ -2218,7 +2218,7 @@ namespace ORB_SLAM3
             // if (optimizer.vertex(opId) && optimizer.vertex(metaMarker->getOpId()))
             // {
             //     // Adding an edge between the Plane and the Marker
-            //     ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker *e = new ORB_SLAM3::EdgeVertexSE3RoomProjectSE3Marker();
+            //     VS_GRAPHS::EdgeVertexSE3RoomProjectSE3Marker *e = new VS_GRAPHS::EdgeVertexSE3RoomProjectSE3Marker();
             //     // e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
             //     // e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(metaMarker->getOpId())));
             //     // e->setInformation(Eigen::Matrix<double, 4, 4>::Identity());
@@ -2253,7 +2253,7 @@ namespace ORB_SLAM3
         //         if (optimizer.vertex(opId) && optimizer.vertex(door->getOpId()))
         //         {
         //             // Adding an edge between the room and the door
-        //             ORB_SLAM3::EdgeSE3DoorProjectSE3Room *e = new ORB_SLAM3::EdgeSE3DoorProjectSE3Room();
+        //             VS_GRAPHS::EdgeSE3DoorProjectSE3Room *e = new VS_GRAPHS::EdgeSE3DoorProjectSE3Room();
         //             e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(opId)));
         //             e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(door->getOpId())));
         //             e->setInformation(Eigen::MatrixXd::Identity(6, 6));
@@ -2296,7 +2296,7 @@ namespace ORB_SLAM3
         // Check inlier observations
         for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++)
         {
-            ORB_SLAM3::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
+            VS_GRAPHS::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
             MapPoint *pMP = vpMapPointEdgeMono[i];
 
             if (pMP->isBad())
@@ -2311,7 +2311,7 @@ namespace ORB_SLAM3
 
         for (size_t i = 0, iend = vpEdgesBody.size(); i < iend; i++)
         {
-            ORB_SLAM3::EdgeSE3ProjectXYZToBody *e = vpEdgesBody[i];
+            VS_GRAPHS::EdgeSE3ProjectXYZToBody *e = vpEdgesBody[i];
             MapPoint *pMP = vpMapPointEdgeBody[i];
 
             if (pMP->isBad())
@@ -2341,7 +2341,7 @@ namespace ORB_SLAM3
 
         for (size_t i = 0, iend = vpEdgesPlane.size(); i < iend; i++)
         {
-            ORB_SLAM3::EdgeVertexPlaneProjectSE3KF *e = vpEdgesPlane[i];
+            VS_GRAPHS::EdgeVertexPlaneProjectSE3KF *e = vpEdgesPlane[i];
             Plane *vpPlane = vpPlaneEdgePlane[i];
 
             if (e->chi2() > 7.815 || !e->isDistanceCorrect())
@@ -2356,7 +2356,7 @@ namespace ORB_SLAM3
 
         for (size_t i = 0, iend = vpEdgesPlanePoint.size(); i < iend; i++)
         {
-            ORB_SLAM3::EdgeSE3KFPointToPlane *e = vpEdgesPlanePoint[i];
+            VS_GRAPHS::EdgeSE3KFPointToPlane *e = vpEdgesPlanePoint[i];
             Plane *vpPlane = vpPlaneEdgePlanePoint[i];
 
             if (e->chi2() > 3.841 || !e->isDistanceCorrect())
@@ -3088,7 +3088,7 @@ namespace ORB_SLAM3
         for (Plane *pPlane : vpCurrentMapPlanes)
         {
             // Get a reference KeyFrame related to the plane
-            std::map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = pPlane->getObservations();
+            std::map<KeyFrame *, VS_GRAPHS::Plane::Observation> observations = pPlane->getObservations();
 
             // If the plane has no observations, continue
             if (observations.empty())
@@ -3278,7 +3278,7 @@ namespace ORB_SLAM3
         const Eigen::Vector3f t2w = pKF2->GetTranslation();
 
         // Set Sim3 vertex
-        ORB_SLAM3::VertexSim3Expmap *vSim3 = new ORB_SLAM3::VertexSim3Expmap();
+        VS_GRAPHS::VertexSim3Expmap *vSim3 = new VS_GRAPHS::VertexSim3Expmap();
         vSim3->_fix_scale = bFixScale;
         vSim3->setEstimate(g2oS12);
         vSim3->setId(0);
@@ -3290,8 +3290,8 @@ namespace ORB_SLAM3
         // Set MapPoint vertices
         const int N = vpMatches1.size();
         const vector<MapPoint *> vpMapPoints1 = pKF1->GetMapPointMatches();
-        vector<ORB_SLAM3::EdgeSim3ProjectXYZ *> vpEdges12;
-        vector<ORB_SLAM3::EdgeInverseSim3ProjectXYZ *> vpEdges21;
+        vector<VS_GRAPHS::EdgeSim3ProjectXYZ *> vpEdges12;
+        vector<VS_GRAPHS::EdgeInverseSim3ProjectXYZ *> vpEdges21;
         vector<size_t> vnIndexEdge;
         vector<bool> vbIsInKF2;
 
@@ -3391,7 +3391,7 @@ namespace ORB_SLAM3
             const cv::KeyPoint &kpUn1 = pKF1->mvKeysUn[i];
             obs1 << kpUn1.pt.x, kpUn1.pt.y;
 
-            ORB_SLAM3::EdgeSim3ProjectXYZ *e12 = new ORB_SLAM3::EdgeSim3ProjectXYZ();
+            VS_GRAPHS::EdgeSim3ProjectXYZ *e12 = new VS_GRAPHS::EdgeSim3ProjectXYZ();
 
             e12->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id2)));
             e12->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(0)));
@@ -3429,7 +3429,7 @@ namespace ORB_SLAM3
                 nOutKF2++;
             }
 
-            ORB_SLAM3::EdgeInverseSim3ProjectXYZ *e21 = new ORB_SLAM3::EdgeInverseSim3ProjectXYZ();
+            VS_GRAPHS::EdgeInverseSim3ProjectXYZ *e21 = new VS_GRAPHS::EdgeInverseSim3ProjectXYZ();
 
             e21->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id1)));
             e21->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(0)));
@@ -3458,8 +3458,8 @@ namespace ORB_SLAM3
         int nBadOutKF2 = 0;
         for (size_t i = 0; i < vpEdges12.size(); i++)
         {
-            ORB_SLAM3::EdgeSim3ProjectXYZ *e12 = vpEdges12[i];
-            ORB_SLAM3::EdgeInverseSim3ProjectXYZ *e21 = vpEdges21[i];
+            VS_GRAPHS::EdgeSim3ProjectXYZ *e12 = vpEdges12[i];
+            VS_GRAPHS::EdgeInverseSim3ProjectXYZ *e21 = vpEdges21[i];
             if (!e12 || !e21)
                 continue;
 
@@ -3469,8 +3469,8 @@ namespace ORB_SLAM3
                 vpMatches1[idx] = static_cast<MapPoint *>(NULL);
                 optimizer.removeEdge(e12);
                 optimizer.removeEdge(e21);
-                vpEdges12[i] = static_cast<ORB_SLAM3::EdgeSim3ProjectXYZ *>(NULL);
-                vpEdges21[i] = static_cast<ORB_SLAM3::EdgeInverseSim3ProjectXYZ *>(NULL);
+                vpEdges12[i] = static_cast<VS_GRAPHS::EdgeSim3ProjectXYZ *>(NULL);
+                vpEdges21[i] = static_cast<VS_GRAPHS::EdgeInverseSim3ProjectXYZ *>(NULL);
                 nBad++;
 
                 if (!vbIsInKF2[i])
@@ -3502,8 +3502,8 @@ namespace ORB_SLAM3
         mAcumHessian = Eigen::MatrixXd::Zero(7, 7);
         for (size_t i = 0; i < vpEdges12.size(); i++)
         {
-            ORB_SLAM3::EdgeSim3ProjectXYZ *e12 = vpEdges12[i];
-            ORB_SLAM3::EdgeInverseSim3ProjectXYZ *e21 = vpEdges21[i];
+            VS_GRAPHS::EdgeSim3ProjectXYZ *e12 = vpEdges12[i];
+            VS_GRAPHS::EdgeInverseSim3ProjectXYZ *e21 = vpEdges21[i];
             if (!e12 || !e21)
                 continue;
 
@@ -4730,7 +4730,7 @@ namespace ORB_SLAM3
 
         const int nExpectedSize = (vpAdjustKF.size() + vpFixedKF.size()) * vpMPs.size();
 
-        vector<ORB_SLAM3::EdgeSE3ProjectXYZ *> vpEdgesMono;
+        vector<VS_GRAPHS::EdgeSE3ProjectXYZ *> vpEdgesMono;
         vpEdgesMono.reserve(nExpectedSize);
 
         vector<KeyFrame *> vpEdgeKFMono;
@@ -4787,7 +4787,7 @@ namespace ORB_SLAM3
                     Eigen::Matrix<double, 2, 1> obs;
                     obs << kpUn.pt.x, kpUn.pt.y;
 
-                    ORB_SLAM3::EdgeSE3ProjectXYZ *e = new ORB_SLAM3::EdgeSE3ProjectXYZ();
+                    VS_GRAPHS::EdgeSE3ProjectXYZ *e = new VS_GRAPHS::EdgeSE3ProjectXYZ();
 
                     e->setVertex(0, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(id)));
                     e->setVertex(1, dynamic_cast<g2o::OptimizableGraph::Vertex *>(optimizer.vertex(pKF->mnId)));
@@ -4866,7 +4866,7 @@ namespace ORB_SLAM3
             int badMonoMP = 0, badStereoMP = 0;
             for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++)
             {
-                ORB_SLAM3::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
+                VS_GRAPHS::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
                 MapPoint *pMP = vpMapPointEdgeMono[i];
 
                 if (pMP->isBad())
@@ -4911,7 +4911,7 @@ namespace ORB_SLAM3
         int badMonoMP = 0, badStereoMP = 0;
         for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++)
         {
-            ORB_SLAM3::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
+            VS_GRAPHS::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
             MapPoint *pMP = vpMapPointEdgeMono[i];
 
             if (pMP->isBad())
@@ -5006,7 +5006,7 @@ namespace ORB_SLAM3
 
             for (size_t i = 0, iend = vpEdgesMono.size(); i < iend; i++)
             {
-                ORB_SLAM3::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
+                VS_GRAPHS::EdgeSE3ProjectXYZ *e = vpEdgesMono[i];
                 MapPoint *pMP = vpMapPointEdgeMono[i];
                 KeyFrame *pKFedge = vpEdgeKFMono[i];
 

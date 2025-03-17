@@ -21,7 +21,7 @@
 #include "ImuTypes.h"
 #include <mutex>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     long unsigned int KeyFrame::nNextId = 0;
@@ -506,9 +506,9 @@ namespace ORB_SLAM3
                 if (!pPlane)
                     continue;
 
-                map<KeyFrame *, ORB_SLAM3::Plane::Observation> observations = pPlane->getObservations();
+                map<KeyFrame *, VS_GRAPHS::Plane::Observation> observations = pPlane->getObservations();
 
-                for (map<KeyFrame *, ORB_SLAM3::Plane::Observation>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
+                for (map<KeyFrame *, VS_GRAPHS::Plane::Observation>::iterator mit = observations.begin(), mend = observations.end(); mit != mend; mit++)
                 {
                     if (mit->first->mnId == mnId || mit->first->isBad() || mit->first->GetMap() != mpMap)
                         continue;

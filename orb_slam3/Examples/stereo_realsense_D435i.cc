@@ -242,7 +242,7 @@ int main(int argc, char **argv)
     std::cout << " Model = " << intrinsics_right.model << std::endl;
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::STEREO, true, 0, file_name);
+    VS_GRAPHS::System SLAM(argv[1], argv[2], VS_GRAPHS::System::STEREO, true, 0, file_name);
     float imageScale = SLAM.GetImageScale();
 
     double timestamp;

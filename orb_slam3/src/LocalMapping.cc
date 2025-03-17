@@ -26,7 +26,7 @@
 #include <mutex>
 #include <chrono>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     LocalMapping::LocalMapping(System *pSys, Atlas *pAtlas, const float bMonocular, bool bInertial, const string &_strSeqName) : mpSystem(pSys), mbMonocular(bMonocular), mbInertial(bInertial), mbResetRequested(false), mbResetRequestedActiveMap(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas), bInitializing(false),

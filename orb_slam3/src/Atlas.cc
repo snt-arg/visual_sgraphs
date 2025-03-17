@@ -23,7 +23,7 @@
 #include "KannalaBrandt8.h"
 #include "GeometricCamera.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     Atlas::Atlas()
     {

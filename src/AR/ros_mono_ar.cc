@@ -33,7 +33,7 @@
 
 using namespace std;
 
-ORB_SLAM3::ViewerAR viewerAR;
+VS_GRAPHS::ViewerAR viewerAR;
 bool bRGB = true;
 
 cv::Mat K;
@@ -42,11 +42,11 @@ cv::Mat DistCoef;
 class ImageGrabber
 {
 public:
-    ImageGrabber(ORB_SLAM3::System *pSLAM) : mpSLAM(pSLAM) {}
+    ImageGrabber(VS_GRAPHS::System *pSLAM) : mpSLAM(pSLAM) {}
 
     void GrabImage(const sensor_msgs::ImageConstPtr &msg);
 
-    ORB_SLAM3::System *mpSLAM;
+    VS_GRAPHS::System *mpSLAM;
 };
 
 int main(int argc, char **argv)
@@ -57,13 +57,13 @@ int main(int argc, char **argv)
     if (argc != 3)
     {
         cerr << endl
-             << "Usage: rosrun ORB_SLAM3 Mono path_to_vocabulary path_to_settings" << endl;
+             << "Usage: rosrun VS_GRAPHS Mono path_to_vocabulary path_to_settings" << endl;
         ros::shutdown();
         return 1;
     }
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::MONOCULAR, false);
+    VS_GRAPHS::System SLAM(argv[1], argv[2], VS_GRAPHS::System::MONOCULAR, false);
 
     cout << endl
          << endl;
@@ -114,7 +114,7 @@ int main(int argc, char **argv)
         DistCoef.at<float>(4) = k3;
     }
 
-    thread tViewer = thread(&ORB_SLAM3::ViewerAR::Run, &viewerAR);
+    thread tViewer = thread(&VS_GRAPHS::ViewerAR::Run, &viewerAR);
 
     ros::spin();
 
@@ -146,7 +146,7 @@ void ImageGrabber::GrabImage(const sensor_msgs::ImageConstPtr &msg)
     cv::Mat imu;
     cv::Mat Tcw = mpSLAM->TrackMonocular(cv_ptr->image, cv_ptr->header.stamp.toSec());
     int state = mpSLAM->GetTrackingState();
-    vector<ORB_SLAM3::MapPoint *> vMPs = mpSLAM->GetTrackedMapPoints();
+    vector<VS_GRAPHS::MapPoint *> vMPs = mpSLAM->GetTrackedMapPoints();
     vector<cv::KeyPoint> vKeys = mpSLAM->GetTrackedKeyPointsUn();
 
     cv::undistort(im, imu, K, DistCoef);

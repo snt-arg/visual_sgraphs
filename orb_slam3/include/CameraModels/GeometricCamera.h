@@ -39,7 +39,7 @@
 #include "Converter.h"
 #include "GeometricTools.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class GeometricCamera
     {
