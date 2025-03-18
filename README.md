@@ -147,22 +147,18 @@ You can read about the configuration parameters (independent of the `ROS` wrappe
 ## 🚀 Run Examples <a id="run"></a>
 
 1. You can download some sample dataset instances from the links provided below and run them using `rosbag play [sample].bag --clock [-s x]`:
-
-   - UniLu's single office ([link](https://uniluxembourg-my.sharepoint.com/:u:/r/personal/ali_tourani_uni_lu/Documents/Data/ULMS-Seq06.zip?csf=1&web=1&e=vyBNPZ)) for Mono, Mono-Inertial, RGB-D, RGB-D Inertial
-   - UniLu's single office ([link](https://uniluxembourg-my.sharepoint.com/:u:/r/personal/ali_tourani_uni_lu/Documents/Data/ULMS-Seq06.zip?csf=1&web=1&e=vyBNPZ)) for Stereo and Stereo-Inertial
-
 2. Run the ArUco marker detector module using `roslaunch aruco_ros marker_publisher.launch`
 3. Run the Semantic Segmentation module (pFCN) using `roslaunch segmenter_ros segmenter_pFCN.launch`
 4. Run VoxBlox Skeleton using `roslaunch voxblox_skeleton skeletonize_map_vsgraphs.launch 2>/dev/null`
 
-| Mode            | Dataset                            | Commands                                                                   | Notes                          |
-| --------------- | ---------------------------------- | -------------------------------------------------------------------------- | ------------------------------ |
-| Mono            | UniLu's single office or Live (\*) | `roslaunch orb_slam3_rosvsgraphsmono.launch [offline:=false]`              | data collected using RealSense |
-| Mono-Inertial   | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_mono_inertial.launch [offline:=false]`   | data collected using RealSense |
-| Stereo          | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo.launch [offline:=false]`          | data collected using RealSense |
-| Stereo-Inertial | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo_inertial.launch [offline:=false]` | data collected using RealSense |
-| RGB-D           | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_rgbd.launch [offline:=false]`            | data collected using RealSense |
-| RGB-D-Inertial  | UniLu's single office or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_rgbd_inertial.launch [offline:=false]`   | data collected using RealSense |
+| Mode            | Dataset                | Commands                                                                   | Notes                          |
+| --------------- | ---------------------- | -------------------------------------------------------------------------- | ------------------------------ |
+| Mono            | AutoSense or Live (\*) | `roslaunch orb_slam3_rosvsgraphsmono.launch [offline:=false]`              | data collected using RealSense |
+| Mono-Inertial   | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_mono_inertial.launch [offline:=false]`   | data collected using RealSense |
+| Stereo          | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo.launch [offline:=false]`          | data collected using RealSense |
+| Stereo-Inertial | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo_inertial.launch [offline:=false]` | data collected using RealSense |
+| RGB-D           | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_rgbd.launch [offline:=false]`            | data collected using RealSense |
+| RGB-D-Inertial  | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_rgbd_inertial.launch [offline:=false]`   | data collected using RealSense |
 
 ### ⚠️ Useful Hints <a id="hints"></a>
 
@@ -250,16 +246,16 @@ Please refer to [this page](/doc/RealSense/README.md) for detailed description o
 
 ### Params <a id="ros-param"></a>
 
-| Param                                                     | Description                                                                                                    |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `offline`                                                 | live or reading rosbag file (offline)?                                                                         |
-| `sys_params_file`                                         | path to the common system parameters (see below)                                                               |
-| `voc_file`                                                | path to ORB vocabulary file                                                                                    |
-| `settings_file`                                           | path to settings file                                                                                          |
-| `enable_pangolin`                                         | enable/disable Pangolin viewer and interface. (`true` by default)                                              |
-| `static_transform`                                        | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `UniLu`) |
-| `roll`, `yaw`, and `pitch`                                | poses and dimensions of movement                                                                               |
-| `frame_map` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                    |
+| Param                                                     | Description                                                                                                        |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `offline`                                                 | live or reading rosbag file (offline)?                                                                             |
+| `sys_params_file`                                         | path to the common system parameters (see below)                                                                   |
+| `voc_file`                                                | path to ORB vocabulary file                                                                                        |
+| `settings_file`                                           | path to settings file                                                                                              |
+| `enable_pangolin`                                         | enable/disable Pangolin viewer and interface. (`true` by default)                                                  |
+| `static_transform`                                        | enable/disable static transform between coordinate frames. (needs to be `true` for some datasets like `AutoSense`) |
+| `roll`, `yaw`, and `pitch`                                | poses and dimensions of movement                                                                                   |
+| `frame_map` <br /> `world_frame_id` <br /> `cam_frame_id` | different frame identifiers                                                                                        |
 
 ## 📍 Maps <a id="maps"></a>
 
