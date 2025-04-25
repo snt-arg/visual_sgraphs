@@ -1,0 +1,14 @@
+services:
+  visual_sgraphs:
+    image: visual_sgraphs:latest
+    container_name: visual_sgraphs
+    build:
+      context: .
+    environment:
+      - DISPLAY=${DISPLAY}
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    network_mode: "host"
+    tty: true
+    stdin_open: true
+    #command: "You can use this to autostart a command"

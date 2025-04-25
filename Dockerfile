@@ -1,27 +1,22 @@
-FROM amd64/ros:noetic-perception-focal
+FROM amd64/ros:noetic-perception-focal AS base
 
 ARG DEBIAN_FRONTEND=noninteractive
 ARG ROS_DISTRO=noetic
 
-#
-# install ORBSLAM3 ROS package
-#
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-        software-properties-common \
-        git \
-        build-essential \
-        cmake \
-        libeigen3-dev \
+        software-properties-common git \
+        build-essential cmake libeigen3-dev \
+        python3-catkin-tools libopencv-dev \
+        libssl-dev \
+        libudev-dev \
+        libusb-1.0-0-dev \
+        librealsense2-dev \
+        librealsense2-utils \
+        ros-${ROS_DISTRO}-realsense2-camera  \
         ros-${ROS_DISTRO}-hector-trajectory-server \
-        python3-catkin-tools \
-        libopencv-dev && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
 
-WORKDIR /root
-
+WORKDIR /deps
 RUN git clone https://github.com/stevenlovegrove/Pangolin.git && \
     cd Pangolin && \
     mkdir build && cd build && \
@@ -29,30 +24,24 @@ RUN git clone https://github.com/stevenlovegrove/Pangolin.git && \
     make -j && \
     make install
 
-RUN mkdir -p catkin_ws/src && \
-    cd catkin_ws/src && \
-    git clone https://github.com/thien94/orb_slam3_ros.git && \
-    cd .. && \
-    catkin config \
-      --extend /opt/ros/noetic && \
+WORKDIR /ws
+
+RUN  git clone https://github.com/thien94/orb_slam3_ros.git && \
+    cd .. && catkin config --extend /opt/ros/noetic && \
     catkin build
 
-RUN echo "source /root/catkin_ws/devel/setup.bash" >> /root/.bashrc
+RUN echo "source /opt/ros/noetic/setup.bash" >> ~/.bashrc
+RUN echo "source /ws/devel/setup.bash" >> ~/.bashrc
 
-#
-# install RealSenseSDK / RealSense ROS wrapper
-#
 
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE || apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-key F6E65AC044F831AC80A06380C8B3A55A6F3EFCDE
-RUN add-apt-repository "deb https://librealsense.intel.com/Debian/apt-repo $(lsb_release -sc) main"
+# Build Entrypoint
+RUN echo "#!/bin/bash" >> /entrypoint.sh \
+    && echo "source /opt/ros/noetic/setup.bash" >> /entrypoint.sh \
+    && echo "source /ws/devel/setup.bash" >> /entrypoint.sh \
+    && echo 'exec "$@"' >> /entrypoint.sh \
+    && chmod a+x /entrypoint.sh
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        libssl-dev \
-        libudev-dev \
-        libusb-1.0-0-dev \
-        librealsense2-dev \
-        librealsense2-utils \
-        ros-${ROS_DISTRO}-realsense2-camera &&  \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
+WORKDIR /ws
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["bash"]
