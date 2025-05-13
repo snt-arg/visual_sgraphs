@@ -15,7 +15,7 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/common/transforms.h>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Atlas;
 

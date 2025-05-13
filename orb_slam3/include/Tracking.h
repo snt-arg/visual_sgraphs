@@ -51,7 +51,7 @@
 #include <mutex>
 #include <unordered_set>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Viewer;
     class FrameDrawer;
@@ -226,8 +226,8 @@ namespace ORB_SLAM3
         bool mbWriteStats;
 
         // Semantic map entities
-        std::vector<ORB_SLAM3::Room *> env_rooms;
-        std::vector<ORB_SLAM3::Door *> env_doors;
+        std::vector<VS_GRAPHS::Room *> env_rooms;
+        std::vector<VS_GRAPHS::Door *> env_doors;
 
 #ifdef REGISTER_TIMES
         void LocalMapStats2File();

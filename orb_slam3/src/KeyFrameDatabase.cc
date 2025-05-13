@@ -25,7 +25,7 @@
 
 using namespace std;
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     KeyFrameDatabase::KeyFrameDatabase(const ORBVocabulary &voc) : mpVoc(&voc)

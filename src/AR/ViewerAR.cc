@@ -26,7 +26,7 @@
 
 using namespace std;
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     const float eps = 1e-4;
@@ -230,7 +230,7 @@ namespace ORB_SLAM3
         }
     }
 
-    void ViewerAR::SetImagePose(const cv::Mat &im, const cv::Mat &Tcw, const int &status, const vector<cv::KeyPoint> &vKeys, const vector<ORB_SLAM3::MapPoint *> &vMPs)
+    void ViewerAR::SetImagePose(const cv::Mat &im, const cv::Mat &Tcw, const int &status, const vector<cv::KeyPoint> &vKeys, const vector<VS_GRAPHS::MapPoint *> &vMPs)
     {
         unique_lock<mutex> lock(mMutexPoseImage);
         mImage = im.clone();

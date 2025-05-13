@@ -30,7 +30,7 @@
 #include <include/CameraModels/Pinhole.h>
 #include <include/CameraModels/KannalaBrandt8.h>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     long unsigned int Frame::nNextId = 0;

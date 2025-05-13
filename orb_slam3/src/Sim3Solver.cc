@@ -27,7 +27,7 @@
 
 #include "Thirdparty/DBoW2/DUtils/Random.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     Sim3Solver::Sim3Solver(KeyFrame *pKF1, KeyFrame *pKF2, const vector<MapPoint *> &vpMatched12, const bool bFixScale,

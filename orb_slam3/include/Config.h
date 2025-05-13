@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class ViewerConfig

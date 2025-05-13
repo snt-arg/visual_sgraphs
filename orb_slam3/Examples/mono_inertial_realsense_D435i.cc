@@ -264,7 +264,7 @@ int main(int argc, char **argv)
 
     rs2::pipeline_profile pipe_profile = pipe.start(cfg, imu_callback);
 
-    vector<ORB_SLAM3::IMU::Point> vImuMeas;
+    vector<VS_GRAPHS::IMU::Point> vImuMeas;
     rs2::stream_profile cam_stream = pipe_profile.get_stream(RS2_STREAM_INFRARED, 1);
 
     rs2::stream_profile imu_stream = pipe_profile.get_stream(RS2_STREAM_GYRO);
@@ -291,7 +291,7 @@ int main(int argc, char **argv)
     std::cout << " Model = " << intrinsics_cam.model << std::endl;
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
-    ORB_SLAM3::System SLAM(argv[1], argv[2], ORB_SLAM3::System::IMU_MONOCULAR, true, 0, file_name);
+    VS_GRAPHS::System SLAM(argv[1], argv[2], VS_GRAPHS::System::IMU_MONOCULAR, true, 0, file_name);
     float imageScale = SLAM.GetImageScale();
 
     double timestamp;
@@ -359,7 +359,7 @@ int main(int argc, char **argv)
 
         for (int i = 0; i < vGyro.size(); ++i)
         {
-            ORB_SLAM3::IMU::Point lastPoint(vAccel[i].x, vAccel[i].y, vAccel[i].z,
+            VS_GRAPHS::IMU::Point lastPoint(vAccel[i].x, vAccel[i].y, vAccel[i].z,
                                             vGyro[i].x, vGyro[i].y, vGyro[i].z,
                                             vGyro_times[i]);
             vImuMeas.push_back(lastPoint);

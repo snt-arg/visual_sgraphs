@@ -103,4 +103,5 @@ RUN echo "#!/bin/bash" >> /entrypoint.sh && \
 
 WORKDIR /workspace
 ENTRYPOINT ["/entrypoint.sh"]
+
 CMD ["bash"]

@@ -10,7 +10,7 @@
 
 #include <Eigen/Core>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class GeoSemHelpers
     {
@@ -26,9 +26,9 @@ namespace ORB_SLAM3
          * @param semanticType the semantic type of the plane observation
          * @param confidence the confidence of the plane observation
          */
-        static ORB_SLAM3::Plane *createMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
+        static VS_GRAPHS::Plane *createMapPlane(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
                                                 const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud,
-                                                ORB_SLAM3::Plane::planeVariant semanticType = ORB_SLAM3::Plane::planeVariant::UNDEFINED,
+                                                VS_GRAPHS::Plane::planeVariant semanticType = VS_GRAPHS::Plane::planeVariant::UNDEFINED,
                                                 double confidence = 1.0);
 
         /**
@@ -41,9 +41,9 @@ namespace ORB_SLAM3
          * @param semanticType the semantic type of the plane observation
          * @param confidence the confidence of the plane observation
          */
-        static void updateMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
+        static void updateMapPlane(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
                                    pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId,
-                                   ORB_SLAM3::Plane::planeVariant semanticType = ORB_SLAM3::Plane::planeVariant::UNDEFINED, 
+                                   VS_GRAPHS::Plane::planeVariant semanticType = VS_GRAPHS::Plane::planeVariant::UNDEFINED,
                                    double confidence = 1.0);
 
         /**
@@ -53,7 +53,7 @@ namespace ORB_SLAM3
          * @param envDoors the list of doors in the environment
          */
         static std::pair<bool, std::string> checkIfMarkerIsDoor(const int &markerId,
-                                                                std::vector<ORB_SLAM3::Door *> envDoors);
+                                                                std::vector<VS_GRAPHS::Door *> envDoors);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
@@ -62,9 +62,9 @@ namespace ORB_SLAM3
          * @param envDoors the list of doors in the environment
          * @param envRooms the list of rooms in the environment
          */
-        static void markerSemanticAnalysis(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                           std::vector<ORB_SLAM3::Door *> envDoors,
-                                           std::vector<ORB_SLAM3::Room *> envRooms);
+        static void markerSemanticAnalysis(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF,
+                                           std::vector<VS_GRAPHS::Door *> envDoors,
+                                           std::vector<VS_GRAPHS::Room *> envRooms);
 
         /**
          * @brief Creates a new marker object to be added to the map
@@ -104,8 +104,8 @@ namespace ORB_SLAM3
          * @param walls the vector of walls detected in the room
          * @param clusterCentroid the centroid of the cluster
          */
-        static ORB_SLAM3::Room *createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                                  std::vector<ORB_SLAM3::Plane *> walls,
+        static VS_GRAPHS::Room *createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
+                                                                  std::vector<VS_GRAPHS::Plane *> walls,
                                                                   Eigen::Vector3d clusterCentroid = Eigen::Vector3d::Zero());
 
         /**
@@ -114,23 +114,22 @@ namespace ORB_SLAM3
          * @param clusterBasedRoom the address of the detected cluster-based room
          * @param isMarkerBasedMapped the boolean value to check if we augment from marker-based or the cluster-based room
          */
-        static void augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
+        static void augmentMapRoomCandidate(VS_GRAPHS::Room *markerBasedRoom, VS_GRAPHS::Room *clusterBasedRoom,
                                             bool isMarkerBasedMapped);
-
 
         /**
          * @brief Chooses a ground plane from the Atlas to be associated with the room
          * @param mpAtlas the current map in Atlas
          * @param givenRoom the address of the detected room
          */
-        static void associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom);
+        static void associateGroundPlaneToRoom(Atlas *mpAtlas, VS_GRAPHS::Room *givenRoom);
 
         /**
          * @brief Counts the number of points in the ground plane that are within the walls of the room
          * @param roomWalls the vector of walls detected in the room
          * @param groundPlane the ground plane associated with the room
          */
-        static size_t countGroundPlanePointsWithinWalls(std::vector<ORB_SLAM3::Plane *> &roomWalls, ORB_SLAM3::Plane *groundPlane);
+        static size_t countGroundPlanePointsWithinWalls(std::vector<VS_GRAPHS::Plane *> &roomWalls, VS_GRAPHS::Plane *groundPlane);
     };
 }
 

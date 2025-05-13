@@ -37,7 +37,7 @@
 #include "Converter.h"
 #include <math.h>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class KeyFrame;

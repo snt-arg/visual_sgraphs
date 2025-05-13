@@ -1,0 +1,64 @@
+{
+    "rooms": [
+        {
+            "name": "AeroLab Corr.",
+            "isCorridor": true,
+            "metaMarker": 7,
+            "doorMarkers": [
+                0,4
+            ]
+        },
+        {
+            "name": "WeldLab Pass-A",
+            "isCorridor": true,
+            "metaMarker": 17,
+            "doorMarkers": [
+                0
+            ]
+        },
+        {
+            "name": "WeldLab Pass-B",
+            "isCorridor": true,
+            "metaMarker": 8,
+            "doorMarkers": []
+        },
+        {
+            "name": "Part. Corr.",
+            "isCorridor": true,
+            "metaMarker": 9,
+            "doorMarkers": [
+                4,6,10
+            ]
+        },
+        {
+            "name": "Part. I",
+            "isCorridor": false,
+            "metaMarker": 1,
+            "doorMarkers": [
+                10
+            ]
+        },
+        {
+            "name": "Part. II",
+            "isCorridor": false,
+            "metaMarker": 2,
+            "doorMarkers": [
+                6
+            ]
+        }
+    ],
+    "doors": [
+        {
+            "name": "WeldLab Door",
+            "marker": 0
+        },
+        {
+            "name": "Workshop Door",
+            "marker": 4
+        },
+        {
+            "name": "Part. I Door",
+            "marker": 10
+        }
+    ]
+}

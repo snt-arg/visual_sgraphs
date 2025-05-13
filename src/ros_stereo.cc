@@ -63,9 +63,9 @@ int main(int argc, char **argv)
 
     // Create SLAM system. It initializes all system threads and gets ready to process frames.
     ImageGrabber igb;
-    sensorType = ORB_SLAM3::System::STEREO;
+    sensorType = VS_GRAPHS::System::STEREO;
 
-    pSLAM = new ORB_SLAM3::System(voc_file, settings_file, sys_params_file, sensorType, enable_pangolin);
+    pSLAM = new VS_GRAPHS::System(voc_file, settings_file, sys_params_file, sensorType, enable_pangolin);
 
     // Subscribe to get raw images
     message_filters::Subscriber<sensor_msgs::Image> sub_img_left(nodeHandler, "/camera/left/image_raw", 500);
@@ -118,10 +118,10 @@ void ImageGrabber::GrabStereo(const sensor_msgs::ImageConstPtr &msgLeft, const s
     }
 
     // Find the marker with the minimum time difference compared to the current frame
-    std::pair<double, std::vector<ORB_SLAM3::Marker *>>
+    std::pair<double, std::vector<VS_GRAPHS::Marker *>>
         result = findNearestMarker(cv_ptrLeft->header.stamp.toSec());
     double minMarkerTimeDiff = result.first;
-    std::vector<ORB_SLAM3::Marker *> matchedMarkers = result.second;
+    std::vector<VS_GRAPHS::Marker *> matchedMarkers = result.second;
 
     // Tracking process sends markers found in this frame for tracking and clears the buffer
     if (minMarkerTimeDiff < 0.05)

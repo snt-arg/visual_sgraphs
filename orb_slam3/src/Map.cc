@@ -20,7 +20,7 @@
 
 #include <mutex>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     long unsigned int Map::nNextId = 0;

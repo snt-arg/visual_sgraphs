@@ -8,7 +8,7 @@
 #include "Map.h"
 #include "Marker.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Map;
     class Marker;

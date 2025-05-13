@@ -153,7 +153,7 @@ You can read about the configuration parameters (independent of the `ROS` wrappe
 
 | Mode            | Dataset                | Commands                                                                   | Notes                          |
 | --------------- | ---------------------- | -------------------------------------------------------------------------- | ------------------------------ |
-| Mono            | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphsmono.launch [offline:=false]`             | data collected using RealSense |
+| Mono            | AutoSense or Live (\*) | `roslaunch orb_slam3_rosvsgraphsmono.launch [offline:=false]`              | data collected using RealSense |
 | Mono-Inertial   | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_mono_inertial.launch [offline:=false]`   | data collected using RealSense |
 | Stereo          | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo.launch [offline:=false]`          | data collected using RealSense |
 | Stereo-Inertial | AutoSense or Live (\*) | `roslaunch orb_slam3_ros vsgraphs_stereo_inertial.launch [offline:=false]` | data collected using RealSense |

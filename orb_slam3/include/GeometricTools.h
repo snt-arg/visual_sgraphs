@@ -23,7 +23,7 @@
 #include <sophus/se3.hpp>
 #include <Eigen/Core>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class KeyFrame;
