@@ -4,7 +4,7 @@
 
 #include "Semantic/Floor.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     Floor::Floor() {}
     Floor::~Floor() {}

@@ -10,7 +10,7 @@
 #include "Room.h"
 #include "Geometric/Plane.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Room;
 

@@ -15,7 +15,7 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/common/transforms.h>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Atlas;
 
@@ -87,7 +87,7 @@ namespace ORB_SLAM3
          * @param givenRoom the address of the given room
          * @param givenRoomList the list of rooms to be checked
          */
-        Room *roomAssociation(const ORB_SLAM3::Room *givenRoom, const vector<Room *> &givenRoomList);
+        Room *roomAssociation(const VS_GRAPHS::Room *givenRoom, const vector<Room *> &givenRoomList);
 
         /**
          * @brief Converts mapped room candidates to rooms using geometric constraints

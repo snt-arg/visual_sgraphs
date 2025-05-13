@@ -9,7 +9,7 @@
 #include "Geometric/Plane.h"
 #include "Thirdparty/g2o/g2o/types/vertex_plane.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class Room

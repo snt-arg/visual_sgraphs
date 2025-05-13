@@ -22,7 +22,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Utils
     {
@@ -199,14 +199,14 @@ namespace ORB_SLAM3
          * @param clsId the class id
          * @return the planeVariant type
          */
-        static ORB_SLAM3::Plane::planeVariant getPlaneTypeFromClassId(int clsId);
+        static VS_GRAPHS::Plane::planeVariant getPlaneTypeFromClassId(int clsId);
 
         /**
          * @brief Gets the class id from the planeVariant type
          * @param planeType the planeVariant type
          * @return the class id
          */
-        static int getClassIdFromPlaneType(ORB_SLAM3::Plane::planeVariant planeType);
+        static int getClassIdFromPlaneType(VS_GRAPHS::Plane::planeVariant planeType);
 
         /**
          * @brief Calculates the soft-min approximation of the given values

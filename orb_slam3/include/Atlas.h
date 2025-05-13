@@ -36,7 +36,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/export.hpp>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Map;
     class Door;

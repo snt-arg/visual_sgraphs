@@ -44,7 +44,7 @@
 #include "Semantic/Marker.h"
 #include "Geometric/Plane.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 #define FRAME_GRID_ROWS 48
 #define FRAME_GRID_COLS 64

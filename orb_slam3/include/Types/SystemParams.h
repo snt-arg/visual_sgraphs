@@ -4,7 +4,7 @@
 #ifndef SYSTEMPARAMS_H
 #define SYSTEMPARAMS_H
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class SystemParams
     {

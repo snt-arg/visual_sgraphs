@@ -31,7 +31,7 @@
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/archive/xml_oarchive.hpp>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     Verbose::eLevel Verbose::th = Verbose::VERBOSITY_NORMAL;
@@ -40,13 +40,6 @@ namespace ORB_SLAM3
                    const bool bUseViewer, const int initFr, const string &strSequence) : mSensor(sensor), mpViewer(static_cast<Viewer *>(NULL)), mbReset(false), mbResetActiveMap(false),
                                                                                          mbActivateLocalizationMode(false), mbDeactivateLocalizationMode(false), mbShutDown(false)
     {
-        // Output welcome message
-        cout << endl
-             << "Visual S-Graphs Copyright © 2023-2024 by Ali Tourani, Hriday Bavle, Jose Luis Sanchez-Lopez, and Holger Voos, SnT - University of Luxembourg." << endl
-             << "Based on ORB-SLAM3 Copyright © 2017-2023 by C. Campos, R. Elvira, J.J. Gómez, J.M.M. Montiel, and J.D. Tardós, University of Zaragoza." << endl
-             << "To redistribute the software please see LICENSE.txt." << endl
-             << endl;
-
         // Input sensor
         cout << "Input sensor is set to: ";
         if (mSensor == MONOCULAR)
@@ -183,7 +176,7 @@ namespace ORB_SLAM3
         // Initialize the Local Mapping thread and launch
         mpLocalMapper = new LocalMapping(this, mpAtlas, mSensor == MONOCULAR || mSensor == IMU_MONOCULAR,
                                          mSensor == IMU_MONOCULAR || mSensor == IMU_STEREO || mSensor == IMU_RGBD, strSequence);
-        mptLocalMapping = new thread(&ORB_SLAM3::LocalMapping::Run, mpLocalMapper);
+        mptLocalMapping = new thread(&VS_GRAPHS::LocalMapping::Run, mpLocalMapper);
         mpLocalMapper->mInitFr = initFr;
         if (settings_)
             mpLocalMapper->mThFarPoints = settings_->thFarPoints();
@@ -199,7 +192,7 @@ namespace ORB_SLAM3
 
         // Initialize the Loop Closing thread and launch
         mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR, activeLC);
-        mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
+        mptLoopClosing = new thread(&VS_GRAPHS::LoopClosing::Run, mpLoopCloser);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
@@ -243,7 +236,7 @@ namespace ORB_SLAM3
     void System::parseJsonDatabase(string jsonFilePath)
     {
         // Creating an object of the database loader
-        ORB_SLAM3::DBParser parser;
+        VS_GRAPHS::DBParser parser;
         // Load JSON file
         json envData = parser.jsonParser(jsonFilePath);
         // Getting semantic entities
@@ -259,7 +252,7 @@ namespace ORB_SLAM3
         if (SystemParams::GetParams()->general.mode_of_operation == SystemParams::general::ModeOfOperation::GEO)
         {
             // just clear the pointcloud of the keyframe and return, as semantic segmentation is not running
-            ORB_SLAM3::KeyFrame *pKF = mpAtlas->GetKeyFrameById(std::get<0>(*tuple));
+            VS_GRAPHS::KeyFrame *pKF = mpAtlas->GetKeyFrameById(std::get<0>(*tuple));
             pKF->clearPointCloud();
             return;
         }
@@ -610,7 +603,7 @@ namespace ORB_SLAM3
 
         // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
         // which is true when tracking failed (lbL).
-        list<ORB_SLAM3::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
+        list<VS_GRAPHS::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
         list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
         list<bool>::iterator lbL = mpTracker->mlbLost.begin();
         for (list<Sophus::SE3f>::iterator lit = mpTracker->mlRelativeFramePoses.begin(),
@@ -717,7 +710,7 @@ namespace ORB_SLAM3
 
         // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
         // which is true when tracking failed (lbL).
-        list<ORB_SLAM3::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
+        list<VS_GRAPHS::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
         list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
         list<bool>::iterator lbL = mpTracker->mlbLost.begin();
 
@@ -797,7 +790,7 @@ namespace ORB_SLAM3
 
         // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
         // which is true when tracking failed (lbL).
-        list<ORB_SLAM3::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
+        list<VS_GRAPHS::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
         list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
         list<bool>::iterator lbL = mpTracker->mlbLost.begin();
 
@@ -968,13 +961,13 @@ namespace ORB_SLAM3
 
         // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
         // which is true when tracking failed (lbL).
-        list<ORB_SLAM3::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
+        list<VS_GRAPHS::KeyFrame *>::iterator lRit = mpTracker->mlpReferences.begin();
         list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
         for (list<Sophus::SE3f>::iterator lit = mpTracker->mlRelativeFramePoses.begin(),
                                           lend = mpTracker->mlRelativeFramePoses.end();
              lit != lend; lit++, lRit++, lT++)
         {
-            ORB_SLAM3::KeyFrame *pKF = *lRit;
+            VS_GRAPHS::KeyFrame *pKF = *lRit;
 
             Sophus::SE3f Trw;
 
@@ -1324,9 +1317,9 @@ namespace ORB_SLAM3
         return checksum;
     }
 
-    ORB_SLAM3::Map *System::GetCurrentMap()
+    VS_GRAPHS::Map *System::GetCurrentMap()
     {
-        ORB_SLAM3::Map *pActiveMap = mpAtlas->GetCurrentMap();
+        VS_GRAPHS::Map *pActiveMap = mpAtlas->GetCurrentMap();
         return pActiveMap;
     }
 

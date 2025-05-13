@@ -24,7 +24,7 @@
 
 #include "KeyFrame.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
 
     class Sim3Solver

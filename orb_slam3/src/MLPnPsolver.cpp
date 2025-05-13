@@ -50,7 +50,7 @@
 
 #include <Eigen/Sparse>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     MLPnPsolver::MLPnPsolver(const Frame &F, const vector<MapPoint *> &vpMapPointMatches) : mnInliersi(0), mnIterations(0), mnBestInliers(0), N(0), mpCamera(F.mpCamera)
     {

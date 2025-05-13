@@ -9,7 +9,7 @@ general:
 
   # The path of the high level semantic information of the environment
   # [TODO] - the path looks ugly, possible workaround?
-  env_database: "../../../src/visual_sgraphs/config/Environments/LuxVSD/luxvsd_seq01.json"
+  env_database: "../../../src/visual_sgraphs/config/Environments/AutoSense/autosense_seq01.json"
 
 #################################### Marker Parameters ###########################################
 markers:

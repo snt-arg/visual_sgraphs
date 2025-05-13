@@ -1,13 +1,13 @@
 #include "GeoSemHelpers.h"
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
-    ORB_SLAM3::Plane *GeoSemHelpers::createMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
+    VS_GRAPHS::Plane *GeoSemHelpers::createMapPlane(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF,
                                                     const g2o::Plane3D estimatedPlane,
                                                     const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud,
-                                                    ORB_SLAM3::Plane::planeVariant semanticType, double confidence)
+                                                    VS_GRAPHS::Plane::planeVariant semanticType, double confidence)
     {
-        ORB_SLAM3::Plane *newMapPlane = new ORB_SLAM3::Plane();
+        VS_GRAPHS::Plane *newMapPlane = new VS_GRAPHS::Plane();
         newMapPlane->setColor();
         newMapPlane->setLocalEquation(estimatedPlane);
         newMapPlane->SetMap(mpAtlas->GetCurrentMap());
@@ -15,7 +15,7 @@ namespace ORB_SLAM3
         newMapPlane->refKeyFrame = pKF;
 
         // The observation of the plane
-        ORB_SLAM3::Plane::Observation obs;
+        VS_GRAPHS::Plane::Observation obs;
 
         // the observation of the plane equation
         obs.localPlane = estimatedPlane;
@@ -42,7 +42,7 @@ namespace ORB_SLAM3
         newMapPlane->addObservation(pKF, obs);
 
         // Set the plane type to undefined, as it is not known yet
-        newMapPlane->setPlaneType(ORB_SLAM3::Plane::planeVariant::UNDEFINED);
+        newMapPlane->setPlaneType(VS_GRAPHS::Plane::planeVariant::UNDEFINED);
 
         // Set the global equation of the plane
         g2o::Plane3D globalEquation = Utils::applyPoseToPlane(pKF->GetPoseInverse().matrix().cast<double>(),
@@ -69,15 +69,15 @@ namespace ORB_SLAM3
         return newMapPlane;
     }
 
-    void GeoSemHelpers::updateMapPlane(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
+    void GeoSemHelpers::updateMapPlane(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF, const g2o::Plane3D estimatedPlane,
                                        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud, int planeId,
-                                       ORB_SLAM3::Plane::planeVariant semanticType, double confidence)
+                                       VS_GRAPHS::Plane::planeVariant semanticType, double confidence)
     {
         // Find the matched plane among all planes of the map
         Plane *currentPlane = mpAtlas->GetPlaneById(planeId);
 
         // The observation of the plane
-        ORB_SLAM3::Plane::Observation obs;
+        VS_GRAPHS::Plane::Observation obs;
 
         // the observation of the plane equation
         obs.localPlane = estimatedPlane;
@@ -122,7 +122,7 @@ namespace ORB_SLAM3
     }
 
     std::pair<bool, std::string> GeoSemHelpers::checkIfMarkerIsDoor(const int &markerId,
-                                                                    std::vector<ORB_SLAM3::Door *> envDoors)
+                                                                    std::vector<VS_GRAPHS::Door *> envDoors)
     {
         bool isDoor = false;
         std::string name = "";
@@ -140,9 +140,9 @@ namespace ORB_SLAM3
         return std::make_pair(isDoor, name);
     }
 
-    void GeoSemHelpers::markerSemanticAnalysis(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                               std::vector<ORB_SLAM3::Door *> envDoors,
-                                               std::vector<ORB_SLAM3::Room *> envRooms)
+    void GeoSemHelpers::markerSemanticAnalysis(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF,
+                                               std::vector<VS_GRAPHS::Door *> envDoors,
+                                               std::vector<VS_GRAPHS::Room *> envRooms)
     {
         // Get the markers from the current KeyFrame
         std::vector<Marker *> mvpMapMarkers = pKF->getCurrentFrameMarkers();
@@ -150,7 +150,7 @@ namespace ORB_SLAM3
         for (Marker *mCurrentMarker : mvpMapMarkers)
         {
             // Variables
-            ORB_SLAM3::Marker *currentMapMarker;
+            VS_GRAPHS::Marker *currentMapMarker;
 
             // Check the type of the marker
             std::pair<bool, std::string> result = checkIfMarkerIsDoor(mCurrentMarker->getId(), envDoors);
@@ -159,8 +159,8 @@ namespace ORB_SLAM3
 
             // Change the marker type
             mCurrentMarker->setMarkerType(markerIsDoor
-                                              ? ORB_SLAM3::Marker::markerVariant::ON_DOOR
-                                              : ORB_SLAM3::Marker::markerVariant::ON_ROOM_CENTER);
+                                              ? VS_GRAPHS::Marker::markerVariant::ON_DOOR
+                                              : VS_GRAPHS::Marker::markerVariant::ON_ROOM_CENTER);
 
             // If the marker is not in the map, add it
             if (!mCurrentMarker->isMarkerInGMap())
@@ -188,7 +188,7 @@ namespace ORB_SLAM3
             else
             {
                 // The current marker is a room meta-marker
-                ORB_SLAM3::Room *mappedRoom;
+                VS_GRAPHS::Room *mappedRoom;
 
                 // Check to find the real room values fetched from the JSON file
                 for (Room *envRoom : envRooms)
@@ -202,10 +202,10 @@ namespace ORB_SLAM3
         }
     }
 
-    ORB_SLAM3::Marker *GeoSemHelpers::createMapMarker(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                                      const ORB_SLAM3::Marker *visitedMarker)
+    VS_GRAPHS::Marker *GeoSemHelpers::createMapMarker(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF,
+                                                      const VS_GRAPHS::Marker *visitedMarker)
     {
-        ORB_SLAM3::Marker *newMapMarker = new ORB_SLAM3::Marker();
+        VS_GRAPHS::Marker *newMapMarker = new VS_GRAPHS::Marker();
 
         newMapMarker->setId(visitedMarker->getId());
         newMapMarker->setMap(mpAtlas->GetCurrentMap());
@@ -223,8 +223,8 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    void GeoSemHelpers::createMapDoor(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                      ORB_SLAM3::Marker *attachedMarker, std::string doorName)
+    void GeoSemHelpers::createMapDoor(Atlas *mpAtlas, VS_GRAPHS::KeyFrame *pKF,
+                                      VS_GRAPHS::Marker *attachedMarker, std::string doorName)
     {
         // Check if the door has not been created before
         bool doorAlreadyInMap = false;
@@ -236,7 +236,7 @@ namespace ORB_SLAM3
             return;
 
         // Variables
-        ORB_SLAM3::Door *newMapDoor = new ORB_SLAM3::Door();
+        VS_GRAPHS::Door *newMapDoor = new VS_GRAPHS::Door();
 
         newMapDoor->setName(doorName);
         newMapDoor->setMarker(attachedMarker);
@@ -252,7 +252,7 @@ namespace ORB_SLAM3
         mpAtlas->AddMapDoor(newMapDoor);
     }
 
-    void GeoSemHelpers::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
+    void GeoSemHelpers::organizeRoomWalls(VS_GRAPHS::Room *givenRoom)
     {
         // Function to find the minimum and maximum coefficient value of a wall among all walls
         auto findExtremumWall = [&](const std::vector<Plane *> &walls, int coeffIndex, bool findMax) -> Plane *
@@ -285,8 +285,8 @@ namespace ORB_SLAM3
         givenRoom->setWalls(maxWallZ);
     }
 
-    void GeoSemHelpers::createMapRoomCandidateByMarker(Atlas *mpAtlas, ORB_SLAM3::Room *matchedRoom,
-                                                       ORB_SLAM3::Marker *attachedMarker)
+    void GeoSemHelpers::createMapRoomCandidateByMarker(Atlas *mpAtlas, VS_GRAPHS::Room *matchedRoom,
+                                                       VS_GRAPHS::Marker *attachedMarker)
     {
         // Variables
         bool roomAlreadyInMap = false;
@@ -300,7 +300,7 @@ namespace ORB_SLAM3
             return;
 
         // Variables
-        ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
+        VS_GRAPHS::Room *newMapRoomCandidate = new VS_GRAPHS::Room();
 
         // Fill the room entity
         newMapRoomCandidate->setHasKnownLabel(true);
@@ -329,13 +329,13 @@ namespace ORB_SLAM3
         mpAtlas->AddMarkerBasedMapRoom(newMapRoomCandidate);
     }
 
-    ORB_SLAM3::Room *GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                                      std::vector<ORB_SLAM3::Plane *> walls,
+    VS_GRAPHS::Room *GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
+                                                                      std::vector<VS_GRAPHS::Plane *> walls,
                                                                       Eigen::Vector3d clusterCentroid)
     {
         // Variables
         Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
-        ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
+        VS_GRAPHS::Room *newMapRoomCandidate = new VS_GRAPHS::Room();
 
         // Fill the room entity
         newMapRoomCandidate->setHasKnownLabel(false);
@@ -349,7 +349,7 @@ namespace ORB_SLAM3
         newMapRoomCandidate->setName(roomType + "#" + std::to_string(roomId));
 
         // Connect the walls to the room
-        for (ORB_SLAM3::Plane *wall : walls)
+        for (VS_GRAPHS::Plane *wall : walls)
             newMapRoomCandidate->setWalls(wall);
 
         // Detect the room center
@@ -384,7 +384,7 @@ namespace ORB_SLAM3
         return newMapRoomCandidate;
     }
 
-    void GeoSemHelpers::augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
+    void GeoSemHelpers::augmentMapRoomCandidate(VS_GRAPHS::Room *markerBasedRoom, VS_GRAPHS::Room *clusterBasedRoom,
                                                 bool isMarkerBasedMapped)
     {
         std::cout << "\n[GeoSeg]" << std::endl;
@@ -393,7 +393,7 @@ namespace ORB_SLAM3
             // Augment the already detected marker-based room with the cluster-based room information
             markerBasedRoom->setRoomCenter(clusterBasedRoom->getRoomCenter());
             // Connect the walls to the room
-            for (ORB_SLAM3::Plane *wall : clusterBasedRoom->getWalls())
+            for (VS_GRAPHS::Plane *wall : clusterBasedRoom->getWalls())
                 markerBasedRoom->setWalls(wall);
             // Create a room candidate for it
             std::cout << "- Marker-based room candidate #" << markerBasedRoom->getId()
@@ -408,7 +408,7 @@ namespace ORB_SLAM3
             clusterBasedRoom->setMetaMarker(markerBasedRoom->getMetaMarker());
             clusterBasedRoom->setMetaMarkerId(markerBasedRoom->getMetaMarkerId());
             // Connect the doors to the room
-            for (ORB_SLAM3::Door *door : markerBasedRoom->getDoors())
+            for (VS_GRAPHS::Door *door : markerBasedRoom->getDoors())
                 clusterBasedRoom->setDoors(door);
             for (int markerId : markerBasedRoom->getDoorMarkerIds())
                 clusterBasedRoom->setDoorMarkerIds(markerId);
@@ -418,16 +418,16 @@ namespace ORB_SLAM3
         }
     }
 
-    void GeoSemHelpers::associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom)
+    void GeoSemHelpers::associateGroundPlaneToRoom(Atlas *mpAtlas, VS_GRAPHS::Room *givenRoom)
     {
-        std::vector<ORB_SLAM3::Plane *> allWalls = givenRoom->getWalls();
-        ORB_SLAM3::Plane *associatedGroundPlane = nullptr;
+        std::vector<VS_GRAPHS::Plane *> allWalls = givenRoom->getWalls();
+        VS_GRAPHS::Plane *associatedGroundPlane = nullptr;
         size_t maxInliers = 0;
 
         // get the ground planes from the Atlas
-        std::vector<ORB_SLAM3::Plane *> groundPlanes;
+        std::vector<VS_GRAPHS::Plane *> groundPlanes;
         for (const auto &plane : mpAtlas->GetAllPlanes())
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::GROUND)
+            if (plane->getPlaneType() == VS_GRAPHS::Plane::planeVariant::GROUND)
                 groundPlanes.push_back(plane);
 
         if (groundPlanes.empty())
@@ -458,7 +458,7 @@ namespace ORB_SLAM3
         }
     }
 
-    size_t GeoSemHelpers::countGroundPlanePointsWithinWalls(std::vector<ORB_SLAM3::Plane *> &roomWalls, ORB_SLAM3::Plane *groundPlane)
+    size_t GeoSemHelpers::countGroundPlanePointsWithinWalls(std::vector<VS_GRAPHS::Plane *> &roomWalls, VS_GRAPHS::Plane *groundPlane)
     {
         // [TODO] - verify the correctness of this function
         // the point cloud of the ground plane

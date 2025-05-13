@@ -15,7 +15,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/common/transforms.h>
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     class Atlas;
 
@@ -26,8 +26,8 @@ namespace ORB_SLAM3
         bool mHasDepthCloud;
         std::mutex mMutexNewKFs;
         std::list<KeyFrame *> mvpKeyFrameBuffer;
-        std::vector<ORB_SLAM3::Door *> envDoors;
-        std::vector<ORB_SLAM3::Room *> envRooms;
+        std::vector<VS_GRAPHS::Door *> envDoors;
+        std::vector<VS_GRAPHS::Room *> envRooms;
 
         // system parameters
         SystemParams *sysParams;
@@ -35,8 +35,8 @@ namespace ORB_SLAM3
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud,
-                              std::vector<ORB_SLAM3::Door *> envDoors,
-                              std::vector<ORB_SLAM3::Room *> envRooms);
+                              std::vector<VS_GRAPHS::Door *> envDoors,
+                              std::vector<VS_GRAPHS::Room *> envRooms);
 
         void AddKeyFrameToBuffer(KeyFrame *pKF);
         std::list<KeyFrame *> GetKeyFrameBuffer();
@@ -47,7 +47,7 @@ namespace ORB_SLAM3
          * @param hasDepthCloud a boolean to indicate if the point cloud has depth information
          * @param minCloudSize the minimum size of the point cloud to be segmented
          */
-        void fetchPlanesFromKeyFrame(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud);
+        void fetchPlanesFromKeyFrame(VS_GRAPHS::KeyFrame *pKF, bool hasDepthCloud);
 
         /**
          * @brief Calculation of plane equation from point clouds (provided by depth in RGB-D or calculated from
@@ -57,7 +57,7 @@ namespace ORB_SLAM3
          * @param minCloudSize the minimum size of the point cloud to be segmented
          */
         std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>>
-        getPlanesFromPointClouds(ORB_SLAM3::KeyFrame *pKF, bool hasDepthCloud);
+        getPlanesFromPointClouds(VS_GRAPHS::KeyFrame *pKF, bool hasDepthCloud);
 
         /**
          * @brief Get the point cloud from a set of map-points

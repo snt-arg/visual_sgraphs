@@ -14,7 +14,7 @@
 
 using json = nlohmann::json;
 
-namespace ORB_SLAM3
+namespace VS_GRAPHS
 {
     /**
      * @brief This class functions to parse data extracted from JSON files.
