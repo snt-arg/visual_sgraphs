@@ -131,8 +131,8 @@ RUN rm -rf /root/.ssh/
  
 ##### Build entrypoint #####
 RUN echo "#!/bin/bash" >> /entrypoint.sh \
-    && echo "source /opt/ros/noetic/setup.bash" >> /entrypoint.sh \
-    && echo "source /workspace/devel/setup.bash" >> /entrypoint.sh \
+    && echo "echo \"source /opt/ros/$ROS_DISTRO/setup.bash\" >> ~/.bashrc" >> /entrypoint.sh \
+    && echo "echo \"source /workspace/devel/setup.bash\" >> ~/.bashrc" >> /entrypoint.sh \
     && echo 'exec "$@"' >> /entrypoint.sh \
     && chmod a+x /entrypoint.sh
  
