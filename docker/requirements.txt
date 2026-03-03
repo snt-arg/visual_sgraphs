@@ -9,7 +9,7 @@ scipy>=1.4.1
 tqdm>=4.64.0
 pandas>=1.1.4
 seaborn>=0.11.0
-gradio==4.11.0
+gradio==6.7.0
 wandb
 transformers
 ftfy
