@@ -53,7 +53,7 @@ namespace ORB_SLAM3
                                      const std::vector<ORB_SLAM3::MapPoint *> &vpMP,
                                      const std::vector<ORB_SLAM3::Marker *> &vpMarkers,
                                      const std::vector<ORB_SLAM3::Plane *> &vpPlanes,
-                                     const std::vector<ORB_SLAM3::Door *> &vpDoors,
+                                     const std::vector<ORB_SLAM3::Doorway *> &vpDoorways,
                                      const std::vector<ORB_SLAM3::Room *> &vpRooms,
                                      const std::vector<ORB_SLAM3::Floor *> &vpFloors,
                                      int nIterations = 5, bool *pbStopFlag = NULL, const unsigned long nLoopKF = 0,
@@ -100,19 +100,19 @@ namespace ORB_SLAM3
          * @param vpFixedCorrectedKFs Corrected Fixed KeyFrames
          * @param vpNonFixedKFs Non-Fixed KeyFrames
          * @param vpNonCorrectedMPs Non-Corrected MapPoints
-         * @param vpCurrentMapDoors Current Map Doors
+         * @param vpCurrentMapDoorways Current Map Doorways
          * @param vpCurrentMapPlanes Current Map Planes
          * @param vpCurrentMapMarkers Current Map Markers
          * @param vpCurrentDetMapRooms Current Detected Map Rooms
          * @param vpCurrentMrkMapRooms Current Marker-based Map Rooms
          * @param vpClusterPoints Cluster points of the map set by `voxblox_skeleton`
          */
-        void static OptimizeEssentialGraph(KeyFrame *pCurKF, vector<KeyFrame *> &vpFixedKFs,
-                                           vector<KeyFrame *> &vpFixedCorrectedKFs, vector<KeyFrame *> &vpNonFixedKFs,
-                                           vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
-                                           vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
-                                           vector<Room *> &vpCurrentDetMapRooms, vector<Room *> &vpCurrentMrkMapRooms,
-                                           vector<vector<Eigen::Vector3d>> &vpClusterPoints);
+        void static OptimizeEssentialGraph(ORB_SLAM3::KeyFrame *pCurKF, std::vector<ORB_SLAM3::KeyFrame *> &vpFixedKFs,
+                                           std::vector<ORB_SLAM3::KeyFrame *> &vpFixedCorrectedKFs, std::vector<ORB_SLAM3::KeyFrame *> &vpNonFixedKFs,
+                                           std::vector<ORB_SLAM3::MapPoint *> &vpNonCorrectedMPs, std::vector<ORB_SLAM3::Doorway *> &vpCurrentMapDoorways,
+                                           std::vector<ORB_SLAM3::Plane *> &vpCurrentMapPlanes, std::vector<ORB_SLAM3::Marker *> &vpCurrentMapMarkers,
+                                           std::vector<ORB_SLAM3::Room *> &vpCurrentDetMapRooms, std::vector<ORB_SLAM3::Room *> &vpCurrentMrkMapRooms,
+                                           std::vector<std::vector<Eigen::Vector3d>> &vpClusterPoints);
 
         // For inertial loopclosing
         void static OptimizeEssentialGraph4DoF(Map *pMap, KeyFrame *pLoopKF, KeyFrame *pCurKF, const LoopClosing::KeyFrameAndPose &NonCorrectedSim3, const LoopClosing::KeyFrameAndPose &CorrectedSim3, const map<KeyFrame *, set<KeyFrame *>> &LoopConnections);

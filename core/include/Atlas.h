@@ -27,13 +27,13 @@
 #include "Pinhole.h"
 #include "MapPoint.h"
 #include "KeyFrame.h"
-#include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Semantic/Floor.h"
 #include "KannalaBrandt8.h"
 #include "GeometricCamera.h"
 #include "Semantic/Marker.h"
 #include "Geometric/Plane.h"
+#include "Semantic/Doorway.h"
 
 #include <set>
 #include <mutex>
@@ -43,7 +43,6 @@
 namespace ORB_SLAM3
 {
     class Map;
-    class Door;
     class Room;
     class Frame;
     class Plane;
@@ -51,6 +50,7 @@ namespace ORB_SLAM3
     class Viewer;
     class Marker;
     class Pinhole;
+    class Doorway;
     class MapPoint;
     class KeyFrame;
     class KannalaBrandt8;
@@ -94,7 +94,6 @@ namespace ORB_SLAM3
         void SetViewer(Viewer *pViewer);
 
         // Methods for adding new components in the current map
-        void AddMapDoor(Door *door);
         void AddMapFloor(Floor *floor);
         void AddMapPlane(Plane *plane);
         void AddKeyFrame(KeyFrame *pKF);
@@ -102,6 +101,7 @@ namespace ORB_SLAM3
         void AddMapMarker(Marker *marker);
         void AddDetectedMapRoom(Room *room);
         void AddCandidateMapRoom(Room *room);
+        void AddMapDoorway(ORB_SLAM3::Doorway *doorway);
         void AddRoomWallPlane(ORB_SLAM3::Plane *pPlane);
 
         std::vector<GeometricCamera *> GetAllCameras();
@@ -120,7 +120,6 @@ namespace ORB_SLAM3
         std::vector<int> visitedPlanesMarkerIds;
 
         // Method for get data in current map
-        std::vector<Door *> GetAllDoors();
         std::vector<Room *> GetAllRooms();
         std::vector<Floor *> GetAllFloors();
         std::vector<Plane *> GetAllPlanes();
@@ -130,6 +129,7 @@ namespace ORB_SLAM3
         std::vector<Room *> GetAllDetectedMapRooms();
         std::vector<Room *> GetAllMarkerBasedMapRooms();
         std::vector<MapPoint *> GetReferenceMapPoints();
+        std::vector<ORB_SLAM3::Doorway *> GetAllDoorways();
 
         /**
          * @brief Get the cluster points of the map set by `voxblox_skeleton`
@@ -169,11 +169,11 @@ namespace ORB_SLAM3
         map<long unsigned int, KeyFrame *> GetAtlasKeyframes();
 
         // Functions for getting the entities
-        Door *GetDoorById(int doorId);
         Plane *GetPlaneById(int planeId);
         Floor *GetFloorById(int floorId);
         Marker *GetMarkerById(int markerId);
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
+        ORB_SLAM3::Doorway *GetDoorwayById(int doorwayId);
         ORB_SLAM3::Plane *GetRoomWallPlaneById(int planeId);
 
         KeyFrameDatabase *GetKeyFrameDatabase();

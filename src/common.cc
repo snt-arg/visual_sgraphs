@@ -46,10 +46,10 @@ std::string frameWorld, frameCamera, frameImu, frameMap, frameBC, frameSE;
 rclcpp::Time lastPlanePublishTime(0, 0, RCL_ROS_TIME);
 rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubKeyFrameList;
 rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdometry;
-rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubDoor;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubAllMappoints;
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pubCameraPose;
 rclcpp::Publisher<segmenter_ros::msg::VSGraphDataMsg>::SharedPtr pubKFImage;
+rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubDoorway;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubBuildingComponents;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubTrackedMappoints;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubFreespaceCluster;
@@ -140,7 +140,7 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     pubTrackingImage = std::make_shared<image_transport::Publisher>(image_transport->advertise(node_name + "/tracking_image", 1));
 
     // Entities
-    pubDoor = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/doors", 1);
+    pubDoorway = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/doorways", 1);
     pubFiducialMarker = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Building Components
@@ -185,7 +185,7 @@ void publishTopics(rclcpp::Time msgTime, Eigen::Vector3f Wbb, const sensor_msgs:
     std::vector<ORB_SLAM3::KeyFrame *> keyframes = pSLAM->GetAllKeyFrames();
 
     // Setup publishers
-    publishDoors(pSLAM->GetAllDoors());
+    publishDoorways(pSLAM->GetAllDoorways());
     publishKeyFrameImages(keyframes, msgTime);
     publishKeyFrameMarkers(keyframes, msgTime);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msgTime);
@@ -739,101 +739,70 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, rclcpp::Ti
     pubFiducialMarker->publish(markerArray);
 }
 
-void publishDoors(std::vector<ORB_SLAM3::Door *> doors)
+void publishDoorways(std::vector<ORB_SLAM3::Doorway *> doorways)
 {
-    // If there are no doors, return
-    int numDoors = doors.size();
-    if (numDoors == 0)
+    // If there are no doorways, return
+    int numDoorways = doorways.size();
+    if (numDoorways == 0)
         return;
 
     // Variables
-    visualization_msgs::msg::MarkerArray doorArray;
-    doorArray.markers.resize(numDoors);
+    visualization_msgs::msg::MarkerArray doorwayArray;
+    doorwayArray.markers.resize(numDoorways);
 
-    for (int idx = 0; idx < numDoors; idx++)
+    for (int idx = 0; idx < numDoorways; idx++)
     {
-        Sophus::SE3f doorPose = doors[idx]->getGlobalPose();
-        visualization_msgs::msg::Marker door, doorLines, doorLabel;
+        Sophus::SE3f doorwayPose = doorways[idx]->getGlobalPose();
+        visualization_msgs::msg::Marker doorway, doorwayLines, doorwayLabel;
 
-        // Door values
-        door.color.a = 0;
-        door.ns = "doors";
-        door.scale.x = 0.5;
-        door.scale.y = 0.5;
-        door.scale.z = 0.5;
-        door.action = door.ADD;
-        door.lifetime = rclcpp::Duration::from_seconds(0);
-        door.id = doorArray.markers.size();
-        door.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
-        door.mesh_use_embedded_materials = true;
-        door.header.frame_id = frameBC;
-        door.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-        door.mesh_resource =
+        // Doorway values
+        doorway.color.a = 0;
+        doorway.ns = "doorways";
+        doorway.scale.x = 0.5;
+        doorway.scale.y = 0.5;
+        doorway.scale.z = 0.5;
+        doorway.action = doorway.ADD;
+        doorway.lifetime = rclcpp::Duration::from_seconds(0);
+        doorway.id = doorwayArray.markers.size();
+        doorway.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
+        doorway.mesh_use_embedded_materials = true;
+        doorway.header.frame_id = frameBC;
+        doorway.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+        doorway.mesh_resource =
             "package://vs_graphs/config/Assets/door.dae";
 
         // Rotation and displacement for better visualization
-        Sophus::SE3f rotatedDoorPose = doorPose * Sophus::SE3f::rotX(-M_PI_2);
-        rotatedDoorPose.translation().y() -= 1.0;
-        door.pose.position.x = rotatedDoorPose.translation().x();
-        door.pose.position.y = rotatedDoorPose.translation().y();
-        door.pose.position.z = rotatedDoorPose.translation().z();
-        door.pose.orientation.x = rotatedDoorPose.unit_quaternion().x();
-        door.pose.orientation.y = rotatedDoorPose.unit_quaternion().y();
-        door.pose.orientation.z = rotatedDoorPose.unit_quaternion().z();
-        door.pose.orientation.w = rotatedDoorPose.unit_quaternion().w();
-        doorArray.markers.push_back(door);
+        Sophus::SE3f rotatedDoorwayPose = doorwayPose * Sophus::SE3f::rotX(-M_PI_2);
+        rotatedDoorwayPose.translation().y() -= 1.0;
+        doorway.pose.position.x = rotatedDoorwayPose.translation().x();
+        doorway.pose.position.y = rotatedDoorwayPose.translation().y();
+        doorway.pose.position.z = rotatedDoorwayPose.translation().z();
+        doorway.pose.orientation.x = rotatedDoorwayPose.unit_quaternion().x();
+        doorway.pose.orientation.y = rotatedDoorwayPose.unit_quaternion().y();
+        doorway.pose.orientation.z = rotatedDoorwayPose.unit_quaternion().z();
+        doorway.pose.orientation.w = rotatedDoorwayPose.unit_quaternion().w();
+        doorwayArray.markers.push_back(doorway);
 
-        // Door label (name)
-        doorLabel.color.a = 1;
-        doorLabel.color.r = 0;
-        doorLabel.color.g = 0;
-        doorLabel.color.b = 0;
-        doorLabel.scale.z = 0.2;
-        doorLabel.ns = "doorLabel";
-        doorLabel.action = doorLabel.ADD;
-        doorLabel.lifetime = rclcpp::Duration::from_seconds(0);
-        doorLabel.text = doors[idx]->getName();
-        doorLabel.id = doorArray.markers.size();
-        doorLabel.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
-        doorLabel.header.frame_id = frameBC;
-        doorLabel.pose.position.x = door.pose.position.x;
-        doorLabel.pose.position.z = door.pose.position.z;
-        doorLabel.pose.position.y = door.pose.position.y - 1.2;
-        doorLabel.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-        doorArray.markers.push_back(doorLabel);
-
-        // Door to points connection line
-        doorLines.color.a = 0.5;
-        doorLines.color.r = 0.0;
-        doorLines.color.g = 0.0;
-        doorLines.color.b = 0.0;
-        doorLines.scale.x = 0.005;
-        doorLines.scale.y = 0.005;
-        doorLines.scale.z = 0.005;
-        doorLines.ns = "doorLines";
-        doorLines.action = doorLines.ADD;
-        doorLines.lifetime = rclcpp::Duration::from_seconds(0);
-        doorLines.id = doorArray.markers.size();
-        doorLines.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
-        doorLines.header.frame_id = frameBC;
-        doorLines.type = visualization_msgs::msg::Marker::LINE_LIST;
-
-        geometry_msgs::msg::Point point1;
-        point1.x = doors[idx]->getMarker()->getGlobalPose().translation().x();
-        point1.y = doors[idx]->getMarker()->getGlobalPose().translation().y();
-        point1.z = doors[idx]->getMarker()->getGlobalPose().translation().z();
-        doorLines.points.push_back(point1);
-
-        geometry_msgs::msg::Point point2;
-        point2.x = rotatedDoorPose.translation().x();
-        point2.y = rotatedDoorPose.translation().y();
-        point2.z = rotatedDoorPose.translation().z();
-        doorLines.points.push_back(point2);
-
-        doorArray.markers.push_back(doorLines);
+        // Doorway label (name)
+        doorwayLabel.color.a = 1;
+        doorwayLabel.color.r = 0;
+        doorwayLabel.color.g = 0;
+        doorwayLabel.color.b = 0;
+        doorwayLabel.scale.z = 0.2;
+        doorwayLabel.ns = "doorwayLabel";
+        doorwayLabel.action = doorwayLabel.ADD;
+        doorwayLabel.lifetime = rclcpp::Duration::from_seconds(0);
+        doorwayLabel.id = doorwayArray.markers.size();
+        doorwayLabel.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
+        doorwayLabel.header.frame_id = frameBC;
+        doorwayLabel.pose.position.x = doorway.pose.position.x;
+        doorwayLabel.pose.position.z = doorway.pose.position.z;
+        doorwayLabel.pose.position.y = doorway.pose.position.y - 1.2;
+        doorwayLabel.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+        doorwayArray.markers.push_back(doorwayLabel);
     }
 
-    pubDoor->publish(doorArray);
+    pubDoorway->publish(doorwayArray);
 }
 
 void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
@@ -1032,7 +1001,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
                 color = {0.5, 0.1, 1.0};
 
             Eigen::Vector3d centroid = rooms[idx]->getCentroid();
-            visualization_msgs::msg::Marker room, roomWallLine, roomDoorLine, roomMarkerLine, roomLabel;
+            visualization_msgs::msg::Marker room, roomWallLine, roomDoorwayLine, roomMarkerLine, roomLabel;
 
             // Room values
             room.id = idx;

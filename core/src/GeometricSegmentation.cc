@@ -18,12 +18,10 @@
 namespace ORB_SLAM3
 {
     GeometricSegmentation::GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud,
-                                                 std::vector<ORB_SLAM3::Door *> nEnvDoors,
                                                  std::vector<ORB_SLAM3::Room *> nEvRooms)
     {
         mpAtlas = pAtlas;
         envRooms = nEvRooms;
-        envDoors = nEnvDoors;
         mHasDepthCloud = hasDepthCloud;
 
         // Get the system parameters
@@ -110,7 +108,7 @@ namespace ORB_SLAM3
         }
 
         // Add Markers while progressing in KFs
-        GeoSemHelpers::markerSemanticAnalysis(mpAtlas, pKF, envDoors, envRooms);
+        GeoSemHelpers::markerSemanticAnalysis(mpAtlas, pKF, envRooms);
     }
 
     std::vector<std::pair<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr, Eigen::Vector4d>> GeometricSegmentation::getPlanesFromPointClouds(

@@ -37,12 +37,12 @@
 
 namespace ORB_SLAM3
 {
-    class Door;
     class Room;
     class Atlas;
     class Plane;
     class Floor;
     class Marker;
+    class Doorway;
     class MapPoint;
     class KeyFrame;
     class KeyFrameDatabase;
@@ -83,7 +83,6 @@ namespace ORB_SLAM3
         Map(int initKFid);
         ~Map();
 
-        void AddMapDoor(Door *pDoor);
         void AddKeyFrame(KeyFrame *pKF);
         void AddMapPoint(MapPoint *pMP);
         void AddMapPlane(Plane *pPlane);
@@ -92,8 +91,8 @@ namespace ORB_SLAM3
         void AddCandidateMapRoom(Room *room);
         void AddMapFloor(ORB_SLAM3::Floor *pFloor);
         void AddRoomWallPlane(ORB_SLAM3::Plane *pPlane);
+        void AddMapDoorway(ORB_SLAM3::Doorway *pDoorway);
 
-        void EraseMapDoor(Door *pDoor);
         void EraseMapPoint(MapPoint *pMP);
         void EraseKeyFrame(KeyFrame *pKF);
         void EraseMapPlane(Plane *pPlane);
@@ -101,12 +100,12 @@ namespace ORB_SLAM3
         void EraseDetectedMapRoom(Room *pRoom);
         void EraseMarkerBasedMapRoom(Room *pRoom);
         void EraseRoomWallPlane(ORB_SLAM3::Plane *pPlane);
+        void EraseMapDoorway(ORB_SLAM3::Doorway *pDoorway);
 
         void InformNewBigChange();
         int GetLastBigChangeIdx();
         void SetReferenceMapPoints(const std::vector<MapPoint *> &vpMPs);
 
-        std::vector<Door *> GetAllDoors();
         std::vector<Room *> GetAllRooms();
         std::vector<Plane *> GetAllPlanes();
         std::vector<Marker *> GetAllMarkers();
@@ -116,6 +115,7 @@ namespace ORB_SLAM3
         std::vector<ORB_SLAM3::Floor *> GetAllFloors();
         std::vector<Room *> GetAllMarkerBasedMapRooms();
         std::vector<MapPoint *> GetReferenceMapPoints();
+        std::vector<ORB_SLAM3::Doorway *> GetAllDoorways();
 
         /**
          * @brief Get the cluster points of the map set by `voxblox_skeleton`
@@ -138,11 +138,11 @@ namespace ORB_SLAM3
         void SetInitKFid(long unsigned int initKFif);
 
         KeyFrame *GetOriginKF();
-        Door *GetDoorById(int doorId);
         Floor *GetFloorById(int floorId);
         Plane *GetPlaneById(int planeId);
         Marker *GetMarkerById(int markerId);
         KeyFrame *GetKeyFrameById(long unsigned int mnId);
+        ORB_SLAM3::Doorway *GetDoorwayById(int doorwayId);
         ORB_SLAM3::Plane *GetRoomWallPlaneById(int planeId);
 
         Plane *GetBiggestGroundPlane();
@@ -203,7 +203,6 @@ namespace ORB_SLAM3
     protected:
         long unsigned int mnId;
 
-        std::set<Door *> mspDoors;
         std::set<Floor *> mspFloors;
         std::set<Plane *> mspPlanes;
         std::set<Marker *> mspMarkers;
@@ -211,16 +210,17 @@ namespace ORB_SLAM3
         std::set<KeyFrame *> mspKeyFrames;
         std::set<Room *> mspDetectedRooms;
         std::set<Room *> mspMarkerBasedRooms;
+        std::set<ORB_SLAM3::Doorway *> mspDoorways;
 
         // Skeleton cluster points of the map set by `voxblox_skeleton`
         std::vector<std::vector<Eigen::Vector3d>> skeletonClusterPoints;
 
         // Hashmaps and indices for fetching elements
-        std::unordered_map<int, Door *> mDoorIndex;
         std::unordered_map<int, Floor *> mFloorIndex;
         std::unordered_map<int, Plane *> mPlaneIndex;
         std::unordered_map<int, Marker *> mMarkerIndex;
         std::unordered_map<long unsigned int, KeyFrame *> mKFIndex;
+        std::unordered_map<int, ORB_SLAM3::Doorway *> mDoorwayIndex;
         std::unordered_map<int, ORB_SLAM3::Plane *> mRoomWallPlaneIndex;
 
         // Save/load, the set structure is broken in libboost 1.58 for ubuntu 16.04, a vector is serializated

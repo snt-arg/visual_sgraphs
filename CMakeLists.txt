@@ -129,12 +129,12 @@ add_library(${PROJECT_NAME}_lib SHARED
   core/src/Config.cc
   core/src/Settings.cc
   core/src/GeoSemHelpers.cc
-  core/src/Geometric/Plane.cc
-  core/src/Semantic/Marker.cc
-  core/src/Semantic/Door.cc
   core/src/Semantic/Room.cc
   core/src/Semantic/Floor.cc
   core/src/DatabaseParser.cc
+  core/src/Semantic/Marker.cc
+  core/src/Geometric/Plane.cc
+  core/src/Semantic/Doorway.cc
   core/src/Types/SystemParams.cc
   core/src/GeometricSegmentation.cc
   core/src/SemanticSegmentation.cc
@@ -171,12 +171,12 @@ add_library(${PROJECT_NAME}_lib SHARED
   core/include/Utils.h
   core/include/Settings.h
   core/include/GeoSemHelpers.h
-  core/include/Semantic/Door.h
   core/include/Semantic/Room.h
   core/include/Semantic/Floor.h
   core/include/DatabaseParser.h
   core/include/Semantic/Marker.h
   core/include/Geometric/Plane.h
+  core/include/Semantic/Doorway.h
   core/include/Types/SystemParams.h
   core/include/GeometricSegmentation.h
   core/include/SemanticSegmentation.h

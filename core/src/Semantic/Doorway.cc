@@ -11,102 +11,72 @@
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details: https://www.gnu.org/licenses/
-*/
+ */
 
-#include "Semantic/Door.h"
+#include "Semantic/Doorway.h"
 
 namespace ORB_SLAM3
 {
-    Door::Door() {}
-    Door::~Door() {}
+    Doorway::Doorway() {}
+    Doorway::~Doorway() {}
 
-    int Door::getId() const
+    int Doorway::getId() const
     {
         return id;
     }
 
-    void Door::setId(int value)
+    void Doorway::setId(int value)
     {
         id = value;
     }
 
-    int Door::getOpId() const
+    int Doorway::getOpId() const
     {
         return opId;
     }
 
-    void Door::setOpId(int value)
+    void Doorway::setOpId(int value)
     {
         opId = value;
     }
 
-    int Door::getOpIdG() const
+    int Doorway::getOpIdG() const
     {
         return opIdG;
     }
 
-    void Door::setOpIdG(int value)
+    void Doorway::setOpIdG(int value)
     {
         opIdG = value;
     }
 
-    int Door::getMarkerId() const
-    {
-        return markerId;
-    }
-
-    void Door::setMarkerId(int value)
-    {
-        markerId = value;
-    }
-
-    std::string Door::getName() const
-    {
-        return name;
-    }
-
-    void Door::setName(std::string value)
-    {
-        name = value;
-    }
-
-    Marker *Door::getMarker() const
-    {
-        return marker;
-    }
-
-    void Door::setMarker(Marker *value)
-    {
-        marker = value;
-    }
-
-    Sophus::SE3f Door::getLocalPose() const
+    Sophus::SE3f Doorway::getLocalPose() const
     {
         return localPose;
     }
 
-    void Door::setLocalPose(const Sophus::SE3f &value)
+    void Doorway::setLocalPose(const Sophus::SE3f &value)
     {
         localPose = value;
     }
 
-    Sophus::SE3f Door::getGlobalPose() const
+    Sophus::SE3f Doorway::getGlobalPose() const
     {
         return globalPose;
     }
 
-    void Door::setGlobalPose(const Sophus::SE3f &value)
+    void Doorway::setGlobalPose(const Sophus::SE3f &value)
     {
         globalPose = value;
     }
 
-    Map *Door::getMap()
+    Map *Doorway::getMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Door::setMap(Map *pMap)
+    void Doorway::setMap(Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;

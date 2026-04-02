@@ -136,27 +136,26 @@ namespace ORB_SLAM3
         }
     }
 
-    std::pair<bool, std::string> GeoSemHelpers::checkIfMarkerIsDoor(const int &markerId,
-                                                                    std::vector<ORB_SLAM3::Door *> envDoors)
+    std::pair<bool, std::string> GeoSemHelpers::checkIfMarkerIsDoorway(const int &markerId,
+                                                                    std::vector<ORB_SLAM3::Room *> envRooms)
     {
-        bool isDoor = false;
+        bool isDoorway = true;
         std::string name = "";
-        // Loop over all markers attached to doors
-        for (const auto &doorPtr : envDoors)
+        // Loop over all markers attached to doorways
+        for (const auto &roomPtr : envRooms)
         {
-            if (doorPtr->getMarkerId() == markerId)
+            if (roomPtr->getMetaMarkerId() == markerId)
             {
-                isDoor = true;
-                name = doorPtr->getName();
+                isDoorway = false;
+                name = roomPtr->getName();
                 break; // No need to continue searching if found
             }
         }
         // Returning
-        return std::make_pair(isDoor, name);
+        return std::make_pair(isDoorway, name);
     }
 
     void GeoSemHelpers::markerSemanticAnalysis(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                               std::vector<ORB_SLAM3::Door *> envDoors,
                                                std::vector<ORB_SLAM3::Room *> envRooms)
     {
         // Get the markers from the current KeyFrame
@@ -168,12 +167,12 @@ namespace ORB_SLAM3
             ORB_SLAM3::Marker *currentMapMarker;
 
             // Check the type of the marker
-            std::pair<bool, std::string> result = checkIfMarkerIsDoor(mCurrentMarker->getId(), envDoors);
-            bool markerIsDoor = result.first;
-            std::string doorName = result.second;
+            std::pair<bool, std::string> result = checkIfMarkerIsDoorway(mCurrentMarker->getId(), envRooms);
+            bool markerIsDoorway = result.first;
+            std::string doorwayName = result.second;
 
             // Change the marker type
-            mCurrentMarker->setMarkerType(markerIsDoor
+            mCurrentMarker->setMarkerType(markerIsDoorway
                                               ? ORB_SLAM3::Marker::markerVariant::ON_DOOR
                                               : ORB_SLAM3::Marker::markerVariant::ON_ROOM_CENTER);
 
@@ -197,9 +196,9 @@ namespace ORB_SLAM3
                     }
 
             // Decide based on the marker type
-            if (markerIsDoor)
+            if (markerIsDoorway)
                 // The current marker is placed on a door
-                createMapDoor(mpAtlas, pKF, mCurrentMarker, doorName);
+                createMapDoorway(mpAtlas, pKF);
             else
             {
                 // The current marker is a room meta-marker
@@ -238,33 +237,25 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    void GeoSemHelpers::createMapDoor(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                      ORB_SLAM3::Marker *attachedMarker, std::string doorName)
+    void GeoSemHelpers::createMapDoorway(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF)
     {
-        // Check if the door has not been created before
-        bool doorAlreadyInMap = false;
-        for (auto door : mpAtlas->GetAllDoors())
-            if (door->getMarker()->getId() == attachedMarker->getId())
-                doorAlreadyInMap = true;
+        // Check if the doorway has not been created before
+        bool doorwayAlreadyInMap = false;
+        // TODO
 
-        if (doorAlreadyInMap)
+        if (doorwayAlreadyInMap)
             return;
 
         // Variables
-        ORB_SLAM3::Door *newMapDoor = new ORB_SLAM3::Door();
+        ORB_SLAM3::Doorway *newMapDoorway = new ORB_SLAM3::Doorway();
 
-        newMapDoor->setName(doorName);
-        newMapDoor->setMarker(attachedMarker);
-        newMapDoor->setMap(mpAtlas->GetCurrentMap());
-        newMapDoor->setId(mpAtlas->GetAllDoors().size());
-        newMapDoor->setLocalPose(attachedMarker->getLocalPose());
-        newMapDoor->setGlobalPose(attachedMarker->getGlobalPose());
+        newMapDoorway->setMap(mpAtlas->GetCurrentMap());
+        newMapDoorway->setId(mpAtlas->GetAllDoorways().size());
 
-        std::cout << "- New door detected: Door#" << newMapDoor->getId() << " (" << newMapDoor->getName()
-                  << "), with Marker#" << attachedMarker->getId() << std::endl;
+        std::cout << "- New doorway detected: Doorway#" << newMapDoorway->getId() << std::endl;
 
-        pKF->AddMapDoor(newMapDoor);
-        mpAtlas->AddMapDoor(newMapDoor);
+        pKF->AddMapDoorway(newMapDoorway);
+        mpAtlas->AddMapDoorway(newMapDoorway);
     }
 
     void GeoSemHelpers::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
@@ -345,16 +336,6 @@ namespace ORB_SLAM3
         newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
         newMapRoomCandidate->setMetaMarkerId(matchedRoom->getMetaMarkerId());
         newMapRoomCandidate->setCentroid(attachedMarker->getGlobalPose().translation().cast<double>());
-
-        // Add door markers to the room
-        for (int markerId : matchedRoom->getDoorMarkerIds())
-        {
-            newMapRoomCandidate->setDoorMarkerIds(markerId);
-            // Check if the door marker is already in the map
-            for (auto door : mpAtlas->GetAllDoors())
-                if (door->getMarker()->getId() == markerId)
-                    newMapRoomCandidate->setDoors(door);
-        }
 
         std::cout
             << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " ("
@@ -445,11 +426,9 @@ namespace ORB_SLAM3
             clusterBasedRoom->setMetaMarker(markerBasedRoom->getMetaMarker());
             clusterBasedRoom->setMetaMarkerId(markerBasedRoom->getMetaMarkerId());
             clusterBasedRoom->setRoomVariant(markerBasedRoom->getRoomVariant());
-            // Connect the doors to the room
-            for (ORB_SLAM3::Door *door : markerBasedRoom->getDoors())
-                clusterBasedRoom->setDoors(door);
-            for (int markerId : markerBasedRoom->getDoorMarkerIds())
-                clusterBasedRoom->setDoorMarkerIds(markerId);
+            // Connect the doorways to the room
+            for (ORB_SLAM3::Doorway *doorway : markerBasedRoom->getDoorways())
+                clusterBasedRoom->setDoorways(doorway);
             // Create a room candidate for it
             std::cout << "- Cluster-based room candidate #" << clusterBasedRoom->getId()
                       << " has been validated (semantic info added)!" << std::endl;

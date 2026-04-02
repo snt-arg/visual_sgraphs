@@ -135,10 +135,10 @@ namespace ORB_SLAM3
         pMapMP->AddRoomWallPlane(pPlane);
     }
 
-    void Atlas::AddMapDoor(Door *door)
+    void Atlas::AddMapDoorway(ORB_SLAM3::Doorway *doorway)
     {
-        Map *pMapMP = door->getMap();
-        pMapMP->AddMapDoor(door);
+        ORB_SLAM3::Map *pMapMP = doorway->getMap();
+        pMapMP->AddMapDoorway(doorway);
     }
 
     void Atlas::AddDetectedMapRoom(Room *room)
@@ -268,10 +268,10 @@ namespace ORB_SLAM3
         return retrievedKF;
     }
 
-    Door *Atlas::GetDoorById(int doorId)
+    ORB_SLAM3::Doorway *Atlas::GetDoorwayById(int doorwayId)
     {
-        Door *fetchedDoor = mpCurrentMap->GetDoorById(doorId);
-        return fetchedDoor;
+        ORB_SLAM3::Doorway *fetchedDoorway = mpCurrentMap->GetDoorwayById(doorwayId);
+        return fetchedDoorway;
     }
 
     Floor *Atlas::GetFloorById(int floorId)
@@ -316,10 +316,10 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllPlanes();
     }
 
-    std::vector<Door *> Atlas::GetAllDoors()
+    std::vector<ORB_SLAM3::Doorway *> Atlas::GetAllDoorways()
     {
         unique_lock<mutex> lock(mMutexAtlas);
-        return mpCurrentMap->GetAllDoors();
+        return mpCurrentMap->GetAllDoorways();
     }
 
     std::vector<Room *> Atlas::GetAllRooms()

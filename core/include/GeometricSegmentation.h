@@ -37,7 +37,6 @@ namespace ORB_SLAM3
         bool mHasDepthCloud;
         std::mutex mMutexNewKFs;
         std::list<KeyFrame *> mvpKeyFrameBuffer;
-        std::vector<ORB_SLAM3::Door *> envDoors;
         std::vector<ORB_SLAM3::Room *> envRooms;
 
         // system parameters
@@ -46,7 +45,6 @@ namespace ORB_SLAM3
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         GeometricSegmentation(Atlas *pAtlas, bool hasDepthCloud,
-                              std::vector<ORB_SLAM3::Door *> envDoors,
                               std::vector<ORB_SLAM3::Room *> envRooms);
 
         void AddKeyFrameToBuffer(KeyFrame *pKF);

@@ -339,7 +339,7 @@ namespace ORB_SLAM3
         return writeInformationMatrix(os);
     }
 
-    EdgeSE3DoorProjectSE3Room::EdgeSE3DoorProjectSE3Room() : EdgeSE3ProjectSE3() {}
+    EdgeSE3DoorwayProjectSE3Room::EdgeSE3DoorwayProjectSE3Room() : EdgeSE3ProjectSE3() {}
 
     EdgeVertexPlaneProjectSE3M::EdgeVertexPlaneProjectSE3M() : g2o::BaseBinaryEdge<4, Eigen::Vector4d, g2o::VertexSE3Expmap, g2o::VertexPlane>() {}
 

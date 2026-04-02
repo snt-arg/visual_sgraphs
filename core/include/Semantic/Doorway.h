@@ -11,34 +11,30 @@
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details: https://www.gnu.org/licenses/
-*/
+ */
 
-#ifndef DOOR_H
-#define DOOR_H
+#ifndef DOORWAY_H
+#define DOORWAY_H
 
 #include "Map.h"
-#include "Marker.h"
 
 namespace ORB_SLAM3
 {
     class Map;
     class Marker;
 
-    class Door
+    class Doorway
     {
     private:
-        int id;                  // The door's identifier
-        int opId;                // The door's identifier in the local optimizer
-        int opIdG;               // The door's identifier in the global optimizer
-        int markerId;            // The marker attached to a door [in real map]
-        Marker *marker;          // The marker attached on the door
-        std::string name;        // The name devoted for each door (optional)
-        Sophus::SE3f localPose;  // Door's pose (position and orientation) in the Local Map
-        Sophus::SE3f globalPose; // Door's pose (position and orientation) in the Global Map
+        int id;
+        int opId;
+        int opIdG;
+        Sophus::SE3f localPose;
+        Sophus::SE3f globalPose;
 
     public:
-        Door();
-        ~Door();
+        Doorway();
+        ~Doorway();
 
         int getId() const;
         void setId(int value);
@@ -48,15 +44,6 @@ namespace ORB_SLAM3
 
         int getOpIdG() const;
         void setOpIdG(int value);
-
-        int getMarkerId() const;
-        void setMarkerId(int value);
-
-        std::string getName() const;
-        void setName(std::string value);
-
-        Marker *getMarker() const;
-        void setMarker(Marker *value);
 
         Sophus::SE3f getLocalPose() const;
         void setLocalPose(const Sophus::SE3f &value);

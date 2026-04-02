@@ -1515,11 +1515,9 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp,
-                                           string filename, const std::vector<Marker *> markers,
-                                           const std::vector<Door *> doors, const std::vector<Room *> rooms)
+                                           string filename, const std::vector<Marker *> markers, const std::vector<Room *> rooms)
     {
         // Set arguments to local variables
-        env_doors = doors;
         env_rooms = rooms;
 
         mImGray = imRectLeft;
@@ -1586,10 +1584,9 @@ namespace ORB_SLAM3
     Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD,
                                          const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
                                          const double &timestamp, string filename, const std::vector<Marker *> markers,
-                                         const std::vector<Door *> doors, const std::vector<Room *> rooms)
+                                         const std::vector<Room *> rooms)
     {
         // Set arguments to local variables
-        env_doors = doors;
         env_rooms = rooms;
 
         mImGray = imRGB;
@@ -1635,11 +1632,10 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename,
-                                              const std::vector<Marker *> markers, const std::vector<Door *> doors,
+                                              const std::vector<Marker *> markers,
                                               const std::vector<Room *> rooms)
     {
         // Set arguments to local variables
-        env_doors = doors;
         env_rooms = rooms;
 
         mImGray = im;

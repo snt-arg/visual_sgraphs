@@ -20,7 +20,6 @@
 #include <iostream>
 #include "Thirdparty/nlohmann/json.hpp"
 
-#include "Semantic/Door.h"
 #include "Semantic/Room.h"
 
 using json = nlohmann::json;
@@ -34,7 +33,6 @@ namespace ORB_SLAM3
     {
     private:
         std::vector<Room *> envRooms; // Rooms available in the real environment
-        std::vector<Door *> envDoors; // Doors available in the real environment
 
     public:
         DBParser();
@@ -52,13 +50,6 @@ namespace ORB_SLAM3
          * @param envData the JSON file containing the rooms data
          */
         std::vector<Room *> getEnvRooms(json envData);
-
-        /**
-         * @brief Parses the dictionary containing doors data in the real environment
-         * and returns a list of doors.
-         * @param envData the JSON file containing the rooms data
-         */
-        std::vector<Door *> getEnvDoors(json envData);
     };
 }
 

@@ -16,7 +16,7 @@
 #ifndef ROOM_H
 #define ROOM_H
 
-#include "Door.h"
+#include "Doorway.h"
 #include "Geometric/Plane.h"
 #include "Thirdparty/g2o/g2o/types/vertex_plane.h"
 
@@ -36,20 +36,19 @@ namespace ORB_SLAM3
         };
 
     private:
-        int id;                         // The room's identifier
-        int opId;                       // The room's identifier in the local optimizer
-        int opIdG;                      // The room's identifier in the global optimizer
-        bool mbBad;                     // Marks the room as bad (if true, the room will not be used)
-        int metaMarkerId;               // The identifier of the room's meta-marker (containing information about the room)
-        std::string name;               // The name devoted for each room (optional)
-        bool hasKnownLabel;             // Checks if it is a candidate room (meta-marker detected) or not
-        Marker *metaMarker;             // The meta-marker assigned for the room
-        Plane *groundPlane;             // The ground plane associated with the room
-        roomVariant variant;            // The room's semantic type (e.g., corridor, room, etc.)
-        Eigen::Vector3d centroid;       // The center of the room as a 3D vector in the global reference
-        std::vector<Door *> doors;      // The vector of detected doors of a room
-        std::vector<Plane *> walls;     // The vector of detected walls of a room
-        std::vector<int> doorMarkerIds; // Markers attached to the doors of a room [in real map], e.g. [3, 4]
+        int id;                                    // The room's identifier
+        int opId;                                  // The room's identifier in the local optimizer
+        int opIdG;                                 // The room's identifier in the global optimizer
+        bool mbBad;                                // Marks the room as bad (if true, the room will not be used)
+        int metaMarkerId;                          // The identifier of the room's meta-marker (containing information about the room)
+        std::string name;                          // The name devoted for each room (optional)
+        bool hasKnownLabel;                        // Checks if it is a candidate room (meta-marker detected) or not
+        Marker *metaMarker;                        // The meta-marker assigned for the room
+        Plane *groundPlane;                        // The ground plane associated with the room
+        roomVariant variant;                       // The room's semantic type (e.g., corridor, room, etc.)
+        Eigen::Vector3d centroid;                  // The center of the room as a 3D vector in the global reference
+        std::vector<Plane *> walls;                // The vector of detected walls of a room
+        std::vector<ORB_SLAM3::Doorway *> doorways; // The vector of detected doorways of a room
 
     public:
         Room();
@@ -82,8 +81,8 @@ namespace ORB_SLAM3
         std::string getName() const;
         void setName(std::string value);
 
-        void setDoors(Door *value);
-        std::vector<Door *> getDoors() const;
+        void setDoorways(ORB_SLAM3::Doorway *value);
+        std::vector<ORB_SLAM3::Doorway *> getDoorways() const;
 
         void setWalls(ORB_SLAM3::Plane *value);
         std::vector<ORB_SLAM3::Plane *> getWalls() const;
@@ -92,9 +91,6 @@ namespace ORB_SLAM3
 
         Plane *getGroundPlane() const;
         void setGroundPlane(Plane *ground);
-
-        void setDoorMarkerIds(int value);
-        std::vector<int> getDoorMarkerIds() const;
 
         Eigen::Vector3d getCentroid() const;
         void setCentroid(Eigen::Vector3d value);

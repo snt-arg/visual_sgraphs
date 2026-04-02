@@ -188,7 +188,7 @@ namespace ORB_SLAM3
 
         // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
         bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
-        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, envDoors, envRooms);
+        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, envRooms);
         mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
 
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
@@ -239,7 +239,6 @@ namespace ORB_SLAM3
         json envData = parser.jsonParser(jsonFilePath);
         // Getting semantic entities
         envRooms = parser.getEnvRooms(envData);
-        envDoors = parser.getEnvDoors(envData);
         // Printing the success message
         std::cout << "- JSON loaded and candidates created!\n";
     }
@@ -349,7 +348,7 @@ namespace ORB_SLAM3
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
         Sophus::SE3f Tcw = mpTracker->GrabImageStereo(imLeftToFeed, imRightToFeed, timestamp, filename,
-                                                      markers, envDoors, envRooms);
+                                                      markers, envRooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
@@ -425,7 +424,7 @@ namespace ORB_SLAM3
 
         // Track RGB-D images
         Sophus::SE3f Tcw = mpTracker->GrabImageRGBD(imToFeed, imDepthToFeed, mainCloud, timestamp,
-                                                    filename, markers, envDoors, envRooms);
+                                                    filename, markers, envRooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
@@ -504,7 +503,7 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename, markers, envDoors, envRooms);
+        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename, markers, envRooms);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
@@ -1380,10 +1379,10 @@ namespace ORB_SLAM3
         return pActiveMap->GetAllMarkers();
     }
 
-    vector<Door *> System::GetAllDoors()
+    std::vector<ORB_SLAM3::Doorway *> System::GetAllDoorways()
     {
         Map *pActiveMap = mpAtlas->GetCurrentMap();
-        return pActiveMap->GetAllDoors();
+        return pActiveMap->GetAllDoorways();
     }
 
     vector<Plane *> System::GetAllPlanes()
