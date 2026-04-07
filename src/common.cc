@@ -863,6 +863,14 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
                 newPoint.b = color[2];
             }
 
+            // If the plane is a door, visualize it in a distinct color (purple)
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::DOOR)
+            {
+                    newPoint.r = 204;
+                    newPoint.g = 0;
+                    newPoint.b = 102;
+            }
+
             // Add the point to the aggregated cloud
             aggregatedCloud->push_back(newPoint);
         }

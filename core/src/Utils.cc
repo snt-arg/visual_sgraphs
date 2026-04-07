@@ -409,6 +409,8 @@ namespace ORB_SLAM3
             return ORB_SLAM3::Plane::planeVariant::GROUND;
         case 1:
             return ORB_SLAM3::Plane::planeVariant::WALL;
+        case 2:
+            return ORB_SLAM3::Plane::planeVariant::DOOR;
         default:
             return ORB_SLAM3::Plane::planeVariant::UNDEFINED;
         }
@@ -422,6 +424,8 @@ namespace ORB_SLAM3
             return 0;
         case ORB_SLAM3::Plane::planeVariant::WALL:
             return 1;
+        case ORB_SLAM3::Plane::planeVariant::DOOR:
+            return 2;
         default:
             return -1;
         }

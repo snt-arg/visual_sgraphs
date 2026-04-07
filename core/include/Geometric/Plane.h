@@ -42,7 +42,7 @@ namespace ORB_SLAM3
             UNDEFINED = -1,
             WALL = 0,
             GROUND = 1,
-            WINDOW = 2
+            DOOR = 2
         };
 
         struct Observation
