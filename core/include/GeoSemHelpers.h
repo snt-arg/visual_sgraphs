@@ -64,7 +64,7 @@ namespace ORB_SLAM3
          * @param envDoorways the list of doorways in the environment
          */
         static std::pair<bool, std::string> checkIfMarkerIsDoorway(const int &markerId,
-                                                                std::vector<ORB_SLAM3::Room *> envRooms);
+                                                                   std::vector<ORB_SLAM3::Room *> envRooms);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
@@ -86,15 +86,12 @@ namespace ORB_SLAM3
         /**
          * @brief Creates a new doorway object to be added to the map
          * @param mpAtlas the current map in Atlas
-         * @param pKF the address of the current keyframe
+         * @param doorPlane the plane representing the door
+         * @param wallPlane the plane representing the wall connected to the door
+         * @param isOpenDoorway whether the doorway is open or closed (default: false, meaning closed doorway)
          */
-        static void createMapDoorway(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF);
-
-        /**
-         * @brief Organizes the walls of a four-walled room
-         * @param givenRoom the address of the detected room
-         */
-        static void organizeRoomWalls(Room *givenRoom);
+        static void createMapDoorway(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
+                                     ORB_SLAM3::Plane *wallPlane, bool isOpenDoorway = false);
 
         /**
          * @brief Creates a blank room object (undefined variant) to be added to the map
@@ -111,15 +108,6 @@ namespace ORB_SLAM3
          * @param attachedMarker the address of the attached marker
          */
         static void createMapRoomCandidateByMarker(Atlas *mpAtlas, Room *matchedRoom, Marker *attachedMarker);
-
-        /**
-         * @brief Updates the room object in the map with new room information
-         * @param markerBasedRoom the address of the detected marker-based room
-         * @param clusterBasedRoom the address of the detected cluster-based room
-         * @param isMarkerBasedMapped the boolean value to check if we augment from marker-based or the cluster-based room
-         */
-        static void augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
-                                            bool isMarkerBasedMapped);
 
         /**
          * @brief Chooses a ground plane from the Atlas to be associated with the room

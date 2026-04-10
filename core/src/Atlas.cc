@@ -310,7 +310,7 @@ namespace ORB_SLAM3
         return mpCurrentMap->GetAllMarkers();
     }
 
-    std::vector<Plane *> Atlas::GetAllPlanes()
+    std::vector<ORB_SLAM3::Plane *> Atlas::GetAllPlanes()
     {
         unique_lock<mutex> lock(mMutexAtlas);
         return mpCurrentMap->GetAllPlanes();

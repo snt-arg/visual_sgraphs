@@ -263,6 +263,18 @@ Visualization Manager:
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
+      Name: Doorways
+      Namespaces:
+        {}
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /vs_graphs/doorways
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
       Name: Fiducial Markers
       Namespaces:
         {}
@@ -434,12 +446,6 @@ Visualization Manager:
       Name: Structural Elements
       Namespaces:
         "": true
-        floorLabels: true
-        floorRoomEdges: true
-        floors: true
-        room: true
-        roomLabel: true
-        roomWallLine: true
       Topic:
         Depth: 5
         Durability Policy: Volatile

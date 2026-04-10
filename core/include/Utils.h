@@ -24,8 +24,10 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <pcl/common/pca.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+#include <pcl/common/common.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/extract_indices.h>
@@ -149,6 +151,15 @@ namespace ORB_SLAM3
         template <typename PointT>
         static typename pcl::PointCloud<PointT>::Ptr pointcloudOutlierRemoval(
             const typename pcl::PointCloud<PointT>::Ptr &cloud, const int meanThresh, const float stdDevThresh);
+
+        /**
+         * @brief Computes the width and height of a plane given its point cloud
+         * @param cloud the point cloud of the plane
+         * @param width the computed width of the plane
+         * @param height the computed height of the plane
+         */
+        static void computePlaneWidthHeight(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud,
+                                            double &width, double &height);
 
         /**
          * @brief Performs PCL ransac to get the plane equations from the a given point cloud

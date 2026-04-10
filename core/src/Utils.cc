@@ -43,7 +43,7 @@ namespace ORB_SLAM3
         return lineStart + t * lineDirection;
     }
 
-    bool Utils::arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2)
+    bool Utils::arePlanesFacingEachOther(const ORB_SLAM3::Plane *plane1, const ORB_SLAM3::Plane *plane2)
     {
         // Get the normal vectors of the planes
         Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
@@ -56,7 +56,7 @@ namespace ORB_SLAM3
         return dotProduct < SystemParams::GetParams()->room_seg.plane_facing_dot_thresh;
     }
 
-    bool Utils::arePlanesApartEnough(const Plane *plane1, const Plane *plane2, const double &threshold)
+    bool Utils::arePlanesApartEnough(const ORB_SLAM3::Plane *plane1, const ORB_SLAM3::Plane *plane2, const double &threshold)
     {
         // Correct the directions of both planes to ensure consistent orientation
         Eigen::Vector4d v1 = correctPlaneDirection(plane1->getGlobalEquation().coeffs());
@@ -264,6 +264,35 @@ namespace ORB_SLAM3
     }
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const int, const float);
+    
+    void Utils::computePlaneWidthHeight(
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud,
+        double &width,
+        double &height)
+    {
+        if (cloud->points.empty())
+        {
+            width = 0.0;
+            height = 0.0;
+            return;
+        }
+
+        // Apply PCA to find the principal axes of the point cloud
+        pcl::PCA<pcl::PointXYZRGBA> pca;
+        pca.setInputCloud(cloud);
+
+        // Project all points onto the PCA space
+        pcl::PointCloud<pcl::PointXYZRGBA> projected;
+        pca.project(*cloud, projected);
+
+        // Find min/max along each principal axis
+        pcl::PointXYZRGBA minPt, maxPt;
+        pcl::getMinMax3D(projected, minPt, maxPt);
+
+        // Axis 0 = largest variance (width), Axis 1 = second (height)
+        width = static_cast<double>(maxPt.x - minPt.x);
+        height = static_cast<double>(maxPt.y - minPt.y);
+    }
 
     template <typename PointT, template <typename> class SegmentationType>
     std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> Utils::ransacPlaneFitting(

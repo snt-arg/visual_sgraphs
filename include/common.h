@@ -169,10 +169,10 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
 
 void publishTrackingImage(cv::Mat, rclcpp::Time);
 void publishCameraPose(Sophus::SE3f, rclcpp::Time);
-void publishDoorways(std::vector<ORB_SLAM3::Doorway *>);
 void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, rclcpp::Time);
 void publishTFTransform(Sophus::SE3f, string, string, rclcpp::Time);
+void publishDoorways(std::vector<ORB_SLAM3::Doorway *>, rclcpp::Time);
 void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, rclcpp::Time);
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, rclcpp::Time);
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, rclcpp::Time);

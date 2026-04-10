@@ -136,9 +136,39 @@ namespace ORB_SLAM3
 
     void SemanticsManager::detectDoorsAndDoorways(ORB_SLAM3::Atlas *pAtlas)
     {
-        // [TODO] Needs to be implemented
-        // [TODO] Get all doors --> Find the doors with the same normal to walls --> Filter by distance --> It is an unpassable doorway
-        std::cout << "Door and doorway detection is not implemented yet." << std::endl;
+        // Get all planes and filter only DOOR and WALL variants
+        std::vector<ORB_SLAM3::Plane *> allPlanes = pAtlas->GetAllPlanes();
+        std::vector<ORB_SLAM3::Plane *> wallPlanes;
+        std::vector<ORB_SLAM3::Plane *> doorPlanes;
+        for (const auto &plane : allPlanes)
+        {
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                wallPlanes.push_back(plane);
+            else if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::DOOR)
+                doorPlanes.push_back(plane);
+        }
+
+        // Detect doors with the same normal as walls and close to walls
+        for (const auto &door : doorPlanes)
+        {
+            for (const auto &wall : wallPlanes)
+            {
+                // Skip if the door and wall are not parallel
+                if (!Utils::arePlanesParallel(door, wall))
+                    continue;
+
+                // Skip if the door and wall are facing each other
+                if (Utils::arePlanesFacingEachOther(door, wall))
+                    continue;
+
+                // Skip if the door and wall are not close to each other
+                if (Utils::arePlanesApartEnough(door, wall, sysParams->sem_seg.max_wall_door_distance))
+                    continue;
+
+                // Otherwise, it is a valid closed door to be connected to the wall
+                GeoSemHelpers::createMapDoorway(mpAtlas, door, wall, false);
+            }
+        }
     }
 
     Eigen::Vector3f SemanticsManager::transformPlaneEqToGroundReference(const Eigen::Vector4d &planeEq)

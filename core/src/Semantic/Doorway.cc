@@ -60,34 +60,64 @@ namespace ORB_SLAM3
         passable = value;
     }
 
-    Sophus::SE3f Doorway::getLocalPose() const
+    double Doorway::getWidth() const
     {
-        return localPose;
+        return width;
     }
 
-    void Doorway::setLocalPose(const Sophus::SE3f &value)
+    void Doorway::setWidth(double value)
     {
-        localPose = value;
+        width = value;
     }
 
-    Sophus::SE3f Doorway::getGlobalPose() const
+    double Doorway::getHeight() const
     {
-        return globalPose;
+        return height;
     }
 
-    void Doorway::setGlobalPose(const Sophus::SE3f &value)
+    void Doorway::setHeight(double value)
     {
-        globalPose = value;
+        height = value;
     }
 
-    ORB_SLAM3::Plane *Doorway::getAssociateWall() const
+    Eigen::Vector3f Doorway::getCentroid() const
     {
-        return associateWall;
+        return centroid;
     }
 
-    void Doorway::setAssociateWall(ORB_SLAM3::Plane *value)
+    void Doorway::setCentroid(const Eigen::Vector3f &value)
     {
-        associateWall = value;
+        centroid = value;
+    }
+
+    ORB_SLAM3::Plane *Doorway::getAssociateDoor() const
+    {
+        return associateDoor;
+    }
+
+    void Doorway::setAssociateDoor(ORB_SLAM3::Plane *value)
+    {
+        associateDoor = value;
+    }
+
+    g2o::Plane3D Doorway::getGlobalEquation() const
+    {
+        return globalEquation;
+    }
+
+    void Doorway::setGlobalEquation(const g2o::Plane3D &value)
+    {
+        globalEquation = value;
+    }
+
+    std::vector<ORB_SLAM3::Plane *> Doorway::getAssociateWalls() const
+    {
+        return associateWalls;
+    }
+
+    void Doorway::addAssociateWall(ORB_SLAM3::Plane *value)
+    {
+        associateWalls.push_back(value);
     }
 
     ORB_SLAM3::Map *Doorway::getMap()

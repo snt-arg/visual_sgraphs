@@ -122,11 +122,11 @@ namespace ORB_SLAM3
         // Method for get data in current map
         std::vector<Room *> GetAllRooms();
         std::vector<Floor *> GetAllFloors();
-        std::vector<Plane *> GetAllPlanes();
         std::vector<Marker *> GetAllMarkers();
         std::vector<KeyFrame *> GetAllKeyFrames();
         std::vector<MapPoint *> GetAllMapPoints();
         std::vector<Room *> GetAllDetectedMapRooms();
+        std::vector<ORB_SLAM3::Plane *> GetAllPlanes();
         std::vector<Room *> GetAllMarkerBasedMapRooms();
         std::vector<MapPoint *> GetReferenceMapPoints();
         std::vector<ORB_SLAM3::Doorway *> GetAllDoorways();

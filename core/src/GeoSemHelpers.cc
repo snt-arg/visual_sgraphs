@@ -137,7 +137,7 @@ namespace ORB_SLAM3
     }
 
     std::pair<bool, std::string> GeoSemHelpers::checkIfMarkerIsDoorway(const int &markerId,
-                                                                    std::vector<ORB_SLAM3::Room *> envRooms)
+                                                                       std::vector<ORB_SLAM3::Room *> envRooms)
     {
         bool isDoorway = true;
         std::string name = "";
@@ -196,10 +196,7 @@ namespace ORB_SLAM3
                     }
 
             // Decide based on the marker type
-            if (markerIsDoorway)
-                // The current marker is placed on a door
-                createMapDoorway(mpAtlas, pKF);
-            else
+            if (!markerIsDoorway)
             {
                 // The current marker is a room meta-marker
                 ORB_SLAM3::Room *mappedRoom;
@@ -237,11 +234,17 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    void GeoSemHelpers::createMapDoorway(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF)
+    void GeoSemHelpers::createMapDoorway(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
+                                         ORB_SLAM3::Plane *wallPlane, bool isOpenDoorway)
     {
         // Check if the doorway has not been created before
         bool doorwayAlreadyInMap = false;
-        // TODO
+        for (auto doorway : mpAtlas->GetAllDoorways())
+            if (doorway->getCentroid().isApprox(doorPlane->getCentroid(), 0.1))
+            {
+                doorwayAlreadyInMap = true;
+                break;
+            }
 
         if (doorwayAlreadyInMap)
             return;
@@ -249,46 +252,23 @@ namespace ORB_SLAM3
         // Variables
         ORB_SLAM3::Doorway *newMapDoorway = new ORB_SLAM3::Doorway();
 
+        // Calculate width and height of the doorway
+        double width = 0.0, height = 0.0;
+        Utils::computePlaneWidthHeight(doorPlane->getMapClouds(), width, height);
+
+        newMapDoorway->setWidth(width);
+        newMapDoorway->setHeight(height);
+        newMapDoorway->setPassable(isOpenDoorway);
+        newMapDoorway->setAssociateDoor(doorPlane);
+        newMapDoorway->addAssociateWall(wallPlane);
         newMapDoorway->setMap(mpAtlas->GetCurrentMap());
+        newMapDoorway->setCentroid(doorPlane->getCentroid());
         newMapDoorway->setId(mpAtlas->GetAllDoorways().size());
+        newMapDoorway->setGlobalEquation(doorPlane->getGlobalEquation());
 
-        std::cout << "- New doorway detected: Doorway#" << newMapDoorway->getId() << std::endl;
-
-        pKF->AddMapDoorway(newMapDoorway);
         mpAtlas->AddMapDoorway(newMapDoorway);
-    }
 
-    void GeoSemHelpers::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
-    {
-        // Function to find the minimum and maximum coefficient value of a wall among all walls
-        auto findExtremumWall = [&](const std::vector<Plane *> &walls, int coeffIndex, bool findMax) -> Plane *
-        {
-            Plane *extremumWall = walls.front();
-            for (const auto &wall : walls)
-            {
-                if ((findMax && wall->getGlobalEquation().coeffs()(coeffIndex) > extremumWall->getGlobalEquation().coeffs()(coeffIndex)) ||
-                    (!findMax && wall->getGlobalEquation().coeffs()(coeffIndex) < extremumWall->getGlobalEquation().coeffs()(coeffIndex)))
-                {
-                    extremumWall = wall;
-                }
-            }
-            return extremumWall;
-        };
-
-        // Get all walls in the room
-        const std::vector<Plane *> &walls = givenRoom->getWalls();
-
-        // Find walls with minimum and maximum coefficients along x and z axes
-        Plane *maxWallX = findExtremumWall(walls, 0, true);
-        Plane *maxWallZ = findExtremumWall(walls, 2, true);
-        Plane *minWallX = findExtremumWall(walls, 0, false);
-        Plane *minWallZ = findExtremumWall(walls, 2, false);
-
-        givenRoom->clearWalls();
-        givenRoom->setWalls(minWallX);
-        givenRoom->setWalls(maxWallX);
-        givenRoom->setWalls(minWallZ);
-        givenRoom->setWalls(maxWallZ);
+        std::cout << "[GeoSemHelper] Creating Doorway#" << newMapDoorway->getId() << " ..." << std::endl;
     }
 
     ORB_SLAM3::Room *GeoSemHelpers::createBlankRoomCandidate(ORB_SLAM3::Atlas *mpAtlas,
@@ -342,38 +322,6 @@ namespace ORB_SLAM3
             << newMapRoomCandidate->getName() << ") using marker #" << attachedMarker->getId() << "!\n";
 
         mpAtlas->AddCandidateMapRoom(newMapRoomCandidate);
-    }
-
-    void GeoSemHelpers::augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
-                                                bool isMarkerBasedMapped)
-    {
-        std::cout << "\n[GeoSeg]" << std::endl;
-        if (isMarkerBasedMapped)
-        {
-            // Augment the already detected marker-based room with the cluster-based room information
-            markerBasedRoom->setCentroid(clusterBasedRoom->getCentroid());
-            // Connect the walls to the room
-            for (ORB_SLAM3::Plane *wall : clusterBasedRoom->getWalls())
-                markerBasedRoom->setWalls(wall);
-            // Create a room candidate for it
-            std::cout << "- Marker-based room candidate #" << markerBasedRoom->getId()
-                      << " has been validated (walls added)!" << std::endl;
-        }
-        else
-        {
-            // Augment the already detected cluster-based room with the marker-based room information
-            clusterBasedRoom->setHasKnownLabel(true);
-            clusterBasedRoom->setName(markerBasedRoom->getName());
-            clusterBasedRoom->setMetaMarker(markerBasedRoom->getMetaMarker());
-            clusterBasedRoom->setMetaMarkerId(markerBasedRoom->getMetaMarkerId());
-            clusterBasedRoom->setRoomVariant(markerBasedRoom->getRoomVariant());
-            // Connect the doorways to the room
-            for (ORB_SLAM3::Doorway *doorway : markerBasedRoom->getDoorways())
-                clusterBasedRoom->setDoorways(doorway);
-            // Create a room candidate for it
-            std::cout << "- Cluster-based room candidate #" << clusterBasedRoom->getId()
-                      << " has been validated (semantic info added)!" << std::endl;
-        }
     }
 
     void GeoSemHelpers::associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom)

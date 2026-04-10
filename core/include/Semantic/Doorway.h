@@ -17,6 +17,7 @@
 #define DOORWAY_H
 
 #include "Map.h"
+#include "Thirdparty/g2o/g2o/types/plane3d.h"
 
 namespace ORB_SLAM3
 {
@@ -30,10 +31,13 @@ namespace ORB_SLAM3
         int id;
         int opId;
         int opIdG;
+        double width;
+        double height;
         bool passable;
-        Sophus::SE3f localPose;
-        Sophus::SE3f globalPose;
-        ORB_SLAM3::Plane *associateWall;
+        Eigen::Vector3f centroid;
+        g2o::Plane3D globalEquation;
+        ORB_SLAM3::Plane *associateDoor;
+        std::vector<ORB_SLAM3::Plane *> associateWalls;            
 
     public:
         Doorway();
@@ -51,14 +55,23 @@ namespace ORB_SLAM3
         bool isPassable() const;
         void setPassable(bool value);
 
-        Sophus::SE3f getLocalPose() const;
-        void setLocalPose(const Sophus::SE3f &value);
+        double getWidth() const;
+        void setWidth(double value);
 
-        Sophus::SE3f getGlobalPose() const;
-        void setGlobalPose(const Sophus::SE3f &value);
+        double getHeight() const;
+        void setHeight(double value);
 
-        ORB_SLAM3::Plane *getAssociateWall() const;
-        void setAssociateWall(ORB_SLAM3::Plane *value);
+        Eigen::Vector3f getCentroid() const;
+        void setCentroid(const Eigen::Vector3f &value);
+
+        g2o::Plane3D getGlobalEquation() const;
+        void setGlobalEquation(const g2o::Plane3D &value);
+
+        ORB_SLAM3::Plane *getAssociateDoor() const;
+        void setAssociateDoor(ORB_SLAM3::Plane *value);
+
+        void addAssociateWall(ORB_SLAM3::Plane *value);
+        std::vector<ORB_SLAM3::Plane *> getAssociateWalls() const;
 
         ORB_SLAM3::Map *getMap();
         void setMap(ORB_SLAM3::Map *pMap);
