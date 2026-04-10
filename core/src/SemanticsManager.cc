@@ -49,6 +49,9 @@ namespace ORB_SLAM3
             if (sysParams->sem_seg.reassociate.enabled)
                 Utils::reAssociateSemanticPlanes(mpAtlas);
 
+            // Check for doors and doorways
+            detectDoorsAndDoorways(mpAtlas);
+
             // Check for possible room candidates
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
                 detectRoom_FreeSpaceCluster();
@@ -131,6 +134,13 @@ namespace ORB_SLAM3
         }
     }
 
+    void SemanticsManager::detectDoorsAndDoorways(ORB_SLAM3::Atlas *pAtlas)
+    {
+        // [TODO] Needs to be implemented
+        // [TODO] Get all doors --> Find the doors with the same normal to walls --> Filter by distance --> It is an unpassable doorway
+        std::cout << "Door and doorway detection is not implemented yet." << std::endl;
+    }
+
     Eigen::Vector3f SemanticsManager::transformPlaneEqToGroundReference(const Eigen::Vector4d &planeEq)
     {
         // extract the rotation matrix from the transformation matrix
@@ -184,132 +194,6 @@ namespace ORB_SLAM3
         planePoseMat(3, 3) = 1.0;
 
         return planePoseMat;
-    }
-
-    bool SemanticsManager::getRectangularRoom(
-        std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> &givenRoom,
-        const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
-        double perpThreshDeg)
-    {
-        // Iterate through each pair of facing walls
-        for (size_t idx1 = 0; idx1 < facingWalls.size(); ++idx1)
-            for (size_t idx2 = idx1 + 1; idx2 < facingWalls.size(); ++idx2)
-            {
-                // Get the walls
-                Plane *wall1P1 = facingWalls[idx1].first;
-                Plane *wall2P1 = facingWalls[idx1].second;
-                Plane *wall1P2 = facingWalls[idx2].first;
-                Plane *wall2P2 = facingWalls[idx2].second;
-
-                // Check if wall pairs form a square, considering the perpendicularity threshold
-                if (Utils::arePlanesPerpendicular(wall1P1, wall1P2) &&
-                    Utils::arePlanesPerpendicular(wall1P1, wall2P2) &&
-                    Utils::arePlanesPerpendicular(wall2P1, wall1P2) &&
-                    Utils::arePlanesPerpendicular(wall2P1, wall2P2))
-                {
-                    givenRoom = std::make_pair(facingWalls[idx1], facingWalls[idx2]);
-                    return true;
-                }
-            }
-        // No rectangular room found
-        return false;
-    }
-
-    /**
-     * 🚧 [vS-Graphs v.2.0] This solution is not very reliable.
-     * It is highly recommended to use the Skeleton Voxblox version.
-     */
-    void SemanticsManager::updateMapRoomCandidateToRoomGeo(KeyFrame *pKF)
-    {
-        // Get all the mapped planes and rooms
-        std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
-        std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
-
-        // Filter the planes to get only the walls
-        std::vector<Plane *> allWalls;
-        for (auto plane : allPlanes)
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
-                allWalls.push_back(plane);
-
-        // Get the closest walls to the current KeyFrame
-        std::vector<Plane *> closestWalls;
-        for (auto wall : allWalls)
-        {
-            // Calculate distance between wall centroid and KeyFrame pose
-            double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(),
-                                                                   pKF->GetPose().translation().cast<double>());
-
-            // Update closestWalls if distance is smaller than the threshold
-            if (distance < sysParams->room_seg.marker_wall_distance_thresh)
-                closestWalls.push_back(wall);
-        }
-
-        // Get all the facing walls
-        std::vector<std::pair<Plane *, Plane *>> facingWalls =
-            Utils::getFacingPlanes(closestWalls);
-
-        // If there is at least one pair of facing wall
-        if (facingWalls.size() > 0)
-            // Loop over all the rooms
-            for (auto roomCandidate : allRooms)
-            {
-                // Fetch parameters of the room candidate
-                roomCandidate->setHasKnownLabel(true);
-                Sophus::SE3f metaMarkerPose = roomCandidate->getMetaMarker()->getGlobalPose();
-
-                // Find the closest facing walls to the room center
-                std::pair<Plane *, Plane *> closestPair1, closestPair2;
-                double minDistance1 = std::numeric_limits<double>::max();
-                double minDistance2 = std::numeric_limits<double>::max();
-
-                for (auto facingWallsPair : facingWalls)
-                {
-                    // Calculate distance between wall centroids and metaMarkerPose
-                    double distance1 = Utils::calculateDistancePointToPlane(facingWallsPair.first->getGlobalEquation().coeffs(),
-                                                                            metaMarkerPose.translation().cast<double>());
-                    double distance2 = Utils::calculateDistancePointToPlane(facingWallsPair.second->getGlobalEquation().coeffs(),
-                                                                            metaMarkerPose.translation().cast<double>());
-
-                    // Update closestPair1 if distance1 is smaller
-                    if (distance1 < minDistance1)
-                    {
-                        minDistance1 = distance1;
-                        closestPair1 = facingWallsPair;
-                    }
-
-                    // Update closestPair2 if distance2 is smaller and it's not the same facingWallsPair as closestPair1
-                    if (distance2 < minDistance2 && facingWallsPair != closestPair1)
-                    {
-                        minDistance2 = distance2;
-                        closestPair2 = facingWallsPair;
-                    }
-                }
-
-                // If the room is a corridor
-                if (roomCandidate->getRoomVariant() == ORB_SLAM3::Room::roomVariant::CORRIDOR)
-                {
-                    if (closestPair1.first != nullptr && closestPair1.second != nullptr)
-                    {
-                        // Update the room walls
-                        roomCandidate->setWalls(closestPair1.first);
-                        roomCandidate->setWalls(closestPair1.second);
-                    }
-                }
-                else if (roomCandidate->getRoomVariant() == ORB_SLAM3::Room::roomVariant::ROOM)
-                {
-                    // Update the room walls
-                    if (closestPair1.first != nullptr && closestPair1.second != nullptr)
-                    {
-                        roomCandidate->setWalls(closestPair1.first);
-                        roomCandidate->setWalls(closestPair1.second);
-                    }
-                    if (closestPair2.first != nullptr && closestPair2.second != nullptr)
-                    {
-                        roomCandidate->setWalls(closestPair2.first);
-                        roomCandidate->setWalls(closestPair2.second);
-                    }
-                }
-            }
     }
 
     void SemanticsManager::detectRoom_FreeSpaceCluster()

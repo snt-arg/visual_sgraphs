@@ -50,6 +50,16 @@ namespace ORB_SLAM3
         opIdG = value;
     }
 
+    bool Doorway::isPassable() const
+    {
+        return passable;
+    }
+
+    void Doorway::setPassable(bool value)
+    {
+        passable = value;
+    }
+
     Sophus::SE3f Doorway::getLocalPose() const
     {
         return localPose;
@@ -70,13 +80,23 @@ namespace ORB_SLAM3
         globalPose = value;
     }
 
-    Map *Doorway::getMap()
+    ORB_SLAM3::Plane *Doorway::getAssociateWall() const
+    {
+        return associateWall;
+    }
+
+    void Doorway::setAssociateWall(ORB_SLAM3::Plane *value)
+    {
+        associateWall = value;
+    }
+
+    ORB_SLAM3::Map *Doorway::getMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Doorway::setMap(Map *pMap)
+    void Doorway::setMap(ORB_SLAM3::Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;

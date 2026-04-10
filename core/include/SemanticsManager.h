@@ -62,6 +62,12 @@ namespace ORB_SLAM3
         void filterWallPlanes();
 
         /**
+         * @brief Detects doors and doorways based on the detected planes and the mapped environment
+         * @param pAtlas the Atlas containing the mapped environment
+         */
+        void detectDoorsAndDoorways(ORB_SLAM3::Atlas *pAtlas);
+
+        /**
          * @brief Filters the ground plane to remove points that are too far from the plane
          * @param groundPlane the main ground plane that is the reference
          */
@@ -89,35 +95,18 @@ namespace ORB_SLAM3
         Eigen::Matrix4f computePlaneToHorizontal(const Plane *plane);
 
         /**
-         * @brief Gets the only rectangular room from the facing walls list (if exists, returns true)
-         * @param givenRoom the address of the given room
-         * @param facingWalls the facing walls list
-         * @param perpThreshDeg the perpendicular threshold in degrees
-         */
-        bool getRectangularRoom(std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> &givenRoom,
-                                const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
-                                double perpThreshDeg = 5.0);
-
-        /**
          * @brief Checks for the existing of a room with particular walls close to a cluster.
          * It returns the address of the existing room if found, otherwise returns nullptr.
          * @param clusterCentroid the centroid of the cluster
          * @param wallList the list of walls to be checked
          */
         ORB_SLAM3::Room *associateRooms(const Eigen::Vector3d clusterCentroid,
-            const std::vector<ORB_SLAM3::Plane *> &wallList);
-        
+                                        const std::vector<ORB_SLAM3::Plane *> &wallList);
+
         /**
          * @brief Re-associates rooms based on fixed time intervals to avoid duplicates
          */
         void reAssociateRooms();
-
-        /**
-         * @brief Converts mapped room candidates to rooms using geometric constraints
-         * 🚧 [vS-Graphs v.1.2.0] This solution is not very reliable. It is recommended to use other
-         * structural element recognition solutions.
-         */
-        void updateMapRoomCandidateToRoomGeo(ORB_SLAM3::KeyFrame *pKF);
 
         /**
          * @brief Processes the latest skeleton cluster to detect rooms based on free space clustering

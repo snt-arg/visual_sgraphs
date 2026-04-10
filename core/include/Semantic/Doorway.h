@@ -21,6 +21,7 @@
 namespace ORB_SLAM3
 {
     class Map;
+    class Plane;
     class Marker;
 
     class Doorway
@@ -29,8 +30,10 @@ namespace ORB_SLAM3
         int id;
         int opId;
         int opIdG;
+        bool passable;
         Sophus::SE3f localPose;
         Sophus::SE3f globalPose;
+        ORB_SLAM3::Plane *associateWall;
 
     public:
         Doorway();
@@ -45,17 +48,23 @@ namespace ORB_SLAM3
         int getOpIdG() const;
         void setOpIdG(int value);
 
+        bool isPassable() const;
+        void setPassable(bool value);
+
         Sophus::SE3f getLocalPose() const;
         void setLocalPose(const Sophus::SE3f &value);
 
         Sophus::SE3f getGlobalPose() const;
         void setGlobalPose(const Sophus::SE3f &value);
 
-        Map *getMap();
-        void setMap(Map *pMap);
+        ORB_SLAM3::Plane *getAssociateWall() const;
+        void setAssociateWall(ORB_SLAM3::Plane *value);
+
+        ORB_SLAM3::Map *getMap();
+        void setMap(ORB_SLAM3::Map *pMap);
 
     protected:
-        Map *mpMap;
+        ORB_SLAM3::Map *mpMap;
         std::mutex mMutexMap;
     };
 

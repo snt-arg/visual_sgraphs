@@ -90,8 +90,8 @@ namespace ORB_SLAM3
 
         /**
          * @brief Checks to see if two planes are facing each other or not
-         * @param plane1 first plane
-         * @param plane2 second plane
+         * @param plane1 first plane (small plane, e.g., door)
+         * @param plane2 second plane (big plane, e.g., wall)
          */
         static bool arePlanesFacingEachOther(const ORB_SLAM3::Plane *plane1, const ORB_SLAM3::Plane *plane2);
 
@@ -119,26 +119,6 @@ namespace ORB_SLAM3
          * @param points the given cluster of points
          */
         static Eigen::Vector3d computeCentroidFromPoints(const std::vector<Eigen::Vector3d> &points);
-
-        /**
-         * @brief Gets the center points of a room with two walls
-         * @param markerPosition the position of the marker
-         * @param wall1 the first plane
-         * @param wall2 the second plane
-         */
-        static Eigen::Vector3d getRoomCenter(const Eigen::Vector3d &markerPosition,
-                                             const Eigen::Vector4d &wall1,
-                                             const Eigen::Vector4d &wall2);
-
-        /**
-         * @brief Gets the center points of a room with four walls
-         * @param x_plane1 the first plane in X direction
-         * @param x_plane2 the second plane in X direction
-         * @param y_plane1 the first plane in Y direction
-         * @param y_plane2 the second plane in Y direction
-         */
-        static Eigen::Vector3d getRoomCenter(const Eigen::Vector4d x_plane1, const Eigen::Vector4d x_plane2,
-                                             const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2);
 
         /**
          * @brief Downsamples the pointclouds based on the given leaf size

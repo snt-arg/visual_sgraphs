@@ -116,6 +116,14 @@ sem_seg:
   max_tilt_wall: 0.2
   max_tilt_ground: 0.2
 
+  # ------------------ Door/Doorway Parameters ------------------
+  # Maximum wall to door distance for a door to be associated with a wall (in meters)
+  max_wall_door_distance: 0.5
+  # Maximum door width for a door to be valid (in meters)
+  max_door_width: 1.5
+  # Maximum Keyframe to doorway distance for checking passing through a doorway (in meters)
+  max_kf_doorway_distance: 1.0
+
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
   min_votes: 1.8
 

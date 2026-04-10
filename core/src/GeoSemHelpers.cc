@@ -344,65 +344,6 @@ namespace ORB_SLAM3
         mpAtlas->AddCandidateMapRoom(newMapRoomCandidate);
     }
 
-    ORB_SLAM3::Room *GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                                      std::vector<ORB_SLAM3::Plane *> walls,
-                                                                      Eigen::Vector3d clusterCentroid)
-    {
-        // Variables
-        Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
-        ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
-
-        // Fill the room entity
-        newMapRoomCandidate->setHasKnownLabel(false);
-        newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
-        newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
-
-        if (isCorridor)
-            newMapRoomCandidate->setRoomVariant(ORB_SLAM3::Room::roomVariant::CORRIDOR);
-        else
-            newMapRoomCandidate->setRoomVariant(ORB_SLAM3::Room::roomVariant::ROOM);
-
-        // Set name based on ID
-        int roomId = newMapRoomCandidate->getId();
-        std::string roomType = isCorridor ? "Corridor" : "Room";
-        newMapRoomCandidate->setName(roomType + "#" + std::to_string(roomId));
-
-        // Connect the walls to the room
-        for (ORB_SLAM3::Plane *wall : walls)
-            newMapRoomCandidate->setWalls(wall);
-
-        // Detect the room center
-        if (isCorridor)
-        {
-            // Refining the walls of the corridor
-            Eigen::Vector4d wall1(Utils::correctPlaneDirection(
-                walls[0]->getGlobalEquation().coeffs()));
-            Eigen::Vector4d wall2(Utils::correctPlaneDirection(
-                walls[1]->getGlobalEquation().coeffs()));
-            // Find the room center and add its vertex
-            centroid = Utils::getRoomCenter(clusterCentroid, wall1, wall2);
-        }
-        else
-        {
-            // Reorganize the walls of the room
-            organizeRoomWalls(newMapRoomCandidate);
-            // Compute the centroid of the walls
-            Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
-                walls[0]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
-                walls[1]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
-                walls[2]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
-                walls[3]->getGlobalEquation().coeffs());
-            // Find the room center and add its vertex
-            centroid = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
-        }
-        newMapRoomCandidate->setCentroid(centroid);
-
-        return newMapRoomCandidate;
-    }
-
     void GeoSemHelpers::augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
                                                 bool isMarkerBasedMapped)
     {
