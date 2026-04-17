@@ -136,6 +136,9 @@ namespace ORB_SLAM3
 
     void SemanticsManager::detectDoorsAndDoorways(ORB_SLAM3::Atlas *pAtlas)
     {
+        // Variables
+        int windowSize = sysParams->sem_seg.doorway_kf_window;
+
         // Get all planes and filter only DOOR and WALL variants
         std::vector<ORB_SLAM3::Plane *> allPlanes = pAtlas->GetAllPlanes();
         std::vector<ORB_SLAM3::Plane *> wallPlanes;
@@ -148,6 +151,7 @@ namespace ORB_SLAM3
                 doorPlanes.push_back(plane);
         }
 
+        // Procedure#1 - Detecting closed doors
         // Detect doors with the same normal as walls and close to walls
         for (const auto &door : doorPlanes)
         {
@@ -167,6 +171,128 @@ namespace ORB_SLAM3
 
                 // Otherwise, it is a valid closed door to be connected to the wall
                 GeoSemHelpers::createMapDoorway(mpAtlas, door, wall, false);
+            }
+        }
+
+        // Procedure#2 - Detecting open passages by checking if trajectory crosses the wall plane
+        // Retrieve and sort ALL keyframes chronologically once, outside the wall loop.
+        std::vector<ORB_SLAM3::KeyFrame *> allKFs = pAtlas->GetAllKeyFrames();
+        if (allKFs.size() < 2)
+            return;
+
+        std::sort(allKFs.begin(), allKFs.end(),
+                  [](const ORB_SLAM3::KeyFrame *a, const ORB_SLAM3::KeyFrame *b)
+                  {
+                      return a->mnId < b->mnId;
+                  });
+
+        for (const auto &wall : wallPlanes)
+        {
+            const Eigen::Vector4d wallEq =
+                Utils::correctPlaneDirection(wall->getGlobalEquation().coeffs());
+            const Eigen::Vector3d wallNormal = wallEq.head<3>();
+
+            // Precompute signed distances for every keyframe against this wall.
+            // We also track the world position so we can do a proximity check.
+            struct KFRecord
+            {
+                ORB_SLAM3::KeyFrame *kf;
+                Eigen::Vector3d posW;
+                double signedDist;
+            };
+
+            std::vector<KFRecord> records;
+            records.reserve(allKFs.size());
+
+            for (auto *kf : allKFs)
+            {
+                if (!kf || kf->isBad())
+                    continue;
+
+                const Eigen::Vector3d posW =
+                    kf->GetPoseInverse().translation().cast<double>();
+
+                // --- Proximity filter (optional but recommended) ---
+                // Only consider keyframes that are reasonably close to the wall's
+                // extent so that distant rooms don't generate false crossings.
+                // Adjust the threshold to match your environment scale.
+                const double distToPlane = std::abs(wallNormal.dot(posW) + wallEq(3));
+                if (distToPlane > sysParams->sem_seg.max_kf_doorway_distance)
+                    continue;
+
+                records.push_back({kf, posW, wallNormal.dot(posW) + wallEq(3)});
+            }
+
+            if (records.size() < 2)
+                continue;
+
+            // Slide a window of size N over the filtered keyframe records and check
+            // every consecutive pair inside each window for a sign change.
+            // Using a window (rather than the full trajectory) keeps detection local
+            // and avoids spurious matches from re-visits after a long detour.
+            bool passageDetected = false;
+            Eigen::Vector3f passageCentroid = Eigen::Vector3f::Zero();
+            const int n = static_cast<int>(records.size());
+
+            for (int start = 0; start <= n - 2 && !passageDetected; ++start)
+            {
+                // Window spans [start, start + windowSize - 1], clamped to n-1.
+                const int end = std::min(start + windowSize - 1, n - 1);
+
+                for (int i = start; i < end && !passageDetected; ++i)
+                {
+                    const KFRecord &recA = records[i];
+                    const KFRecord &recB = records[i + 1];
+
+                    // Baseline check: ignore nearly-static pairs.
+                    const double baseline = (recB.posW - recA.posW).norm();
+                    if (baseline < 0.10)
+                        continue;
+
+                    const double dA = recA.signedDist;
+                    const double dB = recB.signedDist;
+
+                    // Sign change → the segment crosses the plane.
+                    // Using multiplication is cleaner than checking t ∈ [0,1] and
+                    // naturally handles the edge case where one endpoint is on the plane.
+                    if (dA * dB < 0.0)
+                    {
+                        // Compute crossing point
+                        const double denom = dA - dB;
+                        Eigen::Vector3f crossingPoint;
+
+                        if (std::abs(denom) > 1e-6)
+                        {
+                            const double t = dA / denom;
+                            const Eigen::Vector3d crossing = recA.posW + t * (recB.posW - recA.posW);
+                            crossingPoint = crossing.cast<float>();
+                        }
+                        else
+                        {
+                            crossingPoint = ((recA.posW + recB.posW) * 0.5).cast<float>();
+                        }
+
+                        passageDetected = true;
+                        passageCentroid = crossingPoint;
+                    }
+
+                    // Edge case: one endpoint lies exactly on the plane.
+                    else if (std::abs(dA) < 1e-3 || std::abs(dB) < 1e-3)
+                    {
+                        // Only count it if there is meaningful movement toward/through.
+                        if (baseline > 0.10)
+                            passageDetected = true;
+                    }
+                }
+            }
+
+            if (passageDetected)
+            {
+                GeoSemHelpers::createMapDoorway(mpAtlas, nullptr, wall, true, passageCentroid,
+                                                sysParams->sem_seg.max_door_width,
+                                                sysParams->sem_seg.max_door_height);
+                std::cout << "[SemMgr] Open passage detected on Wall #" << wall->getId()
+                          << std::endl;
             }
         }
     }

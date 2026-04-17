@@ -50,14 +50,16 @@ namespace ORB_SLAM3
          * @param point1 first point
          * @param point2 second point
          */
-        static double calculateEuclideanDistance(const Eigen::Vector3f &p1, const Eigen::Vector3f &p2);
+        static double calculateEuclideanDistance(const Eigen::Vector3f &p1,
+                                                 const Eigen::Vector3f &p2);
 
         /**
          * @brief Calculate the distance between a point and a plane
          * @param plane the plane equation
          * @param point the given point
          */
-        static double calculateDistancePointToPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &point);
+        static double calculateDistancePointToPlane(const Eigen::Vector4d &plane,
+                                                    const Eigen::Vector3d &point);
 
         /**
          * @brief Calculates the intersection point of a line and a plane
@@ -65,7 +67,8 @@ namespace ORB_SLAM3
          * @param lineStart the start point of the line
          * @param lineEnd the end point of the line
          */
-        static Eigen::Vector3d lineIntersectsPlane(const Eigen::Vector4d &plane, const Eigen::Vector3d &lineStart,
+        static Eigen::Vector3d lineIntersectsPlane(const Eigen::Vector4d &plane,
+                                                   const Eigen::Vector3d &lineStart,
                                                    const Eigen::Vector3d &lineEnd);
 
         /**

@@ -235,16 +235,20 @@ namespace ORB_SLAM3
     }
 
     void GeoSemHelpers::createMapDoorway(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
-                                         ORB_SLAM3::Plane *wallPlane, bool isOpenDoorway)
+                                         ORB_SLAM3::Plane *wallPlane, bool isOpenDoorway,
+                                         Eigen::Vector3f passageCentroid, double width, double height)
     {
         // Check if the doorway has not been created before
         bool doorwayAlreadyInMap = false;
-        for (auto doorway : mpAtlas->GetAllDoorways())
-            if (doorway->getCentroid().isApprox(doorPlane->getCentroid(), 0.1))
-            {
-                doorwayAlreadyInMap = true;
-                break;
-            }
+
+        // If the door exists
+        if (doorPlane != nullptr)
+            for (auto doorway : mpAtlas->GetAllDoorways())
+                if (doorway->getCentroid().isApprox(doorPlane->getCentroid(), 0.1))
+                {
+                    doorwayAlreadyInMap = true;
+                    break;
+                }
 
         if (doorwayAlreadyInMap)
             return;
@@ -253,18 +257,28 @@ namespace ORB_SLAM3
         ORB_SLAM3::Doorway *newMapDoorway = new ORB_SLAM3::Doorway();
 
         // Calculate width and height of the doorway
-        double width = 0.0, height = 0.0;
-        Utils::computePlaneWidthHeight(doorPlane->getMapClouds(), width, height);
+        if (doorPlane != nullptr)
+            Utils::computePlaneWidthHeight(doorPlane->getMapClouds(), width, height);
 
         newMapDoorway->setWidth(width);
         newMapDoorway->setHeight(height);
         newMapDoorway->setPassable(isOpenDoorway);
-        newMapDoorway->setAssociateDoor(doorPlane);
         newMapDoorway->addAssociateWall(wallPlane);
         newMapDoorway->setMap(mpAtlas->GetCurrentMap());
-        newMapDoorway->setCentroid(doorPlane->getCentroid());
         newMapDoorway->setId(mpAtlas->GetAllDoorways().size());
-        newMapDoorway->setGlobalEquation(doorPlane->getGlobalEquation());
+
+        // If an associated door exists, use its plane equation
+        if (doorPlane != nullptr)
+        {
+            newMapDoorway->setAssociateDoor(doorPlane);
+            newMapDoorway->setCentroid(doorPlane->getCentroid());
+            newMapDoorway->setGlobalEquation(doorPlane->getGlobalEquation());
+        }
+        else
+        {
+            newMapDoorway->setCentroid(passageCentroid);
+            newMapDoorway->setGlobalEquation(wallPlane->getGlobalEquation());
+        }
 
         mpAtlas->AddMapDoorway(newMapDoorway);
 

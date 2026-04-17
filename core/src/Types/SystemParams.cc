@@ -103,7 +103,9 @@ namespace ORB_SLAM3
             sem_seg.conf_thresh = mConfig["sem_seg"]["conf_thresh"].as<float>();
             sem_seg.max_tilt_wall = mConfig["sem_seg"]["max_tilt_wall"].as<float>();
             sem_seg.max_door_width = mConfig["sem_seg"]["max_door_width"].as<float>();
+            sem_seg.max_door_height = mConfig["sem_seg"]["max_door_height"].as<float>();
             sem_seg.max_tilt_ground = mConfig["sem_seg"]["max_tilt_ground"].as<float>();
+            sem_seg.doorway_kf_window = mConfig["sem_seg"]["doorway_kf_window"].as<int>();
             sem_seg.max_step_elevation = mConfig["sem_seg"]["max_step_elevation"].as<float>();
             sem_seg.max_wall_door_distance = mConfig["sem_seg"]["max_wall_door_distance"].as<float>();
             sem_seg.max_kf_doorway_distance = mConfig["sem_seg"]["max_kf_doorway_distance"].as<float>();

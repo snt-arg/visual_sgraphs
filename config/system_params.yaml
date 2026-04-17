@@ -121,8 +121,12 @@ sem_seg:
   max_wall_door_distance: 0.5
   # Maximum door width for a door to be valid (in meters)
   max_door_width: 1.5
+  # Maximum door height for a door to be valid (in meters)
+  max_door_height: 2.0
   # Maximum Keyframe to doorway distance for checking passing through a doorway (in meters)
-  max_kf_doorway_distance: 1.0
+  max_kf_doorway_distance: 0.5
+  # The size of the KeyFrame window to check for passing through a doorway (in number of KeyFrames)
+  doorway_kf_window: 10
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
   min_votes: 1.8
