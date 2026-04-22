@@ -140,12 +140,12 @@ namespace ORB_SLAM3
         groundPlane = ground;
     }
 
-    std::vector<ORB_SLAM3::Doorway *> Room::getDoorways() const
+    std::vector<ORB_SLAM3::Passage *> Room::getPassages() const
     {
         return doorways;
     }
 
-    void Room::setDoorways(ORB_SLAM3::Doorway *value)
+    void Room::setDoorways(ORB_SLAM3::Passage *value)
     {
         doorways.push_back(value);
     }

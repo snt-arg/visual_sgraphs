@@ -280,7 +280,7 @@ namespace ORB_SLAM3
     };
 
     /**
-     * The edge used to connect a Room vertex (SE3) to a Doorway vertex (SE3)
+     * The edge used to connect a Room vertex (SE3) to a Passage vertex (SE3)
      * [Note]: it creates constraint for six measurements, i.e., (x, y, z, roll, pitch, yaw)
      */
     class EdgeSE3DoorwayProjectSE3Room : public EdgeSE3ProjectSE3
@@ -293,7 +293,7 @@ namespace ORB_SLAM3
         {
             // Room's global pose
             const g2o::VertexSE3Expmap *vRoomGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[0]);
-            // Doorway's global pose
+            // Passage's global pose
             const g2o::VertexSE3Expmap *vDoorwayGP = static_cast<const g2o::VertexSE3Expmap *>(_vertices[1]);
 
             // Calculate the local pose of the doorway w.r.t. the keyframe

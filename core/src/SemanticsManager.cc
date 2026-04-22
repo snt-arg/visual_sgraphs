@@ -137,7 +137,7 @@ namespace ORB_SLAM3
     void SemanticsManager::detectDoorsAndDoorways(ORB_SLAM3::Atlas *pAtlas)
     {
         // Variables
-        int windowSize = sysParams->sem_seg.doorway_kf_window;
+        int windowSize = sysParams->sem_seg.passage_kf_window;
 
         // Get all planes and filter only DOOR and WALL variants
         std::vector<ORB_SLAM3::Plane *> allPlanes = pAtlas->GetAllPlanes();
@@ -217,7 +217,7 @@ namespace ORB_SLAM3
                 // extent so that distant rooms don't generate false crossings.
                 // Adjust the threshold to match your environment scale.
                 const double distToPlane = std::abs(wallNormal.dot(posW) + wallEq(3));
-                if (distToPlane > sysParams->sem_seg.max_kf_doorway_distance)
+                if (distToPlane > sysParams->sem_seg.max_kf_passage_distance)
                     continue;
 
                 records.push_back({kf, posW, wallNormal.dot(posW) + wallEq(3)});

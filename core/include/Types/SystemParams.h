@@ -141,11 +141,11 @@ namespace ORB_SLAM3
             float max_tilt_ground = 0.2f;
             float max_step_elevation = 0.2f;
 
-            int doorway_kf_window = 7;
+            int passage_kf_window = 7;
             float max_door_width = 1.5f;
             float max_door_height = 2.0f;
             float max_wall_door_distance = 0.5f;
-            float max_kf_doorway_distance = 1.0f;
+            float max_kf_passage_distance = 1.0f;
 
             struct pointcloud
             {

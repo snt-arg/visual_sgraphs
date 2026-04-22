@@ -1553,7 +1553,7 @@ namespace ORB_SLAM3
         std::vector<KeyFrame *> vpCurrentMapKFs = pCurrentMap->GetAllKeyFrames();
         std::vector<MapPoint *> vpCurrentMapMPs = pCurrentMap->GetAllMapPoints();
         std::vector<Marker *> vpCurrentMapMarkers = pCurrentMap->GetAllMarkers();
-        std::vector<ORB_SLAM3::Doorway *> vpCurrentMapDoorways = pCurrentMap->GetAllDoorways();
+        std::vector<ORB_SLAM3::Passage *> vpCurrentMapPassages = pCurrentMap->GetAllPassages();
         std::vector<Room *> vpCurrentDetectedMapRooms = pCurrentMap->GetAllDetectedMapRooms();
         std::vector<Room *> vpCurrentMarkerBasedMapRooms = pCurrentMap->GetAllMarkerBasedMapRooms();
         std::vector<std::vector<Eigen::Vector3d>> vpClusterPoints = pCurrentMap->GetSkeletoClusterPoints();
@@ -1625,7 +1625,7 @@ namespace ORB_SLAM3
             // Optimize the essential graph and update the loop position for each element in the new map
             if (mpTracker->mSensor != System::MONOCULAR)
                 Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs,
-                                                  vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapDoorways, vpCurrentMapPlanes,
+                                                  vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapPassages, vpCurrentMapPlanes,
                                                   vpCurrentMapMarkers, vpCurrentDetectedMapRooms, vpCurrentMarkerBasedMapRooms,
                                                   vpClusterPoints);
 
@@ -1693,14 +1693,14 @@ namespace ORB_SLAM3
                 }
 
                 // Loop over the Doorways of the current map and move them to the new map
-                for (ORB_SLAM3::Doorway *pDoorway : vpCurrentMapDoorways)
+                for (ORB_SLAM3::Passage *pPassage : vpCurrentMapPassages)
                 {
-                    if (!pDoorway)
+                    if (!pPassage)
                         continue;
 
-                    pDoorway->setMap(pMergeMap);
-                    pMergeMap->AddMapDoorway(pDoorway);
-                    pCurrentMap->EraseMapDoorway(pDoorway);
+                    pPassage->setMap(pMergeMap);
+                    pMergeMap->AddMapPassage(pPassage);
+                    pCurrentMap->EraseMapPassage(pPassage);
                 }
 
                 // Loop over the Detected Rooms of the current map and move them to the new map

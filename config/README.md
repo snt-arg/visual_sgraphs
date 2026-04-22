@@ -96,8 +96,8 @@ These parameters belong to the `sem_seg` category and configure the Semantic Seg
 | `sem_seg` | —             | —                 | `max_wall_door_distance`  | Maximum distance from wall to door for association         |
 | `sem_seg` | —             | —                 | `max_door_width`          | Maximum width for a door to be valid                       |
 | `sem_seg` | —             | —                 | `max_door_height`         | Maximum height for a door to be valid                      |
-| `sem_seg` | —             | —                 | `max_kf_doorway_distance` | Maximum distance from keyframe to doorway                  |
-| `sem_seg` | —             | —                 | `doorway_kf_window`       | Size of the KeyFrame window to check for passing through a doorway |
+| `sem_seg` | —             | —                 | `max_kf_passage_distance` | Maximum distance from keyframe to doorway                  |
+| `sem_seg` | —             | —                 | `passage_kf_window`       | Size of the KeyFrame window to check for passing through a doorway |
 | `sem_seg` | —             | —                 | `min_votes`               | Minimum number of votes needed for a plane to get a label  |
 | `sem_seg` | `reassociate` | —                 | `enabled`                 | Enables semantic re-association of planes (`true/false`)   |
 | `sem_seg` | `reassociate` | —                 | `association_thres`       | Threshold for considering planes in reassociation          |

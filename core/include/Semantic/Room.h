@@ -16,7 +16,7 @@
 #ifndef ROOM_H
 #define ROOM_H
 
-#include "Doorway.h"
+#include "Passage.h"
 #include "Geometric/Plane.h"
 #include "Thirdparty/g2o/g2o/types/vertex_plane.h"
 
@@ -48,7 +48,7 @@ namespace ORB_SLAM3
         roomVariant variant;                       // The room's semantic type (e.g., corridor, room, etc.)
         Eigen::Vector3d centroid;                  // The center of the room as a 3D vector in the global reference
         std::vector<Plane *> walls;                // The vector of detected walls of a room
-        std::vector<ORB_SLAM3::Doorway *> doorways; // The vector of detected doorways of a room
+        std::vector<ORB_SLAM3::Passage *> doorways; // The vector of detected doorways of a room
 
     public:
         Room();
@@ -81,8 +81,8 @@ namespace ORB_SLAM3
         std::string getName() const;
         void setName(std::string value);
 
-        void setDoorways(ORB_SLAM3::Doorway *value);
-        std::vector<ORB_SLAM3::Doorway *> getDoorways() const;
+        void setDoorways(ORB_SLAM3::Passage *value);
+        std::vector<ORB_SLAM3::Passage *> getPassages() const;
 
         void setWalls(ORB_SLAM3::Plane *value);
         std::vector<ORB_SLAM3::Plane *> getWalls() const;

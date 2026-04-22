@@ -388,10 +388,10 @@ namespace ORB_SLAM3
         }
     }
 
-    void ORB_SLAM3::KeyFrame::AddMapDoorway(ORB_SLAM3::Doorway *doorway)
+    void ORB_SLAM3::KeyFrame::AddMapPassage(ORB_SLAM3::Passage *passage)
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        mvpMapDoorways.push_back(doorway);
+        mvpMapPassages.push_back(passage);
     }
 
     void KeyFrame::EraseMapPointMatch(const int &idx)
@@ -481,10 +481,10 @@ namespace ORB_SLAM3
         return mvpMapPlanes;
     }
 
-    std::vector<ORB_SLAM3::Doorway *> ORB_SLAM3::KeyFrame::GetMapDoorways()
+    std::vector<ORB_SLAM3::Passage *> ORB_SLAM3::KeyFrame::GetMapPassages()
     {
         unique_lock<mutex> lock(mMutexFeatures);
-        return mvpMapDoorways;
+        return mvpMapPassages;
     }
 
     void KeyFrame::UpdateConnections(bool upParent)

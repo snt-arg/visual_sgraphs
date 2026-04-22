@@ -48,7 +48,7 @@
 #include "Semantic/Marker.h"
 #include "Semantic/Room.h"
 #include "Geometric/Plane.h"
-#include "Semantic/Doorway.h"
+#include "Semantic/Passage.h"
 #include "Types/SystemParams.h"
 #include "SemanticSegmentation.h"
 #include "SemanticsManager.h"
@@ -235,7 +235,7 @@ namespace ORB_SLAM3
         std::vector<ORB_SLAM3::Floor *> GetAllFloors();
         std::vector<ORB_SLAM3::Plane *> GetAllPlanes();
         std::vector<ORB_SLAM3::Marker *> GetAllMarkers();
-        std::vector<ORB_SLAM3::Doorway *> GetAllDoorways();
+        std::vector<ORB_SLAM3::Passage *> GetAllPassages();
         std::vector<ORB_SLAM3::KeyFrame *> GetAllKeyFrames();
         std::vector<ORB_SLAM3::MapPoint *> GetAllMapPoints();
         std::vector<ORB_SLAM3::MapPoint *> GetTrackedMapPoints();

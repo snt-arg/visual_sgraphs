@@ -13,120 +13,120 @@
  * See the GNU General Public License for more details: https://www.gnu.org/licenses/
  */
 
-#include "Semantic/Doorway.h"
+#include "Semantic/Passage.h"
 
 namespace ORB_SLAM3
 {
-    Doorway::Doorway() {}
-    Doorway::~Doorway() {}
+    Passage::Passage() {}
+    Passage::~Passage() {}
 
-    int Doorway::getId() const
+    int Passage::getId() const
     {
         return id;
     }
 
-    void Doorway::setId(int value)
+    void Passage::setId(int value)
     {
         id = value;
     }
 
-    int Doorway::getOpId() const
+    int Passage::getOpId() const
     {
         return opId;
     }
 
-    void Doorway::setOpId(int value)
+    void Passage::setOpId(int value)
     {
         opId = value;
     }
 
-    int Doorway::getOpIdG() const
+    int Passage::getOpIdG() const
     {
         return opIdG;
     }
 
-    void Doorway::setOpIdG(int value)
+    void Passage::setOpIdG(int value)
     {
         opIdG = value;
     }
 
-    bool Doorway::isPassable() const
+    bool Passage::isPassable() const
     {
         return passable;
     }
 
-    void Doorway::setPassable(bool value)
+    void Passage::setPassable(bool value)
     {
         passable = value;
     }
 
-    double Doorway::getWidth() const
+    double Passage::getWidth() const
     {
         return width;
     }
 
-    void Doorway::setWidth(double value)
+    void Passage::setWidth(double value)
     {
         width = value;
     }
 
-    double Doorway::getHeight() const
+    double Passage::getHeight() const
     {
         return height;
     }
 
-    void Doorway::setHeight(double value)
+    void Passage::setHeight(double value)
     {
         height = value;
     }
 
-    Eigen::Vector3f Doorway::getCentroid() const
+    Eigen::Vector3f Passage::getCentroid() const
     {
         return centroid;
     }
 
-    void Doorway::setCentroid(const Eigen::Vector3f &value)
+    void Passage::setCentroid(const Eigen::Vector3f &value)
     {
         centroid = value;
     }
 
-    ORB_SLAM3::Plane *Doorway::getAssociateDoor() const
+    ORB_SLAM3::Plane *Passage::getAssociateDoor() const
     {
         return associateDoor;
     }
 
-    void Doorway::setAssociateDoor(ORB_SLAM3::Plane *value)
+    void Passage::setAssociateDoor(ORB_SLAM3::Plane *value)
     {
         associateDoor = value;
     }
 
-    g2o::Plane3D Doorway::getGlobalEquation() const
+    g2o::Plane3D Passage::getGlobalEquation() const
     {
         return globalEquation;
     }
 
-    void Doorway::setGlobalEquation(const g2o::Plane3D &value)
+    void Passage::setGlobalEquation(const g2o::Plane3D &value)
     {
         globalEquation = value;
     }
 
-    std::vector<ORB_SLAM3::Plane *> Doorway::getAssociateWalls() const
+    std::vector<ORB_SLAM3::Plane *> Passage::getAssociateWalls() const
     {
         return associateWalls;
     }
 
-    void Doorway::addAssociateWall(ORB_SLAM3::Plane *value)
+    void Passage::addAssociateWall(ORB_SLAM3::Plane *value)
     {
         associateWalls.push_back(value);
     }
 
-    ORB_SLAM3::Map *Doorway::getMap()
+    ORB_SLAM3::Map *Passage::getMap()
     {
         unique_lock<mutex> lock(mMutexMap);
         return mpMap;
     }
 
-    void Doorway::setMap(ORB_SLAM3::Map *pMap)
+    void Passage::setMap(ORB_SLAM3::Map *pMap)
     {
         unique_lock<mutex> lock(mMutexMap);
         mpMap = pMap;

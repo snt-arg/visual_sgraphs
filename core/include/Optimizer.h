@@ -53,7 +53,7 @@ namespace ORB_SLAM3
                                      const std::vector<ORB_SLAM3::MapPoint *> &vpMP,
                                      const std::vector<ORB_SLAM3::Marker *> &vpMarkers,
                                      const std::vector<ORB_SLAM3::Plane *> &vpPlanes,
-                                     const std::vector<ORB_SLAM3::Doorway *> &vpDoorways,
+                                     const std::vector<ORB_SLAM3::Passage *> &vpDoorways,
                                      const std::vector<ORB_SLAM3::Room *> &vpRooms,
                                      const std::vector<ORB_SLAM3::Floor *> &vpFloors,
                                      int nIterations = 5, bool *pbStopFlag = NULL, const unsigned long nLoopKF = 0,
@@ -100,7 +100,7 @@ namespace ORB_SLAM3
          * @param vpFixedCorrectedKFs Corrected Fixed KeyFrames
          * @param vpNonFixedKFs Non-Fixed KeyFrames
          * @param vpNonCorrectedMPs Non-Corrected MapPoints
-         * @param vpCurrentMapDoorways Current Map Doorways
+         * @param vpCurrentMapPassages Current Map Passages
          * @param vpCurrentMapPlanes Current Map Planes
          * @param vpCurrentMapMarkers Current Map Markers
          * @param vpCurrentDetMapRooms Current Detected Map Rooms
@@ -109,7 +109,7 @@ namespace ORB_SLAM3
          */
         void static OptimizeEssentialGraph(ORB_SLAM3::KeyFrame *pCurKF, std::vector<ORB_SLAM3::KeyFrame *> &vpFixedKFs,
                                            std::vector<ORB_SLAM3::KeyFrame *> &vpFixedCorrectedKFs, std::vector<ORB_SLAM3::KeyFrame *> &vpNonFixedKFs,
-                                           std::vector<ORB_SLAM3::MapPoint *> &vpNonCorrectedMPs, std::vector<ORB_SLAM3::Doorway *> &vpCurrentMapDoorways,
+                                           std::vector<ORB_SLAM3::MapPoint *> &vpNonCorrectedMPs, std::vector<ORB_SLAM3::Passage *> &vpCurrentMapPassages,
                                            std::vector<ORB_SLAM3::Plane *> &vpCurrentMapPlanes, std::vector<ORB_SLAM3::Marker *> &vpCurrentMapMarkers,
                                            std::vector<ORB_SLAM3::Room *> &vpCurrentDetMapRooms, std::vector<ORB_SLAM3::Room *> &vpCurrentMrkMapRooms,
                                            std::vector<std::vector<Eigen::Vector3d>> &vpClusterPoints);

@@ -44,7 +44,7 @@
 #include "Geometric/Plane.h"
 #include "Semantic/Marker.h"
 #include "GeometricCamera.h"
-#include "Semantic/Doorway.h"
+#include "Semantic/Passage.h"
 #include "GeometricSegmentation.h"
 
 #include <pcl/point_cloud.h>

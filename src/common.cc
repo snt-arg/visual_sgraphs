@@ -49,7 +49,7 @@ rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdometry;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubAllMappoints;
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pubCameraPose;
 rclcpp::Publisher<segmenter_ros::msg::VSGraphDataMsg>::SharedPtr pubKFImage;
-rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubDoorway;
+rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubPassage;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubBuildingComponents;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubTrackedMappoints;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubFreespaceCluster;
@@ -140,7 +140,7 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     pubTrackingImage = std::make_shared<image_transport::Publisher>(image_transport->advertise(node_name + "/tracking_image", 1));
 
     // Entities
-    pubDoorway = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/doorways", 1);
+    pubPassage = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/passages", 1);
     pubFiducialMarker = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Building Components
@@ -187,7 +187,7 @@ void publishTopics(rclcpp::Time msgTime, Eigen::Vector3f Wbb, const sensor_msgs:
     // Setup publishers
     publishKeyFrameImages(keyframes, msgTime);
     publishKeyFrameMarkers(keyframes, msgTime);
-    publishDoorways(pSLAM->GetAllDoorways(), msgTime);
+    publishPassages(pSLAM->GetAllPassages(), msgTime);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msgTime);
     publishTrackingImage(pSLAM->GetCurrentFrame(), msgTime);
     publishStructuralElements(pSLAM->GetAllRooms(), pSLAM->GetAllFloors(), msgTime);
@@ -739,37 +739,37 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, rclcpp::Ti
     pubFiducialMarker->publish(markerArray);
 }
 
-void publishDoorways(std::vector<ORB_SLAM3::Doorway *> doorways, rclcpp::Time msgTime)
+void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time msgTime)
 {
-    // If there are no doorways, return
-    int numDoorways = doorways.size();
-    if (numDoorways == 0)
+    // If there are no passages, return
+    int numPassages = passages.size();
+    if (numPassages == 0)
         return;
 
     // Variables
-    visualization_msgs::msg::MarkerArray doorwayArray;
-    doorwayArray.markers.resize(numDoorways);
+    visualization_msgs::msg::MarkerArray passageArray;
+    passageArray.markers.resize(numPassages);
 
-    for (int idx = 0; idx < numDoorways; idx++)
+    for (int idx = 0; idx < numPassages; idx++)
     {
         // Variables
         Eigen::Quaterniond q;
         Eigen::Vector3d z_axis(0.0, 0.0, 1.0);
-        visualization_msgs::msg::Marker doorway;
+        visualization_msgs::msg::Marker passage;
 
-        // Get the planar parameters of the doorway
-        double width = doorways[idx]->getWidth();
-        double height = doorways[idx]->getHeight();
-        Eigen::Vector3f centroid = doorways[idx]->getCentroid();
-        double distance = doorways[idx]->getGlobalEquation().distance();
-        Eigen::Vector3d normal = doorways[idx]->getGlobalEquation().normal();
+        // Get the planar parameters of the passage
+        double width = passages[idx]->getWidth();
+        double height = passages[idx]->getHeight();
+        Eigen::Vector3f centroid = passages[idx]->getCentroid();
+        double distance = passages[idx]->getGlobalEquation().distance();
+        Eigen::Vector3d normal = passages[idx]->getGlobalEquation().normal();
 
         // Set color (closed: dark red, open, light green)
         std::vector<double> color = {0.6, 0.0, 0.0};
-        if (doorways[idx]->isPassable())
+        if (passages[idx]->isPassable())
             color = {0.5, 1.0, 0.5};
 
-        // Orientation of the doorway marker
+        // Orientation of the passage marker
         double dot = z_axis.dot(normal);
         Eigen::Vector3d axis = z_axis.cross(normal);
 
@@ -780,38 +780,38 @@ void publishDoorways(std::vector<ORB_SLAM3::Doorway *> doorways, rclcpp::Time ms
             q = Eigen::Quaterniond::FromTwoVectors(z_axis, normal);
         q.normalize();
 
-        // Doorway values
-        doorway.id = idx;
-        doorway.color.a = 0.6;
-        doorway.scale.z = 0.1;
-        doorway.ns = "doorway";
-        doorway.scale.x = width;
-        doorway.scale.y = height;
-        doorway.color.r = color[0];
-        doorway.color.g = color[1];
-        doorway.color.b = color[2];
-        doorway.action = doorway.ADD;
-        doorway.header.stamp = msgTime;
-        doorway.pose.orientation.x = 0.0;
-        doorway.pose.orientation.y = 0.0;
-        doorway.pose.orientation.z = 0.0;
-        doorway.pose.orientation.w = 1.0;
-        doorway.header.frame_id = frameBC;
-        doorway.pose.orientation.x = q.x();
-        doorway.pose.orientation.y = q.y();
-        doorway.pose.orientation.z = q.z();
-        doorway.pose.orientation.w = q.w();
-        doorway.mesh_use_embedded_materials = true;
-        doorway.lifetime = rclcpp::Duration::from_seconds(0);
-        doorway.type = visualization_msgs::msg::Marker::CUBE;
-        doorway.pose.position.x = static_cast<double>(centroid.x());
-        doorway.pose.position.y = static_cast<double>(centroid.y());
-        doorway.pose.position.z = static_cast<double>(centroid.z());
+        // Passage values
+        passage.id = idx;
+        passage.color.a = 0.6;
+        passage.scale.z = 0.1;
+        passage.ns = "passage";
+        passage.scale.x = width;
+        passage.scale.y = height;
+        passage.color.r = color[0];
+        passage.color.g = color[1];
+        passage.color.b = color[2];
+        passage.action = passage.ADD;
+        passage.header.stamp = msgTime;
+        passage.pose.orientation.x = 0.0;
+        passage.pose.orientation.y = 0.0;
+        passage.pose.orientation.z = 0.0;
+        passage.pose.orientation.w = 1.0;
+        passage.header.frame_id = frameBC;
+        passage.pose.orientation.x = q.x();
+        passage.pose.orientation.y = q.y();
+        passage.pose.orientation.z = q.z();
+        passage.pose.orientation.w = q.w();
+        passage.mesh_use_embedded_materials = true;
+        passage.lifetime = rclcpp::Duration::from_seconds(0);
+        passage.type = visualization_msgs::msg::Marker::CUBE;
+        passage.pose.position.x = static_cast<double>(centroid.x());
+        passage.pose.position.y = static_cast<double>(centroid.y());
+        passage.pose.position.z = static_cast<double>(centroid.z());
 
-        doorwayArray.markers.push_back(doorway);
+        passageArray.markers.push_back(passage);
     }
 
-    pubDoorway->publish(doorwayArray);
+    pubPassage->publish(passageArray);
 }
 
 void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)

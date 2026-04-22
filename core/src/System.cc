@@ -1379,10 +1379,10 @@ namespace ORB_SLAM3
         return pActiveMap->GetAllMarkers();
     }
 
-    std::vector<ORB_SLAM3::Doorway *> System::GetAllDoorways()
+    std::vector<ORB_SLAM3::Passage *> System::GetAllPassages()
     {
         Map *pActiveMap = mpAtlas->GetCurrentMap();
-        return pActiveMap->GetAllDoorways();
+        return pActiveMap->GetAllPassages();
     }
 
     vector<Plane *> System::GetAllPlanes()

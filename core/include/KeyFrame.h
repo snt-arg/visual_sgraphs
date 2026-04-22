@@ -33,7 +33,7 @@
 #include "ImuTypes.h"
 #include "Semantic/Marker.h"
 #include "Geometric/Plane.h"
-#include "Semantic/Doorway.h"
+#include "Semantic/Passage.h"
 
 #include "GeometricCamera.h"
 #include "SerializationUtils.h"
@@ -55,7 +55,7 @@ namespace ORB_SLAM3
 
     class Marker;
     class Plane;
-    class Doorway;
+    class Passage;
 
     class KeyFrame
     {
@@ -275,8 +275,8 @@ namespace ORB_SLAM3
         void RemoveMapPlane(Plane *plane);
 
         // MapDoorway observation functions
-        void AddMapDoorway(ORB_SLAM3::Doorway *doorway);
-        std::vector<ORB_SLAM3::Doorway *> GetMapDoorways();
+        void AddMapPassage(ORB_SLAM3::Passage *passage);
+        std::vector<ORB_SLAM3::Passage *> GetMapPassages();
 
         // KeyPoint functions
         std::vector<size_t> GetFeaturesInArea(const float &x, const float &y, const float &r, const bool bRight = false) const;
@@ -479,7 +479,7 @@ namespace ORB_SLAM3
         std::vector<Plane *> mvpMapPlanes;
 
         // Doorways available in each keyframe
-        std::vector<ORB_SLAM3::Doorway *> mvpMapDoorways;
+        std::vector<ORB_SLAM3::Passage *> mvpMapPassages;
 
         // For save relation without pointer, this is necessary for save/load function
         std::vector<long long int> mvBackupMapPointsId;

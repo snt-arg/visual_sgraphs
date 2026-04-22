@@ -13,8 +13,8 @@
  * See the GNU General Public License for more details: https://www.gnu.org/licenses/
  */
 
-#ifndef DOORWAY_H
-#define DOORWAY_H
+#ifndef PASSAGE_H
+#define PASSAGE_H
 
 #include "Map.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
@@ -25,7 +25,7 @@ namespace ORB_SLAM3
     class Plane;
     class Marker;
 
-    class Doorway
+    class Passage
     {
     private:
         int id;
@@ -37,11 +37,11 @@ namespace ORB_SLAM3
         Eigen::Vector3f centroid;
         g2o::Plane3D globalEquation;
         ORB_SLAM3::Plane *associateDoor;
-        std::vector<ORB_SLAM3::Plane *> associateWalls;            
+        std::vector<ORB_SLAM3::Plane *> associateWalls;
 
     public:
-        Doorway();
-        ~Doorway();
+        Passage();
+        ~Passage();
 
         int getId() const;
         void setId(int value);
