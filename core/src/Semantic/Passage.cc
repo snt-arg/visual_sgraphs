@@ -80,6 +80,18 @@ namespace ORB_SLAM3
         height = value;
     }
 
+    Passage::passageVariant Passage::getPassageType()
+    {
+        unique_lock<mutex> lock(mMutexType);
+        return passageType;
+    }
+
+    void Passage::setPassageType(Passage::passageVariant newType)
+    {
+        unique_lock<mutex> lock(mMutexType);
+        passageType = newType;
+    }
+
     Eigen::Vector3f Passage::getCentroid() const
     {
         return centroid;

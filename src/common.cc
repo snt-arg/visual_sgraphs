@@ -760,13 +760,14 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         // Get the planar parameters of the passage
         double width = passages[idx]->getWidth();
         double height = passages[idx]->getHeight();
+        bool isPassable = passages[idx]->isPassable();
         Eigen::Vector3f centroid = passages[idx]->getCentroid();
-        double distance = passages[idx]->getGlobalEquation().distance();
         Eigen::Vector3d normal = passages[idx]->getGlobalEquation().normal();
+        bool isDoorway = passages[idx]->getPassageType() == ORB_SLAM3::Passage::passageVariant::DOORWAY;
 
-        // Set color (closed: dark red, open, light green)
+        // Set color (closed: dark red, open: light green)
         std::vector<double> color = {0.6, 0.0, 0.0};
-        if (passages[idx]->isPassable())
+        if (isPassable)
             color = {0.5, 1.0, 0.5};
 
         // Orientation of the passage marker
@@ -780,33 +781,70 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
             q = Eigen::Quaterniond::FromTwoVectors(z_axis, normal);
         q.normalize();
 
+        // // Mesh correction for passable doorway
+        // if (isPassable)
+        // {
+        //     Eigen::Quaterniond meshCorrection =
+        //         Eigen::Quaterniond(Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitX()));
+        //     q = q * meshCorrection;
+        // }
+
         // Passage values
         passage.id = idx;
-        passage.color.a = 0.6;
-        passage.scale.z = 0.1;
+        passage.color.a = 1.0;
         passage.ns = "passage";
-        passage.scale.x = width;
-        passage.scale.y = height;
         passage.color.r = color[0];
         passage.color.g = color[1];
         passage.color.b = color[2];
         passage.action = passage.ADD;
         passage.header.stamp = msgTime;
-        passage.pose.orientation.x = 0.0;
-        passage.pose.orientation.y = 0.0;
-        passage.pose.orientation.z = 0.0;
-        passage.pose.orientation.w = 1.0;
         passage.header.frame_id = frameBC;
+        passage.mesh_use_embedded_materials = true;
+        passage.lifetime = rclcpp::Duration::from_seconds(0);
+
+        // Position: always from centroid
+        passage.pose.position.x = static_cast<double>(centroid.x());
+        passage.pose.position.y = static_cast<double>(centroid.y());
+        passage.pose.position.z = static_cast<double>(centroid.z());
+
+        // Orientation: always from plane normal
         passage.pose.orientation.x = q.x();
         passage.pose.orientation.y = q.y();
         passage.pose.orientation.z = q.z();
         passage.pose.orientation.w = q.w();
-        passage.mesh_use_embedded_materials = true;
-        passage.lifetime = rclcpp::Duration::from_seconds(0);
-        passage.type = visualization_msgs::msg::Marker::CUBE;
-        passage.pose.position.x = static_cast<double>(centroid.x());
-        passage.pose.position.y = static_cast<double>(centroid.y());
-        passage.pose.position.z = static_cast<double>(centroid.z());
+
+        // Set shape
+        if (!isPassable)
+        {
+            passage.scale.x = 2.0;
+            passage.scale.z = 2.0;
+            passage.scale.y = 2.0;
+            passage.pose.position.z -= 0.15;
+            passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+            passage.mesh_resource = "package://vs_graphs/config/Assets/stop.obj";
+            // Rotate 90 degrees around the Y-axis to make the stop sign face the camera
+            Eigen::Quaterniond meshCorrection =
+                Eigen::Quaterniond(Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitX()));
+            passage.pose.orientation.x = (q * meshCorrection).x();
+            passage.pose.orientation.y = (q * meshCorrection).y();
+            passage.pose.orientation.z = (q * meshCorrection).z();
+            passage.pose.orientation.w = (q * meshCorrection).w();
+        }
+        else
+        {
+            // if (isDoorway)
+            // {
+            passage.scale.z = 1.0;
+            passage.scale.x = width * 1.0;
+            passage.scale.y = height * 1.0;
+            passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+            passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
+            // }
+            // else
+            // {
+            //     passage.type = visualization_msgs::msg::Marker::CUBE;
+            // }
+        }
 
         passageArray.markers.push_back(passage);
     }

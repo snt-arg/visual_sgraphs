@@ -27,6 +27,13 @@ namespace ORB_SLAM3
 
     class Passage
     {
+    public:
+        enum passageVariant
+        {
+            UNDEFINED = -1,
+            DOORWAY = 0
+        };
+
     private:
         int id;
         int opId;
@@ -35,6 +42,7 @@ namespace ORB_SLAM3
         double height;
         bool passable;
         Eigen::Vector3f centroid;
+        passageVariant passageType;
         g2o::Plane3D globalEquation;
         ORB_SLAM3::Plane *associateDoor;
         std::vector<ORB_SLAM3::Plane *> associateWalls;
@@ -61,6 +69,9 @@ namespace ORB_SLAM3
         double getHeight() const;
         void setHeight(double value);
 
+        passageVariant getPassageType();
+        void setPassageType(passageVariant newType);
+
         Eigen::Vector3f getCentroid() const;
         void setCentroid(const Eigen::Vector3f &value);
 
@@ -78,7 +89,7 @@ namespace ORB_SLAM3
 
     protected:
         ORB_SLAM3::Map *mpMap;
-        std::mutex mMutexMap;
+        std::mutex mMutexMap, mMutexType;
     };
 
 }
