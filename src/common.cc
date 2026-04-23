@@ -765,11 +765,6 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         Eigen::Vector3d normal = passages[idx]->getGlobalEquation().normal();
         bool isDoorway = passages[idx]->getPassageType() == ORB_SLAM3::Passage::passageVariant::DOORWAY;
 
-        // Set color (closed: dark red, open: light green)
-        std::vector<double> color = {1.0, 0.0, 0.0};
-        if (isPassable)
-            color = {0.5, 1.0, 0.5};
-
         // Orientation of the passage marker
         double dot = z_axis.dot(normal);
         Eigen::Vector3d axis = z_axis.cross(normal);
@@ -781,26 +776,26 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
             q = Eigen::Quaterniond::FromTwoVectors(z_axis, normal);
         q.normalize();
 
-        // // Mesh correction for passable doorway
-        // if (isPassable)
-        // {
-        //     Eigen::Quaterniond meshCorrection =
-        //         Eigen::Quaterniond(Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitX()));
-        //     q = q * meshCorrection;
-        // }
-
         // Passage values
         passage.id = idx;
         passage.color.a = 1.0;
         passage.ns = "passage";
-        passage.color.r = color[0];
-        passage.color.g = color[1];
-        passage.color.b = color[2];
+        
         passage.action = passage.ADD;
         passage.header.stamp = msgTime;
         passage.header.frame_id = frameBC;
         passage.mesh_use_embedded_materials = true;
         passage.lifetime = rclcpp::Duration::from_seconds(0);
+        passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+        passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
+
+        // Set color (closed passages are red, open passages are blue, doorways are green)
+        std::vector<double> color = {1.0, 0.0, 0.0};
+        if (isPassable)
+            color = isDoorway ? std::vector<double>{0.5, 1.0, 0.5} : std::vector<double>{0.5, 0.5, 1.0};
+        passage.color.r = color[0];
+        passage.color.g = color[1];
+        passage.color.b = color[2];
 
         // Position: always from centroid
         passage.pose.position.x = static_cast<double>(centroid.x());
@@ -813,32 +808,8 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         passage.pose.orientation.z = q.z();
         passage.pose.orientation.w = q.w();
 
-        // Set shape
-        if (!isPassable)
+        if (isPassable)
         {
-            passage.scale.x = 2.0;
-            passage.scale.z = 2.0;
-            passage.scale.y = 2.0;
-            passage.pose.position.z -= 0.15;
-            passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-            passage.mesh_resource = "package://vs_graphs/config/Assets/stop.obj";
-            // Rotate 90 degrees around the X-axis to make the stop sign face the camera
-            Eigen::Quaterniond meshCorrection =
-                Eigen::Quaterniond(Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitX()));
-            passage.pose.orientation.x = (q * meshCorrection).x();
-            passage.pose.orientation.y = (q * meshCorrection).y();
-            passage.pose.orientation.z = (q * meshCorrection).z();
-            passage.pose.orientation.w = (q * meshCorrection).w();
-        }
-        else
-        {
-            // if (isDoorway)
-            // {
-            passage.scale.z = 1.0;
-            passage.scale.x = width / 1.25;
-            passage.scale.y = height / 2.0;
-            passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-            passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
             // Rotate 90 degrees around the Z-axis to make the stop sign face the camera
             Eigen::Quaterniond meshCorrection =
                 Eigen::Quaterniond(Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ()));
@@ -846,13 +817,13 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
             passage.pose.orientation.y = (q * meshCorrection).y();
             passage.pose.orientation.z = (q * meshCorrection).z();
             passage.pose.orientation.w = (q * meshCorrection).w();
-            // }
-            // else
-            // {
-            //     passage.type = visualization_msgs::msg::Marker::CUBE;
-            // }
         }
 
+        // Set shape and size of the passage marker
+        passage.scale.z = 1.0;
+        passage.scale.x = width / 1.25;
+        passage.scale.y = height / 2.0;
+        
         passageArray.markers.push_back(passage);
     }
 

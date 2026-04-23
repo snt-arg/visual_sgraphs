@@ -191,8 +191,7 @@ namespace ORB_SLAM3
                 Utils::correctPlaneDirection(wall->getGlobalEquation().coeffs());
             const Eigen::Vector3d wallNormal = wallEq.head<3>();
 
-            // Precompute signed distances for every keyframe against this wall.
-            // We also track the world position so we can do a proximity check.
+            // Compute signed distances for every keyframe against this wall
             struct KFRecord
             {
                 ORB_SLAM3::KeyFrame *kf;
@@ -208,13 +207,9 @@ namespace ORB_SLAM3
                 if (!kf || kf->isBad())
                     continue;
 
-                const Eigen::Vector3d posW =
-                    kf->GetPoseInverse().translation().cast<double>();
+                const Eigen::Vector3d posW = kf->GetPoseInverse().translation().cast<double>();
 
-                // --- Proximity filter (optional but recommended) ---
-                // Only consider keyframes that are reasonably close to the wall's
-                // extent so that distant rooms don't generate false crossings.
-                // Adjust the threshold to match your environment scale.
+                // Only consider keyframes that are reasonably close to the wall
                 const double distToPlane = std::abs(wallNormal.dot(posW) + wallEq(3));
                 if (distToPlane > sysParams->sem_seg.max_kf_passage_distance)
                     continue;
@@ -225,17 +220,13 @@ namespace ORB_SLAM3
             if (records.size() < 2)
                 continue;
 
-            // Slide a window of size N over the filtered keyframe records and check
-            // every consecutive pair inside each window for a sign change.
-            // Using a window (rather than the full trajectory) keeps detection local
-            // and avoids spurious matches from re-visits after a long detour.
+            // Slide a window of size N over the filtered keyframe records
             bool passageDetected = false;
             Eigen::Vector3f passageCentroid = Eigen::Vector3f::Zero();
             const int n = static_cast<int>(records.size());
 
             for (int start = 0; start <= n - 2 && !passageDetected; ++start)
             {
-                // Window spans [start, start + windowSize - 1], clamped to n-1.
                 const int end = std::min(start + windowSize - 1, n - 1);
 
                 for (int i = start; i < end && !passageDetected; ++i)
@@ -252,8 +243,6 @@ namespace ORB_SLAM3
                     const double dB = recB.signedDist;
 
                     // Sign change → the segment crosses the plane.
-                    // Using multiplication is cleaner than checking t ∈ [0,1] and
-                    // naturally handles the edge case where one endpoint is on the plane.
                     if (dA * dB < 0.0)
                     {
                         // Compute crossing point
@@ -267,31 +256,30 @@ namespace ORB_SLAM3
                             crossingPoint = crossing.cast<float>();
                         }
                         else
-                        {
                             crossingPoint = ((recA.posW + recB.posW) * 0.5).cast<float>();
-                        }
 
                         passageDetected = true;
                         passageCentroid = crossingPoint;
-                    }
-
-                    // Edge case: one endpoint lies exactly on the plane.
-                    else if (std::abs(dA) < 1e-3 || std::abs(dB) < 1e-3)
-                    {
-                        // Only count it if there is meaningful movement toward/through.
-                        if (baseline > 0.10)
-                            passageDetected = true;
                     }
                 }
             }
 
             if (passageDetected)
             {
-                GeoSemHelpers::createMapPassage(mpAtlas, nullptr, wall, true, passageCentroid,
+                // If there is a door close to the passage centroid, then it is an open doorway
+                ORB_SLAM3::Plane *potentialDoor = nullptr;
+
+                for (const auto &door : doorPlanes)
+                    if (Utils::calculateDistancePointToPlane(door->getGlobalEquation().coeffs(),
+                                                             passageCentroid.cast<double>()) < 1.0)
+                    {
+                        potentialDoor = door;
+                        break;
+                    }
+
+                GeoSemHelpers::createMapPassage(mpAtlas, potentialDoor, wall, true, passageCentroid,
                                                 sysParams->sem_seg.max_door_width,
                                                 sysParams->sem_seg.max_door_height);
-                std::cout << "[SemMgr] Open passage detected on Wall #" << wall->getId()
-                          << std::endl;
             }
         }
     }
