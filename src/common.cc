@@ -766,7 +766,7 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         bool isDoorway = passages[idx]->getPassageType() == ORB_SLAM3::Passage::passageVariant::DOORWAY;
 
         // Set color (closed: dark red, open: light green)
-        std::vector<double> color = {0.6, 0.0, 0.0};
+        std::vector<double> color = {1.0, 0.0, 0.0};
         if (isPassable)
             color = {0.5, 1.0, 0.5};
 
@@ -822,7 +822,7 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
             passage.pose.position.z -= 0.15;
             passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
             passage.mesh_resource = "package://vs_graphs/config/Assets/stop.obj";
-            // Rotate 90 degrees around the Y-axis to make the stop sign face the camera
+            // Rotate 90 degrees around the X-axis to make the stop sign face the camera
             Eigen::Quaterniond meshCorrection =
                 Eigen::Quaterniond(Eigen::AngleAxisd(M_PI_2, Eigen::Vector3d::UnitX()));
             passage.pose.orientation.x = (q * meshCorrection).x();
@@ -835,10 +835,17 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
             // if (isDoorway)
             // {
             passage.scale.z = 1.0;
-            passage.scale.x = width * 1.0;
-            passage.scale.y = height * 1.0;
+            passage.scale.x = height;
+            passage.scale.y = width;
             passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
             passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
+            // Rotate 90 degrees around the Z-axis to make the stop sign face the camera
+            Eigen::Quaterniond meshCorrection =
+                Eigen::Quaterniond(Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ()));
+            passage.pose.orientation.x = (q * meshCorrection).x();
+            passage.pose.orientation.y = (q * meshCorrection).y();
+            passage.pose.orientation.z = (q * meshCorrection).z();
+            passage.pose.orientation.w = (q * meshCorrection).w();
             // }
             // else
             // {

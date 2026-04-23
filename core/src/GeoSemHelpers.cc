@@ -282,7 +282,10 @@ namespace ORB_SLAM3
 
         mpAtlas->AddMapPassage(newMapPassage);
 
-        std::cout << "[GeoSemHelper] Creating Passage#" << newMapPassage->getId() << " ..." << std::endl;
+        std::string doorStatus = isOpenDoorway ? "open" : "blocked";
+        std::string info = ", " + std::to_string(width) + "x" + std::to_string(height) + "m";
+        std::cout << "[GeoSemHelper] Creating Passage#" << newMapPassage->getId() << " ("
+                  << info << ") ..." << std::endl;
     }
 
     ORB_SLAM3::Room *GeoSemHelpers::createBlankRoomCandidate(ORB_SLAM3::Atlas *mpAtlas,
