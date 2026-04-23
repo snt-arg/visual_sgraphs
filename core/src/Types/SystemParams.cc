@@ -109,6 +109,7 @@ namespace ORB_SLAM3
             sem_seg.max_step_elevation = mConfig["sem_seg"]["max_step_elevation"].as<float>();
             sem_seg.max_wall_door_distance = mConfig["sem_seg"]["max_wall_door_distance"].as<float>();
             sem_seg.max_kf_passage_distance = mConfig["sem_seg"]["max_kf_passage_distance"].as<float>();
+            sem_seg.passage_centroid_distance_thresh = mConfig["sem_seg"]["passage_centroid_distance_thresh"].as<float>();
             sem_seg.pointcloud.downsample.leaf_size = mConfig["sem_seg"]["pointcloud"]["downsample"]["leaf_size"].as<float>();
             sem_seg.pointcloud.downsample.min_points_per_voxel = mConfig["sem_seg"]["pointcloud"]["downsample"]["min_points_per_voxel"].as<unsigned int>();
             sem_seg.pointcloud.outlier_removal.std_threshold = mConfig["sem_seg"]["pointcloud"]["outlier_removal"]["std_threshold"].as<float>();

@@ -127,6 +127,8 @@ sem_seg:
   max_kf_passage_distance: 0.5
   # The size of the KeyFrame window to check for passing through a passage (in number of KeyFrames)
   passage_kf_window: 10
+  # Passage centroid distance threshold for associating passages (in meters)
+  passage_centroid_distance_thresh: 1.0
 
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
   min_votes: 1.8

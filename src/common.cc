@@ -835,8 +835,8 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
             // if (isDoorway)
             // {
             passage.scale.z = 1.0;
-            passage.scale.x = height;
-            passage.scale.y = width;
+            passage.scale.x = width / 1.25;
+            passage.scale.y = height / 2.0;
             passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
             passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
             // Rotate 90 degrees around the Z-axis to make the stop sign face the camera

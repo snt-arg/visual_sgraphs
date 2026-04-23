@@ -151,7 +151,7 @@ namespace ORB_SLAM3
                 doorPlanes.push_back(plane);
         }
 
-        // Procedure#1 - Detecting closed doors
+        // Procedure#1 - Detecting closed doors (blocked passages)
         // Detect doors with the same normal as walls and close to walls
         for (const auto &door : doorPlanes)
         {
@@ -170,12 +170,11 @@ namespace ORB_SLAM3
                     continue;
 
                 // Otherwise, it is a valid closed door to be connected to the wall
-                GeoSemHelpers::createMapDoorway(mpAtlas, door, wall, false);
+                GeoSemHelpers::createMapPassage(mpAtlas, door, wall, false);
             }
         }
 
         // Procedure#2 - Detecting open passages by checking if trajectory crosses the wall plane
-        // Retrieve and sort ALL keyframes chronologically once, outside the wall loop.
         std::vector<ORB_SLAM3::KeyFrame *> allKFs = pAtlas->GetAllKeyFrames();
         if (allKFs.size() < 2)
             return;
@@ -288,7 +287,7 @@ namespace ORB_SLAM3
 
             if (passageDetected)
             {
-                GeoSemHelpers::createMapDoorway(mpAtlas, nullptr, wall, true, passageCentroid,
+                GeoSemHelpers::createMapPassage(mpAtlas, nullptr, wall, true, passageCentroid,
                                                 sysParams->sem_seg.max_door_width,
                                                 sysParams->sem_seg.max_door_height);
                 std::cout << "[SemMgr] Open passage detected on Wall #" << wall->getId()

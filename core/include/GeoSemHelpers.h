@@ -84,17 +84,17 @@ namespace ORB_SLAM3
         static Marker *createMapMarker(Atlas *mpAtlas, KeyFrame *pKF, const Marker *visitedMarker);
 
         /**
-         * @brief Creates a new doorway object to be added to the map
+         * @brief Creates a new passage object to be added to the map
          * @param mpAtlas the current map in Atlas
          * @param doorPlane the plane representing the door
          * @param wallPlane the plane representing the wall connected to the door
-         * @param isOpenDoorway whether the doorway is open or closed (default: false, meaning closed doorway)
-         * @param passageCentroid the centroid of the passage if it is an open doorway (default: zero vector)
-         * @param width the width of the doorway (default: 1.5m)
-         * @param height the height of the doorway (default: 2.0m)
+         * @param isOpenPassage whether the passage is open or closed (default: false, meaning closed passage)
+         * @param passageCentroid the centroid of the passage if it is an open passage (default: zero vector)
+         * @param width the width of the passage (default: 1.5m)
+         * @param height the height of the passage (default: 2.0m)
          */
-        static void createMapDoorway(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
-                                     ORB_SLAM3::Plane *wallPlane, bool isOpenDoorway = false,
+        static void createMapPassage(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
+                                     ORB_SLAM3::Plane *wallPlane, bool isOpenPassage = false,
                                      Eigen::Vector3f passageCentroid = Eigen::Vector3f::Zero(),
                                      double width = 1.5, double height = 2.0);
 
