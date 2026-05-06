@@ -780,7 +780,6 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         passage.id = idx;
         passage.color.a = 1.0;
         passage.ns = "passage";
-        
         passage.action = passage.ADD;
         passage.header.stamp = msgTime;
         passage.header.frame_id = frameBC;
@@ -808,22 +807,11 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         passage.pose.orientation.z = q.z();
         passage.pose.orientation.w = q.w();
 
-        if (isPassable)
-        {
-            // Rotate 90 degrees around the Z-axis to make the stop sign face the camera
-            Eigen::Quaterniond meshCorrection =
-                Eigen::Quaterniond(Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitZ()));
-            passage.pose.orientation.x = (q * meshCorrection).x();
-            passage.pose.orientation.y = (q * meshCorrection).y();
-            passage.pose.orientation.z = (q * meshCorrection).z();
-            passage.pose.orientation.w = (q * meshCorrection).w();
-        }
-
         // Set shape and size of the passage marker
         passage.scale.z = 1.0;
-        passage.scale.x = width / 1.25;
-        passage.scale.y = height / 2.0;
-        
+        passage.scale.y = width / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_width;
+        passage.scale.x = height / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_height;
+
         passageArray.markers.push_back(passage);
     }
 

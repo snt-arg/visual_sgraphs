@@ -93,6 +93,7 @@ These parameters belong to the `sem_seg` category and configure the Semantic Seg
 | `sem_seg` | —             | —                 | `max_step_elevation`               | Maximum step height over the ground plane                          |
 | `sem_seg` | —             | —                 | `max_tilt_wall`                    | Maximum tilt angle for wall classification                         |
 | `sem_seg` | —             | —                 | `max_tilt_ground`                  | Maximum tilt angle for ground classification                       |
+| `sem_seg` | —             | —                 | `enable_passage_detection`         | Enables detection of passages (doorways)                           |
 | `sem_seg` | —             | —                 | `max_wall_door_distance`           | Maximum distance from wall to door for association                 |
 | `sem_seg` | —             | —                 | `max_door_width`                   | Maximum width for a door to be valid                               |
 | `sem_seg` | —             | —                 | `max_door_height`                  | Maximum height for a door to be valid                              |

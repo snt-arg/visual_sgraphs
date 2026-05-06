@@ -68,6 +68,12 @@ namespace ORB_SLAM3
         void detectDoorsAndDoorways(ORB_SLAM3::Atlas *pAtlas);
 
         /**
+         * @brief Updates the passages in the map based on the detected doors and doorways
+         * @param pAtlas the Atlas containing the mapped environment
+         */
+        void updatePassages(ORB_SLAM3::Atlas *pAtlas);
+
+        /**
          * @brief Filters the ground plane to remove points that are too far from the plane
          * @param groundPlane the main ground plane that is the reference
          */

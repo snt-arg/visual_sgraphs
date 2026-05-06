@@ -117,10 +117,11 @@ sem_seg:
   max_tilt_ground: 0.2
 
   # ------------------ Door/Passage Parameters ------------------
+  enable_passage_detection: true
   # Maximum wall to door distance for a door to be associated with a wall (in meters)
   max_wall_door_distance: 0.5
   # Maximum door width for a door to be valid (in meters)
-  max_door_width: 1.5
+  max_door_width: 1.25
   # Maximum door height for a door to be valid (in meters)
   max_door_height: 2.0
   # Maximum Keyframe to passage distance for checking passing through a passage (in meters)

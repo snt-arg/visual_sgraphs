@@ -49,8 +49,12 @@ namespace ORB_SLAM3
             if (sysParams->sem_seg.reassociate.enabled)
                 Utils::reAssociateSemanticPlanes(mpAtlas);
 
-            // Check for doors and doorways
-            detectDoorsAndDoorways(mpAtlas);
+            // Detect passages?
+            if (sysParams->sem_seg.enable_passage_detection)
+            {
+                detectDoorsAndDoorways(mpAtlas);
+                updatePassages(mpAtlas);
+            }
 
             // Check for possible room candidates
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
@@ -280,6 +284,60 @@ namespace ORB_SLAM3
                 GeoSemHelpers::createMapPassage(mpAtlas, potentialDoor, wall, true, passageCentroid,
                                                 sysParams->sem_seg.max_door_width,
                                                 sysParams->sem_seg.max_door_height);
+            }
+        }
+    }
+
+    void SemanticsManager::updatePassages(ORB_SLAM3::Atlas *pAtlas)
+    {
+        // Get the ground plane
+        ORB_SLAM3::Plane *groundPlane = pAtlas->GetBiggestGroundPlane();
+        if (groundPlane == nullptr)
+            return;
+
+        // Get all passages and update their global pose to be consistent with the ground plane
+        std::vector<ORB_SLAM3::Passage *> allPassages = pAtlas->GetAllPassages();
+
+        for (const auto &passage : allPassages)
+        {
+            // Get the passage variant (doorway or undefined)
+            ORB_SLAM3::Passage::passageVariant variant = passage->getPassageType();
+
+            // Blocked passages (closed doors) should be aligned with the ground plane normal
+            if (!passage->isPassable())
+            {
+                ORB_SLAM3::Plane *doorPlane = passage->getAssociateDoor();
+                if (doorPlane == nullptr)
+                    continue;
+
+                passage->setCentroid(doorPlane->getCentroid());
+                passage->setGlobalEquation(doorPlane->getGlobalEquation());
+            }
+            else
+            {
+                ORB_SLAM3::Plane passagePlane;
+                passagePlane.setGlobalEquation(passage->getGlobalEquation());
+                if (Utils::arePlanesPerpendicular(&passagePlane, groundPlane))
+                    continue;
+
+                // Project the passage normal onto the horizontal plane to remove tilt
+                const Eigen::Vector3d groundNormal =
+                    groundPlane->getGlobalEquation().coeffs().head<3>().normalized();
+                Eigen::Vector4d globalEq = passage->getGlobalEquation().coeffs();
+                Eigen::Vector3d passageNormal = globalEq.head<3>().normalized();
+
+                Eigen::Vector3d correctedNormal =
+                    (passageNormal - passageNormal.dot(groundNormal) * groundNormal).normalized();
+
+                // Recompute d so the plane still passes through the centroid
+                const Eigen::Vector3d centroid = passage->getCentroid().cast<double>();
+                const double d = -correctedNormal.dot(centroid);
+
+                Eigen::Vector4d correctedCoeffs;
+                correctedCoeffs.head<3>() = correctedNormal;
+                correctedCoeffs(3) = d;
+                
+                passage->setGlobalEquation(g2o::Plane3D(correctedCoeffs));
             }
         }
     }

@@ -268,7 +268,7 @@ namespace ORB_SLAM3
             newMapPassage->setPassageType(ORB_SLAM3::Passage::passageVariant::UNDEFINED);
         }
 
-        // Check if the passage already exists
+        // Duplicate check
         for (const auto &existingPassage : allPassages)
         {
             // Check based on the thresholded distance between the centroids of the passages
@@ -279,8 +279,8 @@ namespace ORB_SLAM3
 
         // Otherwise, add the new passage to the map
         std::string doorStatus = isOpenPassage ? "open" : "blocked";
-        std::string info = doorStatus + ", " + std::to_string(std::round(width * 10) / 10.0) +
-                           "x" + std::to_string(std::round(height * 10) / 10.0) + "m";
+        std::string info = doorStatus + ", " + std::to_string(std::round(width * 100.0) / 100.0) +
+                           "x" + std::to_string(std::round(height * 100.0) / 100.0) + "m";
         std::cout << "[GeoSemHelper] Creating Passage#" << newMapPassage->getId() << " ("
                   << info << ") ..." << std::endl;
 
