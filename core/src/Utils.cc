@@ -265,17 +265,11 @@ namespace ORB_SLAM3
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const int, const float);
     
-    void Utils::computePlaneWidthHeight(
-        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud,
-        double &width,
-        double &height)
+    std::pair<double, double> Utils::computePlaneWidthHeight(
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud)
     {
         if (cloud->points.empty())
-        {
-            width = 0.0;
-            height = 0.0;
-            return;
-        }
+            return std::make_pair(0.0, 0.0);
 
         // Apply PCA to find the principal axes of the point cloud
         pcl::PCA<pcl::PointXYZRGBA> pca;
@@ -290,8 +284,10 @@ namespace ORB_SLAM3
         pcl::getMinMax3D(projected, minPt, maxPt);
 
         // Axis 0 = largest variance (width), Axis 1 = second (height)
-        width = static_cast<double>(maxPt.x - minPt.x);
-        height = static_cast<double>(maxPt.y - minPt.y);
+        double width = static_cast<double>(maxPt.x - minPt.x);
+        double height = static_cast<double>(maxPt.y - minPt.y);
+        
+        return std::make_pair(width, height);
     }
 
     template <typename PointT, template <typename> class SegmentationType>

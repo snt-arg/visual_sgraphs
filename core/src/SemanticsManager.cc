@@ -281,9 +281,7 @@ namespace ORB_SLAM3
                         break;
                     }
 
-                GeoSemHelpers::createMapPassage(mpAtlas, potentialDoor, wall, true, passageCentroid,
-                                                sysParams->sem_seg.max_door_width,
-                                                sysParams->sem_seg.max_door_height);
+                GeoSemHelpers::createMapPassage(mpAtlas, potentialDoor, wall, true, passageCentroid);
             }
         }
     }
@@ -306,10 +304,16 @@ namespace ORB_SLAM3
             // Blocked passages (closed doors) should be aligned with the ground plane normal
             if (!passage->isPassable())
             {
+                // Variables
+                double width, height;
                 ORB_SLAM3::Plane *doorPlane = passage->getAssociateDoor();
                 if (doorPlane == nullptr)
                     continue;
 
+                std::pair<double, double> widthHeight =
+                    Utils::computePlaneWidthHeight(doorPlane->getMapClouds());
+                passage->setWidth(widthHeight.first);
+                passage->setHeight(widthHeight.second);
                 passage->setCentroid(doorPlane->getCentroid());
                 passage->setGlobalEquation(doorPlane->getGlobalEquation());
             }
@@ -336,7 +340,7 @@ namespace ORB_SLAM3
                 Eigen::Vector4d correctedCoeffs;
                 correctedCoeffs.head<3>() = correctedNormal;
                 correctedCoeffs(3) = d;
-                
+
                 passage->setGlobalEquation(g2o::Plane3D(correctedCoeffs));
             }
         }

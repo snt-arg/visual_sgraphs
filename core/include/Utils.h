@@ -158,11 +158,8 @@ namespace ORB_SLAM3
         /**
          * @brief Computes the width and height of a plane given its point cloud
          * @param cloud the point cloud of the plane
-         * @param width the computed width of the plane
-         * @param height the computed height of the plane
          */
-        static void computePlaneWidthHeight(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud,
-                                            double &width, double &height);
+        static std::pair<double, double> computePlaneWidthHeight(pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud);
 
         /**
          * @brief Performs PCL ransac to get the plane equations from the a given point cloud

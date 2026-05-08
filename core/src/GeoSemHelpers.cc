@@ -236,15 +236,25 @@ namespace ORB_SLAM3
 
     void GeoSemHelpers::createMapPassage(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
                                          ORB_SLAM3::Plane *wallPlane, bool isOpenPassage,
-                                         Eigen::Vector3f passageCentroid, double width, double height)
+                                         Eigen::Vector3f passageCentroid)
     {
         // Variables
+        double width, height;
+        std::pair<double, double> widthHeight;
         ORB_SLAM3::Passage *newMapPassage = new ORB_SLAM3::Passage();
         std::vector<ORB_SLAM3::Passage *> allPassages = mpAtlas->GetAllPassages();
 
-        // Calculate width and height of the doorway
+        // Get default width and height values
+        width = SystemParams::GetParams()->sem_seg.max_door_width;
+        height = SystemParams::GetParams()->sem_seg.max_door_height;
+
+        // If a door exists, compute the dimensions based on the door plane point cloud
         if (doorPlane != nullptr)
-            Utils::computePlaneWidthHeight(doorPlane->getMapClouds(), width, height);
+        {
+            widthHeight = Utils::computePlaneWidthHeight(doorPlane->getMapClouds());
+            width = widthHeight.first;
+            height = widthHeight.second;
+        }
 
         newMapPassage->setWidth(width);
         newMapPassage->setHeight(height);

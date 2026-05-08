@@ -753,7 +753,6 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
     for (int idx = 0; idx < numPassages; idx++)
     {
         // Variables
-        Eigen::Quaterniond q;
         Eigen::Vector3d z_axis(0.0, 0.0, 1.0);
         visualization_msgs::msg::Marker passage;
 
@@ -762,31 +761,27 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         double height = passages[idx]->getHeight();
         bool isPassable = passages[idx]->isPassable();
         Eigen::Vector3f centroid = passages[idx]->getCentroid();
-        Eigen::Vector3d normal = passages[idx]->getGlobalEquation().normal();
+        Eigen::Vector3d normal = passages[idx]->getGlobalEquation().normal().normalized();
         bool isDoorway = passages[idx]->getPassageType() == ORB_SLAM3::Passage::passageVariant::DOORWAY;
 
         // Orientation of the passage marker
-        double dot = z_axis.dot(normal);
-        Eigen::Vector3d axis = z_axis.cross(normal);
-
-        if (axis.norm() < 1e-6)
-            q = dot > 0.0 ? Eigen::Quaterniond::Identity()
-                          : Eigen::Quaterniond(0.0, 1.0, 0.0, 0.0);
-        else
-            q = Eigen::Quaterniond::FromTwoVectors(z_axis, normal);
-        q.normalize();
+        if (normal.dot(z_axis) < 0)
+            normal = -normal;
+        Eigen::Quaterniond quat = Eigen::Quaterniond::FromTwoVectors(z_axis, normal);
+        quat.normalize();
 
         // Passage values
         passage.id = idx;
-        passage.color.a = 1.0;
+        passage.color.a = 0.5;
         passage.ns = "passage";
         passage.action = passage.ADD;
         passage.header.stamp = msgTime;
         passage.header.frame_id = frameBC;
         passage.mesh_use_embedded_materials = true;
         passage.lifetime = rclcpp::Duration::from_seconds(0);
-        passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-        passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
+        passage.type = visualization_msgs::msg::Marker::CUBE;
+        // passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+        // passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
 
         // Set color (closed passages are red, open passages are blue, doorways are green)
         std::vector<double> color = {1.0, 0.0, 0.0};
@@ -802,15 +797,18 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         passage.pose.position.z = static_cast<double>(centroid.z());
 
         // Orientation: always from plane normal
-        passage.pose.orientation.x = q.x();
-        passage.pose.orientation.y = q.y();
-        passage.pose.orientation.z = q.z();
-        passage.pose.orientation.w = q.w();
+        passage.pose.orientation.x = quat.x();
+        passage.pose.orientation.y = quat.y();
+        passage.pose.orientation.z = quat.z();
+        passage.pose.orientation.w = quat.w();
 
         // Set shape and size of the passage marker
-        passage.scale.z = 1.0;
-        passage.scale.y = width / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_width;
-        passage.scale.x = height / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_height;
+        passage.scale.z = 0.1;
+        passage.scale.y = width;
+        passage.scale.x = height;
+        // passage.scale.z = 1.0;
+        // passage.scale.y = width / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_width;
+        // passage.scale.x = height / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_height;
 
         passageArray.markers.push_back(passage);
     }
