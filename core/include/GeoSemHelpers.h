@@ -19,6 +19,8 @@
 #include "Atlas.h"
 #include "Utils.h"
 
+#include <iomanip>
+#include <sstream>
 #include <Eigen/Core>
 
 namespace ORB_SLAM3

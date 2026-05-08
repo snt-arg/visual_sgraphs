@@ -288,9 +288,12 @@ namespace ORB_SLAM3
         }
 
         // Otherwise, add the new passage to the map
+        std::ostringstream oss;
         std::string doorStatus = isOpenPassage ? "open" : "blocked";
-        std::string info = doorStatus + ", " + std::to_string(std::round(width * 100.0) / 100.0) +
-                           "x" + std::to_string(std::round(height * 100.0) / 100.0) + "m";
+        oss << doorStatus << ", "
+            << std::fixed << std::setprecision(2)
+            << width << "x" << height << "m";
+        std::string info = oss.str();
         std::cout << "[GeoSemHelper] Creating Passage#" << newMapPassage->getId() << " ("
                   << info << ") ..." << std::endl;
 
