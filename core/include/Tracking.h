@@ -45,7 +45,6 @@
 #include "Semantic/Marker.h"
 #include "GeometricCamera.h"
 #include "Semantic/Passage.h"
-#include "GeometricSegmentation.h"
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -64,7 +63,6 @@ namespace ORB_SLAM3
     class LoopClosing;
     class System;
     class Settings;
-    class GeometricSegmentation;
 
     class Tracking
     {
@@ -101,7 +99,6 @@ namespace ORB_SLAM3
         void SetViewer(Viewer *pViewer);
         void SetLoopClosing(LoopClosing *pLoopClosing);
         void SetLocalMapper(LocalMapping *pLocalMapper);
-        void SetGeometricSegmentation(GeometricSegmentation *pGeometricSegmentation);
 
         void SetStepByStep(bool bSet);
         bool GetStepByStep();
@@ -277,12 +274,6 @@ namespace ORB_SLAM3
         bool NeedNewKeyFrame();
         void CreateNewKeyFrame();
 
-        /**
-         * @brief Adds a newly created KeyFrame to the buffer in the GeometricSegmentation thread
-         * @param pKF the address of the newly created KeyFrame
-         */
-        void AddKeyFrameToGeoSegKFBuffer(KeyFrame *pKF);
-
         // Perform preintegration from last frame
         void PreintegrateIMU();
 
@@ -316,7 +307,6 @@ namespace ORB_SLAM3
         // Other Thread Pointers
         LoopClosing *mpLoopClosing;
         LocalMapping *mpLocalMapper;
-        GeometricSegmentation *mpGeometricSegmentation;
 
         // ORB
         ORBextractor *mpORBextractorLeft, *mpORBextractorRight;

@@ -136,7 +136,6 @@ add_library(${PROJECT_NAME}_lib SHARED
   core/src/Geometric/Plane.cc
   core/src/Semantic/Passage.cc
   core/src/Types/SystemParams.cc
-  core/src/GeometricSegmentation.cc
   core/src/SemanticSegmentation.cc
   core/src/SemanticsManager.cc
   core/include/System.h
@@ -178,7 +177,6 @@ add_library(${PROJECT_NAME}_lib SHARED
   core/include/Geometric/Plane.h
   core/include/Semantic/Passage.h
   core/include/Types/SystemParams.h
-  core/include/GeometricSegmentation.h
   core/include/SemanticSegmentation.h
   core/include/SemanticsManager.h
 )

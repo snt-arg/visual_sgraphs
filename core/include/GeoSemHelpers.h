@@ -106,14 +106,6 @@ namespace ORB_SLAM3
                                                          Eigen::Vector3d centroid = Eigen::Vector3d::Zero());
 
         /**
-         * @brief Creates a new room object (corridor or room) to be added to the map
-         * @param mpAtlas the current map in Atlas
-         * @param matchedRoom the address of the room matched from the database
-         * @param attachedMarker the address of the attached marker
-         */
-        static void createMapRoomCandidateByMarker(Atlas *mpAtlas, Room *matchedRoom, Marker *attachedMarker);
-
-        /**
          * @brief Chooses a ground plane from the Atlas to be associated with the room
          * @param mpAtlas the current map in Atlas
          * @param givenRoom the address of the detected room

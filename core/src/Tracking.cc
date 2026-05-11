@@ -1494,11 +1494,6 @@ namespace ORB_SLAM3
         mpLoopClosing = pLoopClosing;
     }
 
-    void Tracking::SetGeometricSegmentation(GeometricSegmentation *pGeometricSegmentation)
-    {
-        mpGeometricSegmentation = pGeometricSegmentation;
-    }
-
     void Tracking::SetViewer(Viewer *pViewer)
     {
         mpViewer = pViewer;
@@ -2491,9 +2486,6 @@ namespace ORB_SLAM3
                 }
             }
 
-            // Add the current KeyFrame to the buffer in GeometrySegmentation
-            AddKeyFrameToGeoSegKFBuffer(pKFini);
-
             std::cout << "\n[Tracking] New map created with #" + to_string(mpAtlas->MapPointsInMap()) + " points!"
                       << std::endl;
 
@@ -2635,9 +2627,6 @@ namespace ORB_SLAM3
             // Add to Map
             mpAtlas->AddMapPoint(pMP);
         }
-
-        // Add the current KeyFrame to the buffer in GeometrySegmentation
-        AddKeyFrameToGeoSegKFBuffer(pKFini);
 
         // Update Connections
         pKFini->UpdateConnections();
@@ -3402,21 +3391,12 @@ namespace ORB_SLAM3
                     currentFrameMaker->setMarkerInGMap(true);
         }
 
-        // Add the current KeyFrame to the buffer in GeometrySegmentation
-        AddKeyFrameToGeoSegKFBuffer(pKF);
-
         mpLocalMapper->InsertKeyFrame(pKF);
 
         mpLocalMapper->SetNotStop(false);
 
         mnLastKeyFrameId = mCurrentFrame.mnId;
         mpLastKeyFrame = pKF;
-    }
-
-    void Tracking::AddKeyFrameToGeoSegKFBuffer(KeyFrame *pKF)
-    {
-        // Add the current KeyFrame to the buffer in GeometrySegmentation
-        mpGeometricSegmentation->AddKeyFrameToBuffer(pKF);
     }
 
     void Tracking::SearchLocalPoints()

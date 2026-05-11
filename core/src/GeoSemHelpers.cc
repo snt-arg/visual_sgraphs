@@ -194,22 +194,6 @@ namespace ORB_SLAM3
                         currentMapMarker = mappedMarker;
                         currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
                     }
-
-            // Decide based on the marker type
-            if (!markerIsDoorway)
-            {
-                // The current marker is a room meta-marker
-                ORB_SLAM3::Room *mappedRoom;
-
-                // Check to find the real room values fetched from the JSON file
-                for (Room *envRoom : envRooms)
-                    // Check if the current detected marker belongs to this room
-                    if (mCurrentMarker->getId() == envRoom->getMetaMarkerId())
-                        // Create a room candidate if does not exist in the map
-                        // [💡hint] Creation of room candidates happens here and updating (changing to real candidates)
-                        // happens in the Semantic Segmentation module
-                        createMapRoomCandidateByMarker(mpAtlas, envRoom, mCurrentMarker);
-            }
         }
     }
 
@@ -318,39 +302,6 @@ namespace ORB_SLAM3
         // mpAtlas->AddCandidateMapRoom(newRoom);
 
         return newRoom;
-    }
-
-    void GeoSemHelpers::createMapRoomCandidateByMarker(Atlas *mpAtlas, ORB_SLAM3::Room *matchedRoom,
-                                                       ORB_SLAM3::Marker *attachedMarker)
-    {
-        // Variables
-        bool roomAlreadyInMap = false;
-
-        // Check if a room has not been created before for this marker
-        for (auto room : mpAtlas->GetAllMarkerBasedMapRooms())
-            if (room->getMetaMarkerId() == attachedMarker->getId())
-                roomAlreadyInMap = true;
-
-        if (roomAlreadyInMap)
-            return;
-
-        // Variables
-        ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
-
-        // Fill the room entity
-        newMapRoomCandidate->setHasKnownLabel(true);
-        newMapRoomCandidate->setMetaMarker(attachedMarker);
-        newMapRoomCandidate->setName(matchedRoom->getName());
-        newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
-        newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
-        newMapRoomCandidate->setMetaMarkerId(matchedRoom->getMetaMarkerId());
-        newMapRoomCandidate->setCentroid(attachedMarker->getGlobalPose().translation().cast<double>());
-
-        std::cout
-            << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " ("
-            << newMapRoomCandidate->getName() << ") using marker #" << attachedMarker->getId() << "!\n";
-
-        mpAtlas->AddCandidateMapRoom(newMapRoomCandidate);
     }
 
     void GeoSemHelpers::associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom)

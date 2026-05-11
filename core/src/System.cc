@@ -186,11 +186,6 @@ namespace ORB_SLAM3
         mpLoopCloser = new LoopClosing(mpAtlas, mpKeyFrameDatabase, mpVocabulary, mSensor != MONOCULAR, activeLC);
         mptLoopClosing = new thread(&ORB_SLAM3::LoopClosing::Run, mpLoopCloser);
 
-        // 🚀 [vS-Graphs v.2.0] Initialize Geometric Segmentation thread and launch
-        bool hasDepthCloud = (mSensor == System::RGBD || mSensor == System::IMU_RGBD);
-        mpGeometricSegmentation = new GeometricSegmentation(mpAtlas, hasDepthCloud, envRooms);
-        mptGeometricSegmentation = new thread(&GeometricSegmentation::Run, mpGeometricSegmentation);
-
         // 🚀 [vS-Graphs v.2.0] Initialize Semantic Segmentation thread and launch
         // [TODO] - launch threads based on flags
         mpSemanticSegmentation = new SemanticSegmentation(mpAtlas);
@@ -203,7 +198,6 @@ namespace ORB_SLAM3
         // Set pointers between threads
         mpTracker->SetLoopClosing(mpLoopCloser);
         mpTracker->SetLocalMapper(mpLocalMapper);
-        mpTracker->SetGeometricSegmentation(mpGeometricSegmentation);
 
         mpLocalMapper->SetTracker(mpTracker);
         mpLocalMapper->SetLoopCloser(mpLoopCloser);

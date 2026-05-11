@@ -52,7 +52,6 @@
 #include "Types/SystemParams.h"
 #include "SemanticSegmentation.h"
 #include "SemanticsManager.h"
-#include "GeometricSegmentation.h"
 #include "DatabaseParser.h"
 
 namespace ORB_SLAM3
@@ -94,7 +93,6 @@ namespace ORB_SLAM3
     class LoopClosing;
     class Settings;
     class SemanticSegmentation;
-    class GeometricSegmentation;
     class SemanticsManager;
 
     class System
@@ -333,7 +331,6 @@ namespace ORB_SLAM3
         // Geometric & Semantic Segmentation
         SemanticSegmentation *mpSemanticSegmentation;
         SemanticsManager *mpSemanticsManager;
-        GeometricSegmentation *mpGeometricSegmentation;
 
         // List of rooms in the environment
         std::vector<ORB_SLAM3::Room *> envRooms;
