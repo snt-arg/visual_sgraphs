@@ -273,13 +273,14 @@ namespace ORB_SLAM3
                 // If there is a door close to the passage centroid, then it is an open doorway
                 ORB_SLAM3::Plane *potentialDoor = nullptr;
 
-                for (const auto &door : doorPlanes)
-                    if (Utils::calculateDistancePointToPlane(door->getGlobalEquation().coeffs(),
-                                                             passageCentroid.cast<double>()) < 1.0)
-                    {
-                        potentialDoor = door;
-                        break;
-                    }
+                //     // for (const auto &door : doorPlanes)
+                //     //     if (Utils::calculateDistancePointToPlane(door->getGlobalEquation().coeffs(),
+                //     //                                              passageCentroid.cast<double>()) <
+                //     //         sysParams->sem_seg.max_wall_door_distance)
+                //     //     {
+                //     //         potentialDoor = door;
+                //     //         break;
+                //     //     }
 
                 GeoSemHelpers::createMapPassage(mpAtlas, potentialDoor, wall, true, passageCentroid);
             }
@@ -301,19 +302,14 @@ namespace ORB_SLAM3
             // Get the passage variant (doorway or undefined)
             ORB_SLAM3::Passage::passageVariant variant = passage->getPassageType();
 
+            // Updating the dimensions of the passage based on the associated door plane
+            ORB_SLAM3::Plane *doorPlane = passage->getAssociateDoor();
+
             // Blocked passages (closed doors) should be aligned with the ground plane normal
             if (!passage->isPassable())
             {
-                // Variables
-                double width, height;
-                ORB_SLAM3::Plane *doorPlane = passage->getAssociateDoor();
                 if (doorPlane == nullptr)
                     continue;
-
-                std::pair<double, double> widthHeight =
-                    Utils::computePlaneWidthHeight(doorPlane->getMapClouds());
-                passage->setWidth(widthHeight.first);
-                passage->setHeight(widthHeight.second);
                 passage->setCentroid(doorPlane->getCentroid());
                 passage->setGlobalEquation(doorPlane->getGlobalEquation());
             }
@@ -321,27 +317,30 @@ namespace ORB_SLAM3
             {
                 ORB_SLAM3::Plane passagePlane;
                 passagePlane.setGlobalEquation(passage->getGlobalEquation());
-                if (Utils::arePlanesPerpendicular(&passagePlane, groundPlane))
-                    continue;
+                if (!Utils::arePlanesPerpendicular(&passagePlane, groundPlane))
+                {
+                    // Project the passage normal onto the horizontal plane to remove tilt
+                    const Eigen::Vector3d groundNormal =
+                        groundPlane->getGlobalEquation().coeffs().head<3>().normalized();
+                    Eigen::Vector4d globalEq = passage->getGlobalEquation().coeffs();
+                    Eigen::Vector3d passageNormal = globalEq.head<3>().normalized();
 
-                // Project the passage normal onto the horizontal plane to remove tilt
-                const Eigen::Vector3d groundNormal =
-                    groundPlane->getGlobalEquation().coeffs().head<3>().normalized();
-                Eigen::Vector4d globalEq = passage->getGlobalEquation().coeffs();
-                Eigen::Vector3d passageNormal = globalEq.head<3>().normalized();
+                    Eigen::Vector3d correctedNormal =
+                        (passageNormal - passageNormal.dot(groundNormal) * groundNormal).normalized();
+                    if (correctedNormal.norm() < 1e-6)
+                        continue;
+                    correctedNormal.normalize();
 
-                Eigen::Vector3d correctedNormal =
-                    (passageNormal - passageNormal.dot(groundNormal) * groundNormal).normalized();
+                    // Recompute d so the plane still passes through the centroid
+                    const Eigen::Vector3d centroid = passage->getCentroid().cast<double>();
+                    const double d = -correctedNormal.dot(centroid);
 
-                // Recompute d so the plane still passes through the centroid
-                const Eigen::Vector3d centroid = passage->getCentroid().cast<double>();
-                const double d = -correctedNormal.dot(centroid);
+                    Eigen::Vector4d correctedCoeffs;
+                    correctedCoeffs.head<3>() = correctedNormal;
+                    correctedCoeffs(3) = d;
 
-                Eigen::Vector4d correctedCoeffs;
-                correctedCoeffs.head<3>() = correctedNormal;
-                correctedCoeffs(3) = d;
-
-                passage->setGlobalEquation(g2o::Plane3D(correctedCoeffs));
+                    passage->setGlobalEquation(g2o::Plane3D(correctedCoeffs));
+                }
             }
         }
     }

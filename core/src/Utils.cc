@@ -284,8 +284,8 @@ namespace ORB_SLAM3
         pcl::getMinMax3D(projected, minPt, maxPt);
 
         // Axis 0 = largest variance (width), Axis 1 = second (height)
-        double width = static_cast<double>(maxPt.x - minPt.x);
-        double height = static_cast<double>(maxPt.y - minPt.y);
+        double width = static_cast<double>(maxPt.y - minPt.y);
+        double height = static_cast<double>(maxPt.x - minPt.x);
         
         return std::make_pair(width, height);
     }

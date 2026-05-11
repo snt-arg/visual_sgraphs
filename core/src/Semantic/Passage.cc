@@ -17,7 +17,7 @@
 
 namespace ORB_SLAM3
 {
-    Passage::Passage() {}
+    Passage::Passage() : associateDoor(nullptr) {}
     Passage::~Passage() {}
 
     int Passage::getId() const

@@ -780,8 +780,6 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
         passage.mesh_use_embedded_materials = true;
         passage.lifetime = rclcpp::Duration::from_seconds(0);
         passage.type = visualization_msgs::msg::Marker::CUBE;
-        // passage.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-        // passage.mesh_resource = "package://vs_graphs/config/Assets/doorframe.obj";
 
         // Set color (closed passages are red, open passages are blue, doorways are green)
         std::vector<double> color = {1.0, 0.0, 0.0};
@@ -804,11 +802,8 @@ void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time ms
 
         // Set shape and size of the passage marker
         passage.scale.z = 0.1;
-        passage.scale.y = width;
-        passage.scale.x = height;
-        // passage.scale.z = 1.0;
-        // passage.scale.y = width / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_width;
-        // passage.scale.x = height / ORB_SLAM3::SystemParams::GetParams()->sem_seg.max_door_height;
+        passage.scale.x = width;
+        passage.scale.y = height;
 
         passageArray.markers.push_back(passage);
     }
