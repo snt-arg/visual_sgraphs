@@ -264,7 +264,7 @@ namespace ORB_SLAM3
     }
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const int, const float);
-    
+
     std::pair<double, double> Utils::computePlaneWidthHeight(
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud)
     {
@@ -286,7 +286,7 @@ namespace ORB_SLAM3
         // Axis 0 = largest variance (width), Axis 1 = second (height)
         double width = static_cast<double>(maxPt.y - minPt.y);
         double height = static_cast<double>(maxPt.x - minPt.x);
-        
+
         return std::make_pair(width, height);
     }
 

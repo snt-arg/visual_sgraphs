@@ -310,8 +310,13 @@ namespace ORB_SLAM3
             {
                 if (doorPlane == nullptr)
                     continue;
+                std::pair<double, double> widthHeight = Utils::computePlaneWidthHeight(doorPlane->getMapClouds());
+                cout << "[SemanticsManager] Updating passage " << passage->getId() << " with associated door plane " << doorPlane->getId()
+                     << " dimensions: width = " << widthHeight.first << "m, height = " << widthHeight.second << "m.\n";
                 passage->setCentroid(doorPlane->getCentroid());
                 passage->setGlobalEquation(doorPlane->getGlobalEquation());
+                passage->setWidth(widthHeight.first);
+                passage->setHeight(widthHeight.second);
             }
             else
             {
