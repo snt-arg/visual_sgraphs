@@ -11,7 +11,7 @@
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details: https://www.gnu.org/licenses/
-*/
+ */
 
 #include "Semantic/Room.h"
 
@@ -140,14 +140,14 @@ namespace ORB_SLAM3
         groundPlane = ground;
     }
 
-    std::vector<Door *> Room::getDoors() const
+    std::vector<ORB_SLAM3::Passage *> Room::getPassages() const
     {
-        return doors;
+        return doorways;
     }
 
-    void Room::setDoors(Door *value)
+    void Room::setDoorways(ORB_SLAM3::Passage *value)
     {
-        doors.push_back(value);
+        doorways.push_back(value);
     }
 
     Eigen::Vector3d Room::getCentroid() const
@@ -158,16 +158,6 @@ namespace ORB_SLAM3
     void Room::setCentroid(Eigen::Vector3d value)
     {
         centroid = value;
-    }
-
-    std::vector<int> Room::getDoorMarkerIds() const
-    {
-        return doorMarkerIds;
-    }
-
-    void Room::setDoorMarkerIds(int value)
-    {
-        doorMarkerIds.push_back(value);
     }
 
     Map *Room::getMap()

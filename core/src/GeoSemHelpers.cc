@@ -136,27 +136,26 @@ namespace ORB_SLAM3
         }
     }
 
-    std::pair<bool, std::string> GeoSemHelpers::checkIfMarkerIsDoor(const int &markerId,
-                                                                    std::vector<ORB_SLAM3::Door *> envDoors)
+    std::pair<bool, std::string> GeoSemHelpers::checkIfMarkerIsDoorway(const int &markerId,
+                                                                       std::vector<ORB_SLAM3::Room *> envRooms)
     {
-        bool isDoor = false;
+        bool isDoorway = true;
         std::string name = "";
-        // Loop over all markers attached to doors
-        for (const auto &doorPtr : envDoors)
+        // Loop over all markers attached to doorways
+        for (const auto &roomPtr : envRooms)
         {
-            if (doorPtr->getMarkerId() == markerId)
+            if (roomPtr->getMetaMarkerId() == markerId)
             {
-                isDoor = true;
-                name = doorPtr->getName();
+                isDoorway = false;
+                name = roomPtr->getName();
                 break; // No need to continue searching if found
             }
         }
         // Returning
-        return std::make_pair(isDoor, name);
+        return std::make_pair(isDoorway, name);
     }
 
     void GeoSemHelpers::markerSemanticAnalysis(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                               std::vector<ORB_SLAM3::Door *> envDoors,
                                                std::vector<ORB_SLAM3::Room *> envRooms)
     {
         // Get the markers from the current KeyFrame
@@ -168,12 +167,12 @@ namespace ORB_SLAM3
             ORB_SLAM3::Marker *currentMapMarker;
 
             // Check the type of the marker
-            std::pair<bool, std::string> result = checkIfMarkerIsDoor(mCurrentMarker->getId(), envDoors);
-            bool markerIsDoor = result.first;
-            std::string doorName = result.second;
+            std::pair<bool, std::string> result = checkIfMarkerIsDoorway(mCurrentMarker->getId(), envRooms);
+            bool markerIsDoorway = result.first;
+            std::string doorwayName = result.second;
 
             // Change the marker type
-            mCurrentMarker->setMarkerType(markerIsDoor
+            mCurrentMarker->setMarkerType(markerIsDoorway
                                               ? ORB_SLAM3::Marker::markerVariant::ON_DOOR
                                               : ORB_SLAM3::Marker::markerVariant::ON_ROOM_CENTER);
 
@@ -195,25 +194,6 @@ namespace ORB_SLAM3
                         currentMapMarker = mappedMarker;
                         currentMapMarker->addObservation(pKF, mCurrentMarker->getLocalPose());
                     }
-
-            // Decide based on the marker type
-            if (markerIsDoor)
-                // The current marker is placed on a door
-                createMapDoor(mpAtlas, pKF, mCurrentMarker, doorName);
-            else
-            {
-                // The current marker is a room meta-marker
-                ORB_SLAM3::Room *mappedRoom;
-
-                // Check to find the real room values fetched from the JSON file
-                for (Room *envRoom : envRooms)
-                    // Check if the current detected marker belongs to this room
-                    if (mCurrentMarker->getId() == envRoom->getMetaMarkerId())
-                        // Create a room candidate if does not exist in the map
-                        // [💡hint] Creation of room candidates happens here and updating (changing to real candidates)
-                        // happens in the Semantic Segmentation module
-                        createMapRoomCandidateByMarker(mpAtlas, envRoom, mCurrentMarker);
-            }
         }
     }
 
@@ -238,66 +218,70 @@ namespace ORB_SLAM3
         return newMapMarker;
     }
 
-    void GeoSemHelpers::createMapDoor(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                      ORB_SLAM3::Marker *attachedMarker, std::string doorName)
+    void GeoSemHelpers::createMapPassage(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
+                                         ORB_SLAM3::Plane *wallPlane, bool isOpenPassage,
+                                         Eigen::Vector3f passageCentroid)
     {
-        // Check if the door has not been created before
-        bool doorAlreadyInMap = false;
-        for (auto door : mpAtlas->GetAllDoors())
-            if (door->getMarker()->getId() == attachedMarker->getId())
-                doorAlreadyInMap = true;
-
-        if (doorAlreadyInMap)
-            return;
-
         // Variables
-        ORB_SLAM3::Door *newMapDoor = new ORB_SLAM3::Door();
+        double width, height;
+        std::pair<double, double> widthHeight;
+        ORB_SLAM3::Passage *newMapPassage = new ORB_SLAM3::Passage();
+        std::vector<ORB_SLAM3::Passage *> allPassages = mpAtlas->GetAllPassages();
 
-        newMapDoor->setName(doorName);
-        newMapDoor->setMarker(attachedMarker);
-        newMapDoor->setMap(mpAtlas->GetCurrentMap());
-        newMapDoor->setId(mpAtlas->GetAllDoors().size());
-        newMapDoor->setLocalPose(attachedMarker->getLocalPose());
-        newMapDoor->setGlobalPose(attachedMarker->getGlobalPose());
+        // Get default width and height values
+        width = SystemParams::GetParams()->sem_seg.max_door_width;
+        height = SystemParams::GetParams()->sem_seg.max_door_height;
 
-        std::cout << "- New door detected: Door#" << newMapDoor->getId() << " (" << newMapDoor->getName()
-                  << "), with Marker#" << attachedMarker->getId() << std::endl;
-
-        pKF->AddMapDoor(newMapDoor);
-        mpAtlas->AddMapDoor(newMapDoor);
-    }
-
-    void GeoSemHelpers::organizeRoomWalls(ORB_SLAM3::Room *givenRoom)
-    {
-        // Function to find the minimum and maximum coefficient value of a wall among all walls
-        auto findExtremumWall = [&](const std::vector<Plane *> &walls, int coeffIndex, bool findMax) -> Plane *
+        // If a door exists, compute the dimensions based on the door plane point cloud
+        if (doorPlane != nullptr)
         {
-            Plane *extremumWall = walls.front();
-            for (const auto &wall : walls)
-            {
-                if ((findMax && wall->getGlobalEquation().coeffs()(coeffIndex) > extremumWall->getGlobalEquation().coeffs()(coeffIndex)) ||
-                    (!findMax && wall->getGlobalEquation().coeffs()(coeffIndex) < extremumWall->getGlobalEquation().coeffs()(coeffIndex)))
-                {
-                    extremumWall = wall;
-                }
-            }
-            return extremumWall;
-        };
+            widthHeight = Utils::computePlaneWidthHeight(doorPlane->getMapClouds());
+            width = widthHeight.first;
+            height = widthHeight.second;
+        }
 
-        // Get all walls in the room
-        const std::vector<Plane *> &walls = givenRoom->getWalls();
+        newMapPassage->setWidth(width);
+        newMapPassage->setHeight(height);
+        newMapPassage->setId(allPassages.size());
+        newMapPassage->setPassable(isOpenPassage);
+        newMapPassage->addAssociateWall(wallPlane);
+        newMapPassage->setMap(mpAtlas->GetCurrentMap());
 
-        // Find walls with minimum and maximum coefficients along x and z axes
-        Plane *maxWallX = findExtremumWall(walls, 0, true);
-        Plane *maxWallZ = findExtremumWall(walls, 2, true);
-        Plane *minWallX = findExtremumWall(walls, 0, false);
-        Plane *minWallZ = findExtremumWall(walls, 2, false);
+        // If an associated door exists, use its plane equation
+        if (doorPlane != nullptr)
+        {
+            newMapPassage->setAssociateDoor(doorPlane);
+            newMapPassage->setCentroid(doorPlane->getCentroid());
+            newMapPassage->setGlobalEquation(doorPlane->getGlobalEquation());
+            newMapPassage->setPassageType(ORB_SLAM3::Passage::passageVariant::DOORWAY);
+        }
+        else
+        {
+            newMapPassage->setCentroid(passageCentroid);
+            newMapPassage->setGlobalEquation(wallPlane->getGlobalEquation());
+            newMapPassage->setPassageType(ORB_SLAM3::Passage::passageVariant::UNDEFINED);
+        }
 
-        givenRoom->clearWalls();
-        givenRoom->setWalls(minWallX);
-        givenRoom->setWalls(maxWallX);
-        givenRoom->setWalls(minWallZ);
-        givenRoom->setWalls(maxWallZ);
+        // Duplicate check
+        for (const auto &existingPassage : allPassages)
+        {
+            // Check based on the thresholded distance between the centroids of the passages
+            double distance = (newMapPassage->getCentroid() - existingPassage->getCentroid()).norm();
+            if (distance < SystemParams::GetParams()->sem_seg.passage_centroid_distance_thresh)
+                return;
+        }
+
+        // Otherwise, add the new passage to the map
+        std::ostringstream oss;
+        std::string doorStatus = isOpenPassage ? "open" : "blocked";
+        oss << doorStatus << ", "
+            << std::fixed << std::setprecision(2)
+            << width << "x" << height << "m";
+        std::string info = oss.str();
+        std::cout << "[GeoSemHelper] Creating Passage#" << newMapPassage->getId() << " ("
+                  << info << ") ..." << std::endl;
+
+        mpAtlas->AddMapPassage(newMapPassage);
     }
 
     ORB_SLAM3::Room *GeoSemHelpers::createBlankRoomCandidate(ORB_SLAM3::Atlas *mpAtlas,
@@ -318,142 +302,6 @@ namespace ORB_SLAM3
         // mpAtlas->AddCandidateMapRoom(newRoom);
 
         return newRoom;
-    }
-
-    void GeoSemHelpers::createMapRoomCandidateByMarker(Atlas *mpAtlas, ORB_SLAM3::Room *matchedRoom,
-                                                       ORB_SLAM3::Marker *attachedMarker)
-    {
-        // Variables
-        bool roomAlreadyInMap = false;
-
-        // Check if a room has not been created before for this marker
-        for (auto room : mpAtlas->GetAllMarkerBasedMapRooms())
-            if (room->getMetaMarkerId() == attachedMarker->getId())
-                roomAlreadyInMap = true;
-
-        if (roomAlreadyInMap)
-            return;
-
-        // Variables
-        ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
-
-        // Fill the room entity
-        newMapRoomCandidate->setHasKnownLabel(true);
-        newMapRoomCandidate->setMetaMarker(attachedMarker);
-        newMapRoomCandidate->setName(matchedRoom->getName());
-        newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
-        newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
-        newMapRoomCandidate->setMetaMarkerId(matchedRoom->getMetaMarkerId());
-        newMapRoomCandidate->setCentroid(attachedMarker->getGlobalPose().translation().cast<double>());
-
-        // Add door markers to the room
-        for (int markerId : matchedRoom->getDoorMarkerIds())
-        {
-            newMapRoomCandidate->setDoorMarkerIds(markerId);
-            // Check if the door marker is already in the map
-            for (auto door : mpAtlas->GetAllDoors())
-                if (door->getMarker()->getId() == markerId)
-                    newMapRoomCandidate->setDoors(door);
-        }
-
-        std::cout
-            << "- New room candidate detected: Room#" << newMapRoomCandidate->getId() << " ("
-            << newMapRoomCandidate->getName() << ") using marker #" << attachedMarker->getId() << "!\n";
-
-        mpAtlas->AddCandidateMapRoom(newMapRoomCandidate);
-    }
-
-    ORB_SLAM3::Room *GeoSemHelpers::createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                                      std::vector<ORB_SLAM3::Plane *> walls,
-                                                                      Eigen::Vector3d clusterCentroid)
-    {
-        // Variables
-        Eigen::Vector3d centroid = Eigen::Vector3d::Zero();
-        ORB_SLAM3::Room *newMapRoomCandidate = new ORB_SLAM3::Room();
-
-        // Fill the room entity
-        newMapRoomCandidate->setHasKnownLabel(false);
-        newMapRoomCandidate->setMap(mpAtlas->GetCurrentMap());
-        newMapRoomCandidate->setId(mpAtlas->GetAllRooms().size());
-
-        if (isCorridor)
-            newMapRoomCandidate->setRoomVariant(ORB_SLAM3::Room::roomVariant::CORRIDOR);
-        else
-            newMapRoomCandidate->setRoomVariant(ORB_SLAM3::Room::roomVariant::ROOM);
-
-        // Set name based on ID
-        int roomId = newMapRoomCandidate->getId();
-        std::string roomType = isCorridor ? "Corridor" : "Room";
-        newMapRoomCandidate->setName(roomType + "#" + std::to_string(roomId));
-
-        // Connect the walls to the room
-        for (ORB_SLAM3::Plane *wall : walls)
-            newMapRoomCandidate->setWalls(wall);
-
-        // Detect the room center
-        if (isCorridor)
-        {
-            // Refining the walls of the corridor
-            Eigen::Vector4d wall1(Utils::correctPlaneDirection(
-                walls[0]->getGlobalEquation().coeffs()));
-            Eigen::Vector4d wall2(Utils::correctPlaneDirection(
-                walls[1]->getGlobalEquation().coeffs()));
-            // Find the room center and add its vertex
-            centroid = Utils::getRoomCenter(clusterCentroid, wall1, wall2);
-        }
-        else
-        {
-            // Reorganize the walls of the room
-            organizeRoomWalls(newMapRoomCandidate);
-            // Compute the centroid of the walls
-            Eigen::Vector4d wall1 = Utils::correctPlaneDirection(
-                walls[0]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall2 = Utils::correctPlaneDirection(
-                walls[1]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall3 = Utils::correctPlaneDirection(
-                walls[2]->getGlobalEquation().coeffs());
-            Eigen::Vector4d wall4 = Utils::correctPlaneDirection(
-                walls[3]->getGlobalEquation().coeffs());
-            // Find the room center and add its vertex
-            centroid = Utils::getRoomCenter(wall1, wall2, wall3, wall4);
-        }
-        newMapRoomCandidate->setCentroid(centroid);
-
-        return newMapRoomCandidate;
-    }
-
-    void GeoSemHelpers::augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
-                                                bool isMarkerBasedMapped)
-    {
-        std::cout << "\n[GeoSeg]" << std::endl;
-        if (isMarkerBasedMapped)
-        {
-            // Augment the already detected marker-based room with the cluster-based room information
-            markerBasedRoom->setCentroid(clusterBasedRoom->getCentroid());
-            // Connect the walls to the room
-            for (ORB_SLAM3::Plane *wall : clusterBasedRoom->getWalls())
-                markerBasedRoom->setWalls(wall);
-            // Create a room candidate for it
-            std::cout << "- Marker-based room candidate #" << markerBasedRoom->getId()
-                      << " has been validated (walls added)!" << std::endl;
-        }
-        else
-        {
-            // Augment the already detected cluster-based room with the marker-based room information
-            clusterBasedRoom->setHasKnownLabel(true);
-            clusterBasedRoom->setName(markerBasedRoom->getName());
-            clusterBasedRoom->setMetaMarker(markerBasedRoom->getMetaMarker());
-            clusterBasedRoom->setMetaMarkerId(markerBasedRoom->getMetaMarkerId());
-            clusterBasedRoom->setRoomVariant(markerBasedRoom->getRoomVariant());
-            // Connect the doors to the room
-            for (ORB_SLAM3::Door *door : markerBasedRoom->getDoors())
-                clusterBasedRoom->setDoors(door);
-            for (int markerId : markerBasedRoom->getDoorMarkerIds())
-                clusterBasedRoom->setDoorMarkerIds(markerId);
-            // Create a room candidate for it
-            std::cout << "- Cluster-based room candidate #" << clusterBasedRoom->getId()
-                      << " has been validated (semantic info added)!" << std::endl;
-        }
     }
 
     void GeoSemHelpers::associateGroundPlaneToRoom(Atlas *mpAtlas, ORB_SLAM3::Room *givenRoom)

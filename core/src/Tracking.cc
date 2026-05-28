@@ -1494,11 +1494,6 @@ namespace ORB_SLAM3
         mpLoopClosing = pLoopClosing;
     }
 
-    void Tracking::SetGeometricSegmentation(GeometricSegmentation *pGeometricSegmentation)
-    {
-        mpGeometricSegmentation = pGeometricSegmentation;
-    }
-
     void Tracking::SetViewer(Viewer *pViewer)
     {
         mpViewer = pViewer;
@@ -1515,11 +1510,9 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f Tracking::GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight, const double &timestamp,
-                                           string filename, const std::vector<Marker *> markers,
-                                           const std::vector<Door *> doors, const std::vector<Room *> rooms)
+                                           string filename, const std::vector<Marker *> markers, const std::vector<Room *> rooms)
     {
         // Set arguments to local variables
-        env_doors = doors;
         env_rooms = rooms;
 
         mImGray = imRectLeft;
@@ -1586,10 +1579,9 @@ namespace ORB_SLAM3
     Sophus::SE3f Tracking::GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD,
                                          const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
                                          const double &timestamp, string filename, const std::vector<Marker *> markers,
-                                         const std::vector<Door *> doors, const std::vector<Room *> rooms)
+                                         const std::vector<Room *> rooms)
     {
         // Set arguments to local variables
-        env_doors = doors;
         env_rooms = rooms;
 
         mImGray = imRGB;
@@ -1635,11 +1627,10 @@ namespace ORB_SLAM3
     }
 
     Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename,
-                                              const std::vector<Marker *> markers, const std::vector<Door *> doors,
+                                              const std::vector<Marker *> markers,
                                               const std::vector<Room *> rooms)
     {
         // Set arguments to local variables
-        env_doors = doors;
         env_rooms = rooms;
 
         mImGray = im;
@@ -2495,9 +2486,6 @@ namespace ORB_SLAM3
                 }
             }
 
-            // Add the current KeyFrame to the buffer in GeometrySegmentation
-            AddKeyFrameToGeoSegKFBuffer(pKFini);
-
             std::cout << "\n[Tracking] New map created with #" + to_string(mpAtlas->MapPointsInMap()) + " points!"
                       << std::endl;
 
@@ -2639,9 +2627,6 @@ namespace ORB_SLAM3
             // Add to Map
             mpAtlas->AddMapPoint(pMP);
         }
-
-        // Add the current KeyFrame to the buffer in GeometrySegmentation
-        AddKeyFrameToGeoSegKFBuffer(pKFini);
 
         // Update Connections
         pKFini->UpdateConnections();
@@ -3406,21 +3391,12 @@ namespace ORB_SLAM3
                     currentFrameMaker->setMarkerInGMap(true);
         }
 
-        // Add the current KeyFrame to the buffer in GeometrySegmentation
-        AddKeyFrameToGeoSegKFBuffer(pKF);
-
         mpLocalMapper->InsertKeyFrame(pKF);
 
         mpLocalMapper->SetNotStop(false);
 
         mnLastKeyFrameId = mCurrentFrame.mnId;
         mpLastKeyFrame = pKF;
-    }
-
-    void Tracking::AddKeyFrameToGeoSegKFBuffer(KeyFrame *pKF)
-    {
-        // Add the current KeyFrame to the buffer in GeometrySegmentation
-        mpGeometricSegmentation->AddKeyFrameToBuffer(pKF);
     }
 
     void Tracking::SearchLocalPoints()

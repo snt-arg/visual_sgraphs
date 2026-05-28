@@ -116,6 +116,21 @@ sem_seg:
   max_tilt_wall: 0.2
   max_tilt_ground: 0.2
 
+  # ------------------ Door/Passage Parameters ------------------
+  enable_passage_detection: false
+  # Maximum wall to door distance for a door to be associated with a wall (in meters)
+  max_wall_door_distance: 0.5
+  # Maximum door width for a door to be valid (in meters)
+  max_door_width: 1.25
+  # Maximum door height for a door to be valid (in meters)
+  max_door_height: 2.0
+  # Maximum Keyframe to passage distance for checking passing through a passage (in meters)
+  max_kf_passage_distance: 0.5
+  # The size of the KeyFrame window to check for passing through a passage (in number of KeyFrames)
+  passage_kf_window: 10
+  # Passage centroid distance threshold for associating passages (in meters)
+  passage_centroid_distance_thresh: 1.0
+
   # The amount of votes (votes are weighted votes) for a plane to be finally classified with a semantic label
   min_votes: 1.8
 

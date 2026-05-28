@@ -67,13 +67,6 @@ namespace ORB_SLAM3
                 else
                     envRoom->setRoomVariant(Room::UNDEFINED);
 
-                // Fill the set of doors (markers attached to doors) of a room
-                if (envDatum.value()["doorMarkers"].size() != 0)
-                    for (const auto &marker : envDatum.value()["doorMarkers"].items())
-                        envRoom->setDoorMarkerIds(marker.value());
-                else
-                    std::cout << "- No doors connected to the room '" << envRoom->getName() << "'!" << std::endl;
-
                 // Fill the vector
                 envRooms.push_back(envRoom);
             }
@@ -86,39 +79,5 @@ namespace ORB_SLAM3
             std::cout << "- No rooms found in the JSON file!" << std::endl;
 
         return envRooms;
-    }
-
-    std::vector<Door *> DBParser::getEnvDoors(json envData)
-    {
-        envDoors.clear();
-
-        // Check if the JSON file contains doors
-        if (envData["doors"].size() != 0)
-        {
-            // Iterate over all rooms data in JSON
-            for (const auto &envDatum : envData["doors"].items())
-            {
-                // Initialization
-                Door *envDoor = new Door();
-
-                // Fill the room entity
-                envDoor->setOpId(-1);
-                envDoor->setOpIdG(-1);
-                envDoor->setId(stoi(envDatum.key()));
-                envDoor->setName(envDatum.value()["name"]);
-                envDoor->setMarkerId(envDatum.value()["marker"]);
-
-                // Fill the vector
-                envDoors.push_back(envDoor);
-            }
-
-            // Print the loaded doors
-            std::cout << "- Fetched " << envDoors.size() << " doors from the JSON file! [e.g., '"
-                      << envDoors[0]->getName() << "']." << std::endl;
-        }
-        else
-            std::cout << "- No doors found in the JSON file!" << std::endl;
-
-        return envDoors;
     }
 }

@@ -102,9 +102,9 @@
 // #include <aruco_msgs/MarkerArray.h>
 
 // Semantics
-#include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Semantic/Marker.h"
+#include "Semantic/Passage.h"
 
 // Situational Graphs Messages
 #include <situational_graphs_msgs/msg/rooms_data.hpp>
@@ -168,11 +168,11 @@ void publishTopics(rclcpp::Time, Eigen::Vector3f = Eigen::Vector3f::Zero(), cons
 void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_transport::ImageTransport> image_transport, const std::string &node_name);
 
 void publishTrackingImage(cv::Mat, rclcpp::Time);
-void publishDoors(std::vector<ORB_SLAM3::Door *>);
 void publishCameraPose(Sophus::SE3f, rclcpp::Time);
 void publishSegmentedCloud(std::vector<ORB_SLAM3::KeyFrame *>);
 void publishPlanes(std::vector<ORB_SLAM3::Plane *>, rclcpp::Time);
 void publishTFTransform(Sophus::SE3f, string, string, rclcpp::Time);
+void publishPassages(std::vector<ORB_SLAM3::Passage *>, rclcpp::Time);
 void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, rclcpp::Time);
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, rclcpp::Time);
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, rclcpp::Time);

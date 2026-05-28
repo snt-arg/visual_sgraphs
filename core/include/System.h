@@ -46,13 +46,12 @@
 #include "ImuTypes.h"
 #include "Settings.h"
 #include "Semantic/Marker.h"
-#include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Geometric/Plane.h"
+#include "Semantic/Passage.h"
 #include "Types/SystemParams.h"
 #include "SemanticSegmentation.h"
 #include "SemanticsManager.h"
-#include "GeometricSegmentation.h"
 #include "DatabaseParser.h"
 
 namespace ORB_SLAM3
@@ -94,7 +93,6 @@ namespace ORB_SLAM3
     class LoopClosing;
     class Settings;
     class SemanticSegmentation;
-    class GeometricSegmentation;
     class SemanticsManager;
 
     class System
@@ -231,14 +229,14 @@ namespace ORB_SLAM3
         // You can call this right after TrackMonocular (or stereo or RGBD)
         int GetTrackingState();
         cv::Mat GetCurrentFrame();
-        std::vector<Door *> GetAllDoors();
-        std::vector<Room *> GetAllRooms();
-        std::vector<Plane *> GetAllPlanes();
-        std::vector<Marker *> GetAllMarkers();
-        std::vector<KeyFrame *> GetAllKeyFrames();
-        std::vector<MapPoint *> GetAllMapPoints();
-        std::vector<MapPoint *> GetTrackedMapPoints();
+        std::vector<ORB_SLAM3::Room *> GetAllRooms();
         std::vector<ORB_SLAM3::Floor *> GetAllFloors();
+        std::vector<ORB_SLAM3::Plane *> GetAllPlanes();
+        std::vector<ORB_SLAM3::Marker *> GetAllMarkers();
+        std::vector<ORB_SLAM3::Passage *> GetAllPassages();
+        std::vector<ORB_SLAM3::KeyFrame *> GetAllKeyFrames();
+        std::vector<ORB_SLAM3::MapPoint *> GetAllMapPoints();
+        std::vector<ORB_SLAM3::MapPoint *> GetTrackedMapPoints();
         std::vector<Sophus::SE3f> GetAllKeyframePoses();
         std::vector<cv::KeyPoint> GetTrackedKeyPointsUn();
 
@@ -333,11 +331,9 @@ namespace ORB_SLAM3
         // Geometric & Semantic Segmentation
         SemanticSegmentation *mpSemanticSegmentation;
         SemanticsManager *mpSemanticsManager;
-        GeometricSegmentation *mpGeometricSegmentation;
 
-        // List of rooms and doors in the environment
+        // List of rooms in the environment
         std::vector<ORB_SLAM3::Room *> envRooms;
-        std::vector<ORB_SLAM3::Door *> envDoors;
 
         // System threads: Local Mapping, Loop Closing, Viewer.
         // 🚀 [vS-Graphs v.2.0] Two new threads: Geometric Segmentation and Semantic Segmentation

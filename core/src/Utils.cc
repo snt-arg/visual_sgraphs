@@ -43,7 +43,7 @@ namespace ORB_SLAM3
         return lineStart + t * lineDirection;
     }
 
-    bool Utils::arePlanesFacingEachOther(const Plane *plane1, const Plane *plane2)
+    bool Utils::arePlanesFacingEachOther(const ORB_SLAM3::Plane *plane1, const ORB_SLAM3::Plane *plane2)
     {
         // Get the normal vectors of the planes
         Eigen::Vector3d normal1 = plane1->getGlobalEquation().normal();
@@ -56,7 +56,7 @@ namespace ORB_SLAM3
         return dotProduct < SystemParams::GetParams()->room_seg.plane_facing_dot_thresh;
     }
 
-    bool Utils::arePlanesApartEnough(const Plane *plane1, const Plane *plane2, const double &threshold)
+    bool Utils::arePlanesApartEnough(const ORB_SLAM3::Plane *plane1, const ORB_SLAM3::Plane *plane2, const double &threshold)
     {
         // Correct the directions of both planes to ensure consistent orientation
         Eigen::Vector4d v1 = correctPlaneDirection(plane1->getGlobalEquation().coeffs());
@@ -182,60 +182,6 @@ namespace ORB_SLAM3
         return sum / points.size();
     }
 
-    Eigen::Vector3d Utils::getRoomCenter(const Eigen::Vector3d &givenPoint,
-                                         const Eigen::Vector4d &wall1,
-                                         const Eigen::Vector4d &wall2)
-    {
-        Eigen::Vector3d roomCenter;
-        Eigen::Vector3d vec, vectorNormal;
-
-        // Get the dominant wall by comparing the magnitudes of the last elements of the given walls
-        if (fabs(wall1(3)) > fabs(wall2(3)))
-            // Calculate the midpoint of the dominant wall
-            vec = (0.5 * (fabs(wall1(3)) * wall1.head(3) - fabs(wall2(3)) * wall2.head(3))) +
-                  fabs(wall2(3)) * wall2.head(3);
-        else
-            // Calculate the midpoint of the dominant wall
-            vec = (0.5 * (fabs(wall2(3)) * wall2.head(3) - fabs(wall1(3)) * wall1.head(3))) +
-                  fabs(wall1(3)) * wall1.head(3);
-
-        // Normalize the vector to obtain the normal direction of the room
-        vectorNormal = vec / vec.norm();
-
-        // Calculate the room center by projecting the marker position onto the room plane
-        roomCenter = vec + (givenPoint - (givenPoint.dot(vectorNormal)) * vectorNormal);
-
-        return roomCenter;
-    }
-
-    Eigen::Vector3d Utils::getRoomCenter(const Eigen::Vector4d x_plane1, const Eigen::Vector4d x_plane2,
-                                         const Eigen::Vector4d y_plane1, const Eigen::Vector4d y_plane2)
-    {
-        Eigen::Vector3d roomCenter;
-        Eigen::Vector3d vectorX, vectorY;
-
-        // Calculate the midpoint vector along the x-axis of the room
-        if (fabs(x_plane1(3)) > fabs(x_plane2(3)))
-            vectorX = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) +
-                      fabs(x_plane2(3)) * x_plane2.head(3);
-        else
-            vectorX = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) +
-                      fabs(x_plane1(3)) * x_plane1.head(3);
-
-        // Calculate the midpoint vector along the y-axis of the room
-        if (fabs(y_plane1(3)) > fabs(y_plane2(3)))
-            vectorY = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) +
-                      fabs(y_plane2(3)) * y_plane2.head(3);
-        else
-            vectorY = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) +
-                      fabs(y_plane1(3)) * y_plane1.head(3);
-
-        // Calculate the room center by summing the midpoint vectors along the x and y axes
-        roomCenter = vectorX + vectorY;
-
-        return roomCenter;
-    }
-
     template <typename PointT>
     typename pcl::PointCloud<PointT>::Ptr Utils::pointcloudDownsample(
         const typename pcl::PointCloud<PointT>::Ptr &cloud, const float leafSize, const unsigned int minPointsPerVoxel)
@@ -318,6 +264,31 @@ namespace ORB_SLAM3
     }
     template pcl::PointCloud<pcl::PointXYZRGBA>::Ptr Utils::pointcloudOutlierRemoval<pcl::PointXYZRGBA>(
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr &, const int, const float);
+
+    std::pair<double, double> Utils::computePlaneWidthHeight(
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud)
+    {
+        if (cloud->points.empty())
+            return std::make_pair(0.0, 0.0);
+
+        // Apply PCA to find the principal axes of the point cloud
+        pcl::PCA<pcl::PointXYZRGBA> pca;
+        pca.setInputCloud(cloud);
+
+        // Project all points onto the PCA space
+        pcl::PointCloud<pcl::PointXYZRGBA> projected;
+        pca.project(*cloud, projected);
+
+        // Find min/max along each principal axis
+        pcl::PointXYZRGBA minPt, maxPt;
+        pcl::getMinMax3D(projected, minPt, maxPt);
+
+        // Axis 0 = largest variance (width), Axis 1 = second (height)
+        double width = static_cast<double>(maxPt.y - minPt.y);
+        double height = static_cast<double>(maxPt.x - minPt.x);
+
+        return std::make_pair(width, height);
+    }
 
     template <typename PointT, template <typename> class SegmentationType>
     std::vector<std::pair<typename pcl::PointCloud<PointT>::Ptr, Eigen::Vector4d>> Utils::ransacPlaneFitting(
@@ -409,6 +380,8 @@ namespace ORB_SLAM3
             return ORB_SLAM3::Plane::planeVariant::GROUND;
         case 1:
             return ORB_SLAM3::Plane::planeVariant::WALL;
+        case 2:
+            return ORB_SLAM3::Plane::planeVariant::DOOR;
         default:
             return ORB_SLAM3::Plane::planeVariant::UNDEFINED;
         }
@@ -422,6 +395,8 @@ namespace ORB_SLAM3
             return 0;
         case ORB_SLAM3::Plane::planeVariant::WALL:
             return 1;
+        case ORB_SLAM3::Plane::planeVariant::DOOR:
+            return 2;
         default:
             return -1;
         }

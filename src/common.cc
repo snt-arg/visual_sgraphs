@@ -46,10 +46,10 @@ std::string frameWorld, frameCamera, frameImu, frameMap, frameBC, frameSE;
 rclcpp::Time lastPlanePublishTime(0, 0, RCL_ROS_TIME);
 rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubKeyFrameList;
 rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdometry;
-rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubDoor;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubAllMappoints;
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pubCameraPose;
 rclcpp::Publisher<segmenter_ros::msg::VSGraphDataMsg>::SharedPtr pubKFImage;
+rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubPassage;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubBuildingComponents;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubTrackedMappoints;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubFreespaceCluster;
@@ -140,7 +140,7 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     pubTrackingImage = std::make_shared<image_transport::Publisher>(image_transport->advertise(node_name + "/tracking_image", 1));
 
     // Entities
-    pubDoor = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/doors", 1);
+    pubPassage = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/passages", 1);
     pubFiducialMarker = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/fiducial_markers", 1);
 
     // Building Components
@@ -185,9 +185,9 @@ void publishTopics(rclcpp::Time msgTime, Eigen::Vector3f Wbb, const sensor_msgs:
     std::vector<ORB_SLAM3::KeyFrame *> keyframes = pSLAM->GetAllKeyFrames();
 
     // Setup publishers
-    publishDoors(pSLAM->GetAllDoors());
     publishKeyFrameImages(keyframes, msgTime);
     publishKeyFrameMarkers(keyframes, msgTime);
+    publishPassages(pSLAM->GetAllPassages(), msgTime);
     publishFiducialMarkers(pSLAM->GetAllMarkers(), msgTime);
     publishTrackingImage(pSLAM->GetCurrentFrame(), msgTime);
     publishStructuralElements(pSLAM->GetAllRooms(), pSLAM->GetAllFloors(), msgTime);
@@ -739,101 +739,76 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, rclcpp::Ti
     pubFiducialMarker->publish(markerArray);
 }
 
-void publishDoors(std::vector<ORB_SLAM3::Door *> doors)
+void publishPassages(std::vector<ORB_SLAM3::Passage *> passages, rclcpp::Time msgTime)
 {
-    // If there are no doors, return
-    int numDoors = doors.size();
-    if (numDoors == 0)
+    // If there are no passages, return
+    int numPassages = passages.size();
+    if (numPassages == 0)
         return;
 
     // Variables
-    visualization_msgs::msg::MarkerArray doorArray;
-    doorArray.markers.resize(numDoors);
+    visualization_msgs::msg::MarkerArray passageArray;
+    passageArray.markers.resize(numPassages);
 
-    for (int idx = 0; idx < numDoors; idx++)
+    for (int idx = 0; idx < numPassages; idx++)
     {
-        Sophus::SE3f doorPose = doors[idx]->getGlobalPose();
-        visualization_msgs::msg::Marker door, doorLines, doorLabel;
+        // Variables
+        Eigen::Vector3d z_axis(0.0, 0.0, 1.0);
+        visualization_msgs::msg::Marker passage;
 
-        // Door values
-        door.color.a = 0;
-        door.ns = "doors";
-        door.scale.x = 0.5;
-        door.scale.y = 0.5;
-        door.scale.z = 0.5;
-        door.action = door.ADD;
-        door.lifetime = rclcpp::Duration::from_seconds(0);
-        door.id = doorArray.markers.size();
-        door.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
-        door.mesh_use_embedded_materials = true;
-        door.header.frame_id = frameBC;
-        door.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-        door.mesh_resource =
-            "package://vs_graphs/config/Assets/door.dae";
+        // Get the planar parameters of the passage
+        double width = passages[idx]->getWidth();
+        double height = passages[idx]->getHeight();
+        bool isPassable = passages[idx]->isPassable();
+        Eigen::Vector3f centroid = passages[idx]->getCentroid();
+        Eigen::Vector3d normal = passages[idx]->getGlobalEquation().normal().normalized();
+        bool isDoorway = passages[idx]->getPassageType() == ORB_SLAM3::Passage::passageVariant::DOORWAY;
 
-        // Rotation and displacement for better visualization
-        Sophus::SE3f rotatedDoorPose = doorPose * Sophus::SE3f::rotX(-M_PI_2);
-        rotatedDoorPose.translation().y() -= 1.0;
-        door.pose.position.x = rotatedDoorPose.translation().x();
-        door.pose.position.y = rotatedDoorPose.translation().y();
-        door.pose.position.z = rotatedDoorPose.translation().z();
-        door.pose.orientation.x = rotatedDoorPose.unit_quaternion().x();
-        door.pose.orientation.y = rotatedDoorPose.unit_quaternion().y();
-        door.pose.orientation.z = rotatedDoorPose.unit_quaternion().z();
-        door.pose.orientation.w = rotatedDoorPose.unit_quaternion().w();
-        doorArray.markers.push_back(door);
+        // Orientation of the passage marker
+        if (normal.dot(z_axis) < 0)
+            normal = -normal;
+        Eigen::Quaterniond quat = Eigen::Quaterniond::FromTwoVectors(z_axis, normal);
+        quat.normalize();
 
-        // Door label (name)
-        doorLabel.color.a = 1;
-        doorLabel.color.r = 0;
-        doorLabel.color.g = 0;
-        doorLabel.color.b = 0;
-        doorLabel.scale.z = 0.2;
-        doorLabel.ns = "doorLabel";
-        doorLabel.action = doorLabel.ADD;
-        doorLabel.lifetime = rclcpp::Duration::from_seconds(0);
-        doorLabel.text = doors[idx]->getName();
-        doorLabel.id = doorArray.markers.size();
-        doorLabel.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
-        doorLabel.header.frame_id = frameBC;
-        doorLabel.pose.position.x = door.pose.position.x;
-        doorLabel.pose.position.z = door.pose.position.z;
-        doorLabel.pose.position.y = door.pose.position.y - 1.2;
-        doorLabel.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-        doorArray.markers.push_back(doorLabel);
+        // Passage values
+        passage.id = idx;
+        passage.color.a = 0.5;
+        passage.ns = "passage";
+        passage.action = passage.ADD;
+        passage.header.stamp = msgTime;
+        passage.header.frame_id = frameBC;
+        passage.mesh_use_embedded_materials = true;
+        passage.lifetime = rclcpp::Duration::from_seconds(0);
+        passage.type = visualization_msgs::msg::Marker::CUBE;
 
-        // Door to points connection line
-        doorLines.color.a = 0.5;
-        doorLines.color.r = 0.0;
-        doorLines.color.g = 0.0;
-        doorLines.color.b = 0.0;
-        doorLines.scale.x = 0.005;
-        doorLines.scale.y = 0.005;
-        doorLines.scale.z = 0.005;
-        doorLines.ns = "doorLines";
-        doorLines.action = doorLines.ADD;
-        doorLines.lifetime = rclcpp::Duration::from_seconds(0);
-        doorLines.id = doorArray.markers.size();
-        doorLines.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
-        doorLines.header.frame_id = frameBC;
-        doorLines.type = visualization_msgs::msg::Marker::LINE_LIST;
+        // Set color (closed passages are red, open passages are blue, doorways are green)
+        std::vector<double> color = {1.0, 0.0, 0.0};
+        if (isPassable)
+            color = isDoorway ? std::vector<double>{0.5, 1.0, 0.5} : std::vector<double>{0.5, 0.5, 1.0};
+        passage.color.r = color[0];
+        passage.color.g = color[1];
+        passage.color.b = color[2];
 
-        geometry_msgs::msg::Point point1;
-        point1.x = doors[idx]->getMarker()->getGlobalPose().translation().x();
-        point1.y = doors[idx]->getMarker()->getGlobalPose().translation().y();
-        point1.z = doors[idx]->getMarker()->getGlobalPose().translation().z();
-        doorLines.points.push_back(point1);
+        // Position: always from centroid
+        passage.pose.position.x = static_cast<double>(centroid.x());
+        passage.pose.position.y = static_cast<double>(centroid.y());
+        passage.pose.position.z = static_cast<double>(centroid.z());
 
-        geometry_msgs::msg::Point point2;
-        point2.x = rotatedDoorPose.translation().x();
-        point2.y = rotatedDoorPose.translation().y();
-        point2.z = rotatedDoorPose.translation().z();
-        doorLines.points.push_back(point2);
+        // Orientation: always from plane normal
+        passage.pose.orientation.x = quat.x();
+        passage.pose.orientation.y = quat.y();
+        passage.pose.orientation.z = quat.z();
+        passage.pose.orientation.w = quat.w();
 
-        doorArray.markers.push_back(doorLines);
+        // Set shape and size of the passage marker
+        passage.scale.z = 0.1;
+        passage.scale.x = width;
+        passage.scale.y = height;
+
+        passageArray.markers.push_back(passage);
     }
 
-    pubDoor->publish(doorArray);
+    pubPassage->publish(passageArray);
 }
 
 void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
@@ -886,12 +861,20 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
             newPoint.g = point.g;
             newPoint.b = point.b;
 
-            // Override color according to type of plane
-            if (colorPointcloud)
+            // [TEMP] Override color according to type of plane
+            // if (colorPointcloud)
+            // {
+            //     newPoint.r = color[0];
+            //     newPoint.g = color[1];
+            //     newPoint.b = color[2];
+            // }
+
+            // If the plane is a door, visualize it in a distinct color (purple)
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::DOOR)
             {
-                newPoint.r = color[0];
-                newPoint.g = color[1];
-                newPoint.b = color[2];
+                newPoint.r = 204;
+                newPoint.g = 0;
+                newPoint.b = 102;
             }
 
             // Add the point to the aggregated cloud
@@ -992,7 +975,8 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
         for (int idx = 0; idx < numRooms; idx++)
         {
             // Skip if the room is bad
-            if (rooms[idx]->isBad()) {
+            if (rooms[idx]->isBad())
+            {
                 // Variables
                 visualization_msgs::msg::Marker delRoom, delRoomLabel, delRoomWallLine;
                 // Delete previous marker for this room
@@ -1019,7 +1003,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
                 roomArray.markers.push_back(delRoomWallLine);
                 continue;
             }
-            
+
             // Variables
             std::string roomName = rooms[idx]->getName();
             geometry_msgs::msg::PointStamped roomPoint, roomPointTr;
@@ -1032,7 +1016,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
                 color = {0.5, 0.1, 1.0};
 
             Eigen::Vector3d centroid = rooms[idx]->getCentroid();
-            visualization_msgs::msg::Marker room, roomWallLine, roomDoorLine, roomMarkerLine, roomLabel;
+            visualization_msgs::msg::Marker room, roomWallLine, roomDoorwayLine, roomMarkerLine, roomLabel;
 
             // Room values
             room.id = idx;
@@ -1174,7 +1158,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             // If the floor has no rooms, skip it
             if (floors[floorId]->getRooms().size() == 0)
                 continue;
-            
+
             // Variables
             std::string floorName = floors[floorId]->getName();
             geometry_msgs::msg::PointStamped floorPoint, floorPointTr;
@@ -1411,7 +1395,7 @@ tf2::Transform SE3fToTFTransform(Sophus::SE3f data)
 //         geometry_msgs::Quaternion markerOrientation = markerPose.orientation; // (x,y,z,w)
 
 //         Eigen::Vector3f markerTranslation(markerPosition.x, markerPosition.y, markerPosition.z);
-//         Eigen::Quaternionf markerQuaternion(markerOrientation.w, markerOrientation.x,
+//         Eigen::Quaterniond markerQuaternion(markerOrientation.w, markerOrientation.x,
 //                                             markerOrientation.y, markerOrientation.z);
 //         Sophus::SE3f normalizedPose(markerQuaternion, markerTranslation);
 

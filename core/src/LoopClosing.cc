@@ -1549,13 +1549,13 @@ namespace ORB_SLAM3
         mpLocalMapper->Release();
 
         // Get the non-critical area from the current map to the new (merged) map
-        vector<Door *> vpCurrentMapDoors = pCurrentMap->GetAllDoors();
-        vector<Plane *> vpCurrentMapPlanes = pCurrentMap->GetAllPlanes();
-        vector<KeyFrame *> vpCurrentMapKFs = pCurrentMap->GetAllKeyFrames();
-        vector<MapPoint *> vpCurrentMapMPs = pCurrentMap->GetAllMapPoints();
-        vector<Marker *> vpCurrentMapMarkers = pCurrentMap->GetAllMarkers();
-        vector<Room *> vpCurrentDetectedMapRooms = pCurrentMap->GetAllDetectedMapRooms();
-        vector<Room *> vpCurrentMarkerBasedMapRooms = pCurrentMap->GetAllMarkerBasedMapRooms();
+        std::vector<Plane *> vpCurrentMapPlanes = pCurrentMap->GetAllPlanes();
+        std::vector<KeyFrame *> vpCurrentMapKFs = pCurrentMap->GetAllKeyFrames();
+        std::vector<MapPoint *> vpCurrentMapMPs = pCurrentMap->GetAllMapPoints();
+        std::vector<Marker *> vpCurrentMapMarkers = pCurrentMap->GetAllMarkers();
+        std::vector<ORB_SLAM3::Passage *> vpCurrentMapPassages = pCurrentMap->GetAllPassages();
+        std::vector<Room *> vpCurrentDetectedMapRooms = pCurrentMap->GetAllDetectedMapRooms();
+        std::vector<Room *> vpCurrentMarkerBasedMapRooms = pCurrentMap->GetAllMarkerBasedMapRooms();
         std::vector<std::vector<Eigen::Vector3d>> vpClusterPoints = pCurrentMap->GetSkeletoClusterPoints();
 
         if (vpCurrentMapKFs.size() != 0)
@@ -1625,7 +1625,7 @@ namespace ORB_SLAM3
             // Optimize the essential graph and update the loop position for each element in the new map
             if (mpTracker->mSensor != System::MONOCULAR)
                 Optimizer::OptimizeEssentialGraph(mpCurrentKF, vpMergeConnectedKFs, vpLocalCurrentWindowKFs,
-                                                  vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapDoors, vpCurrentMapPlanes,
+                                                  vpCurrentMapKFs, vpCurrentMapMPs, vpCurrentMapPassages, vpCurrentMapPlanes,
                                                   vpCurrentMapMarkers, vpCurrentDetectedMapRooms, vpCurrentMarkerBasedMapRooms,
                                                   vpClusterPoints);
 
@@ -1692,15 +1692,15 @@ namespace ORB_SLAM3
                     pCurrentMap->EraseMapMarker(pMarker);
                 }
 
-                // Loop over the Doors of the current map and move them to the new map
-                for (Door *pDoor : vpCurrentMapDoors)
+                // Loop over the Doorways of the current map and move them to the new map
+                for (ORB_SLAM3::Passage *pPassage : vpCurrentMapPassages)
                 {
-                    if (!pDoor)
+                    if (!pPassage)
                         continue;
 
-                    pDoor->setMap(pMergeMap);
-                    pMergeMap->AddMapDoor(pDoor);
-                    pCurrentMap->EraseMapDoor(pDoor);
+                    pPassage->setMap(pMergeMap);
+                    pMergeMap->AddMapPassage(pPassage);
+                    pCurrentMap->EraseMapPassage(pPassage);
                 }
 
                 // Loop over the Detected Rooms of the current map and move them to the new map

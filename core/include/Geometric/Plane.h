@@ -11,7 +11,7 @@
  * This software is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
  * without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details: https://www.gnu.org/licenses/
-*/
+ */
 
 #ifndef PLANE_H
 #define PLANE_H
@@ -19,7 +19,6 @@
 #include <set>
 #include "Map.h"
 #include "MapPoint.h"
-#include "Semantic/Marker.h"
 #include "Types/SystemParams.h"
 #include "Thirdparty/g2o/g2o/types/plane3d.h"
 
@@ -31,7 +30,6 @@
 namespace ORB_SLAM3
 {
     class Map;
-    class Marker;
     class MapPoint;
 
     class Plane
@@ -42,15 +40,15 @@ namespace ORB_SLAM3
             UNDEFINED = -1,
             WALL = 0,
             GROUND = 1,
-            WINDOW = 2
+            DOOR = 2
         };
 
         struct Observation
         {
-            g2o::Plane3D localPlane;                        // The plane equation in the local frame
-            Eigen::Matrix4d Gij;                            // The aggregated point cloud measurement for point-plane constraint
-            double confidence;                              // The aggregated confidence of the plane
-            planeVariant semanticType = UNDEFINED;          // The semantic type of the plane
+            g2o::Plane3D localPlane;               // The plane equation in the local frame
+            Eigen::Matrix4d Gij;                   // The aggregated point cloud measurement for point-plane constraint
+            double confidence;                     // The aggregated confidence of the plane
+            planeVariant semanticType = UNDEFINED; // The semantic type of the plane
         };
 
         // Variables for bundle adjustment
@@ -59,19 +57,19 @@ namespace ORB_SLAM3
         g2o::Plane3D mPlaneGBA;            // The plane equation in the global map after the Global BA
 
     private:
-        int id;                                             // The plane's identifier
-        int opId;                                           // The plane's identifier in the local optimizer
-        int opIdG;                                          // The plane's identifier in the global optimizer
-        bool mbBad;                                         // Marks the plane as bad (if true, the plane will not be used)
-        planeVariant planeType;                             // The plane's semantic type (e.g., wall, ground, etc.)s
-        Eigen::Vector3f centroid;                           // The centroid of the plane
-        std::vector<uint8_t> color;                         // A color devoted for visualization
-        g2o::Plane3D localEquation;                         // The plane equation in the local map
-        g2o::Plane3D globalEquation;                        // The plane equation in the global map
-        std::set<MapPoint *> mapPoints;                     // The unique set of map points lying on the plane
-        std::map<planeVariant, double> semanticVotes;       // The votes for the semantic type of the plane
-        std::map<KeyFrame *, Observation> observations;    // Plane's observations in keyFrames
-        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud; // The point cloud of the plane
+        int id;                                                                           // The plane's identifier
+        int opId;                                                                         // The plane's identifier in the local optimizer
+        int opIdG;                                                                        // The plane's identifier in the global optimizer
+        bool mbBad;                                                                       // Marks the plane as bad (if true, the plane will not be used)
+        planeVariant planeType;                                                           // The plane's semantic type (e.g., wall, ground, door, etc.)
+        Eigen::Vector3f centroid;                                                         // The centroid of the plane
+        std::vector<uint8_t> color;                                                       // A color devoted for visualization
+        g2o::Plane3D localEquation;                                                       // The plane equation in the local map
+        g2o::Plane3D globalEquation;                                                      // The plane equation in the global map
+        std::set<ORB_SLAM3::MapPoint *> mapPoints;                                        // The unique set of map points lying on the plane
+        std::map<planeVariant, double> semanticVotes;                                     // The votes for the semantic type of the plane
+        std::map<KeyFrame *, Observation> observations;                                   // Plane's observations in keyFrames
+        pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeCloud;                               // The point cloud of the plane
         boost::shared_ptr<pcl::octree::OctreePointCloudSearch<pcl::PointXYZRGBA>> octree; // The octree for the plane cloud
 
     public:
@@ -97,8 +95,8 @@ namespace ORB_SLAM3
         planeVariant getExpectedPlaneType();
         void setPlaneType(planeVariant newType);
 
-        void setMapPoints(MapPoint *value);
-        std::set<MapPoint *> getMapPoints();
+        void setMapPoints(ORB_SLAM3::MapPoint *value);
+        std::set<ORB_SLAM3::MapPoint *> getMapPoints();
 
         Eigen::Vector3f getCentroid() const;
         void setCentroid(const Eigen::Vector3f &value);
@@ -121,11 +119,11 @@ namespace ORB_SLAM3
         void castWeightedVote(planeVariant semanticType, double voteWeight);
         void resetPlaneSemantics();
 
-        Map *GetMap();
-        void SetMap(Map *pMap);
+        ORB_SLAM3::Map *GetMap();
+        void SetMap(ORB_SLAM3::Map *pMap);
 
     protected:
-        Map *mpMap;
+        ORB_SLAM3::Map *mpMap;
         std::mutex mMutexMap, mMutexType;
         mutable std::mutex mMutexFeatures, mMutexPos;
     };

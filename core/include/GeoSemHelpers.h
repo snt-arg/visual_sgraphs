@@ -19,6 +19,8 @@
 #include "Atlas.h"
 #include "Utils.h"
 
+#include <iomanip>
+#include <sstream>
 #include <Eigen/Core>
 
 namespace ORB_SLAM3
@@ -58,23 +60,21 @@ namespace ORB_SLAM3
                                    double confidence = 1.0);
 
         /**
-         * @brief Checks to see if the marker is attached to a door or not (e.g., a window)
+         * @brief Checks to see if the marker is attached to a doorway or not (e.g., a window)
          * and returns the name of it if exists (only valid for doors)
          * @param markerId the id of the marker
-         * @param envDoors the list of doors in the environment
+         * @param envDoorways the list of doorways in the environment
          */
-        static std::pair<bool, std::string> checkIfMarkerIsDoor(const int &markerId,
-                                                                std::vector<ORB_SLAM3::Door *> envDoors);
+        static std::pair<bool, std::string> checkIfMarkerIsDoorway(const int &markerId,
+                                                                   std::vector<ORB_SLAM3::Room *> envRooms);
 
         /**
          * @brief Uses the detected markers to detect and map semantic objects, e.g., planes and doors
          * @param mpAtlas the current map in Atlas
          * @param pKF the current keyframe in which the detection took place
-         * @param envDoors the list of doors in the environment
          * @param envRooms the list of rooms in the environment
          */
         static void markerSemanticAnalysis(Atlas *mpAtlas, ORB_SLAM3::KeyFrame *pKF,
-                                           std::vector<ORB_SLAM3::Door *> envDoors,
                                            std::vector<ORB_SLAM3::Room *> envRooms);
 
         /**
@@ -86,19 +86,16 @@ namespace ORB_SLAM3
         static Marker *createMapMarker(Atlas *mpAtlas, KeyFrame *pKF, const Marker *visitedMarker);
 
         /**
-         * @brief Creates a new door object to be added to the map
+         * @brief Creates a new passage object to be added to the map
          * @param mpAtlas the current map in Atlas
-         * @param pKF the address of the current keyframe
-         * @param attachedMarker the address of the attached marker
-         * @param name the name of the door
+         * @param doorPlane the plane representing the door
+         * @param wallPlane the plane representing the wall connected to the door
+         * @param isOpenPassage whether the passage is open or closed (default: false, meaning closed passage)
+         * @param passageCentroid the centroid of the passage if it is an open passage (default: zero vector)
          */
-        static void createMapDoor(Atlas *mpAtlas, KeyFrame *pKF, Marker *attachedMarker, std::string name);
-
-        /**
-         * @brief Organizes the walls of a four-walled room
-         * @param givenRoom the address of the detected room
-         */
-        static void organizeRoomWalls(Room *givenRoom);
+        static void createMapPassage(ORB_SLAM3::Atlas *mpAtlas, ORB_SLAM3::Plane *doorPlane,
+                                     ORB_SLAM3::Plane *wallPlane, bool isOpenPassage = false,
+                                     Eigen::Vector3f passageCentroid = Eigen::Vector3f::Zero());
 
         /**
          * @brief Creates a blank room object (undefined variant) to be added to the map
@@ -107,34 +104,6 @@ namespace ORB_SLAM3
          */
         static ORB_SLAM3::Room *createBlankRoomCandidate(Atlas *mpAtlas,
                                                          Eigen::Vector3d centroid = Eigen::Vector3d::Zero());
-
-        /**
-         * @brief Creates a new room object (corridor or room) to be added to the map
-         * @param mpAtlas the current map in Atlas
-         * @param matchedRoom the address of the room matched from the database
-         * @param attachedMarker the address of the attached marker
-         */
-        static void createMapRoomCandidateByMarker(Atlas *mpAtlas, Room *matchedRoom, Marker *attachedMarker);
-
-        /**
-         * @brief Creates a new room object (corridor or room) to be added to the map
-         * @param mpAtlas the current map in Atlas
-         * @param isCorridor the boolean value to check if the room is a corridor or not
-         * @param walls the vector of walls detected in the room
-         * @param clusterCentroid the centroid of the cluster
-         */
-        static ORB_SLAM3::Room *createMapRoomCandidateByFreeSpace(Atlas *mpAtlas, bool isCorridor,
-                                                                  std::vector<ORB_SLAM3::Plane *> walls,
-                                                                  Eigen::Vector3d clusterCentroid = Eigen::Vector3d::Zero());
-
-        /**
-         * @brief Updates the room object in the map with new room information
-         * @param markerBasedRoom the address of the detected marker-based room
-         * @param clusterBasedRoom the address of the detected cluster-based room
-         * @param isMarkerBasedMapped the boolean value to check if we augment from marker-based or the cluster-based room
-         */
-        static void augmentMapRoomCandidate(ORB_SLAM3::Room *markerBasedRoom, ORB_SLAM3::Room *clusterBasedRoom,
-                                            bool isMarkerBasedMapped);
 
         /**
          * @brief Chooses a ground plane from the Atlas to be associated with the room

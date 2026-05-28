@@ -40,12 +40,11 @@
 #include "System.h"
 #include "ImuTypes.h"
 #include "Settings.h"
-#include "Semantic/Door.h"
 #include "Semantic/Room.h"
 #include "Geometric/Plane.h"
 #include "Semantic/Marker.h"
 #include "GeometricCamera.h"
-#include "GeometricSegmentation.h"
+#include "Semantic/Passage.h"
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -64,7 +63,6 @@ namespace ORB_SLAM3
     class LoopClosing;
     class System;
     class Settings;
-    class GeometricSegmentation;
 
     class Tracking
     {
@@ -87,15 +85,13 @@ namespace ORB_SLAM3
         // Preprocess the input and call Track(). Extract features and performs stereo matching.
         Sophus::SE3f GrabImageStereo(const cv::Mat &imRectLeft, const cv::Mat &imRectRight,
                                      const double &timestamp, string filename,
-                                     const std::vector<Marker *> markers, const std::vector<Door *> doors,
-                                     const std::vector<Room *> rooms);
+                                     const std::vector<Marker *> markers, const std::vector<Room *> rooms);
         Sophus::SE3f GrabImageRGBD(const cv::Mat &imRGB, const cv::Mat &imD,
                                    const pcl::PointCloud<pcl::PointXYZRGB>::Ptr &pointcloud,
                                    const double &timestamp, string filename, const std::vector<Marker *> markers,
-                                   const std::vector<Door *> doors, const std::vector<Room *> rooms);
+                                   const std::vector<Room *> rooms);
         Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename,
-                                        const std::vector<Marker *> markers, const std::vector<Door *> doors,
-                                        const std::vector<Room *> rooms);
+                                        const std::vector<Marker *> markers, const std::vector<Room *> rooms);
 
         void GrabImuData(const IMU::Point &imuMeasurement);
 
@@ -103,7 +99,6 @@ namespace ORB_SLAM3
         void SetViewer(Viewer *pViewer);
         void SetLoopClosing(LoopClosing *pLoopClosing);
         void SetLocalMapper(LocalMapping *pLocalMapper);
-        void SetGeometricSegmentation(GeometricSegmentation *pGeometricSegmentation);
 
         void SetStepByStep(bool bSet);
         bool GetStepByStep();
@@ -231,7 +226,6 @@ namespace ORB_SLAM3
 
         // Semantic map entities
         std::vector<ORB_SLAM3::Room *> env_rooms;
-        std::vector<ORB_SLAM3::Door *> env_doors;
 
 #ifdef REGISTER_TIMES
         void LocalMapStats2File();
@@ -280,12 +274,6 @@ namespace ORB_SLAM3
         bool NeedNewKeyFrame();
         void CreateNewKeyFrame();
 
-        /**
-         * @brief Adds a newly created KeyFrame to the buffer in the GeometricSegmentation thread
-         * @param pKF the address of the newly created KeyFrame
-         */
-        void AddKeyFrameToGeoSegKFBuffer(KeyFrame *pKF);
-
         // Perform preintegration from last frame
         void PreintegrateIMU();
 
@@ -319,7 +307,6 @@ namespace ORB_SLAM3
         // Other Thread Pointers
         LoopClosing *mpLoopClosing;
         LocalMapping *mpLocalMapper;
-        GeometricSegmentation *mpGeometricSegmentation;
 
         // ORB
         ORBextractor *mpORBextractorLeft, *mpORBextractorRight;

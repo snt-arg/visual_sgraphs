@@ -56,9 +56,9 @@ namespace ORB_SLAM3
         mspMarkers.clear();
 
         // Erase all semantic entities from memory
-        mspDoors.clear();
         mspFloors.clear();
         mspPlanes.clear();
+        mspPassages.clear();
         mspDetectedRooms.clear();
         mspMarkerBasedRooms.clear();
 
@@ -124,12 +124,12 @@ namespace ORB_SLAM3
         mRoomWallPlaneIndex[pPlane->getId()] = pPlane;
     }
 
-    void Map::AddMapDoor(Door *pDoor)
+    void ORB_SLAM3::Map::AddMapPassage(ORB_SLAM3::Passage *pPassage)
     {
         unique_lock<mutex> lock(mMutexMap);
-        mspDoors.insert(pDoor);
-        // Add the door to the hashmap
-        mDoorIndex[pDoor->getId()] = pDoor;
+        mspPassages.insert(pPassage);
+        // Add the passage to the hashmap
+        mPassageIndex[pPassage->getId()] = pPassage;
     }
 
     void Map::AddDetectedMapRoom(Room *pRoom)
@@ -157,11 +157,11 @@ namespace ORB_SLAM3
         return retrievedKF;
     }
 
-    Door *Map::GetDoorById(int doorId)
+    ORB_SLAM3::Passage *Map::GetPassageById(int passageId)
     {
         unique_lock<mutex> lock(mMutexMap);
-        Door *fetchedDoor = mDoorIndex[doorId];
-        return fetchedDoor;
+        ORB_SLAM3::Passage *fetchedPassage = mPassageIndex[passageId];
+        return fetchedPassage;
     }
 
     Plane *Map::GetPlaneById(int planeId)
@@ -229,10 +229,10 @@ namespace ORB_SLAM3
         mRoomWallPlaneIndex.erase(pPlane->getId());
     }
 
-    void Map::EraseMapDoor(Door *pDoor)
+    void Map::EraseMapPassage(ORB_SLAM3::Passage *pPassage)
     {
         unique_lock<mutex> lock(mMutexMap);
-        mspDoors.erase(pDoor);
+        mspPassages.erase(pPassage);
     }
 
     void Map::EraseDetectedMapRoom(Room *pRoom)
@@ -344,10 +344,10 @@ namespace ORB_SLAM3
         return biggestGroundPlane;
     }
 
-    vector<Door *> Map::GetAllDoors()
+    std::vector<ORB_SLAM3::Passage *> Map::GetAllPassages()
     {
         unique_lock<mutex> lock(mMutexMap);
-        return vector<Door *>(mspDoors.begin(), mspDoors.end());
+        return std::vector<ORB_SLAM3::Passage *>(mspPassages.begin(), mspPassages.end());
     }
 
     vector<Room *> Map::GetAllRooms()
@@ -447,9 +447,9 @@ namespace ORB_SLAM3
             pKF->UpdateMap(static_cast<Map *>(NULL));
         }
 
-        mspDoors.clear();
         mspPlanes.clear();
         mspMarkers.clear();
+        mspPassages.clear();
         mspMapPoints.clear();
         mspKeyFrames.clear();
         mnMaxKFid = mnInitKFid;

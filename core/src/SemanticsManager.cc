@@ -49,6 +49,13 @@ namespace ORB_SLAM3
             if (sysParams->sem_seg.reassociate.enabled)
                 Utils::reAssociateSemanticPlanes(mpAtlas);
 
+            // Detect passages?
+            if (sysParams->sem_seg.enable_passage_detection)
+            {
+                detectDoorsAndDoorways(mpAtlas);
+                updatePassages(mpAtlas);
+            }
+
             // Check for possible room candidates
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
                 detectRoom_FreeSpaceCluster();
@@ -131,6 +138,218 @@ namespace ORB_SLAM3
         }
     }
 
+    void SemanticsManager::detectDoorsAndDoorways(ORB_SLAM3::Atlas *pAtlas)
+    {
+        // Variables
+        int windowSize = sysParams->sem_seg.passage_kf_window;
+
+        // Get all planes and filter only DOOR and WALL variants
+        std::vector<ORB_SLAM3::Plane *> allPlanes = pAtlas->GetAllPlanes();
+        std::vector<ORB_SLAM3::Plane *> wallPlanes;
+        std::vector<ORB_SLAM3::Plane *> doorPlanes;
+        for (const auto &plane : allPlanes)
+        {
+            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
+                wallPlanes.push_back(plane);
+            else if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::DOOR)
+                doorPlanes.push_back(plane);
+        }
+
+        // Procedure#1 - Detecting closed doors (blocked passages)
+        // Detect doors with the same normal as walls and close to walls
+        for (const auto &door : doorPlanes)
+        {
+            for (const auto &wall : wallPlanes)
+            {
+                // Skip if the door and wall are not parallel
+                if (!Utils::arePlanesParallel(door, wall))
+                    continue;
+
+                // Skip if the door and wall are facing each other
+                if (Utils::arePlanesFacingEachOther(door, wall))
+                    continue;
+
+                // Skip if the door and wall are not close to each other
+                if (Utils::arePlanesApartEnough(door, wall, sysParams->sem_seg.max_wall_door_distance))
+                    continue;
+
+                // Otherwise, it is a valid closed door to be connected to the wall
+                GeoSemHelpers::createMapPassage(mpAtlas, door, wall, false);
+            }
+        }
+
+        // Procedure#2 - Detecting open passages by checking if trajectory crosses the wall plane
+        std::vector<ORB_SLAM3::KeyFrame *> allKFs = pAtlas->GetAllKeyFrames();
+        if (allKFs.size() < 2)
+            return;
+
+        std::sort(allKFs.begin(), allKFs.end(),
+                  [](const ORB_SLAM3::KeyFrame *a, const ORB_SLAM3::KeyFrame *b)
+                  {
+                      return a->mnId < b->mnId;
+                  });
+
+        for (const auto &wall : wallPlanes)
+        {
+            const Eigen::Vector4d wallEq =
+                Utils::correctPlaneDirection(wall->getGlobalEquation().coeffs());
+            const Eigen::Vector3d wallNormal = wallEq.head<3>();
+
+            // Compute signed distances for every keyframe against this wall
+            struct KFRecord
+            {
+                ORB_SLAM3::KeyFrame *kf;
+                Eigen::Vector3d posW;
+                double signedDist;
+            };
+
+            std::vector<KFRecord> records;
+            records.reserve(allKFs.size());
+
+            for (auto *kf : allKFs)
+            {
+                if (!kf || kf->isBad())
+                    continue;
+
+                const Eigen::Vector3d posW = kf->GetPoseInverse().translation().cast<double>();
+
+                // Only consider keyframes that are reasonably close to the wall
+                const double distToPlane = std::abs(wallNormal.dot(posW) + wallEq(3));
+                if (distToPlane > sysParams->sem_seg.max_kf_passage_distance)
+                    continue;
+
+                records.push_back({kf, posW, wallNormal.dot(posW) + wallEq(3)});
+            }
+
+            if (records.size() < 2)
+                continue;
+
+            // Slide a window of size N over the filtered keyframe records
+            bool passageDetected = false;
+            Eigen::Vector3f passageCentroid = Eigen::Vector3f::Zero();
+            const int n = static_cast<int>(records.size());
+
+            for (int start = 0; start <= n - 2 && !passageDetected; ++start)
+            {
+                const int end = std::min(start + windowSize - 1, n - 1);
+
+                for (int i = start; i < end && !passageDetected; ++i)
+                {
+                    const KFRecord &recA = records[i];
+                    const KFRecord &recB = records[i + 1];
+
+                    // Baseline check: ignore nearly-static pairs.
+                    const double baseline = (recB.posW - recA.posW).norm();
+                    if (baseline < 0.10)
+                        continue;
+
+                    const double dA = recA.signedDist;
+                    const double dB = recB.signedDist;
+
+                    // Sign change → the segment crosses the plane.
+                    if (dA * dB < 0.0)
+                    {
+                        // Compute crossing point
+                        const double denom = dA - dB;
+                        Eigen::Vector3f crossingPoint;
+
+                        if (std::abs(denom) > 1e-6)
+                        {
+                            const double t = dA / denom;
+                            const Eigen::Vector3d crossing = recA.posW + t * (recB.posW - recA.posW);
+                            crossingPoint = crossing.cast<float>();
+                        }
+                        else
+                            crossingPoint = ((recA.posW + recB.posW) * 0.5).cast<float>();
+
+                        passageDetected = true;
+                        passageCentroid = crossingPoint;
+                    }
+                }
+            }
+
+            if (passageDetected)
+            {
+                // If there is a door close to the passage centroid, then it is an open doorway
+                ORB_SLAM3::Plane *potentialDoor = nullptr;
+
+                //     // for (const auto &door : doorPlanes)
+                //     //     if (Utils::calculateDistancePointToPlane(door->getGlobalEquation().coeffs(),
+                //     //                                              passageCentroid.cast<double>()) <
+                //     //         sysParams->sem_seg.max_wall_door_distance)
+                //     //     {
+                //     //         potentialDoor = door;
+                //     //         break;
+                //     //     }
+
+                GeoSemHelpers::createMapPassage(mpAtlas, potentialDoor, wall, true, passageCentroid);
+            }
+        }
+    }
+
+    void SemanticsManager::updatePassages(ORB_SLAM3::Atlas *pAtlas)
+    {
+        // Get the ground plane
+        ORB_SLAM3::Plane *groundPlane = pAtlas->GetBiggestGroundPlane();
+        if (groundPlane == nullptr)
+            return;
+
+        // Get all passages and update their global pose to be consistent with the ground plane
+        std::vector<ORB_SLAM3::Passage *> allPassages = pAtlas->GetAllPassages();
+
+        for (const auto &passage : allPassages)
+        {
+            // Get the passage variant (doorway or undefined)
+            ORB_SLAM3::Passage::passageVariant variant = passage->getPassageType();
+
+            // Updating the dimensions of the passage based on the associated door plane
+            ORB_SLAM3::Plane *doorPlane = passage->getAssociateDoor();
+
+            // Blocked passages (closed doors) should be aligned with the ground plane normal
+            if (!passage->isPassable())
+            {
+                if (doorPlane == nullptr)
+                    continue;
+                std::pair<double, double> widthHeight = Utils::computePlaneWidthHeight(doorPlane->getMapClouds());
+                cout << "[SemanticsManager] Updating passage " << passage->getId() << " with associated door plane " << doorPlane->getId()
+                     << " dimensions: width = " << widthHeight.first << "m, height = " << widthHeight.second << "m.\n";
+                passage->setCentroid(doorPlane->getCentroid());
+                passage->setGlobalEquation(doorPlane->getGlobalEquation());
+                passage->setWidth(widthHeight.first);
+                passage->setHeight(widthHeight.second);
+            }
+            else
+            {
+                ORB_SLAM3::Plane passagePlane;
+                passagePlane.setGlobalEquation(passage->getGlobalEquation());
+                if (!Utils::arePlanesPerpendicular(&passagePlane, groundPlane))
+                {
+                    // Project the passage normal onto the horizontal plane to remove tilt
+                    const Eigen::Vector3d groundNormal =
+                        groundPlane->getGlobalEquation().coeffs().head<3>().normalized();
+                    Eigen::Vector4d globalEq = passage->getGlobalEquation().coeffs();
+                    Eigen::Vector3d passageNormal = globalEq.head<3>().normalized();
+
+                    Eigen::Vector3d correctedNormal =
+                        (passageNormal - passageNormal.dot(groundNormal) * groundNormal).normalized();
+                    if (correctedNormal.norm() < 1e-6)
+                        continue;
+                    correctedNormal.normalize();
+
+                    // Recompute d so the plane still passes through the centroid
+                    const Eigen::Vector3d centroid = passage->getCentroid().cast<double>();
+                    const double d = -correctedNormal.dot(centroid);
+
+                    Eigen::Vector4d correctedCoeffs;
+                    correctedCoeffs.head<3>() = correctedNormal;
+                    correctedCoeffs(3) = d;
+
+                    passage->setGlobalEquation(g2o::Plane3D(correctedCoeffs));
+                }
+            }
+        }
+    }
+
     Eigen::Vector3f SemanticsManager::transformPlaneEqToGroundReference(const Eigen::Vector4d &planeEq)
     {
         // extract the rotation matrix from the transformation matrix
@@ -184,132 +403,6 @@ namespace ORB_SLAM3
         planePoseMat(3, 3) = 1.0;
 
         return planePoseMat;
-    }
-
-    bool SemanticsManager::getRectangularRoom(
-        std::pair<std::pair<Plane *, Plane *>, std::pair<Plane *, Plane *>> &givenRoom,
-        const std::vector<std::pair<Plane *, Plane *>> &facingWalls,
-        double perpThreshDeg)
-    {
-        // Iterate through each pair of facing walls
-        for (size_t idx1 = 0; idx1 < facingWalls.size(); ++idx1)
-            for (size_t idx2 = idx1 + 1; idx2 < facingWalls.size(); ++idx2)
-            {
-                // Get the walls
-                Plane *wall1P1 = facingWalls[idx1].first;
-                Plane *wall2P1 = facingWalls[idx1].second;
-                Plane *wall1P2 = facingWalls[idx2].first;
-                Plane *wall2P2 = facingWalls[idx2].second;
-
-                // Check if wall pairs form a square, considering the perpendicularity threshold
-                if (Utils::arePlanesPerpendicular(wall1P1, wall1P2) &&
-                    Utils::arePlanesPerpendicular(wall1P1, wall2P2) &&
-                    Utils::arePlanesPerpendicular(wall2P1, wall1P2) &&
-                    Utils::arePlanesPerpendicular(wall2P1, wall2P2))
-                {
-                    givenRoom = std::make_pair(facingWalls[idx1], facingWalls[idx2]);
-                    return true;
-                }
-            }
-        // No rectangular room found
-        return false;
-    }
-
-    /**
-     * 🚧 [vS-Graphs v.2.0] This solution is not very reliable.
-     * It is highly recommended to use the Skeleton Voxblox version.
-     */
-    void SemanticsManager::updateMapRoomCandidateToRoomGeo(KeyFrame *pKF)
-    {
-        // Get all the mapped planes and rooms
-        std::vector<Room *> allRooms = mpAtlas->GetAllRooms();
-        std::vector<Plane *> allPlanes = mpAtlas->GetAllPlanes();
-
-        // Filter the planes to get only the walls
-        std::vector<Plane *> allWalls;
-        for (auto plane : allPlanes)
-            if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::WALL)
-                allWalls.push_back(plane);
-
-        // Get the closest walls to the current KeyFrame
-        std::vector<Plane *> closestWalls;
-        for (auto wall : allWalls)
-        {
-            // Calculate distance between wall centroid and KeyFrame pose
-            double distance = Utils::calculateDistancePointToPlane(wall->getGlobalEquation().coeffs(),
-                                                                   pKF->GetPose().translation().cast<double>());
-
-            // Update closestWalls if distance is smaller than the threshold
-            if (distance < sysParams->room_seg.marker_wall_distance_thresh)
-                closestWalls.push_back(wall);
-        }
-
-        // Get all the facing walls
-        std::vector<std::pair<Plane *, Plane *>> facingWalls =
-            Utils::getFacingPlanes(closestWalls);
-
-        // If there is at least one pair of facing wall
-        if (facingWalls.size() > 0)
-            // Loop over all the rooms
-            for (auto roomCandidate : allRooms)
-            {
-                // Fetch parameters of the room candidate
-                roomCandidate->setHasKnownLabel(true);
-                Sophus::SE3f metaMarkerPose = roomCandidate->getMetaMarker()->getGlobalPose();
-
-                // Find the closest facing walls to the room center
-                std::pair<Plane *, Plane *> closestPair1, closestPair2;
-                double minDistance1 = std::numeric_limits<double>::max();
-                double minDistance2 = std::numeric_limits<double>::max();
-
-                for (auto facingWallsPair : facingWalls)
-                {
-                    // Calculate distance between wall centroids and metaMarkerPose
-                    double distance1 = Utils::calculateDistancePointToPlane(facingWallsPair.first->getGlobalEquation().coeffs(),
-                                                                            metaMarkerPose.translation().cast<double>());
-                    double distance2 = Utils::calculateDistancePointToPlane(facingWallsPair.second->getGlobalEquation().coeffs(),
-                                                                            metaMarkerPose.translation().cast<double>());
-
-                    // Update closestPair1 if distance1 is smaller
-                    if (distance1 < minDistance1)
-                    {
-                        minDistance1 = distance1;
-                        closestPair1 = facingWallsPair;
-                    }
-
-                    // Update closestPair2 if distance2 is smaller and it's not the same facingWallsPair as closestPair1
-                    if (distance2 < minDistance2 && facingWallsPair != closestPair1)
-                    {
-                        minDistance2 = distance2;
-                        closestPair2 = facingWallsPair;
-                    }
-                }
-
-                // If the room is a corridor
-                if (roomCandidate->getRoomVariant() == ORB_SLAM3::Room::roomVariant::CORRIDOR)
-                {
-                    if (closestPair1.first != nullptr && closestPair1.second != nullptr)
-                    {
-                        // Update the room walls
-                        roomCandidate->setWalls(closestPair1.first);
-                        roomCandidate->setWalls(closestPair1.second);
-                    }
-                }
-                else if (roomCandidate->getRoomVariant() == ORB_SLAM3::Room::roomVariant::ROOM)
-                {
-                    // Update the room walls
-                    if (closestPair1.first != nullptr && closestPair1.second != nullptr)
-                    {
-                        roomCandidate->setWalls(closestPair1.first);
-                        roomCandidate->setWalls(closestPair1.second);
-                    }
-                    if (closestPair2.first != nullptr && closestPair2.second != nullptr)
-                    {
-                        roomCandidate->setWalls(closestPair2.first);
-                        roomCandidate->setWalls(closestPair2.second);
-                    }
-                }
-            }
     }
 
     void SemanticsManager::detectRoom_FreeSpaceCluster()

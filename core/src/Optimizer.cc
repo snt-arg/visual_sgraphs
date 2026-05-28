@@ -50,25 +50,25 @@ namespace ORB_SLAM3
                                            const unsigned long nLoopKF, const bool bRobust,
                                            double markerImpact)
     {
-        std::vector<ORB_SLAM3::Door *> allDoors = pMap->GetAllDoors();
         std::vector<ORB_SLAM3::Room *> allRooms = pMap->GetAllRooms();
         std::vector<ORB_SLAM3::Floor *> allFloors = pMap->GetAllFloors();
         std::vector<ORB_SLAM3::Plane *> allPlanes = pMap->GetAllPlanes();
         std::vector<ORB_SLAM3::Marker *> allMarkers = pMap->GetAllMarkers();
+        std::vector<ORB_SLAM3::Passage *> allPassages = pMap->GetAllPassages();
         std::vector<ORB_SLAM3::MapPoint *> allMapPoints = pMap->GetAllMapPoints();
         std::vector<ORB_SLAM3::KeyFrame *> allKeyFrames = pMap->GetAllKeyFrames();
 
-        BundleAdjustment(allKeyFrames, allMapPoints, allMarkers, allPlanes, allDoors,
+        BundleAdjustment(allKeyFrames, allMapPoints, allMarkers, allPlanes, allPassages,
                          allRooms, allFloors, nIterations, pbStopFlag, nLoopKF, bRobust, markerImpact);
     }
 
-    void Optimizer::BundleAdjustment(const vector<ORB_SLAM3::KeyFrame *> &vpKFs,
-                                     const vector<ORB_SLAM3::MapPoint *> &vpMP,
-                                     const vector<ORB_SLAM3::Marker *> &allMarkersVec,
-                                     const vector<ORB_SLAM3::Plane *> &allPlanesVec,
-                                     const vector<ORB_SLAM3::Door *> &allDoorsVec,
-                                     const vector<ORB_SLAM3::Room *> &vpRooms,
-                                     const vector<ORB_SLAM3::Floor *> &vpFloors,
+    void Optimizer::BundleAdjustment(const std::vector<ORB_SLAM3::KeyFrame *> &vpKFs,
+                                     const std::vector<ORB_SLAM3::MapPoint *> &vpMP,
+                                     const std::vector<ORB_SLAM3::Marker *> &allMarkersVec,
+                                     const std::vector<ORB_SLAM3::Plane *> &allPlanesVec,
+                                     const std::vector<ORB_SLAM3::Passage *> &allDoorwaysVec,
+                                     const std::vector<ORB_SLAM3::Room *> &vpRooms,
+                                     const std::vector<ORB_SLAM3::Floor *> &vpFloors,
                                      int nIterations, bool *pbStopFlag, const unsigned long nLoopKF,
                                      const bool bRobust, double markerImpact)
     {
@@ -144,11 +144,11 @@ namespace ORB_SLAM3
         const float thHuber3D = sqrt(7.815);
 
         int nPlanes = 1;
-        int nDoors = 1;
         int nRooms = 1;
         int nFloors = 1;
         int maxOpId = 0;
         int nMarkers = 1;
+        int nDoorways = 1;
 
         // [GBA] MapPoints
         for (size_t i = 0; i < vpMP.size(); i++)
@@ -1663,11 +1663,11 @@ namespace ORB_SLAM3
 
         // Variables
         countFixedKF = 0;
-        std::list<ORB_SLAM3::Door *> localDoorList;
         std::list<ORB_SLAM3::Room *> localRoomList;
         ORB_SLAM3::Map *pCurrentMap = pKF->GetMap();
         std::list<ORB_SLAM3::Plane *> localPlaneList;
         std::list<ORB_SLAM3::Marker *> localMarkerList;
+        std::list<ORB_SLAM3::Passage *> localPassageList;
         std::list<ORB_SLAM3::KeyFrame *> localKeyFrameList;
         std::list<ORB_SLAM3::MapPoint *> localMapPointList;
         std::vector<ORB_SLAM3::KeyFrame *> neighborKeyFrameVec;
@@ -1675,9 +1675,9 @@ namespace ORB_SLAM3
         std::vector<ORB_SLAM3::Floor *> allFloors = pCurrentMap->GetAllFloors();
 
         // Unorderd maps to keep track of the local entities
-        std::unordered_map<int, bool> mpLocalDoorId;
         std::unordered_map<int, bool> mpLocalPlaneId;
         std::unordered_map<int, bool> mpLocalMarkerId;
+        std::unordered_map<int, bool> mpLocalDoorwayId;
         std::unordered_map<int, bool> mpLocalMapPointId;
         std::unordered_map<int, bool> mpLocalKeyFrameId;
 
@@ -1716,9 +1716,9 @@ namespace ORB_SLAM3
         {
             // Variables
             ORB_SLAM3::KeyFrame *pKFi = *lit;
-            std::vector<ORB_SLAM3::Door *> localDoorsVec = pKFi->GetMapDoors();
             std::vector<ORB_SLAM3::Plane *> localPlanesVec = pKFi->GetMapPlanes();
             std::vector<ORB_SLAM3::Marker *> localMarkersVec = pKFi->GetMapMarkers();
+            std::vector<ORB_SLAM3::Passage *> localDoorwaysVec = pKFi->GetMapPassages();
             std::vector<ORB_SLAM3::MapPoint *> localMapPointsVec = pKFi->GetMapPointMatches();
 
             // If the KeyFrame is the initial KeyFrame of the map, mark that as a fixed KeyFrame
@@ -1776,15 +1776,15 @@ namespace ORB_SLAM3
                 }
             }
 
-            // [LBA] Loop through all the Doors and prepare them for LBA
-            for (std::vector<ORB_SLAM3::Door *>::iterator idx = localDoorsVec.begin(), vend = localDoorsVec.end();
+            // [LBA] Loop through all the Doorways and prepare them for LBA
+            for (std::vector<ORB_SLAM3::Passage *>::iterator idx = localDoorwaysVec.begin(), vend = localDoorwaysVec.end();
                  idx != vend; idx++)
             {
-                if (mpLocalDoorId.find((*idx)->getId()) == mpLocalDoorId.end())
+                if (mpLocalDoorwayId.find((*idx)->getId()) == mpLocalDoorwayId.end())
                 {
-                    ORB_SLAM3::Door *door = *idx;
-                    localDoorList.push_back(door);
-                    mpLocalDoorId[door->getId()] = true;
+                    ORB_SLAM3::Passage *doorway = *idx;
+                    localPassageList.push_back(doorway);
+                    mpLocalDoorwayId[doorway->getId()] = true;
                 }
             }
         }
@@ -1994,12 +1994,12 @@ namespace ORB_SLAM3
         const float thHuberMono = sqrt(5.991);
         const float thHuberStereo = sqrt(7.815);
 
-        int nDoors = 1;
         int nRooms = 1;
         int nFloors = 1;
         int nPlanes = 1;
         int nPoints = 0;
         int nMarkers = 1;
+        int nDoorways = 1;
 
         int nEdges = 0;
         int maxOpId = 0;
@@ -2714,14 +2714,14 @@ namespace ORB_SLAM3
         //         g2o::SE3Quat SE3quat = vrtxRoom->estimate();
         //         pMapRoom->setCentroid(SE3quat.translation());
 
-        //         // Locally Optimized Doors
-        //         // for (const auto door : pMapRoom->getDoors())
+        //         // Locally Optimized Doorways
+        //         // for (const auto doorway : pMapRoom->getPassages())
         //         // {
-        //         //     ORB_SLAM3::Door *pMapDoor = door;
-        //         //     g2o::VertexSE3Expmap *vDoor = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapDoor->getOpId()));
-        //         //     g2o::SE3Quat SE3quat = vDoor->estimate();
+        //         //     ORB_SLAM3::Passage *pMapDoorway = doorway;
+        //         //     g2o::VertexSE3Expmap *vDoorway = static_cast<g2o::VertexSE3Expmap *>(optimizer.vertex(pMapDoorway->getOpId()));
+        //         //     g2o::SE3Quat SE3quat = vDoorway->estimate();
         //         //     Sophus::SE3f Tiw(SE3quat.rotation().cast<float>(), SE3quat.translation().cast<float>());
-        //         //     pMapDoor->setGlobalPose(Tiw);
+        //         //     pMapDoorway->setGlobalPose(Tiw);
         //         // }
         //     }
         //     catch (std::exception &e)
@@ -3050,12 +3050,12 @@ namespace ORB_SLAM3
         pMap->IncreaseChangeIndex();
     }
 
-    void Optimizer::OptimizeEssentialGraph(KeyFrame *pCurKF, vector<KeyFrame *> &vpFixedKFs,
-                                           vector<KeyFrame *> &vpFixedCorrectedKFs, vector<KeyFrame *> &vpNonFixedKFs,
-                                           vector<MapPoint *> &vpNonCorrectedMPs, vector<Door *> &vpCurrentMapDoors,
-                                           vector<Plane *> &vpCurrentMapPlanes, vector<Marker *> &vpCurrentMapMarkers,
-                                           vector<Room *> &vpCurrentDetMapRooms, vector<Room *> &vpCurrentMrkMapRooms,
-                                           vector<vector<Eigen::Vector3d>> &vpClusterPoints)
+    void Optimizer::OptimizeEssentialGraph(ORB_SLAM3::KeyFrame *pCurKF, std::vector<ORB_SLAM3::KeyFrame *> &vpFixedKFs,
+                                           std::vector<ORB_SLAM3::KeyFrame *> &vpFixedCorrectedKFs, std::vector<ORB_SLAM3::KeyFrame *> &vpNonFixedKFs,
+                                           std::vector<ORB_SLAM3::MapPoint *> &vpNonCorrectedMPs, std::vector<ORB_SLAM3::Passage *> &vpCurrentMapPassages,
+                                           std::vector<ORB_SLAM3::Plane *> &vpCurrentMapPlanes, std::vector<ORB_SLAM3::Marker *> &vpCurrentMapMarkers,
+                                           std::vector<ORB_SLAM3::Room *> &vpCurrentDetMapRooms, std::vector<ORB_SLAM3::Room *> &vpCurrentMrkMapRooms,
+                                           std::vector<std::vector<Eigen::Vector3d>> &vpClusterPoints)
     {
         // Variables
         g2o::SparseOptimizer optimizer;
@@ -3498,19 +3498,10 @@ namespace ORB_SLAM3
             }
         }
 
-        // Correct the pose of the detected doors in the new map
-        std::cout << "- Correcting the poses of doors ..." << std::endl;
-        for (Door *pDoor : vpCurrentMapDoors)
+        // Correct the pose of the detected doorways in the new map
+        std::cout << "- Correcting the poses of doorways (need update) ..." << std::endl;
+        for (ORB_SLAM3::Passage *pDoorway : vpCurrentMapPassages)
         {
-            // Get the marker related to the door
-            Marker *pMarker = pDoor->getMarker();
-
-            // If the door has no marker, continue
-            if (!pMarker)
-                continue;
-
-            // Update the global pose of the door
-            pDoor->setGlobalPose(pMarker->getGlobalPose());
         }
 
         // Correct the pose of the marker-based rooms in the new map

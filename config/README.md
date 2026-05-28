@@ -82,20 +82,27 @@ These parameters fall under the `geo_seg` category and configure the behavior of
 
 These parameters belong to the `sem_seg` category and configure the Semantic Segmentation (SemSeg) process:
 
-| Category  | Component     | Process           | Parameter              | Description                                                |
-| --------- | ------------- | ----------------- | ---------------------- | ---------------------------------------------------------- |
-| `sem_seg` | `pointcloud`  | `downsample`      | `leaf_size`            | Leaf size (uniform across all axes) for voxel downsampling |
-| `sem_seg` | `pointcloud`  | `downsample`      | `min_points_per_voxel` | Minimum number of points per voxel to retain it            |
-| `sem_seg` | `pointcloud`  | `outlier_removal` | `std_threshold`        | Standard deviation threshold for outlier removal           |
-| `sem_seg` | `pointcloud`  | `outlier_removal` | `mean_threshold`       | Number of neighboring points required to keep a point      |
-| `sem_seg` | —             | —                 | `prob_thresh`          | Minimum class probability threshold (e.g., > 0.5)          |
-| `sem_seg` | —             | —                 | `conf_thresh`          | Minimum confidence threshold for class probabilities       |
-| `sem_seg` | —             | —                 | `max_step_elevation`   | Maximum step height over the ground plane                  |
-| `sem_seg` | —             | —                 | `max_tilt_wall`        | Maximum tilt angle for wall classification                 |
-| `sem_seg` | —             | —                 | `max_tilt_ground`      | Maximum tilt angle for ground classification               |
-| `sem_seg` | —             | —                 | `min_votes`            | Minimum number of votes needed for a plane to get a label  |
-| `sem_seg` | `reassociate` | —                 | `enabled`              | Enables semantic re-association of planes (`true/false`)   |
-| `sem_seg` | `reassociate` | —                 | `association_thres`    | Threshold for considering planes in reassociation          |
+| Category  | Component     | Process           | Parameter                          | Description                                                        |
+| --------- | ------------- | ----------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| `sem_seg` | `pointcloud`  | `downsample`      | `leaf_size`                        | Leaf size (uniform across all axes) for voxel downsampling         |
+| `sem_seg` | `pointcloud`  | `downsample`      | `min_points_per_voxel`             | Minimum number of points per voxel to retain it                    |
+| `sem_seg` | `pointcloud`  | `outlier_removal` | `std_threshold`                    | Standard deviation threshold for outlier removal                   |
+| `sem_seg` | `pointcloud`  | `outlier_removal` | `mean_threshold`                   | Number of neighboring points required to keep a point              |
+| `sem_seg` | —             | —                 | `prob_thresh`                      | Minimum class probability threshold (e.g., > 0.5)                  |
+| `sem_seg` | —             | —                 | `conf_thresh`                      | Minimum confidence threshold for class probabilities               |
+| `sem_seg` | —             | —                 | `max_step_elevation`               | Maximum step height over the ground plane                          |
+| `sem_seg` | —             | —                 | `max_tilt_wall`                    | Maximum tilt angle for wall classification                         |
+| `sem_seg` | —             | —                 | `max_tilt_ground`                  | Maximum tilt angle for ground classification                       |
+| `sem_seg` | —             | —                 | `enable_passage_detection`         | Enables detection of passages (doorways)                           |
+| `sem_seg` | —             | —                 | `max_wall_door_distance`           | Maximum distance from wall to door for association                 |
+| `sem_seg` | —             | —                 | `max_door_width`                   | Maximum width for a door to be valid                               |
+| `sem_seg` | —             | —                 | `max_door_height`                  | Maximum height for a door to be valid                              |
+| `sem_seg` | —             | —                 | `max_kf_passage_distance`          | Maximum distance from keyframe to doorway                          |
+| `sem_seg` | —             | —                 | `passage_centroid_distance_thresh` | Maximum distance from passage association                          |
+| `sem_seg` | —             | —                 | `passage_kf_window`                | Size of the KeyFrame window to check for passing through a doorway |
+| `sem_seg` | —             | —                 | `min_votes`                        | Minimum number of votes needed for a plane to get a label          |
+| `sem_seg` | `reassociate` | —                 | `enabled`                          | Enables semantic re-association of planes (`true/false`)           |
+| `sem_seg` | `reassociate` | —                 | `association_thres`                | Threshold for considering planes in reassociation                  |
 
 ## 🚪 Room Segmentation Parameters
 
