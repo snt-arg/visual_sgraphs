@@ -1,0 +1,87 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them! (RealSense D435i camera - Serial Number: 044322070965)
+# Source: https://github.com/snt-arg/smapper/tree/main/calibration/kalibr/static
+#--------------------------------------------------------------------------------------------
+File.version: "1.0"
+
+Camera.type: "PinHole"
+
+# Rectified Camera Intrinsics
+Camera1.fx: 608.8519897460938
+Camera1.fy: 607.9760131835938
+Camera1.cx: 331.6618347167969
+Camera1.cy: 251.41233825683594
+
+# Distortion Parameters
+Camera1.k1: 0.0
+Camera1.k2: 0.0
+Camera1.p1: 0.0
+Camera1.p2: 0.0
+
+# Stereo
+Stereo.b: 0.0499585
+Stereo.ThDepth: 10.0
+
+# Camera Resolution
+Camera.width: 640
+Camera.height: 480
+
+# Camera FPS
+Camera.fps: 30
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# RGBD Parameters
+RGBD.DepthMapFactor: 1.0
+RGBD.NearThresh: 0.1
+RGBD.FarThresh: 10.0
+
+# Transformation (IMU to Camera)
+IMU.T_b_c1: !!opencv-matrix
+   rows: 4
+   cols: 4
+   dt: f
+   data: [ -0.014727338818110586, -0.9997505489706886, -0.016791227594876112, 0.039938237003778305,
+          -0.05130052290257775, 0.01752642757563294, -0.9985294590979066, -0.11186067996703218,
+           0.9985746651308847, -0.013844282908206218, -0.05154584357151279, -0.12417107842813298,
+           0.0, 0.0, 0.0, 1.0]
+
+# Number of KFs to insert when IMU is lost
+IMU.InsertKFsWhenLost: 0
+
+# IMU Noise
+IMU.NoiseGyro: 0.0010273469802412588
+IMU.NoiseAcc: 0.005119536556707974
+IMU.GyroWalk: 3.8743601798420855e-05
+IMU.AccWalk: 0.0007446449364276494
+IMU.Frequency: 400.0
+
+# Number of ORB Features per Frame
+ORBextractor.nFeatures: 2000
+
+# ORB Scale Factors in the Scale Pyramid
+ORBextractor.scaleFactor: 1.2
+
+# ORB Levels in the Scale Pyramid
+ORBextractor.nLevels: 8
+
+# ORB Extractor Fast Threshold
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 5
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -3.5
+Viewer.ViewpointF: 500.0

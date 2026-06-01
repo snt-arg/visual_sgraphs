@@ -238,13 +238,20 @@ function(add_ros2_node target_name cpp_file)
     ${COMMON_SOURCES}
     ${cpp_file}
   )
+
   target_link_libraries(${target_name}
     ${PROJECT_NAME}_lib
   )
+
   ament_target_dependencies(${target_name}
     ${COMMON_DEPENDENCIES}
   )
+
   rosidl_target_interfaces(${target_name} ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+  set_target_properties(${target_name} PROPERTIES
+    INSTALL_RPATH "\$ORIGIN/.."
+  )
 
   install(TARGETS ${target_name}
     DESTINATION lib/${PROJECT_NAME}
@@ -255,16 +262,44 @@ endfunction()
 add_ros2_node(ros_rgbd          src/ros_rgbd.cc)
 add_ros2_node(ros_rgbd_inertial src/ros_rgbd_inertial.cc)
 
+# libvs_graphs_lib.so must also be able to find libDBoW2.so and libg2o.so
+# in the same install/vs_graphs/lib/ folder.
+set_target_properties(${PROJECT_NAME}_lib PROPERTIES
+  INSTALL_RPATH "\$ORIGIN"
+)
+
 # Install other resources
 install(
   DIRECTORY launch config core/Vocabulary
   DESTINATION share/${PROJECT_NAME}
 )
 
-# Install the library
 install(TARGETS ${PROJECT_NAME}_lib
   DESTINATION lib/${PROJECT_NAME}
 )
+
+# Install the main vs_graphs shared library
+install(TARGETS ${PROJECT_NAME}_lib
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+# Install third-party shared libraries needed at runtime
+install(DIRECTORY
+  ${PROJECT_SOURCE_DIR}/core/Thirdparty/DBoW2/lib/
+  DESTINATION lib
+  FILES_MATCHING PATTERN "libDBoW2.so*"
+)
+
+install(DIRECTORY
+  ${PROJECT_SOURCE_DIR}/core/Thirdparty/g2o/lib/
+  DESTINATION lib
+  FILES_MATCHING PATTERN "libg2o.so*"
+)
+
+ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 
 # Ament package configuration
 ament_package()

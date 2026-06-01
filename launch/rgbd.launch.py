@@ -7,42 +7,99 @@ from launch_ros.actions import ComposableNodeContainer
 from ament_index_python.packages import get_package_share_directory
 from launch.substitutions import LaunchConfiguration, EqualsSubstitution
 
+
 def generate_launch_description():
     return LaunchDescription(
         [
+            # ---------------------------------------------------------------- #
             # Global arguments declarations
-            DeclareLaunchArgument("offline", default_value="true"),
-            DeclareLaunchArgument("launch_rviz", default_value="true"),
-            DeclareLaunchArgument("colored_pointcloud", default_value="true"),
-            DeclareLaunchArgument("visualize_segmented_scene", default_value="true"),
+            # ---------------------------------------------------------------- #
+
+            DeclareLaunchArgument(
+                "offline",
+                default_value="true"
+            ),
+
+            DeclareLaunchArgument(
+                "launch_rviz",
+                default_value="true"
+            ),
+
+            DeclareLaunchArgument(
+                "colored_pointcloud",
+                default_value="true"
+            ),
+
+            DeclareLaunchArgument(
+                "visualize_segmented_scene",
+                default_value="true"
+            ),
+
+            DeclareLaunchArgument(
+                "pointcloud_topic",
+                default_value="/camera/depth/points",
+            ),
+
+            DeclareLaunchArgument(
+                "segmented_image_topic",
+                default_value="/camera/color/image_segment",
+            ),
+
             DeclareLaunchArgument(
                 "semantic_scene_segmenter",
                 default_value="yoso",
-                description="The method to segment the semantic scene (if off, the baseline)",
-                choices=["yoso", "pfcn", "off"],
+                description=("The method to segment the semantic scene "
+                             "(if off, the baseline)"),
+                choices=[
+                    "yoso",
+                    "pfcn",
+                    "segformer",
+                    "off"
+                ],
             ),
+
+            # ---------------------------------------------------------------- #
             # Topics
-            DeclareLaunchArgument("camera_frame", default_value="camera"),
-            DeclareLaunchArgument("sensor_config", default_value="SMapper_RealSense"),
+            # ---------------------------------------------------------------- #
+
             DeclareLaunchArgument(
-                "rgb_image_topic", default_value="/camera/realsense/color/image_raw"
+                "camera_frame",
+                default_value="camera"
             ),
+
+            DeclareLaunchArgument(
+                "sensor_config",
+                default_value="SMapper_RealSense"
+            ),
+
+            DeclareLaunchArgument(
+                "rgb_image_topic",
+                default_value="/camera/realsense/color/image_raw"
+            ),
+
             DeclareLaunchArgument(
                 "rgb_camera_info_topic",
                 default_value="/camera/realsense/color/camera_info",
             ),
+
             DeclareLaunchArgument(
                 "depth_image_topic",
                 default_value="/camera/realsense/aligned_depth_to_color/image_raw",
             ),
+
+            # ---------------------------------------------------------------- #
             # VS-Graphs Node
+            # ---------------------------------------------------------------- #
+
             Node(
                 name="vs_graphs",
                 package="vs_graphs",
                 executable="ros_rgbd",
                 output="screen",
                 parameters=[
-                    {"use_sim_time": LaunchConfiguration("offline")},
+                    {
+                        "use_sim_time": LaunchConfiguration("offline")
+                    },
                     {
                         "voc_file": LaunchConfiguration(
                             "voc_file",
@@ -72,44 +129,101 @@ def generate_launch_description():
                             ],
                         )
                     },
-                    {"roll": 0.0},
-                    {"yaw": 1.5697},
-                    {"pitch": -1.5697},
-                    {"frame_map": "map"},
-                    {"frame_world": "world"},
-                    {"frame_camera": "camera"},
-                    {"enable_pangolin": False},
-                    {"static_transform": True},
-                    {"colored_pointcloud": False},
-                    {"publish_pointclouds": True},
+                    {
+                        "roll": 1.5707963268
+                    },
+                    {
+                        "pitch": 0.0
+                    },
+                    {
+                        "yaw": 0.0
+                    },
+                    {
+                        "frame_map": "map"
+                    },
+                    {
+                        "frame_world": "world"
+                    },
+                    {
+                        "frame_camera": "camera"
+                    },
+                    {
+                        "enable_pangolin": False
+                    },
+                    {
+                        "static_transform": True
+                    },
+                    {
+                        "colored_pointcloud": False
+                    },
+                    {
+                        "publish_pointclouds": True
+                    },
                 ],
                 remappings=[
-                    ("/camera/rgb/image_raw", LaunchConfiguration("rgb_image_topic")),
+                    (
+                        "/camera/rgb/image_raw",
+                        LaunchConfiguration("rgb_image_topic")
+                    ),
                     (
                         "/camera/depth_registered/image_raw",
                         LaunchConfiguration("depth_image_topic"),
                     ),
                 ],
             ),
+
+            # ---------------------------------------------------------------- #
             # Static Transforms
+            # ---------------------------------------------------------------- #
+
             Node(
                 package="tf2_ros",
-                name="map_to_map_elevated", # For Voxblox Skeleton
+                name="map_to_map_elevated",
                 executable="static_transform_publisher",
-                arguments=["0", "0", "0", "0", "0", "0", "map", "map_elevated"],
+                arguments=[
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    "map",
+                    "map_elevated"
+                ],
             ),
+
             Node(
                 package="tf2_ros",
                 executable="static_transform_publisher",
                 name="bc_to_se",
-                arguments=["0", "-3", "0", "0", "0", "0", "build_comp", "struc_elem"],
+                arguments=[
+                    "0",
+                    "-3",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    "build_comp",
+                    "struc_elem"
+                ],
             ),
+
             Node(
                 package="tf2_ros",
                 executable="static_transform_publisher",
                 name="world_to_bc",
-                arguments=["0", "0.5", "0", "0", "0", "0", "world", "build_comp"],
+                arguments=[
+                    "0",
+                    "0.5",
+                    "0",
+                    "0",
+                    "0",
+                    "0",
+                    "world",
+                    "build_comp"
+                ],
             ),
+
             Node(
                 package="tf2_ros",
                 executable="static_transform_publisher",
@@ -122,11 +236,15 @@ def generate_launch_description():
                     "0",
                     "0",
                     "camera",
-                    "d400_color",
+                    "camera_color_optical_frame",
                     # RealSense: camera_color_optical_frame, OpenLoris: d400_color
                 ],
             ),
+
+            # ---------------------------------------------------------------- #
             # RViz
+            # ---------------------------------------------------------------- #
+
             Node(
                 condition=IfCondition(LaunchConfiguration("launch_rviz")),
                 package="rviz2",
@@ -139,9 +257,18 @@ def generate_launch_description():
                         "/config/Visualization/vsgraphs_rgbd.rviz",
                     ],
                 ],
+                parameters=[
+                    {
+                        "use_sim_time": LaunchConfiguration("offline")
+                    }
+                ],
                 output="screen",
             ),
+
+            # ---------------------------------------------------------------- #
             # Nodelete
+            # ---------------------------------------------------------------- #
+
             ComposableNodeContainer(
                 name="depth_image_proc_container",
                 package="rclcpp_components",
@@ -170,6 +297,7 @@ def generate_launch_description():
                     ),
                 ],
             ),
+
             # Semantic Scene Segmenter Node (based on semantic_scene_segmenter argument)
             Node(
                 condition=IfCondition(
@@ -182,8 +310,15 @@ def generate_launch_description():
                 executable="segmenter_yoso.py",
                 output="screen",
                 parameters=[
-                    {"visualize": LaunchConfiguration("visualize_segmented_scene")}
+                    {
+                        "use_sim_time": LaunchConfiguration("offline")
+                    },
+                    {
+                        "visualize": LaunchConfiguration(
+                            "visualize_segmented_scene")
+                    }
                 ],
+
                 arguments=[
                     "--ros-args",
                     "--params-file",
@@ -193,10 +328,14 @@ def generate_launch_description():
                     ],
                 ],
             ),
+
             Node(
                 condition=IfCondition(
                     EqualsSubstitution(
-                        LaunchConfiguration("semantic_scene_segmenter"), "pfcn"
+                        LaunchConfiguration(
+                            "semantic_scene_segmenter"
+                        ),
+                        "pfcn"
                     )
                 ),
                 name="segmenter_ros",
@@ -204,7 +343,10 @@ def generate_launch_description():
                 executable="segmenter_pFCN.py",
                 output="screen",
                 parameters=[
-                    {"visualize": LaunchConfiguration("visualize_segmented_scene")}
+                    {
+                        "visualize": LaunchConfiguration(
+                            "visualize_segmented_scene")
+                    }
                 ],
                 arguments=[
                     "--ros-args",
@@ -215,6 +357,37 @@ def generate_launch_description():
                     ],
                 ],
             ),
+
+            Node(
+                condition=IfCondition(
+                    EqualsSubstitution(
+                        LaunchConfiguration(
+                            "semantic_scene_segmenter"
+                        ),
+                        "segformer"
+                    )
+                ),
+                name="segmenter_ros",
+                package="segmenter_ros",
+                executable="segmenter_segformer.py",
+                output="screen",
+                parameters=[
+                    {
+                        "visualize": LaunchConfiguration(
+                            "visualize_segmented_scene"
+                        )
+                    }
+                ],
+                arguments=[
+                    "--ros-args",
+                    "--params-file",
+                    [
+                        get_package_share_directory("segmenter_ros"),
+                        "/config/cfg_segformer.yaml",
+                    ],
+                ],
+            ),
+
             # Structural Element Detectors
             # Node(
             #     name="situational_graphs_reasoning",
