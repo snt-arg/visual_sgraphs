@@ -53,7 +53,7 @@ def generate_launch_description():
                 choices=[
                     "yoso",
                     "pfcn",
-                    "segformer",
+                    "yolo26",
                     "off"
                 ],
             ),
@@ -292,7 +292,10 @@ def generate_launch_description():
                                 "depth_registered/image_rect",
                                 LaunchConfiguration("depth_image_topic"),
                             ),
-                            ("points", "/camera/depth/points"),
+                            (
+                                "points",
+                                "/camera/depth/points"
+                            ),
                         ],
                     ),
                 ],
@@ -302,7 +305,8 @@ def generate_launch_description():
             Node(
                 condition=IfCondition(
                     EqualsSubstitution(
-                        LaunchConfiguration("semantic_scene_segmenter"), "yoso"
+                        LaunchConfiguration("semantic_scene_segmenter"),
+                        "yoso"
                     )
                 ),
                 name="segmenter_ros",
@@ -345,7 +349,8 @@ def generate_launch_description():
                 parameters=[
                     {
                         "visualize": LaunchConfiguration(
-                            "visualize_segmented_scene")
+                            "visualize_segmented_scene"
+                        )
                     }
                 ],
                 arguments=[
@@ -364,12 +369,12 @@ def generate_launch_description():
                         LaunchConfiguration(
                             "semantic_scene_segmenter"
                         ),
-                        "segformer"
+                        "yolo26"
                     )
                 ),
                 name="segmenter_ros",
                 package="segmenter_ros",
-                executable="segmenter_segformer.py",
+                executable="segmenter_yolo26.py",
                 output="screen",
                 parameters=[
                     {
@@ -383,7 +388,7 @@ def generate_launch_description():
                     "--params-file",
                     [
                         get_package_share_directory("segmenter_ros"),
-                        "/config/cfg_segformer.yaml",
+                        "/config/cfg_yolo26.yaml",
                     ],
                 ],
             ),

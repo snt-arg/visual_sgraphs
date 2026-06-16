@@ -36,8 +36,8 @@ Camera.RGB: 1
 
 # RGBD Parameters
 RGBD.DepthMapFactor: 1.0
-RGBD.NearThresh: 0.1
-RGBD.FarThresh: 10.0
+RGBD.NearThresh: 0.05
+RGBD.FarThresh: 5.0
 
 # Transformation (IMU to Camera)
 IMU.T_b_c1: !!opencv-matrix
@@ -53,11 +53,11 @@ IMU.T_b_c1: !!opencv-matrix
 IMU.InsertKFsWhenLost: 0
 
 # IMU Noise
-IMU.NoiseGyro: 0.0010273469802412588
-IMU.NoiseAcc: 0.005119536556707974
+IMU.NoiseGyro: 0.0008726646
+IMU.NoiseAcc: 0.0065
 IMU.GyroWalk: 3.8743601798420855e-05
 IMU.AccWalk: 0.0007446449364276494
-IMU.Frequency: 400.0
+IMU.Frequency: 250.0
 
 # Number of ORB Features per Frame
 ORBextractor.nFeatures: 2000

@@ -210,6 +210,7 @@ ament_target_dependencies(${PROJECT_NAME}_lib
   image_transport
   rviz_visual_tools
   situational_graphs_msgs
+  segmenter_ros
 )
 
 # Common source files
