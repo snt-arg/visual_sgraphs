@@ -65,16 +65,16 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # --- Python environment setup ---
 RUN pip3 install networkx==3.1
-RUN pip3 install --extra-index-url https://download.pytorch.org/whl/cu121 \
-    torch \
-    torchvision
+RUN pip3 install --index-url https://download.pytorch.org/whl/cu121 \
+    torch==2.5.1 \
+    torchvision==0.20.1
 RUN apt remove --purge python3-typing-extensions -y
 RUN pip3 install typing-extensions==4.11.0
 
 # --- CLIP and Detectron2 setup ---
 ARG TORCH_CUDA_ARCH_LIST="7.5;7.0+PTX"
 ENV FORCE_CUDA="1"
-RUN pip3 install 'git+https://github.com/facebookresearch/detectron2.git'
+RUN pip3 install 'git+https://github.com/facebookresearch/detectron2.git@fd27788985af0f4ca800bca563acdb700bb890e2'
 RUN pip3 install 'git+https://github.com/openai/CLIP.git'
 
 
@@ -119,8 +119,8 @@ WORKDIR /home/$USERNAME/workspace/src
 # Mount the SSH keys and clone the vS-Graphs repositories
 RUN --mount=type=ssh git clone git@github.com:snt-arg/visual_sgraphs.git
 RUN --mount=type=ssh git clone git@github.com:snt-arg/situational_graphs_msgs.git
-RUN --mount=type=ssh git clone -b ros2-jazzy git@github.com:snt-arg/scene_segment_ros.git
-RUN --mount=type=ssh git clone -b ros2-master git@github.com:IntelRealSense/realsense-ros.git
+RUN --mount=type=ssh git clone git@github.com:snt-arg/scene_segment_ros.git
+RUN --mount=type=ssh git clone -b r/4.57.7 git@github.com:IntelRealSense/realsense-ros.git
 # RUN --mount=type=ssh git clone -b humble-devel git@github.com:pal-robotics/aruco_ros.git
 
 # Repositories for GNN-based room detection and reasoning
@@ -183,13 +183,6 @@ RUN echo "#!/bin/bash" >> /entrypoint.sh \
     && echo 'exec "$@"' >> /entrypoint.sh \
     && chmod a+x /entrypoint.sh
 
-# ------------------------------------
-# Download Vox2Ros Toolkit for Voxblox
-# ------------------------------------
-WORKDIR /home/$USERNAME/workspace/vsgraphs_tools
-RUN curl -L https://raw.githubusercontent.com/snt-arg/vsgraphs_tools/refs/heads/main/Voxblox/relay_jazzy.py -o /home/$USERNAME/workspace/vsgraphs_tools/relay_jazzy.py
-RUN chmod +x /home/$USERNAME/workspace/vsgraphs_tools/relay_jazzy.py
-
 USER $USERNAME
 RUN sudo chown -R $USERNAME:$USERNAME /home/$USERNAME/workspace
 WORKDIR /home/$USERNAME/workspace/
@@ -204,9 +197,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y \
 # --------------------------
 # Aliases and Environment Setup
 # --------------------------
-RUN echo "alias mprocs='mprocs -c /home/$USERNAME/workspace/src/visual_sgraphs/config/mprocs.yml'" >> ~/.bashrc && \
-    echo "alias rel_vox='python /home/$USERNAME/workspace/vsgraphs_tools/relay_jazzy.py --mode voxblox_client'" >> ~/.bashrc && \
-    echo "alias rel_pcl='python /home/$USERNAME/workspace/vsgraphs_tools/relay_jazzy.py --mode pc_server'" >> ~/.bashrc
+RUN echo "alias mprocs='mprocs -c /home/$USERNAME/workspace/src/visual_sgraphs/config/mprocs.yml'" >> ~/.bashrc
 
 ENTRYPOINT ["/entrypoint.sh"]
 USER $USERNAME

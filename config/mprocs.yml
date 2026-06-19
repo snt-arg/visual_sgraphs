@@ -70,7 +70,12 @@ procs:
   Build vS-Graphs:
     shell: 'bash -c "source /opt/ros/jazzy/setup.bash &&
       source ~/workspace/install/setup.bash && cd ~/workspace &&
-      colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-w" --packages-select vs_graphs"'
+      colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select vs_graphs"'
+    autostart: false
+  Build SemSeg:
+    shell: 'bash -c "source /opt/ros/jazzy/setup.bash &&
+      source ~/workspace/install/setup.bash && cd ~/workspace &&
+      colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-select segmenter_ros"'
     autostart: false
   Build RealSense:
     shell: 'bash -c "source /opt/ros/jazzy/setup.bash &&
