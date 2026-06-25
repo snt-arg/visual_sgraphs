@@ -4,7 +4,7 @@
 
 <!-- Shields.io Badges -->
 
-[![Static Badge](https://img.shields.io/badge/ArXiv-2503.01783-%23B31B1B?style=flat&logo=arxiv&logoColor=%23B31B1B&color=%23B31B1B)](https://doi.org/10.48550/arXiv.2503.01783)
+[![Static Badge](https://img.shields.io/badge/DOI-IEEE_RAL-%2300629B?style=flat&logo=ieee&logoColor=%2300629B)](https://doi.org/10.1109/LRA.2026.3703649)
 [![Static Badge](https://img.shields.io/badge/Docker-availabe-%23B31B1B?style=flat&logo=docker&logoColor=%232496ED&color=%232496ED)](/docker/README.md)
 [![Static Badge](https://img.shields.io/badge/YouTube-watch-%23FF0000?style=flat&logo=youtube&logoColor=%23FF0000&color=%23FF0000)](https://youtu.be/5kbgUucvQos?si=DwitJHGpCXkJaeeJ)
 ![Static Badge](https://img.shields.io/badge/Build-Passing-%2314CC80?style=flat&logoColor=%2314CC80&color=%2314CC80)
@@ -57,9 +57,12 @@ To evaluate vS-Graphs against other visual SLAM frameworks, read the [evaluation
 @article{tourani2025vsgraphs,
   title={vS-Graphs: Tightly Coupling Visual SLAM and 3D Scene Graphs Exploiting Hierarchical Scene Understanding},
   author={Tourani, Ali and Ejaz, Saad and Bavle, Hriday and Fernandez-Cortizas, Miguel and Morilla-Cabello, David and Sanchez-Lopez, Jose Luis and Voos, Holger},
-  journal={arXiv preprint arXiv:2503.01783},
-  year={2025},
-  doi={https://doi.org/10.48550/arXiv.2503.01783}
+  journal={IEEE Robotics and Automation Letters},
+  volume={11},
+  number={8},
+  pages={9239-9246},
+  year={2026},
+  doi={https://doi.org/10.1109/LRA.2026.3703649}
 }
 ```
 
