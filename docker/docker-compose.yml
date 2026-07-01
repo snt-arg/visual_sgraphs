@@ -57,6 +57,8 @@ services:
       - "/home/$USERNAME/workspaces/dv_sgraphs/src/keyframe_depth_validator:/home/$USERNAME/workspace/src/keyframe_depth_validator:rw"
       # Working Directory - Dynamic keypoint 3D lifter (** MODIFY **)
       - "/home/$USERNAME/workspaces/dv_sgraphs/src/dynamic_keypoint_3d_lifter:/home/$USERNAME/workspace/src/dynamic_keypoint_3d_lifter:rw"
+      # Working Directory - Object motion estimator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/object_motion_estimator:/home/$USERNAME/workspace/src/object_motion_estimator:rw"
       # Data Directory (** MODIFY **)
       - "/media/$USERNAME/muffin/datasets:/home/$USERNAME/datasets:rw"
     network_mode: "host"
@@ -85,5 +87,7 @@ services:
       - "/home/$USERNAME/workspaces/dv_sgraphs/src/keyframe_depth_validator:/home/$USERNAME/workspace/src/keyframe_depth_validator:rw"
       # Working Directory - Dynamic keypoint 3D lifter (** MODIFY **)
       - "/home/$USERNAME/workspaces/dv_sgraphs/src/dynamic_keypoint_3d_lifter:/home/$USERNAME/workspace/src/dynamic_keypoint_3d_lifter:rw"
+      # Working Directory - Object motion estimator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/object_motion_estimator:/home/$USERNAME/workspace/src/object_motion_estimator:rw"
     entrypoint: ""
     restart: "no"

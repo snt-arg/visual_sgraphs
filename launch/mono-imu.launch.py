@@ -32,6 +32,11 @@ def generate_launch_description():
         "config",
         "config.yaml",
     )
+    object_motion_estimator_config = os.path.join(
+        get_package_share_directory("object_motion_estimator"),
+        "config",
+        "config.yaml",
+    )
 
     return LaunchDescription(
         [
@@ -54,7 +59,8 @@ def generate_launch_description():
             DeclareLaunchArgument("launch_object_track_manager", default_value="true"),
             DeclareLaunchArgument("launch_track_outlier_rejector", default_value="true"),
             DeclareLaunchArgument("launch_dynamic_keypoint_3d_lifter", default_value="true"),
-            DeclareLaunchArgument("launch_dynamic_keypoint_interpolator", default_value="false"),
+            DeclareLaunchArgument("launch_dynamic_keypoint_interpolator", default_value="true"),
+            DeclareLaunchArgument("launch_object_motion_estimator", default_value="true"),
             DeclareLaunchArgument(
                 "keyframe_depth_model_path",
                 default_value=(
@@ -153,6 +159,10 @@ def generate_launch_description():
                 default_value="0.25",
             ),
             DeclareLaunchArgument(
+                "dynamic_keypoint_3d_lifter_max_lift_distance_m",
+                default_value="7.0",
+            ),
+            DeclareLaunchArgument(
                 "dynamic_keypoint_3d_lifter_publish_debug_image",
                 default_value="true",
             ),
@@ -183,6 +193,34 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "dynamic_keypoint_interpolator_publish_debug_image",
                 default_value="true",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_input_mode",
+                default_value="keyframe_only",
+                description=(
+                    "Phase 4 input mode: keyframe_only, keyframe_and_interpolated, "
+                    "or keyframe_and_interpolated_weighted"
+                ),
+            ),
+            DeclareLaunchArgument(
+                "object_motion_output_topic",
+                default_value="/object_motion",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_queue_depth",
+                default_value="300",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_gap_timeout_ms",
+                default_value="2000",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_publish_debug_image",
+                default_value="true",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_arrow_scale",
+                default_value="1.0",
             ),
             DeclareLaunchArgument("keyframe_depth_sky_handling", default_value="true"),
             DeclareLaunchArgument(
@@ -521,6 +559,12 @@ def generate_launch_description():
                             ),
                             value_type=float,
                         ),
+                        "max_lift_distance_m": ParameterValue(
+                            LaunchConfiguration(
+                                "dynamic_keypoint_3d_lifter_max_lift_distance_m"
+                            ),
+                            value_type=float,
+                        ),
                         "publish_debug_image": ParameterValue(
                             LaunchConfiguration(
                                 "dynamic_keypoint_3d_lifter_publish_debug_image"
@@ -579,6 +623,49 @@ def generate_launch_description():
                                 "dynamic_keypoint_interpolator_publish_debug_image"
                             ),
                             value_type=bool,
+                        ),
+                    },
+                ],
+            ),
+            # Object Motion Estimator
+            Node(
+                condition=IfCondition(
+                    LaunchConfiguration("launch_object_motion_estimator")
+                ),
+                package="object_motion_estimator",
+                executable="object_motion_estimator_node",
+                name="object_motion_estimator",
+                output="screen",
+                parameters=[
+                    object_motion_estimator_config,
+                    {
+                        "use_sim_time": LaunchConfiguration("offline"),
+                        "input_mode": LaunchConfiguration("object_motion_input_mode"),
+                        "dynamic_object_points_topic": LaunchConfiguration(
+                            "dynamic_keypoint_3d_lifter_output_topic"
+                        ),
+                        "interpolated_points_topic": LaunchConfiguration(
+                            "dynamic_keypoint_interpolator_output_topic"
+                        ),
+                        "camera_pose_topic": "/vs_graphs/camera_pose",
+                        "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
+                        "image_topic": LaunchConfiguration("rgb_image_topic"),
+                        "output_topic": LaunchConfiguration("object_motion_output_topic"),
+                        "queue_depth": ParameterValue(
+                            LaunchConfiguration("object_motion_queue_depth"),
+                            value_type=int,
+                        ),
+                        "gap_timeout_ms": ParameterValue(
+                            LaunchConfiguration("object_motion_gap_timeout_ms"),
+                            value_type=int,
+                        ),
+                        "publish_debug_image": ParameterValue(
+                            LaunchConfiguration("object_motion_publish_debug_image"),
+                            value_type=bool,
+                        ),
+                        "arrow_scale": ParameterValue(
+                            LaunchConfiguration("object_motion_arrow_scale"),
+                            value_type=float,
                         ),
                     },
                 ],
