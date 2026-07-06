@@ -196,7 +196,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "object_motion_input_mode",
-                default_value="keyframe_only",
+                default_value="keyframe_and_interpolated_weighted",
                 description=(
                     "Phase 4 input mode: keyframe_only, keyframe_and_interpolated, "
                     "or keyframe_and_interpolated_weighted"
@@ -207,6 +207,10 @@ def generate_launch_description():
                 default_value="/object_motion",
             ),
             DeclareLaunchArgument(
+                "object_motion_world_frame_id",
+                default_value="world",
+            ),
+            DeclareLaunchArgument(
                 "object_motion_queue_depth",
                 default_value="300",
             ),
@@ -215,12 +219,48 @@ def generate_launch_description():
                 default_value="2000",
             ),
             DeclareLaunchArgument(
+                "object_motion_trajectory_window_size",
+                default_value="2147483647",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_mad_k",
+                default_value="2.5",
+            ),
+            DeclareLaunchArgument(
                 "object_motion_publish_debug_image",
+                default_value="true",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_publish_markers",
                 default_value="true",
             ),
             DeclareLaunchArgument(
                 "object_motion_arrow_scale",
                 default_value="1.0",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_arrow_time_scale_s",
+                default_value="1.0",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_arrow_lifetime_s",
+                default_value="0.0",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_clear_markers_on_track_lost",
+                default_value="false",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_marker_line_width_m",
+                default_value="0.05",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_marker_sphere_radius_m",
+                default_value="0.08",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_marker_text_height_m",
+                default_value="0.15",
             ),
             DeclareLaunchArgument("keyframe_depth_sky_handling", default_value="true"),
             DeclareLaunchArgument(
@@ -647,10 +687,12 @@ def generate_launch_description():
                         "interpolated_points_topic": LaunchConfiguration(
                             "dynamic_keypoint_interpolator_output_topic"
                         ),
+                        "object_track_events_topic": "/object_tracks/events",
                         "camera_pose_topic": "/vs_graphs/camera_pose",
                         "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
                         "image_topic": LaunchConfiguration("rgb_image_topic"),
                         "output_topic": LaunchConfiguration("object_motion_output_topic"),
+                        "world_frame_id": LaunchConfiguration("object_motion_world_frame_id"),
                         "queue_depth": ParameterValue(
                             LaunchConfiguration("object_motion_queue_depth"),
                             value_type=int,
@@ -659,12 +701,48 @@ def generate_launch_description():
                             LaunchConfiguration("object_motion_gap_timeout_ms"),
                             value_type=int,
                         ),
+                        "trajectory_window_size": ParameterValue(
+                            LaunchConfiguration("object_motion_trajectory_window_size"),
+                            value_type=int,
+                        ),
+                        "mad_k": ParameterValue(
+                            LaunchConfiguration("object_motion_mad_k"),
+                            value_type=float,
+                        ),
                         "publish_debug_image": ParameterValue(
                             LaunchConfiguration("object_motion_publish_debug_image"),
                             value_type=bool,
                         ),
+                        "publish_markers": ParameterValue(
+                            LaunchConfiguration("object_motion_publish_markers"),
+                            value_type=bool,
+                        ),
                         "arrow_scale": ParameterValue(
                             LaunchConfiguration("object_motion_arrow_scale"),
+                            value_type=float,
+                        ),
+                        "arrow_time_scale_s": ParameterValue(
+                            LaunchConfiguration("object_motion_arrow_time_scale_s"),
+                            value_type=float,
+                        ),
+                        "arrow_lifetime_s": ParameterValue(
+                            LaunchConfiguration("object_motion_arrow_lifetime_s"),
+                            value_type=float,
+                        ),
+                        "clear_markers_on_track_lost": ParameterValue(
+                            LaunchConfiguration("object_motion_clear_markers_on_track_lost"),
+                            value_type=bool,
+                        ),
+                        "marker_line_width_m": ParameterValue(
+                            LaunchConfiguration("object_motion_marker_line_width_m"),
+                            value_type=float,
+                        ),
+                        "marker_sphere_radius_m": ParameterValue(
+                            LaunchConfiguration("object_motion_marker_sphere_radius_m"),
+                            value_type=float,
+                        ),
+                        "marker_text_height_m": ParameterValue(
+                            LaunchConfiguration("object_motion_marker_text_height_m"),
                             value_type=float,
                         ),
                     },
