@@ -121,26 +121,10 @@ RUN --mount=type=ssh git clone git@github.com:snt-arg/visual_sgraphs.git
 RUN --mount=type=ssh git clone git@github.com:snt-arg/situational_graphs_msgs.git
 RUN --mount=type=ssh git clone git@github.com:snt-arg/scene_segment_ros.git
 RUN --mount=type=ssh git clone -b r/4.57.7 git@github.com:IntelRealSense/realsense-ros.git
-# RUN --mount=type=ssh git clone -b humble-devel git@github.com:pal-robotics/aruco_ros.git
-
-# Repositories for GNN-based room detection and reasoning
-# RUN --mount=type=ssh git clone -b develop git@github.com:snt-arg/situational_graphs_wrapper.git
-# RUN --mount=type=ssh git clone -b develop git@github.com:snt-arg/situational_graphs_datasets.git
-# RUN --mount=type=ssh git clone -b develop git@github.com:snt-arg/situational_graphs_reasoning.git
-# RUN --mount=type=ssh git clone -b main git@github.com:snt-arg/situational_graphs_reasoning_msgs.git
 
 # Install the vS-Graphs dependencies
 WORKDIR /home/$USERNAME/workspace/src/visual_sgraphs/docker
-RUN pip3 install --break-system-packages --ignore-installed -r requirements.txt
-
-# [Hint] Temp. fix for installing ROS2 Humble repositories (GNN-based room detection) in Jazzy
-# (Read more: https://github.com/ros2/ros2/issues/1702)
-# RUN pip3 install --break-system-packages setuptools==79.0.1
-
-# Install reasoning dependencies
-# RUN pip3 install --break-system-packages shapely==2.1.1 torch-geometric==2.6.1 transforms3d==0.4.2
-# RUN mkdir -p /home/$USERNAME/workspace/install/situational_graphs_reasoning/share/situational_graphs_reasoning/reports \
-#     && chown -R $USERNAME:$USERNAME /home/$USERNAME/workspace/install/situational_graphs_reasoning/share/situational_graphs_reasoning/reports
+RUN pip3 install --break-system-packages -r requirements.txt --upgrade-strategy only-if-needed
 
 WORKDIR /home/$USERNAME/workspace/src/
 
