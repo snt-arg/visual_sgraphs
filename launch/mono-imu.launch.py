@@ -53,14 +53,15 @@ def generate_launch_description():
             DeclareLaunchArgument("colored_pointcloud", default_value="true"),
             DeclareLaunchArgument("visualize_segmented_scene", default_value="true"),
             DeclareLaunchArgument("use_aux_depth", default_value="false"),
-            DeclareLaunchArgument("launch_keyframe_depth_estimator", default_value="false"),
-            DeclareLaunchArgument("launch_keyframe_depth_validator", default_value="true"),
+            DeclareLaunchArgument("launch_keyframe_depth_estimator", default_value="false"), # Pipeline DA3
+            DeclareLaunchArgument("launch_keyframe_depth_validator", default_value="false"), # Pipeline DA3
             DeclareLaunchArgument("launch_dynamic_keypoint_tracker", default_value="true"),
             DeclareLaunchArgument("launch_object_track_manager", default_value="true"),
             DeclareLaunchArgument("launch_track_outlier_rejector", default_value="true"),
-            DeclareLaunchArgument("launch_dynamic_keypoint_3d_lifter", default_value="true"),
-            DeclareLaunchArgument("launch_dynamic_keypoint_interpolator", default_value="true"),
-            DeclareLaunchArgument("launch_object_motion_estimator", default_value="true"),
+            DeclareLaunchArgument("launch_dynamic_keypoint_3d_lifter", default_value="false"),    # Pipeline DA3 
+            DeclareLaunchArgument("launch_dynamic_keypoint_interpolator", default_value="false"), # Pipeline DA3
+            DeclareLaunchArgument("launch_object_motion_estimator", default_value="false"),  # Pipeline DA3
+            DeclareLaunchArgument("launch_object_ba_tracker", default_value="true"), # Pipeline BA
             DeclareLaunchArgument(
                 "keyframe_depth_model_path",
                 default_value=(
@@ -204,7 +205,11 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "object_motion_output_topic",
-                default_value="/object_motion",
+                default_value="/object_motion/depth_model",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_markers_topic",
+                default_value="/object_motion/depth_model/markers",
             ),
             DeclareLaunchArgument(
                 "object_motion_world_frame_id",
@@ -225,6 +230,10 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "object_motion_mad_k",
                 default_value="2.5",
+            ),
+            DeclareLaunchArgument(
+                "object_motion_ema_alpha_h",
+                default_value="0.4",
             ),
             DeclareLaunchArgument(
                 "object_motion_publish_debug_image",
@@ -261,6 +270,62 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "object_motion_marker_text_height_m",
                 default_value="0.15",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_output_topic",
+                default_value="/object_motion/ba",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_markers_topic",
+                default_value="/object_motion/ba/markers",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_window_size",
+                default_value="20",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_min_window_frames",
+                default_value="5",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_min_point_observations",
+                default_value="3",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_sigma_pixel",
+                default_value="1.5",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_huber_delta_pixels",
+                default_value="3.0",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_num_iterations",
+                default_value="10",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_time_budget_ms",
+                default_value="15.0",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_min_camera_displacement_m",
+                default_value="0.05",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_alpha_scale",
+                default_value="0.3",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_pose_topic_timeout_s",
+                default_value="5.0",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_pose_sync_tolerance_ms",
+                default_value="10.0",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_mad_k",
+                default_value="2.5",
             ),
             DeclareLaunchArgument("keyframe_depth_sky_handling", default_value="true"),
             DeclareLaunchArgument(
@@ -692,6 +757,7 @@ def generate_launch_description():
                         "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
                         "image_topic": LaunchConfiguration("rgb_image_topic"),
                         "output_topic": LaunchConfiguration("object_motion_output_topic"),
+                        "markers_topic": LaunchConfiguration("object_motion_markers_topic"),
                         "world_frame_id": LaunchConfiguration("object_motion_world_frame_id"),
                         "queue_depth": ParameterValue(
                             LaunchConfiguration("object_motion_queue_depth"),
@@ -709,6 +775,10 @@ def generate_launch_description():
                             LaunchConfiguration("object_motion_mad_k"),
                             value_type=float,
                         ),
+                        "ema_alpha_h": ParameterValue(
+                            LaunchConfiguration("object_motion_ema_alpha_h"),
+                            value_type=float,
+                        ),
                         "publish_debug_image": ParameterValue(
                             LaunchConfiguration("object_motion_publish_debug_image"),
                             value_type=bool,
@@ -720,6 +790,115 @@ def generate_launch_description():
                         "arrow_scale": ParameterValue(
                             LaunchConfiguration("object_motion_arrow_scale"),
                             value_type=float,
+                        ),
+                        "arrow_time_scale_s": ParameterValue(
+                            LaunchConfiguration("object_motion_arrow_time_scale_s"),
+                            value_type=float,
+                        ),
+                        "arrow_lifetime_s": ParameterValue(
+                            LaunchConfiguration("object_motion_arrow_lifetime_s"),
+                            value_type=float,
+                        ),
+                        "clear_markers_on_track_lost": ParameterValue(
+                            LaunchConfiguration("object_motion_clear_markers_on_track_lost"),
+                            value_type=bool,
+                        ),
+                        "marker_line_width_m": ParameterValue(
+                            LaunchConfiguration("object_motion_marker_line_width_m"),
+                            value_type=float,
+                        ),
+                        "marker_sphere_radius_m": ParameterValue(
+                            LaunchConfiguration("object_motion_marker_sphere_radius_m"),
+                            value_type=float,
+                        ),
+                        "marker_text_height_m": ParameterValue(
+                            LaunchConfiguration("object_motion_marker_text_height_m"),
+                            value_type=float,
+                        ),
+                    },
+                ],
+            ),
+            # Object BA Tracker (Pipeline B)
+            Node(
+                condition=IfCondition(
+                    LaunchConfiguration("launch_object_ba_tracker")
+                ),
+                package="object_motion_estimator",
+                executable="object_ba_tracker_node",
+                name="object_ba_tracker",
+                output="screen",
+                parameters=[
+                    object_motion_estimator_config,
+                    {
+                        "use_sim_time": LaunchConfiguration("offline"),
+                        "object_tracks_topic": LaunchConfiguration(
+                            "dynamic_keypoint_filtered_object_tracks_topic"
+                        ),
+                        "camera_pose_topic": "/vs_graphs/camera_pose",
+                        "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
+                        "object_track_events_topic": "/object_tracks/events",
+                        "output_topic": LaunchConfiguration("object_ba_output_topic"),
+                        "markers_topic": LaunchConfiguration("object_ba_markers_topic"),
+                        "world_frame_id": LaunchConfiguration("object_motion_world_frame_id"),
+                        "queue_depth": ParameterValue(
+                            LaunchConfiguration("object_motion_queue_depth"),
+                            value_type=int,
+                        ),
+                        "window_size": ParameterValue(
+                            LaunchConfiguration("object_ba_window_size"),
+                            value_type=int,
+                        ),
+                        "min_window_frames": ParameterValue(
+                            LaunchConfiguration("object_ba_min_window_frames"),
+                            value_type=int,
+                        ),
+                        "min_point_observations": ParameterValue(
+                            LaunchConfiguration("object_ba_min_point_observations"),
+                            value_type=int,
+                        ),
+                        "sigma_pixel": ParameterValue(
+                            LaunchConfiguration("object_ba_sigma_pixel"),
+                            value_type=float,
+                        ),
+                        "huber_delta_pixels": ParameterValue(
+                            LaunchConfiguration("object_ba_huber_delta_pixels"),
+                            value_type=float,
+                        ),
+                        "num_iterations": ParameterValue(
+                            LaunchConfiguration("object_ba_num_iterations"),
+                            value_type=int,
+                        ),
+                        "ba_time_budget_ms": ParameterValue(
+                            LaunchConfiguration("object_ba_time_budget_ms"),
+                            value_type=float,
+                        ),
+                        "min_camera_displacement_m": ParameterValue(
+                            LaunchConfiguration("object_ba_min_camera_displacement_m"),
+                            value_type=float,
+                        ),
+                        "alpha_scale": ParameterValue(
+                            LaunchConfiguration("object_ba_alpha_scale"),
+                            value_type=float,
+                        ),
+                        "pose_topic_timeout_s": ParameterValue(
+                            LaunchConfiguration("object_ba_pose_topic_timeout_s"),
+                            value_type=float,
+                        ),
+                        "pose_sync_tolerance_ms": ParameterValue(
+                            LaunchConfiguration("object_ba_pose_sync_tolerance_ms"),
+                            value_type=float,
+                        ),
+                        "mad_k": ParameterValue(
+                            LaunchConfiguration("object_ba_mad_k"),
+                            value_type=float,
+                        ),
+                        "trajectory_window_size": ParameterValue(
+                            LaunchConfiguration("object_motion_trajectory_window_size"),
+                            value_type=int,
+                        ),
+                        "publish_markers": ParameterValue(
+                            LaunchConfiguration("object_motion_publish_markers"),
+                            value_type=bool,
                         ),
                         "arrow_time_scale_s": ParameterValue(
                             LaunchConfiguration("object_motion_arrow_time_scale_s"),
