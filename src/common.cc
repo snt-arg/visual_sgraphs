@@ -53,6 +53,7 @@ rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pubCameraPose;
 rclcpp::Publisher<segmenter_ros::msg::VSGraphDataMsg>::SharedPtr pubKFImage;
 rclcpp::Publisher<keyframe_depth_estimator::msg::KeyFrameCreated>::SharedPtr pubKeyFrameCreated;
 rclcpp::Publisher<keyframe_depth_validator::msg::StaticMapPointCorrespondences>::SharedPtr pubKeyFrameStaticMapPoints;
+rclcpp::Publisher<keyframe_depth_validator::msg::StaticMapPoints>::SharedPtr pubStaticMapPoints;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubBuildingComponents;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubTrackedMappoints;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubFreespaceCluster;
@@ -218,6 +219,9 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     pubKeyFrameStaticMapPoints =
         node->create_publisher<keyframe_depth_validator::msg::StaticMapPointCorrespondences>(
             "/orbslam3/keyframe_static_map_points", 10);
+    pubStaticMapPoints =
+        node->create_publisher<keyframe_depth_validator::msg::StaticMapPoints>(
+            "/orbslam3/static_map_points", 10);
     pubTrackedMappoints = node->create_publisher<sensor_msgs::msg::PointCloud2>(node_name + "/tracked_points", 1);
     pubWorldFramePointCloud = node->create_publisher<sensor_msgs::msg::PointCloud2>(node_name + "/points_map", 1);
     pubKeyFrameMarker = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/kf_markers", 1);
@@ -263,6 +267,7 @@ void publishTopics(rclcpp::Time msgTime, Eigen::Vector3f Wbb, const sensor_msgs:
 
     // Common topics
     publishCameraPose(Twc, msgTime);
+    publishStaticMapPoints(pSLAM->GetTrackedMapPoints(), msgTime);
     publishTFTransform(Twc, frameWorld, frameCamera, msgTime);
     publishFramePointCloud(Twc, msgPCL, msgTime);
 
@@ -696,6 +701,52 @@ void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *> trackedMapPoints, r
 {
     sensor_msgs::msg::PointCloud2 cloud = mapPointToPointcloud(trackedMapPoints, msgTime);
     pubTrackedMappoints->publish(cloud);
+}
+
+void publishStaticMapPoints(std::vector<ORB_SLAM3::MapPoint *> trackedMapPoints, rclcpp::Time msgTime)
+{
+    if (!pubStaticMapPoints)
+        return;
+
+    keyframe_depth_validator::msg::StaticMapPoints points_msg;
+    points_msg.header.stamp = msgTime;
+    points_msg.header.frame_id = frameWorld;
+
+    const std::vector<cv::KeyPoint> &trackedKeyPointsUn = pSLAM->GetTrackedKeyPointsUn();
+    const Sophus::SE3f Tcw = pSLAM->GetCamTwc().inverse();
+
+    const std::size_t count = std::min(trackedMapPoints.size(), trackedKeyPointsUn.size());
+    points_msg.point_ids.reserve(count);
+    points_msg.positions_world.reserve(count);
+    points_msg.pixels.reserve(count);
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        ORB_SLAM3::MapPoint *map_point = trackedMapPoints[i];
+        if (map_point == nullptr || map_point->isBad())
+            continue;
+
+        const Eigen::Vector3f pos_world = map_point->GetWorldPos();
+        const Eigen::Vector3f p_cam = Tcw * pos_world;
+        if (!std::isfinite(p_cam.z()) || p_cam.z() <= 0.0F)
+            continue;
+
+        geometry_msgs::msg::Point p_world_msg;
+        p_world_msg.x = static_cast<double>(pos_world.x());
+        p_world_msg.y = static_cast<double>(pos_world.y());
+        p_world_msg.z = static_cast<double>(pos_world.z());
+
+        geometry_msgs::msg::Point p_pixel_msg;
+        p_pixel_msg.x = static_cast<double>(trackedKeyPointsUn[i].pt.x);
+        p_pixel_msg.y = static_cast<double>(trackedKeyPointsUn[i].pt.y);
+        p_pixel_msg.z = 0.0;
+
+        points_msg.point_ids.push_back(static_cast<uint32_t>(map_point->mnId));
+        points_msg.positions_world.push_back(p_world_msg);
+        points_msg.pixels.push_back(p_pixel_msg);
+    }
+
+    pubStaticMapPoints->publish(points_msg);
 }
 
 void publishFramePointCloud(Sophus::SE3f Twc, const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msgPCL, rclcpp::Time msgTime)

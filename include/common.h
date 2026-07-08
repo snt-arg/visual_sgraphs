@@ -80,6 +80,7 @@
 #include <segmenter_ros/msg/segmenter_data_msg.hpp>
 #include <keyframe_depth_estimator/msg/key_frame_created.hpp>
 #include <keyframe_depth_validator/msg/static_map_point_correspondences.hpp>
+#include <keyframe_depth_validator/msg/static_map_points.hpp>
 #include <nav_msgs/msg/path.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 #include <pcl_conversions/pcl_conversions.h>
@@ -152,6 +153,7 @@ extern rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdometry;
 extern rclcpp::Publisher<segmenter_ros::msg::VSGraphDataMsg>::SharedPtr pubKFImage;
 extern rclcpp::Publisher<keyframe_depth_estimator::msg::KeyFrameCreated>::SharedPtr pubKeyFrameCreated;
 extern rclcpp::Publisher<keyframe_depth_validator::msg::StaticMapPointCorrespondences>::SharedPtr pubKeyFrameStaticMapPoints;
+extern rclcpp::Publisher<keyframe_depth_validator::msg::StaticMapPoints>::SharedPtr pubStaticMapPoints;
 extern rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pubCameraPose;
 extern rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubAllMappoints;
 extern rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubTrackedMappoints;
@@ -181,6 +183,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *>, rclcpp::Time);
 void publishTFTransform(Sophus::SE3f, string, string, rclcpp::Time);
 void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *>, rclcpp::Time);
 void publishTrackedPoints(std::vector<ORB_SLAM3::MapPoint *>, rclcpp::Time);
+void publishStaticMapPoints(std::vector<ORB_SLAM3::MapPoint *>, rclcpp::Time);
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, rclcpp::Time);
 void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *>, rclcpp::Time);
 void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *>, rclcpp::Time);

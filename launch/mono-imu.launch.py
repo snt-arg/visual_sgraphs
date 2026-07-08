@@ -289,7 +289,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "object_ba_min_point_observations",
-                default_value="3",
+                default_value="6",
             ),
             DeclareLaunchArgument(
                 "object_ba_sigma_pixel",
@@ -326,6 +326,18 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "object_ba_mad_k",
                 default_value="2.5",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_max_landmark_anchor_norm_m",
+                default_value="20.0",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_max_landmark_reprojection_error_px",
+                default_value="8.0",
+            ),
+            DeclareLaunchArgument(
+                "object_ba_min_scale_object_displacement_m",
+                default_value="0.10",
             ),
             DeclareLaunchArgument("keyframe_depth_sky_handling", default_value="true"),
             DeclareLaunchArgument(
@@ -890,6 +902,18 @@ def generate_launch_description():
                         ),
                         "mad_k": ParameterValue(
                             LaunchConfiguration("object_ba_mad_k"),
+                            value_type=float,
+                        ),
+                        "max_landmark_anchor_norm_m": ParameterValue(
+                            LaunchConfiguration("object_ba_max_landmark_anchor_norm_m"),
+                            value_type=float,
+                        ),
+                        "max_landmark_reprojection_error_px": ParameterValue(
+                            LaunchConfiguration("object_ba_max_landmark_reprojection_error_px"),
+                            value_type=float,
+                        ),
+                        "min_scale_object_displacement_m": ParameterValue(
+                            LaunchConfiguration("object_ba_min_scale_object_displacement_m"),
                             value_type=float,
                         ),
                         "trajectory_window_size": ParameterValue(
