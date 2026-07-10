@@ -879,14 +879,26 @@ int main(int argc, char **argv)
     auto igb   = std::make_shared<ImageGrabber>(state, auxDepthOptions, segmentOptions);
 
     // --- QoS (sensor data profile) ---
+    // rmw_qos_profile_sensor_data defaults to a keep-last depth of 5, which at ~400Hz is only a
+    // ~12.5ms buffer -- any delay servicing the IMU callback longer than that (e.g. the executor
+    // busy on a slower vision callback, see imuCallbackGroup below) causes DDS to silently drop
+    // the backlog before GrabImu ever runs, starving SyncWithImu's ready_imu_count even though
+    // the true publish rate is far higher than the ~30Hz camera rate would suggest is necessary.
+    // Widened to 0.5s worth of samples to absorb realistic scheduling jitter/bursts.
     rclcpp::QoS sensorQos(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_sensor_data));
     sensorQos.reliability(rclcpp::ReliabilityPolicy::BestEffort);
     sensorQos.durability(rclcpp::DurabilityPolicy::Volatile);
+    sensorQos.keep_last(200);
 
     using sensor_msgs::msg::Image;
     using sensor_msgs::msg::Imu;
 
-    auto imuCallbackGroup = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    // automatically_add_to_executor_with_node = false: this group is serviced by its own
+    // dedicated executor/thread below instead of the shared 4-thread pool, so it must not also
+    // be picked up by executor.add_node(node) below (a callback group can only belong to one
+    // executor at a time).
+    auto imuCallbackGroup = node->create_callback_group(
+      rclcpp::CallbackGroupType::MutuallyExclusive, /*automatically_add_to_executor_with_node=*/false);
     auto imageCallbackGroup = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     auto auxDepthCallbackGroup = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     auto instanceMaskCallbackGroup = node->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -952,6 +964,14 @@ int main(int argc, char **argv)
     // --- Sync thread ---
     std::thread syncThread(&ImageGrabber::SyncWithImu, igb);
 
+    // Dedicated executor + thread for imuCallbackGroup: isolates high-rate (~400Hz) IMU
+    // servicing from the heavier per-frame vision callbacks (image/instanceMask/semantic/
+    // voxblox), which share only 4 threads on the executor below and can otherwise starve the
+    // IMU callback long enough to overrun sensorQos's buffer and silently drop samples.
+    rclcpp::executors::SingleThreadedExecutor imuExecutor;
+    imuExecutor.add_callback_group(imuCallbackGroup, node->get_node_base_interface());
+    std::thread imuThread([&imuExecutor]() { imuExecutor.spin(); });
+
     rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 4);
     executor.add_node(node);
     executor.spin();
@@ -959,6 +979,8 @@ int main(int argc, char **argv)
     igb->mustStop = true;
     state->image_ready_cv.notify_all();  // unblock SyncWithImu if it's waiting
     syncThread.join();
+    imuExecutor.cancel();
+    imuThread.join();
     pSLAM->Shutdown();
 
     rclcpp::shutdown();
