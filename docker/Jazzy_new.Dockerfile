@@ -234,9 +234,26 @@ RUN python3 -m pip install --user --break-system-packages --no-cache-dir --force
   torch torchvision torchaudio \
   --index-url https://download.pytorch.org/whl/cu126
 
+# Purge numpy/scipy from BOTH the user site and the system dist-packages before
+# reinstalling. Earlier layers install numpy/scipy system-wide with
+# `--ignore-installed`, which does not clean up files from a differently-laid-out
+# previous version. If those stale files are left in dist-packages, they can
+# shadow the pinned --user install below (e.g. a stray flat
+# scipy/sparse/linalg/_propack*.so shadowing the real _propack/ package),
+# breaking `import scipy` at runtime even though `pip list` looks correct.
 RUN rm -rf ~/.local/lib/python3.12/site-packages/numpy \
        ~/.local/lib/python3.12/site-packages/numpy-*.dist-info \
-       ~/.local/lib/python3.12/site-packages/numpy.libs
+       ~/.local/lib/python3.12/site-packages/numpy.libs \
+       ~/.local/lib/python3.12/site-packages/scipy \
+       ~/.local/lib/python3.12/site-packages/scipy-*.dist-info \
+       ~/.local/lib/python3.12/site-packages/scipy.libs
+RUN sudo rm -rf \
+  /usr/local/lib/python3.12/dist-packages/numpy \
+  /usr/local/lib/python3.12/dist-packages/numpy-* \
+  /usr/local/lib/python3.12/dist-packages/numpy.libs \
+  /usr/local/lib/python3.12/dist-packages/scipy \
+  /usr/local/lib/python3.12/dist-packages/scipy-* \
+  /usr/local/lib/python3.12/dist-packages/scipy.libs
 
 RUN python3 -m pip install --user --break-system-packages --no-cache-dir "numpy==1.26.4"
 RUN python3 -m pip install --user --break-system-packages --no-cache-dir --force-reinstall --no-deps \
