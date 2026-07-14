@@ -22,6 +22,8 @@
 
 #include "common.h"
 #include <cmath>
+#include <set>
+#include <unordered_map>
 #include <rclcpp/rclcpp.hpp>
 
 // Variables for ORB-SLAM3
@@ -66,6 +68,41 @@ rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubKeyFrameMa
 rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubFiducialMarker;
 rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubStructuralElements;
 rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr pubAllWalls_legacy;
+rclcpp::Publisher<vs_graphs::msg::MapResetEvent>::SharedPtr pubMapReset;
+rclcpp::Publisher<vs_graphs::msg::MapReadyEvent>::SharedPtr pubMapReady;
+
+// Marker ids published in the previous cycle, keyed by RViz marker namespace. An entity stops
+// appearing in the SLAM system's GetAllX() lists either because it was individually pruned, or
+// because its owning map is no longer the active one (e.g. after a tracking-loss reset) -- in
+// both cases the corresponding marker(s) must be explicitly DELETEd, since marker.lifetime is 0
+// (forever) and RViz otherwise keeps drawing them indefinitely.
+std::unordered_map<std::string, std::set<int>> lastPublishedMarkerIds;
+
+// Appends DELETE markers for any id previously published under `ns` that is absent from
+// `currentIds` this cycle, then records `currentIds` as the new baseline for `ns`.
+void appendDeletedMarkers(
+    visualization_msgs::msg::MarkerArray &markerArray,
+    const std::string &ns,
+    const std::set<int> &currentIds,
+    const std::string &frameId,
+    const rclcpp::Time &stamp)
+{
+    std::set<int> &previousIds = lastPublishedMarkerIds[ns];
+    for (int id : previousIds)
+    {
+        if (currentIds.count(id))
+            continue;
+
+        visualization_msgs::msg::Marker deleteMarker;
+        deleteMarker.ns = ns;
+        deleteMarker.id = id;
+        deleteMarker.header.frame_id = frameId;
+        deleteMarker.header.stamp = stamp;
+        deleteMarker.action = visualization_msgs::msg::Marker::DELETE;
+        markerArray.markers.push_back(deleteMarker);
+    }
+    previousIds = currentIds;
+}
 
 void saveMapService(
     std::shared_ptr<vs_graphs::srv::SaveMap::Request> req,
@@ -245,6 +282,16 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     // Structural Elements
     pubStructuralElements = node->create_publisher<visualization_msgs::msg::MarkerArray>(node_name + "/structural_elements", 1);
 
+    // Map reset notifications, for downstream nodes that keep their own per-map state
+    pubMapReset = node->create_publisher<vs_graphs::msg::MapResetEvent>(node_name + "/map_reset", 1);
+
+    // Map readiness (scale/IMU initialized), so downstream nodes know when it's safe to start
+    // creating entities/tracks. Unlike the other publishers here, this uses transient_local
+    // ("latched") durability: readiness is a level, not a pure edge, so a node that (re)connects
+    // later must learn the current state immediately instead of waiting for the next transition.
+    pubMapReady = node->create_publisher<vs_graphs::msg::MapReadyEvent>(
+        node_name + "/map_ready", rclcpp::QoS(1).transient_local());
+
     // Get body odometry if IMU data is also available
     if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
         sensorType == ORB_SLAM3::System::IMU_RGBD)
@@ -257,8 +304,78 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     tfListener_ = std::make_shared<tf2_ros::TransformListener>(*tfBuffer_);
 }
 
+// Announces when the current active map changes (tracking-loss reset, new map created), so that
+// downstream nodes keeping their own per-map/per-track state (e.g. object_motion_estimator) can
+// clear it instead of silently mixing data across two unrelated coordinate frames. Detecting this
+// needs no core changes: Map::GetId() is already a stable, globally unique, monotonically
+// increasing id assigned once per Map object.
+void publishMapResetIfChanged(rclcpp::Time msgTime)
+{
+    static uint64_t lastMapId = std::numeric_limits<uint64_t>::max(); // sentinel: nothing seen yet
+    static uint64_t resetCount = 0;
+
+    uint64_t currentMapId = pSLAM->GetCurrentMap()->GetId();
+    if (currentMapId == lastMapId)
+        return;
+
+    // Only the transition to a *different already-seen-once* map is a reset; the very first map
+    // observed at startup is not.
+    if (lastMapId != std::numeric_limits<uint64_t>::max())
+    {
+        vs_graphs::msg::MapResetEvent event;
+        event.header.stamp = msgTime;
+        event.header.frame_id = frameWorld;
+        event.previous_map_id = lastMapId;
+        event.current_map_id = currentMapId;
+        event.reset_count = ++resetCount;
+        pubMapReset->publish(event);
+    }
+    lastMapId = currentMapId;
+}
+
+// Announces whether the current map is safe to create entities/tracks against -- non-inertial
+// sensors are always ready once a map exists (no separate scale phase); inertial sensors aren't
+// ready until GetIniertialBA2() (scale/gravity actually converged, not just the earliest
+// bias-only isImuInitialized() stage -- mirrors the core-side guard in Atlas::AddMapDoor etc. and
+// the existing precedent for this exact pairing in Tracking.cc). Publishes once per map (whatever
+// the state is at first sight) and again only on each actual true/false flip thereafter.
+void publishMapReadyIfChanged(rclcpp::Time msgTime)
+{
+    static uint64_t lastMapId = std::numeric_limits<uint64_t>::max();
+    static bool lastPublishedReady = false;
+    static bool havePublishedForThisMap = false;
+
+    ORB_SLAM3::Map *pMap = pSLAM->GetCurrentMap();
+    uint64_t currentMapId = pMap->GetId();
+    bool currentlyReady = !pMap->IsInertial() || (pMap->isImuInitialized() && pMap->GetIniertialBA2());
+
+    if (currentMapId != lastMapId)
+    {
+        lastMapId = currentMapId;
+        havePublishedForThisMap = false;
+    }
+    if (havePublishedForThisMap && currentlyReady == lastPublishedReady)
+        return;
+
+    vs_graphs::msg::MapReadyEvent event;
+    event.header.stamp = msgTime;
+    event.header.frame_id = frameWorld;
+    event.map_id = currentMapId;
+    event.is_ready = currentlyReady;
+    pubMapReady->publish(event);
+    lastPublishedReady = currentlyReady;
+    havePublishedForThisMap = true;
+}
+
 void publishTopics(rclcpp::Time msgTime, Eigen::Vector3f Wbb, const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msgPCL)
 {
+    // Detect and announce a map reset/readiness change as early as possible in the cycle, even if
+    // the current pose is temporarily invalid (NaN, handled below) -- downstream consumers need to
+    // know their world-frame assumptions broke (or that it's now safe to resume) right away, not
+    // only once tracking recovers.
+    publishMapResetIfChanged(msgTime);
+    publishMapReadyIfChanged(msgTime);
+
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
 
     // Avoid publishing NaN
@@ -781,13 +898,16 @@ void publishAllPoints(std::vector<ORB_SLAM3::MapPoint *> allMapPoints, rclcpp::T
 void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, rclcpp::Time msgTime)
 {
     sort(keyframe_vec.begin(), keyframe_vec.end(), ORB_SLAM3::KeyFrame::lId);
-    if (keyframe_vec.size() == 0)
-        return;
 
+    // kf_markers is a single SPHERE_LIST marker (fixed id) whose points are fully replaced
+    // below, so an empty keyframe_vec (e.g. right after a map reset) must still be published
+    // -- with an empty points list -- rather than skipped, otherwise the previous map's whole
+    // trajectory marker is left stuck on screen forever (marker lifetime is 0).
     visualization_msgs::msg::MarkerArray markerArray;
 
     visualization_msgs::msg::Marker kf_markers;
     kf_markers.header.frame_id = frameWorld;
+    kf_markers.header.stamp = msgTime;
     kf_markers.ns = "kf_markers";
     kf_markers.type = visualization_msgs::msg::Marker::SPHERE_LIST;
     kf_markers.action = visualization_msgs::msg::Marker::ADD;
@@ -851,17 +971,17 @@ void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *> keyframe_vec, rcl
 
 void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, rclcpp::Time msgTime)
 {
-    int numMarkers = markers.size();
-    if (numMarkers == 0)
-        return;
-
     visualization_msgs::msg::MarkerArray markerArray;
-    markerArray.markers.resize(numMarkers);
+    std::set<int> currentIds;
+    rclcpp::Time now = rclcpp::Clock().now(); // rclcpp::Time().now();
 
-    for (int idx = 0; idx < numMarkers; idx++)
+    for (auto *marker : markers)
     {
+        int id = marker->getId();
+        currentIds.insert(id);
+
         visualization_msgs::msg::Marker fiducial_marker;
-        Sophus::SE3f markerPose = markers[idx]->getGlobalPose();
+        Sophus::SE3f markerPose = marker->getGlobalPose();
 
         fiducial_marker.color.a = 0;
         fiducial_marker.scale.x = 0.2;
@@ -870,8 +990,8 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, rclcpp::Ti
         fiducial_marker.ns = "fiducial_markers";
         fiducial_marker.lifetime = rclcpp::Duration::from_seconds(0);
         fiducial_marker.action = fiducial_marker.ADD;
-        fiducial_marker.id = markerArray.markers.size();
-        fiducial_marker.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
+        fiducial_marker.id = id;
+        fiducial_marker.header.stamp = now;
         fiducial_marker.mesh_use_embedded_materials = true;
         fiducial_marker.header.frame_id = frameBC;
         fiducial_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
@@ -889,23 +1009,23 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *> markers, rclcpp::Ti
         markerArray.markers.push_back(fiducial_marker);
     }
 
+    appendDeletedMarkers(markerArray, "fiducial_markers", currentIds, frameBC, now);
     pubFiducialMarker->publish(markerArray);
 }
 
 void publishDoors(std::vector<ORB_SLAM3::Door *> doors)
 {
-    // If there are no doors, return
-    int numDoors = doors.size();
-    if (numDoors == 0)
-        return;
-
     // Variables
     visualization_msgs::msg::MarkerArray doorArray;
-    doorArray.markers.resize(numDoors);
+    std::set<int> currentIds;
+    rclcpp::Time now = rclcpp::Clock().now();
 
-    for (int idx = 0; idx < numDoors; idx++)
+    for (auto *doorPtr : doors)
     {
-        Sophus::SE3f doorPose = doors[idx]->getGlobalPose();
+        int id = doorPtr->getId();
+        currentIds.insert(id);
+
+        Sophus::SE3f doorPose = doorPtr->getGlobalPose();
         visualization_msgs::msg::Marker door, doorLines, doorLabel;
 
         // Door values
@@ -916,8 +1036,8 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors)
         door.scale.z = 0.5;
         door.action = door.ADD;
         door.lifetime = rclcpp::Duration::from_seconds(0);
-        door.id = doorArray.markers.size();
-        door.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
+        door.id = id;
+        door.header.stamp = now; // rclcpp::Time().now();
         door.mesh_use_embedded_materials = true;
         door.header.frame_id = frameBC;
         door.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
@@ -945,9 +1065,9 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors)
         doorLabel.ns = "doorLabel";
         doorLabel.action = doorLabel.ADD;
         doorLabel.lifetime = rclcpp::Duration::from_seconds(0);
-        doorLabel.text = doors[idx]->getName();
-        doorLabel.id = doorArray.markers.size();
-        doorLabel.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
+        doorLabel.text = doorPtr->getName();
+        doorLabel.id = id;
+        doorLabel.header.stamp = now; // rclcpp::Time().now();
         doorLabel.header.frame_id = frameBC;
         doorLabel.pose.position.x = door.pose.position.x;
         doorLabel.pose.position.z = door.pose.position.z;
@@ -966,15 +1086,15 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors)
         doorLines.ns = "doorLines";
         doorLines.action = doorLines.ADD;
         doorLines.lifetime = rclcpp::Duration::from_seconds(0);
-        doorLines.id = doorArray.markers.size();
-        doorLines.header.stamp = rclcpp::Clock().now(); // rclcpp::Time().now();
+        doorLines.id = id;
+        doorLines.header.stamp = now; // rclcpp::Time().now();
         doorLines.header.frame_id = frameBC;
         doorLines.type = visualization_msgs::msg::Marker::LINE_LIST;
 
         geometry_msgs::msg::Point point1;
-        point1.x = doors[idx]->getMarker()->getGlobalPose().translation().x();
-        point1.y = doors[idx]->getMarker()->getGlobalPose().translation().y();
-        point1.z = doors[idx]->getMarker()->getGlobalPose().translation().z();
+        point1.x = doorPtr->getMarker()->getGlobalPose().translation().x();
+        point1.y = doorPtr->getMarker()->getGlobalPose().translation().y();
+        point1.z = doorPtr->getMarker()->getGlobalPose().translation().z();
         doorLines.points.push_back(point1);
 
         geometry_msgs::msg::Point point2;
@@ -986,16 +1106,14 @@ void publishDoors(std::vector<ORB_SLAM3::Door *> doors)
         doorArray.markers.push_back(doorLines);
     }
 
+    appendDeletedMarkers(doorArray, "doors", currentIds, frameBC, now);
+    appendDeletedMarkers(doorArray, "doorLabel", currentIds, frameBC, now);
+    appendDeletedMarkers(doorArray, "doorLines", currentIds, frameBC, now);
     pubDoor->publish(doorArray);
 }
 
 void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
 {
-    // Publish the planes, if any
-    int numPlanes = planes.size();
-    if (numPlanes == 0)
-        return;
-
     // Check if sufficient time has passed since the last plane publication
     if (msgTime.seconds() - lastPlanePublishTime < 3.0)
         return;
@@ -1004,7 +1122,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
 
     // Variables
     visualization_msgs::msg::MarkerArray planeLabelArray;
-    planeLabelArray.markers.resize(numPlanes);
+    std::set<int> currentPlaneIds;
     visualization_msgs::msg::Marker planeLabel, planeNormal;
     geometry_msgs::msg::Point normalStartPoint, normalEndPoint;
 
@@ -1020,7 +1138,8 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
         Eigen::Vector3d normal = plane->getGlobalEquation().normal();
         const std::string planeLabelText = "Plane#" + std::to_string(plane->getId());
 
-        // If the plane is undefined, skip it
+        // If the plane is undefined, skip it (it is left out of currentPlaneIds, so any
+        // previously-published label/normal for it is auto-deleted by appendDeletedMarkers)
         if (plane->getPlaneType() == ORB_SLAM3::Plane::planeVariant::UNDEFINED)
             continue;
 
@@ -1028,6 +1147,8 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
         const pcl::PointCloud<pcl::PointXYZRGBA>::Ptr planeClouds = plane->getMapClouds();
         if (planeClouds == nullptr || planeClouds->empty())
             continue;
+
+        currentPlaneIds.insert(plane->getId());
 
         for (const auto &point : planeClouds->points)
         {
@@ -1080,7 +1201,7 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
         planeNormal.color.r = color[0] / 255.0;
         planeNormal.color.g = color[1] / 255.0;
         planeNormal.color.b = color[2] / 255.0;
-        planeNormal.id = plane->getId() + numPlanes;
+        planeNormal.id = plane->getId();
         planeNormal.lifetime = rclcpp::Duration::from_seconds(0);
         planeNormal.type = visualization_msgs::msg::Marker::ARROW;
 
@@ -1103,6 +1224,10 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
         planeLabelArray.markers.push_back(planeNormal);
     }
 
+    appendDeletedMarkers(planeLabelArray, "planeLabel", currentPlaneIds, frameBC, msgTime);
+    appendDeletedMarkers(planeLabelArray, "planeNormal", currentPlaneIds, frameBC, msgTime);
+    pubPlaneLabel->publish(planeLabelArray);
+
     if (aggregatedCloud->empty())
         return;
 
@@ -1116,19 +1241,13 @@ void publishPlanes(std::vector<ORB_SLAM3::Plane *> planes, rclcpp::Time msgTime)
 
     // Publish the point cloud
     pubBuildingComponents->publish(cloudMsg);
-    pubPlaneLabel->publish(planeLabelArray);
 }
 
 void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
                                std::vector<ORB_SLAM3::Floor *> floors, rclcpp::Time msgTime)
 {
-    // Publish rooms, if any
     int numRooms = rooms.size();
     int numFloors = floors.size();
-
-    // If there are no rooms or floors, return
-    if (numRooms == 0 && numFloors == 0)
-        return;
 
     // Variables
     double textOffset = -0.5;
@@ -1136,43 +1255,19 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
 
     // Visualization markers
     visualization_msgs::msg::MarkerArray roomArray, floorArray;
-    roomArray.markers.resize(numRooms);
-    floorArray.markers.resize(numFloors);
+    std::set<int> currentRoomIds, currentFloorIds;
 
     // Publish rooms, if any
-    if (numRooms > 0)
+    for (int idx = 0; idx < numRooms; idx++)
     {
-        for (int idx = 0; idx < numRooms; idx++)
-        {
-            // Skip if the room is bad
-            if (rooms[idx]->isBad()) {
-                // Variables
-                visualization_msgs::msg::Marker delRoom, delRoomLabel, delRoomWallLine;
-                // Delete previous marker for this room
-                delRoom.id = idx;
-                delRoom.ns = "room";
-                delRoom.header.stamp = msgTime;
-                delRoom.header.frame_id = frameSE;
-                delRoom.action = visualization_msgs::msg::Marker::DELETE;
-                // Delete previous marker for this room label
-                delRoomLabel.id = idx;
-                delRoomLabel.ns = "roomLabel";
-                delRoomLabel.header.stamp = msgTime;
-                delRoomLabel.header.frame_id = frameSE;
-                delRoomLabel.action = visualization_msgs::msg::Marker::DELETE;
-                // Delete previous room-wall lines
-                delRoomWallLine.id = idx;
-                delRoomWallLine.ns = "roomWallLine";
-                delRoomWallLine.header.stamp = msgTime;
-                delRoomWallLine.header.frame_id = frameWorld;
-                delRoomWallLine.action = visualization_msgs::msg::Marker::DELETE;
-                // Push the delete markers and skip them
-                roomArray.markers.push_back(delRoom);
-                roomArray.markers.push_back(delRoomLabel);
-                roomArray.markers.push_back(delRoomWallLine);
+            // A bad room is simply left out of currentRoomIds below, so it is
+            // auto-deleted by appendDeletedMarkers once it drops out of the room list
+            if (rooms[idx]->isBad())
                 continue;
-            }
-            
+
+            int id = rooms[idx]->getId();
+            currentRoomIds.insert(id);
+
             // Variables
             std::string roomName = rooms[idx]->getName();
             geometry_msgs::msg::PointStamped roomPoint, roomPointTr;
@@ -1188,7 +1283,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             visualization_msgs::msg::Marker room, roomWallLine, roomDoorLine, roomMarkerLine, roomLabel;
 
             // Room values
-            room.id = idx;
+            room.id = id;
             room.ns = "room";
             room.scale.x = 0.3;
             room.scale.y = 0.3;
@@ -1213,7 +1308,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             roomArray.markers.push_back(room);
 
             // Room label (name)
-            roomLabel.id = idx;
+            roomLabel.id = id;
             roomLabel.color.a = 1;
             roomLabel.color.r = 0;
             roomLabel.color.g = 0;
@@ -1232,7 +1327,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             roomArray.markers.push_back(roomLabel);
 
             // Room to Wall connection line
-            roomWallLine.id = idx;
+            roomWallLine.id = id;
             roomWallLine.color.a = 0.9;
             roomWallLine.color.r = 0.0;
             roomWallLine.color.g = 0.0;
@@ -1312,11 +1407,12 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             roomArray.markers.push_back(roomWallLine);
         }
 
-        pubStructuralElements->publish(roomArray);
-    }
+    appendDeletedMarkers(roomArray, "room", currentRoomIds, frameSE, msgTime);
+    appendDeletedMarkers(roomArray, "roomLabel", currentRoomIds, frameSE, msgTime);
+    appendDeletedMarkers(roomArray, "roomWallLine", currentRoomIds, frameWorld, msgTime);
+    pubStructuralElements->publish(roomArray);
 
     // Publish floors, if any
-    if (numFloors > 0)
     {
         // Variables
         std::vector<double> color = {0.3, 0.6, 0.7};
@@ -1324,10 +1420,14 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
         // Loop through all the floors
         for (int floorId = 0; floorId < numFloors; floorId++)
         {
-            // If the floor has no rooms, skip it
+            // If the floor has no rooms, skip it, so it is auto-deleted by appendDeletedMarkers
+            // below once it drops out of currentFloorIds
             if (floors[floorId]->getRooms().size() == 0)
                 continue;
-            
+
+            int id = floors[floorId]->getId();
+            currentFloorIds.insert(id);
+
             // Variables
             std::string floorName = floors[floorId]->getName();
             geometry_msgs::msg::PointStamped floorPoint, floorPointTr;
@@ -1335,7 +1435,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             visualization_msgs::msg::Marker floorMarker, floorLabel, floorRoomLine;
 
             // Floor marker (cube)
-            floorMarker.id = floorId;
+            floorMarker.id = id;
             floorMarker.ns = "floors";
             floorMarker.scale.x = 0.4;
             floorMarker.scale.y = 0.4;
@@ -1363,7 +1463,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             floorLabel.color.g = 0;
             floorLabel.color.b = 0;
             floorLabel.scale.z = 0.2;
-            floorLabel.id = floorId;
+            floorLabel.id = id;
             floorLabel.text = floorName;
             floorLabel.ns = "floorLabels";
             floorLabel.header.stamp = msgTime;
@@ -1388,7 +1488,7 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             }
 
             // Floor to Room connection line
-            floorRoomLine.id = floorId;
+            floorRoomLine.id = id;
             floorRoomLine.color.a = 0.9;
             floorRoomLine.color.r = 0.0;
             floorRoomLine.color.g = 0.0;
@@ -1465,9 +1565,12 @@ void publishStructuralElements(std::vector<ORB_SLAM3::Room *> rooms,
             floorArray.markers.push_back(floorMarker);
             floorArray.markers.push_back(floorRoomLine);
         }
-
-        pubStructuralElements->publish(floorArray);
     }
+
+    appendDeletedMarkers(floorArray, "floors", currentFloorIds, frameSE, msgTime);
+    appendDeletedMarkers(floorArray, "floorLabels", currentFloorIds, frameSE, msgTime);
+    appendDeletedMarkers(floorArray, "floorRoomEdges", currentFloorIds, frameWorld, msgTime);
+    pubStructuralElements->publish(floorArray);
 }
 
 sensor_msgs::msg::PointCloud2 mapPointToPointcloud(std::vector<ORB_SLAM3::MapPoint *> mapPoints, rclcpp::Time msgTime)

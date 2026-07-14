@@ -117,45 +117,72 @@ namespace ORB_SLAM3
         pMapMP->AddMapPoint(pMP);
     }
 
+    namespace
+    {
+        // Non-inertial sensors have no separate scale-initialization phase: if a keyframe exists
+        // to hang an entity off at all, tracking was already OK and scale was always metric.
+        // Inertial sensors need scale/gravity to have actually converged (GetIniertialBA2 --
+        // isImuInitialized() alone is only the earliest, rough bias-only stage, see Tracking.cc's
+        // own use of this same pairing) before any entity position can be trusted.
+        bool IsMapReadyForEntities(Map *pMap)
+        {
+            return !pMap->IsInertial() || (pMap->isImuInitialized() && pMap->GetIniertialBA2());
+        }
+    }
+
     void Atlas::AddMapMarker(Marker *marker)
     {
         Map *pMapMP = marker->getMap();
+        if (!IsMapReadyForEntities(pMapMP))
+            return;
         pMapMP->AddMapMarker(marker);
     }
 
     void Atlas::AddMapPlane(ORB_SLAM3::Plane *plane)
     {
         ORB_SLAM3::Map *pMapMP = plane->GetMap();
+        if (!IsMapReadyForEntities(pMapMP))
+            return;
         pMapMP->AddMapPlane(plane);
     }
 
     void Atlas::AddRoomWallPlane(ORB_SLAM3::Plane *pPlane)
     {
         ORB_SLAM3::Map *pMapMP = pPlane->GetMap();
+        if (!IsMapReadyForEntities(pMapMP))
+            return;
         pMapMP->AddRoomWallPlane(pPlane);
     }
 
     void Atlas::AddMapDoor(Door *door)
     {
         Map *pMapMP = door->getMap();
+        if (!IsMapReadyForEntities(pMapMP))
+            return;
         pMapMP->AddMapDoor(door);
     }
 
     void Atlas::AddDetectedMapRoom(Room *room)
     {
         Map *pMapMP = room->getMap();
+        if (!IsMapReadyForEntities(pMapMP))
+            return;
         pMapMP->AddDetectedMapRoom(room);
     }
 
     void Atlas::AddCandidateMapRoom(Room *room)
     {
         Map *pMapMP = room->getMap();
+        if (!IsMapReadyForEntities(pMapMP))
+            return;
         pMapMP->AddCandidateMapRoom(room);
     }
 
     void Atlas::AddMapFloor(Floor *floor)
     {
         Map *pMapMP = floor->getMap();
+        if (!IsMapReadyForEntities(pMapMP))
+            return;
         pMapMP->AddMapFloor(floor);
     }
 

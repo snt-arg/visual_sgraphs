@@ -68,6 +68,8 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VSGraphsRoomData.msg"
   "msg/VSGraphsAllWallsData.msg"
   "msg/VSGraphsAllDetectdetRooms.msg"
+  "msg/MapResetEvent.msg"
+  "msg/MapReadyEvent.msg"
   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
 )
 
