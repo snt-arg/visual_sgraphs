@@ -21,6 +21,8 @@
  */
 
 #include "Map.h"
+#include "Semantic/Door.h"
+#include "Geometric/Plane.h"
 
 #include <mutex>
 
@@ -510,10 +512,77 @@ namespace ORB_SLAM3
 
         for (set<Marker *>::iterator sit = mspMarkers.begin(); sit != mspMarkers.end(); sit++)
         {
-            // MapPoint *pMP = *sit; [TODO]
-            // pMP->SetWorldPos(s * Ryw * pMP->GetWorldPos() + tyw);
-            // pMP->UpdateNormalAndDepth();
+            Marker *pMarker = *sit;
+            Sophus::SE3f pose = pMarker->getGlobalPose();
+            pose.translation() *= s;
+            pMarker->setGlobalPose(Tyw * pose);
         }
+
+        for (set<Door *>::iterator sit = mspDoors.begin(); sit != mspDoors.end(); sit++)
+        {
+            // Only the cached global pose needs correcting -- localPose is keyframe-relative
+            Door *pDoor = *sit;
+            Sophus::SE3f pose = pDoor->getGlobalPose();
+            pose.translation() *= s;
+            pDoor->setGlobalPose(Tyw * pose);
+        }
+
+        // g2o::Plane3D only has a rigid (rotation + translation) transform built in, no scale, so
+        // the similarity version is hand-rolled here: the normal is unaffected by a uniform scale
+        // (rotation only), while distance' = s*distance + normal'.dot(t) -- derived from requiring
+        // that a point x' = s*R*x + t satisfying the old plane equation also satisfies the new one.
+        Eigen::Matrix3d RywD = Ryw.cast<double>();
+        Eigen::Vector3d tywD = tyw.cast<double>();
+        auto rescalePlaneEquation = [&](const g2o::Plane3D &plane) -> g2o::Plane3D
+        {
+            Eigen::Vector3d normal = RywD * plane.normal();
+            double distance = static_cast<double>(s) * plane.distance() + normal.dot(tywD);
+            Eigen::Vector4d coeffs;
+            coeffs.head<3>() = normal;
+            coeffs(3) = -distance;
+            return g2o::Plane3D(coeffs);
+        };
+        auto rescalePlane = [&](Plane *pPlane)
+        {
+            if (!pPlane)
+                return;
+
+            pPlane->setCentroid(s * Ryw * pPlane->getCentroid() + tyw);
+            pPlane->setGlobalEquation(rescalePlaneEquation(pPlane->getGlobalEquation()));
+            pPlane->mPlaneGBA = rescalePlaneEquation(pPlane->mPlaneGBA);
+
+            pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloud = pPlane->getMapClouds();
+            if (cloud && !cloud->empty())
+            {
+                pcl::PointCloud<pcl::PointXYZRGBA>::Ptr newCloud(new pcl::PointCloud<pcl::PointXYZRGBA>());
+                newCloud->reserve(cloud->size());
+                for (const auto &point : cloud->points)
+                {
+                    Eigen::Vector3f pNew = s * Ryw * Eigen::Vector3f(point.x, point.y, point.z) + tyw;
+                    pcl::PointXYZRGBA newPoint = point;
+                    newPoint.x = pNew.x();
+                    newPoint.y = pNew.y();
+                    newPoint.z = pNew.z();
+                    newCloud->push_back(newPoint);
+                }
+                pPlane->replaceMapClouds(newCloud);
+            }
+        };
+
+        // Two disjoint containers hold Plane* objects -- mspPlanes doesn't include room-wall planes
+        for (set<Plane *>::iterator sit = mspPlanes.begin(); sit != mspPlanes.end(); sit++)
+            rescalePlane(*sit);
+        for (auto &kv : mRoomWallPlaneIndex)
+            rescalePlane(kv.second);
+
+        for (set<Room *>::iterator sit = mspDetectedRooms.begin(); sit != mspDetectedRooms.end(); sit++)
+            (*sit)->setCentroid(static_cast<double>(s) * RywD * (*sit)->getCentroid() + tywD);
+        for (set<Room *>::iterator sit = mspMarkerBasedRooms.begin(); sit != mspMarkerBasedRooms.end(); sit++)
+            (*sit)->setCentroid(static_cast<double>(s) * RywD * (*sit)->getCentroid() + tywD);
+
+        for (set<Floor *>::iterator sit = mspFloors.begin(); sit != mspFloors.end(); sit++)
+            (*sit)->setCentroid(static_cast<double>(s) * RywD * (*sit)->getCentroid() + tywD);
+
         mnMapChange++;
     }
 
