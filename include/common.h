@@ -120,6 +120,7 @@
 #include <vs_graphs/msg/vs_graphs_all_detectdet_rooms.hpp>
 #include <vs_graphs/msg/map_reset_event.hpp>
 #include <vs_graphs/msg/map_ready_event.hpp>
+#include <vs_graphs/msg/map_rescale_event.hpp>
 
 using json = nlohmann::json;
 

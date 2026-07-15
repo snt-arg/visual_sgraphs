@@ -70,6 +70,7 @@ rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubStructural
 rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr pubAllWalls_legacy;
 rclcpp::Publisher<vs_graphs::msg::MapResetEvent>::SharedPtr pubMapReset;
 rclcpp::Publisher<vs_graphs::msg::MapReadyEvent>::SharedPtr pubMapReady;
+rclcpp::Publisher<vs_graphs::msg::MapRescaleEvent>::SharedPtr pubMapRescale;
 
 // Marker ids published in the previous cycle, keyed by RViz marker namespace. An entity stops
 // appearing in the SLAM system's GetAllX() lists either because it was individually pruned, or
@@ -292,6 +293,11 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     pubMapReady = node->create_publisher<vs_graphs::msg::MapReadyEvent>(
         node_name + "/map_ready", rclcpp::QoS(1).transient_local());
 
+    // Map rescale notifications (scale/gravity refinement, or a map merge), so downstream nodes
+    // that buffer their own world-frame positions/poses can apply the same correction instead of
+    // going stale relative to the (now rescaled) map.
+    pubMapRescale = node->create_publisher<vs_graphs::msg::MapRescaleEvent>(node_name + "/map_rescale", 1);
+
     // Get body odometry if IMU data is also available
     if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
         sensorType == ORB_SLAM3::System::IMU_RGBD)
@@ -367,14 +373,64 @@ void publishMapReadyIfChanged(rclcpp::Time msgTime)
     havePublishedForThisMap = true;
 }
 
+// Announces the similarity correction (scale, rotation, translation) whenever
+// Map::ApplyScaledRotation runs (IMU scale/gravity refinement, or a map merge) -- downstream nodes
+// that buffer their own world-frame positions/poses (e.g. object_motion_estimator) apply the same
+// correction to stay consistent with the now-rescaled map. Uses Map::GetScaleCorrectionVersion(),
+// a dedicated counter -- unlike GetMapChangeIndex()/mnMapChange, which is bumped by many unrelated
+// events (BA, loop closure, merge welding) and would give false positives here.
+void publishMapRescaleIfChanged(rclcpp::Time msgTime)
+{
+    static uint64_t lastMapId = std::numeric_limits<uint64_t>::max();
+    static uint64_t lastVersion = 0;
+
+    ORB_SLAM3::Map *pMap = pSLAM->GetCurrentMap();
+    uint64_t currentMapId = pMap->GetId();
+    if (currentMapId != lastMapId)
+    {
+        // A new map's version counter starts back at 0 -- reset our bookkeeping too, so a new
+        // map's first rescale isn't skipped just because its version happens to match whatever
+        // the previous map's counter last was.
+        lastMapId = currentMapId;
+        lastVersion = 0;
+    }
+
+    uint64_t currentVersion = pMap->GetScaleCorrectionVersion();
+    if (currentVersion == lastVersion)
+        return;
+    lastVersion = currentVersion;
+    if (currentVersion == 0)
+        return; // no rescale has happened yet for this map
+
+    Sophus::SE3f T;
+    float s;
+    pMap->GetLastScaleCorrection(T, s);
+
+    vs_graphs::msg::MapRescaleEvent event;
+    event.header.stamp = msgTime;
+    event.header.frame_id = frameWorld;
+    event.map_id = pMap->GetId();
+    event.scale = static_cast<double>(s);
+    event.rotation.x = T.unit_quaternion().x();
+    event.rotation.y = T.unit_quaternion().y();
+    event.rotation.z = T.unit_quaternion().z();
+    event.rotation.w = T.unit_quaternion().w();
+    event.translation.x = T.translation().x();
+    event.translation.y = T.translation().y();
+    event.translation.z = T.translation().z();
+    event.rescale_count = currentVersion;
+    pubMapRescale->publish(event);
+}
+
 void publishTopics(rclcpp::Time msgTime, Eigen::Vector3f Wbb, const sensor_msgs::msg::PointCloud2::ConstSharedPtr &msgPCL)
 {
-    // Detect and announce a map reset/readiness change as early as possible in the cycle, even if
-    // the current pose is temporarily invalid (NaN, handled below) -- downstream consumers need to
-    // know their world-frame assumptions broke (or that it's now safe to resume) right away, not
-    // only once tracking recovers.
+    // Detect and announce a map reset/readiness/rescale change as early as possible in the cycle,
+    // even if the current pose is temporarily invalid (NaN, handled below) -- downstream consumers
+    // need to know their world-frame assumptions broke (or that it's now safe to resume, or that a
+    // correction needs applying) right away, not only once tracking recovers.
     publishMapResetIfChanged(msgTime);
     publishMapReadyIfChanged(msgTime);
+    publishMapRescaleIfChanged(msgTime);
 
     Sophus::SE3f Twc = pSLAM->GetCamTwc();
 

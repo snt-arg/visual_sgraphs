@@ -583,7 +583,24 @@ namespace ORB_SLAM3
         for (set<Floor *>::iterator sit = mspFloors.begin(); sit != mspFloors.end(); sit++)
             (*sit)->setCentroid(static_cast<double>(s) * RywD * (*sit)->getCentroid() + tywD);
 
+        mLastScaleCorrectionT = Tyw;
+        mLastScaleCorrectionS = s;
+        mnScaleCorrectionVersion++;
+
         mnMapChange++;
+    }
+
+    void Map::GetLastScaleCorrection(Sophus::SE3f &T, float &s)
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        T = mLastScaleCorrectionT;
+        s = mLastScaleCorrectionS;
+    }
+
+    uint64_t Map::GetScaleCorrectionVersion()
+    {
+        unique_lock<mutex> lock(mMutexMap);
+        return mnScaleCorrectionVersion;
     }
 
     void Map::SetInertialSensor()
