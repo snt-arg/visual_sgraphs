@@ -259,6 +259,12 @@ namespace ORB_SLAM3
         bool isLost();
         bool isFinished();
 
+        // Number of keyframes pending in LocalMapping's queue. Lets a caller feeding
+        // frames faster than real time (e.g. offline bag replay) apply backpressure so
+        // LocalMapping's IMU init/BA gets real wall-clock time to keep up, instead of
+        // racing far ahead of what it has actually processed.
+        int GetLocalMappingQueueSize();
+
         void ChangeDataset();
 
         float GetImageScale();

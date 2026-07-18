@@ -270,6 +270,14 @@ namespace ORB_SLAM3
 
         bool Relocalization();
 
+        // IMU-aided relocalization: attempted while RECENTLY_LOST (inertial sensors) to
+        // recover visual tracking via the IMU-predicted pose instead of only coasting on
+        // PredictStateIMU() until time_recently_lost expires.
+        bool mbImuAidedReloc = false;
+        unsigned int mnLastImuRelocFrameId = 0;
+        bool RelocalizationWithIMU();
+        bool VerifyRelocAgainstIMU(const Sophus::SE3f &Tcw_reloc);
+
         void UpdateLocalMap();
         void UpdateLocalPoints();
         void UpdateLocalKeyFrames();

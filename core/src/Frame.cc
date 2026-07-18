@@ -46,7 +46,7 @@ namespace ORB_SLAM3
     // For stereo fisheye matching
     cv::BFMatcher Frame::BFmatcher = cv::BFMatcher(cv::NORM_HAMMING);
 
-    Frame::Frame() : mpcpi(NULL), mpImuPreintegrated(NULL), mpPrevFrame(NULL), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mbHasPose(false), mbHasVelocity(false)
+    Frame::Frame() : mpcpi(NULL), mpImuPreintegrated(NULL), mpPrevFrame(NULL), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
 #ifdef REGISTER_TIMES
         mTimeStereoMatch = 0;
@@ -109,7 +109,7 @@ namespace ORB_SLAM3
                  const std::vector<Marker *> markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractorLeft), mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
-          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
+          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
         // Setting the color image for Semantic Segmentation
         colorImg = imColor.clone();
@@ -197,8 +197,6 @@ namespace ORB_SLAM3
             mVw.setZero();
         }
 
-        mpMutexImu = new std::mutex();
-
         // Set no stereo fisheye information
         Nleft = -1;
         Nright = -1;
@@ -218,7 +216,7 @@ namespace ORB_SLAM3
                  Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractorLeft), mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbImuPreintegrated(false), mpCamera(pCamera), mpCamera2(pCamera2),
-          mbHasPose(false), mbHasVelocity(false)
+          mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
 
     {
         imgLeft = imLeft.clone();
@@ -309,8 +307,6 @@ namespace ORB_SLAM3
 
         AssignFeaturesToGrid();
 
-        mpMutexImu = new std::mutex();
-
         UndistortKeyPoints();
     }
 
@@ -324,7 +320,7 @@ namespace ORB_SLAM3
           mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL),
           mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
-          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
+          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
         // Setting the color image for Semantic Segmentation
         colorImg = imColor.clone();
@@ -400,8 +396,6 @@ namespace ORB_SLAM3
         else
             mVw.setZero();
 
-        mpMutexImu = new std::mutex();
-
         // Set no stereo fisheye information
         Nleft = -1;
         Nright = -1;
@@ -421,7 +415,7 @@ namespace ORB_SLAM3
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
           mTimeStamp(timeStamp), mK(static_cast<Pinhole *>(pCamera)->toK()), mK_(static_cast<Pinhole *>(pCamera)->toK_()), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mpCamera(pCamera),
-          mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
+          mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
         // Setting the color image for Semantic Segmentation
         colorImg = imColor.clone();
@@ -514,8 +508,6 @@ namespace ORB_SLAM3
         {
             mVw.setZero();
         }
-
-        mpMutexImu = new std::mutex();
     }
 
     void Frame::AssignFeaturesToGrid()

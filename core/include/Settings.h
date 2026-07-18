@@ -99,6 +99,7 @@ namespace ORB_SLAM3
         float noiseGyro() { return noiseGyro_; }
         Sophus::SE3f Tbc() { return Tbc_; }
         bool insertKFsWhenLost() { return insertKFsWhenLost_; }
+        bool imuAidedReloc() { return imuAidedReloc_; }
 
         float depthMapFactor() { return depthMapFactor_; }
 
@@ -205,6 +206,7 @@ namespace ORB_SLAM3
         float imuThreshold_;
         Sophus::SE3f Tbc_;
         bool insertKFsWhenLost_;
+        bool imuAidedReloc_;
 
         /*
          * RGBD stuff

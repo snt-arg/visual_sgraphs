@@ -35,7 +35,7 @@ namespace ORB_SLAM3
 
     LocalMapping::LocalMapping(System *pSys, Atlas *pAtlas, const float bMonocular, bool bInertial, const string &_strSeqName) : mpSystem(pSys), mbMonocular(bMonocular), mbInertial(bInertial), mbResetRequested(false), mbResetRequestedActiveMap(false), mbFinishRequested(false), mbFinished(true), mpAtlas(pAtlas), bInitializing(false),
                                                                                                                                  mbAbortBA(false), mbStopped(false), mbStopRequested(false), mbNotStop(false), mbAcceptKeyFrames(true),
-                                                                                                                                 mIdxInit(0), mScale(1.0), mInitSect(0), mbNotBA1(true), mbNotBA2(true), mIdxIteration(0), infoInertial(Eigen::MatrixXd::Zero(9, 9))
+                                                                                                                                 mIdxInit(0), mScale(1.0), mInitSect(0), mbNotBA1(true), mbNotBA2(true), mIdxIteration(0), infoInertial(Eigen::MatrixXd::Zero(9, 9)), mpCurrentKeyFrame(nullptr)
     {
         mNumLM = 0;
         mTinit = 0.f;
@@ -137,7 +137,17 @@ namespace ORB_SLAM3
                                 mTinit += mpCurrentKeyFrame->mTimeStamp - mpCurrentKeyFrame->mPrevKF->mTimeStamp;
                             if (!mpCurrentKeyFrame->GetMap()->GetIniertialBA2())
                             {
-                                if ((mTinit < 10.f) && (dist < 0.02))
+                                // Guard: don't reset within the first 3s of map creation. A map that
+                                // starts with the sensor stationary (e.g. before the platform begins
+                                // moving) has near-zero motion by construction, but the map itself is
+                                // still valid — resetting here just discards a good map and restarts
+                                // the whole init process for no benefit.
+                                float elapsedSinceMapCreation = 0.f;
+                                const std::vector<KeyFrame *> &vpOrigins = mpCurrentKeyFrame->GetMap()->mvpKeyFrameOrigins;
+                                if (!vpOrigins.empty())
+                                    elapsedSinceMapCreation = mpCurrentKeyFrame->mTimeStamp - vpOrigins.front()->mTimeStamp;
+
+                                if ((mTinit < 10.f) && (dist < 0.02) && (elapsedSinceMapCreation > 3.0f))
                                 {
                                     std::cout << "[Mapping] Not enough motion for map initializing. Reseting..." << std::endl;
                                     unique_lock<mutex> lock(mMutexReset);
@@ -1123,6 +1133,10 @@ namespace ORB_SLAM3
                 mbResetRequested = false;
                 mbResetRequestedActiveMap = false;
 
+                // mpAtlas->clearAtlas()/clearMap() deletes the KeyFrame mpCurrentKeyFrame
+                // points to; leaving it set would dangle until the next ProcessNewKeyFrame().
+                mpCurrentKeyFrame = nullptr;
+
                 // Inertial parameters
                 mTinit = 0.f;
                 mIdxInit = 0;
@@ -1146,6 +1160,10 @@ namespace ORB_SLAM3
                 mbBadImu = false;
                 mbResetRequested = false;
                 mbResetRequestedActiveMap = false;
+
+                // Same dangling-pointer hazard as the full-Atlas reset above, for the
+                // active-map-only reset path (mpAtlas->clearMap()).
+                mpCurrentKeyFrame = nullptr;
             }
         }
     }

@@ -479,6 +479,15 @@ namespace ORB_SLAM3
             insertKFsWhenLost_ = (bool)readParameter<int>(fSettings, "IMU.InsertKFsWhenLost", found, false);
         else
             insertKFsWhenLost_ = true;
+
+        // When RECENTLY_LOST, attempt an IMU-guided visual relocalization instead of only
+        // coasting on IMU pose prediction until the timeout expires. Opt-in: off by default
+        // since it hasn't been tuned/validated for every sensor configuration.
+        readParameter<int>(fSettings, "IMU.ImuAidedReloc", found, false);
+        if (found)
+            imuAidedReloc_ = (bool)readParameter<int>(fSettings, "IMU.ImuAidedReloc", found, false);
+        else
+            imuAidedReloc_ = false;
     }
 
     void Settings::readRGBD(cv::FileStorage &fSettings)

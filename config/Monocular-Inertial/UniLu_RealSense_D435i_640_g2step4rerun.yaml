@@ -23,7 +23,7 @@ Camera1.p2: 0.0
 Camera.width: 640
 Camera.height: 480
 
-# Camera frames per second 
+# Camera frames per second
 Camera.fps: 30
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
@@ -42,6 +42,12 @@ IMU.T_b_c1: !!opencv-matrix
 # Do not insert KFs when recently lost
 IMU.InsertKFsWhenLost: 0
 
+# G2 Step 4 rerun (patched backend): enable IMU-aided relocalization during
+# RECENTLY_LOST, ported from BinoSLAM. Off by default upstream in this fork;
+# turned on here only, so this file is a rerun-only copy of
+# UniLu_RealSense_D435i_640.yaml, not a shared-config edit.
+IMU.ImuAidedReloc: 1
+
 # IMU noise (Use those from VINS-mono)
 IMU.Threshold: 0.5      # Default: 0.5
 IMU.NoiseGyro: 1e-3 # 2.44e-4 #1e-3 # rad/s^0.5
@@ -56,16 +62,16 @@ IMU.Frequency: 400.0
 # ORB Extractor: Number of features per image
 ORBextractor.nFeatures: 1250
 
-# ORB Extractor: Scale factor between levels in the scale pyramid 	
+# ORB Extractor: Scale factor between levels in the scale pyramid
 ORBextractor.scaleFactor: 1.2
 
-# ORB Extractor: Number of levels in the scale pyramid	
+# ORB Extractor: Number of levels in the scale pyramid
 ORBextractor.nLevels: 8
 
 # ORB Extractor: Fast threshold
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
-# You can lower these values if your images have low contrast			
+# You can lower these values if your images have low contrast
 ORBextractor.iniThFAST: 20
 ORBextractor.minThFAST: 7
 

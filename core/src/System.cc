@@ -1152,6 +1152,11 @@ namespace ORB_SLAM3
         return (GetTimeFromIMUInit() > 0.1);
     }
 
+    int System::GetLocalMappingQueueSize()
+    {
+        return mpLocalMapper->KeyframesInQueue();
+    }
+
     void System::ChangeDataset()
     {
         if (mpAtlas->GetCurrentMap()->KeyFramesInMap() < 12)

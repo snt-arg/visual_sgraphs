@@ -6263,6 +6263,18 @@ namespace ORB_SLAM3
             }
         }
 
+        // Gauss-Newton here runs undamped: when the outlier rounds reject (nearly) all
+        // visual edges, the remaining system can be singular and the dense solve diverges
+        // to NaN. Writing that state back would abort in Sophus (SO3 from a NaN rotation)
+        // and stamping mpcpi with it would poison the next frame's optimization — discard
+        // the result instead and report zero inliers so tracking treats this as a failure.
+        if (!VP->estimate().Rwb.allFinite() || !VP->estimate().twb.allFinite() ||
+            !VV->estimate().allFinite() || !VG->estimate().allFinite() || !VA->estimate().allFinite())
+        {
+            std::cout << "[Optimizer] PoseInertialOptimizationLastKeyFrame diverged (non-finite estimate), discarding result" << std::endl;
+            return 0;
+        }
+
         // Recover optimized pose, velocity and biases
         pFrame->SetImuPoseVelocity(VP->estimate().Rwb.cast<float>(), VP->estimate().twb.cast<float>(), VV->estimate().cast<float>());
         Vector6d b;
@@ -6659,6 +6671,17 @@ namespace ORB_SLAM3
         }
 
         nInliers = nInliersMono + nInliersStereo;
+
+        // Same undamped-GN divergence guard as in PoseInertialOptimizationLastKeyFrame:
+        // discard a non-finite solution instead of aborting in Sophus / poisoning mpcpi.
+        // Skipping the mpcpi stamp/delete below is safe: the TrackLocalMap dispatch only
+        // selects this variant when the previous frame's mpcpi exists.
+        if (!VP->estimate().Rwb.allFinite() || !VP->estimate().twb.allFinite() ||
+            !VV->estimate().allFinite() || !VG->estimate().allFinite() || !VA->estimate().allFinite())
+        {
+            std::cout << "[Optimizer] PoseInertialOptimizationLastFrame diverged (non-finite estimate), discarding result" << std::endl;
+            return 0;
+        }
 
         // Recover optimized pose, velocity and biases
         pFrame->SetImuPoseVelocity(VP->estimate().Rwb.cast<float>(), VP->estimate().twb.cast<float>(), VV->estimate().cast<float>());
