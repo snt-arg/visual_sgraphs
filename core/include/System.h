@@ -252,6 +252,7 @@ namespace ORB_SLAM3
         Sophus::SE3f GetCamTwc();
         Sophus::SE3f GetImuTwb();
         Eigen::Vector3f GetImuVwb();
+        IMU::Bias GetImuBias();
         bool isImuPreintegrated();
 
         // For debugging

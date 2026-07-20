@@ -121,6 +121,7 @@
 #include <vs_graphs/msg/map_reset_event.hpp>
 #include <vs_graphs/msg/map_ready_event.hpp>
 #include <vs_graphs/msg/map_rescale_event.hpp>
+#include <vs_graphs/msg/imu_bias_estimate.hpp>
 
 using json = nlohmann::json;
 
@@ -153,6 +154,7 @@ extern rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr pu
 extern double lastPlanePublishTime;
 extern std::shared_ptr<image_transport::Publisher> pubTrackingImage;
 extern rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdometry;
+extern rclcpp::Publisher<vs_graphs::msg::ImuBiasEstimate>::SharedPtr pubImuBias;
 extern rclcpp::Publisher<segmenter_ros::msg::VSGraphDataMsg>::SharedPtr pubKFImage;
 extern rclcpp::Publisher<keyframe_depth_estimator::msg::KeyFrameCreated>::SharedPtr pubKeyFrameCreated;
 extern rclcpp::Publisher<keyframe_depth_validator::msg::StaticMapPointCorrespondences>::SharedPtr pubKeyFrameStaticMapPoints;
@@ -191,6 +193,7 @@ void publishFiducialMarkers(std::vector<ORB_SLAM3::Marker *>, rclcpp::Time);
 void publishKeyFrameImages(std::vector<ORB_SLAM3::KeyFrame *>, rclcpp::Time);
 void publishKeyFrameMarkers(std::vector<ORB_SLAM3::KeyFrame *>, rclcpp::Time);
 void publishBodyOdometry(Sophus::SE3f, Eigen::Vector3f, Eigen::Vector3f, rclcpp::Time);
+void publishImuBias(const ORB_SLAM3::IMU::Bias &, rclcpp::Time);
 void publishStructuralElements(std::vector<ORB_SLAM3::Room *>, std::vector<ORB_SLAM3::Floor *>, rclcpp::Time);
 
 /**

@@ -49,6 +49,7 @@ std::string frameWorld, frameCamera, frameImu, frameMap, frameBC, frameSE;
 double lastPlanePublishTime = -std::numeric_limits<double>::infinity();
 rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr pubKeyFrameList;
 rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr pubOdometry;
+rclcpp::Publisher<vs_graphs::msg::ImuBiasEstimate>::SharedPtr pubImuBias;
 rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pubDoor;
 rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pubAllMappoints;
 rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr pubCameraPose;
@@ -301,7 +302,13 @@ void setupPublishers(std::shared_ptr<rclcpp::Node> node, std::shared_ptr<image_t
     // Get body odometry if IMU data is also available
     if (sensorType == ORB_SLAM3::System::IMU_MONOCULAR || sensorType == ORB_SLAM3::System::IMU_STEREO ||
         sensorType == ORB_SLAM3::System::IMU_RGBD)
+    {
         pubOdometry = node->create_publisher<nav_msgs::msg::Odometry>(node_name + "/body_odom", 1);
+        // Latest accel/gyro bias estimate, published alongside body_odom so downstream nodes
+        // that build their own IMU::Preintegrated factors (rather than reimplementing Forster
+        // preintegration) have the bias value ORB-SLAM3's own inertial edges are using.
+        pubImuBias = node->create_publisher<vs_graphs::msg::ImuBiasEstimate>(node_name + "/imu_bias", 1);
+    }
 
     if (pSLAM)
         pSLAM->SetKeyFrameCreatedCallback(publishKeyFrameCreatedEvent);
@@ -488,6 +495,7 @@ void publishTopics(rclcpp::Time msgTime, Eigen::Vector3f Wbb, const sensor_msgs:
 
         publishTFTransform(Twb, frameWorld, frameImu, msgTime);
         publishBodyOdometry(Twb, Vwb, Wwb, msgTime);
+        publishImuBias(pSLAM->GetImuBias(), msgTime);
     }
 }
 
@@ -516,6 +524,22 @@ void publishBodyOdometry(Sophus::SE3f Twb_SE3f, Eigen::Vector3f Vwb_E3f, Eigen::
     odom_msg.twist.twist.angular.z = ang_vel_body.z();
 
     pubOdometry->publish(odom_msg);
+}
+
+void publishImuBias(const ORB_SLAM3::IMU::Bias &bias, rclcpp::Time msgTime)
+{
+    vs_graphs::msg::ImuBiasEstimate bias_msg;
+    bias_msg.header.frame_id = frameImu;
+    bias_msg.header.stamp = msgTime;
+
+    bias_msg.bax = bias.bax;
+    bias_msg.bay = bias.bay;
+    bias_msg.baz = bias.baz;
+    bias_msg.bwx = bias.bwx;
+    bias_msg.bwy = bias.bwy;
+    bias_msg.bwz = bias.bwz;
+
+    pubImuBias->publish(bias_msg);
 }
 
 void publishCameraPose(Sophus::SE3f Tcw_SE3f, rclcpp::Time msgTime)

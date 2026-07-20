@@ -1120,6 +1120,11 @@ namespace ORB_SLAM3
         return mpTracker->GetImuVwb();
     }
 
+    IMU::Bias System::GetImuBias()
+    {
+        return mpTracker->GetImuBias();
+    }
+
     bool System::isImuPreintegrated()
     {
         return mpTracker->isImuPreintegrated();

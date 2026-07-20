@@ -4431,6 +4431,11 @@ namespace ORB_SLAM3
         return mCurrentFrame.GetVelocity();
     }
 
+    IMU::Bias Tracking::GetImuBias()
+    {
+        return mCurrentFrame.mImuBias;
+    }
+
     bool Tracking::isImuPreintegrated()
     {
         return mCurrentFrame.mpImuPreintegrated;
