@@ -371,8 +371,7 @@ namespace ORB_SLAM3
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
-        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+        UpdateTrackedPointsFromCurrentFrame();
 
         return Tcw;
     }
@@ -447,8 +446,7 @@ namespace ORB_SLAM3
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
-        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+        UpdateTrackedPointsFromCurrentFrame();
         return Tcw;
     }
 
@@ -529,9 +527,32 @@ namespace ORB_SLAM3
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
-        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+        UpdateTrackedPointsFromCurrentFrame();
         return Tcw;
+    }
+
+    void System::UpdateTrackedPointsFromCurrentFrame()
+    {
+        const Frame &f = mpTracker->mCurrentFrame;
+        const size_t n = std::min(f.mvpMapPoints.size(), f.mvKeysUn.size());
+
+        mTrackedMapPoints.clear();
+        mTrackedKeyPointsUn.clear();
+        mTrackedMapPoints.reserve(n);
+        mTrackedKeyPointsUn.reserve(n);
+
+        for (size_t i = 0; i < n; i++)
+        {
+            // mvbOutlier[i] is set by the tracker's own pose optimization (PoseOptimization /
+            // inertial variants) when this keypoint<->map-point association is rejected this
+            // frame; the map point pointer itself is left non-null (see Frame::mvbOutlier usage
+            // elsewhere, e.g. GetMapPointMatches), so it must be checked separately here.
+            if (i < f.mvbOutlier.size() && f.mvbOutlier[i])
+                continue;
+
+            mTrackedMapPoints.push_back(f.mvpMapPoints[i]);
+            mTrackedKeyPointsUn.push_back(f.mvKeysUn[i]);
+        }
     }
 
     void System::ActivateLocalizationMode()

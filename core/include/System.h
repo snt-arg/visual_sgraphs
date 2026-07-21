@@ -312,6 +312,12 @@ namespace ORB_SLAM3
         bool SaveAtlas(int type);
         bool LoadAtlas(int type);
 
+        // Snapshot mCurrentFrame's tracked map points/keypoints into mTrackedMapPoints/
+        // mTrackedKeyPointsUn, excluding entries the tracker's own pose optimization has already
+        // flagged as outliers (mvbOutlier) this frame -- consumers (e.g. publishStaticMapPoints)
+        // must not receive point/pixel associations ORB-SLAM3 itself has already rejected.
+        void UpdateTrackedPointsFromCurrentFrame();
+
         string CalculateCheckSum(string filename, int type);
 
         // Input sensor

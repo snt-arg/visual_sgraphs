@@ -916,6 +916,7 @@ void publishStaticMapPoints(std::vector<ORB_SLAM3::MapPoint *> trackedMapPoints,
     points_msg.point_ids.reserve(count);
     points_msg.positions_world.reserve(count);
     points_msg.pixels.reserve(count);
+    points_msg.num_observations.reserve(count);
 
     for (std::size_t i = 0; i < count; ++i)
     {
@@ -941,6 +942,7 @@ void publishStaticMapPoints(std::vector<ORB_SLAM3::MapPoint *> trackedMapPoints,
         points_msg.point_ids.push_back(static_cast<uint32_t>(map_point->mnId));
         points_msg.positions_world.push_back(p_world_msg);
         points_msg.pixels.push_back(p_pixel_msg);
+        points_msg.num_observations.push_back(static_cast<int32_t>(map_point->Observations()));
     }
 
     pubStaticMapPoints->publish(points_msg);
