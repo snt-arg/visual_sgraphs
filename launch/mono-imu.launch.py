@@ -61,7 +61,20 @@ def generate_launch_description():
             DeclareLaunchArgument("launch_dynamic_keypoint_3d_lifter", default_value="false"),    # Pipeline DA3 
             DeclareLaunchArgument("launch_dynamic_keypoint_interpolator", default_value="false"), # Pipeline DA3
             DeclareLaunchArgument("launch_object_motion_estimator", default_value="false"),  # Pipeline DA3
-            DeclareLaunchArgument("launch_object_ba_tracker", default_value="true"), # Pipeline BA
+            # D12: Pipeline B (object_ba_tracker_node) retired from the default launch graph --
+            # its fixed-landmark BA output is no longer consumed by joint_window_node, which now
+            # gets its landmark seeds from landmark_initializer_node and optimizes landmarks
+            # in-graph. Flag kept (not removed) so the node can still be launched standalone for
+            # debugging/comparison; object_ba_tracker_node.cpp/.hpp are kept in the source tree
+            # unbuilt-from-launch (still compiled as an executable) since
+            # landmark_initializer_node's triangulation was ported from it.
+            DeclareLaunchArgument("launch_object_ba_tracker", default_value="false"), # Pipeline BA (D12: retired by default)
+            DeclareLaunchArgument("launch_landmark_initializer", default_value="true"), # D12: landmark seed source
+            DeclareLaunchArgument(
+                "landmark_seed_topic", default_value="/object_motion/landmark_seed"
+            ),
+            DeclareLaunchArgument("landmark_min_frames_for_triangulation", default_value="5"),
+            DeclareLaunchArgument("landmark_window_max_frames", default_value="15"),
             DeclareLaunchArgument(
                 "keyframe_depth_model_path",
                 default_value=(
@@ -173,7 +186,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "dynamic_keypoint_3d_lifter_debug_match_logging",
-                default_value="true",
+                default_value="false",
             ),
             DeclareLaunchArgument(
                 "dynamic_keypoint_interpolator_output_topic",
@@ -350,18 +363,18 @@ def generate_launch_description():
                 choices=["yoso", "pfcn", "yolo26", "off"],
             ),
             # Topics
-            DeclareLaunchArgument("camera_frame", default_value="camera"),
-            DeclareLaunchArgument("sensor_config", default_value="UniLu_RealSense_D435i_640"),
+            DeclareLaunchArgument("camera_frame", default_value="camera"), #left_cam
+            DeclareLaunchArgument("sensor_config", default_value="uHumans2_TESSE"), #UniLu_RealSense_D435i_640
             DeclareLaunchArgument(
-                "rgb_image_topic", default_value="/camera/realsense/color/image_raw"
+                "rgb_image_topic", default_value="/tesse/left_cam/rgb/image_raw" #"/camera/realsense/color/image_raw"
             ),
             DeclareLaunchArgument(
                 "rgb_camera_info_topic",
-                default_value="/camera/realsense/color/camera_info",
+                default_value="/tesse/left_cam/camera_info", # "/camera/realsense/color/camera_info",
             ),
             DeclareLaunchArgument(
                 "imu_topic",
-                default_value="/camera/realsense/imu",
+                default_value="/tesse/imu/noisy/imu", #"/camera/realsense/imu"
             ),
             # VS-Graphs Node
             Node(
@@ -436,6 +449,12 @@ def generate_launch_description():
                         "camera_info_topic": LaunchConfiguration(
                             "rgb_camera_info_topic"
                         ),
+                        "settings_file": [
+                            get_package_share_directory("vs_graphs"),
+                            "/config/Monocular-Inertial/",
+                            LaunchConfiguration("sensor_config"),
+                            ".yaml",
+                        ],
                         "metric_depth_topic": LaunchConfiguration(
                             "keyframe_depth_metric_topic"
                         ),
@@ -660,6 +679,12 @@ def generate_launch_description():
                         ),
                         "keyframe_pose_topic": "/vs_graphs/camera_pose",
                         "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
+                        "settings_file": [
+                            get_package_share_directory("vs_graphs"),
+                            "/config/Monocular-Inertial/",
+                            LaunchConfiguration("sensor_config"),
+                            ".yaml",
+                        ],
                         "output_topic": LaunchConfiguration(
                             "dynamic_keypoint_3d_lifter_output_topic"
                         ),
@@ -718,6 +743,12 @@ def generate_launch_description():
                         ),
                         "camera_pose_topic": "/vs_graphs/camera_pose",
                         "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
+                        "settings_file": [
+                            get_package_share_directory("vs_graphs"),
+                            "/config/Monocular-Inertial/",
+                            LaunchConfiguration("sensor_config"),
+                            ".yaml",
+                        ],
                         "output_topic": LaunchConfiguration(
                             "dynamic_keypoint_interpolator_output_topic"
                         ),
@@ -767,6 +798,12 @@ def generate_launch_description():
                         "object_track_events_topic": "/object_tracks/events",
                         "camera_pose_topic": "/vs_graphs/camera_pose",
                         "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
+                        "settings_file": [
+                            get_package_share_directory("vs_graphs"),
+                            "/config/Monocular-Inertial/",
+                            LaunchConfiguration("sensor_config"),
+                            ".yaml",
+                        ],
                         "image_topic": LaunchConfiguration("rgb_image_topic"),
                         "output_topic": LaunchConfiguration("object_motion_output_topic"),
                         "markers_topic": LaunchConfiguration("object_motion_markers_topic"),
@@ -848,6 +885,12 @@ def generate_launch_description():
                         ),
                         "camera_pose_topic": "/vs_graphs/camera_pose",
                         "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
+                        "settings_file": [
+                            get_package_share_directory("vs_graphs"),
+                            "/config/Monocular-Inertial/",
+                            LaunchConfiguration("sensor_config"),
+                            ".yaml",
+                        ],
                         "object_track_events_topic": "/object_tracks/events",
                         "output_topic": LaunchConfiguration("object_ba_output_topic"),
                         "markers_topic": LaunchConfiguration("object_ba_markers_topic"),
@@ -951,56 +994,102 @@ def generate_launch_description():
                     },
                 ],
             ),
-            # Static Transforms
+            # D12 Step 2: Landmark Initializer -- replaces Pipeline BA as joint_window_node's
+            # landmark-seed source. Triangulation-only, no optimizer, publishes a one-shot seed
+            # per track_id (see landmark_initializer_node.hpp doc comment).
             Node(
-                package="tf2_ros",
-                name="map_to_map_elevated",  # For Voxblox Skeleton
-                executable="static_transform_publisher",
-                arguments=["0", "0", "0", "0", "0", "0", "map", "map_elevated"],
-            ),
-            Node(
-                name="bc_to_se",
-                package="tf2_ros",
-                executable="static_transform_publisher",
-                arguments=["0", "0", "3", "0", "0", "0", "build_comp", "struc_elem"],
-            ),
-            Node(
-                package="tf2_ros",
-                name="world_to_bc",
-                executable="static_transform_publisher",
-                arguments=["0", "0", "3", "0", "0", "0", "world", "build_comp"],
-            ),
-            Node(
-                package="tf2_ros",
-                name="camera_to_imu",
-                executable="static_transform_publisher",
-                arguments=[
-                    "-0.011739999987185001",
-                    "-0.005520000122487545",
-                    "0.005100000184029341",
-                    "0",
-                    "0",
-                    "0",
-                    "camera",
-                    "imu",
+                condition=IfCondition(
+                    LaunchConfiguration("launch_landmark_initializer")
+                ),
+                package="object_motion_estimator",
+                executable="landmark_initializer_node",
+                name="landmark_initializer",
+                output="screen",
+                parameters=[
+                    {
+                        "use_sim_time": LaunchConfiguration("offline"),
+                        "object_tracks_topic": LaunchConfiguration(
+                            "dynamic_keypoint_filtered_object_tracks_topic"
+                        ),
+                        "object_track_events_topic": "/object_tracks/events",
+                        "camera_pose_topic": "/vs_graphs/camera_pose",
+                        "camera_info_topic": LaunchConfiguration("rgb_camera_info_topic"),
+                        "settings_file": [
+                            get_package_share_directory("vs_graphs"),
+                            "/config/Monocular-Inertial/",
+                            LaunchConfiguration("sensor_config"),
+                            ".yaml",
+                        ],
+                        "output_topic": LaunchConfiguration("landmark_seed_topic"),
+                        "pose_sync_tolerance_ms": ParameterValue(
+                            LaunchConfiguration("object_ba_pose_sync_tolerance_ms"),
+                            value_type=float,
+                        ),
+                        "min_frames_for_triangulation": ParameterValue(
+                            LaunchConfiguration("landmark_min_frames_for_triangulation"),
+                            value_type=int,
+                        ),
+                        "window_max_frames": ParameterValue(
+                            LaunchConfiguration("landmark_window_max_frames"),
+                            value_type=int,
+                        ),
+                        "queue_depth": ParameterValue(
+                            LaunchConfiguration("object_motion_queue_depth"),
+                            value_type=int,
+                        ),
+                    },
                 ],
             ),
-            Node(
-                package="tf2_ros",
-                name="camera_to_camera_optical",
-                executable="static_transform_publisher",
-                arguments=[
-                    "0.00011983246804447845",
-                    "0.014999180100858212",
-                    "0.00015637179603800178",
-                    "-1.5730284322450263",
-                    "0.019080586334886032",
-                    "-1.574238659946616",
-                    "camera",
-                    "camera_color_optical_frame",
-                    # RealSense: camera_color_optical_frame, OpenLoris: d400_color
-                ],
-            ),
+            # # Static Transforms
+            # Node(
+            #     package="tf2_ros",
+            #     name="map_to_map_elevated",  # For Voxblox Skeleton
+            #     executable="static_transform_publisher",
+            #     arguments=["0", "0", "0", "0", "0", "0", "map", "map_elevated"],
+            # ),
+            # Node(
+            #     name="bc_to_se",
+            #     package="tf2_ros",
+            #     executable="static_transform_publisher",
+            #     arguments=["0", "0", "3", "0", "0", "0", "build_comp", "struc_elem"],
+            # ),
+            # Node(
+            #     package="tf2_ros",
+            #     name="world_to_bc",
+            #     executable="static_transform_publisher",
+            #     arguments=["0", "0", "3", "0", "0", "0", "world", "build_comp"],
+            # ),
+            # Node(
+            #     package="tf2_ros",
+            #     name="camera_to_imu",
+            #     executable="static_transform_publisher",
+            #     arguments=[
+            #         "-0.011739999987185001",
+            #         "-0.005520000122487545",
+            #         "0.005100000184029341",
+            #         "0",
+            #         "0",
+            #         "0",
+            #         "camera",
+            #         "imu",
+            #     ],
+            # ),
+            # Node(
+            #     package="tf2_ros",
+            #     name="camera_to_camera_optical",
+            #     executable="static_transform_publisher",
+            #     arguments=[
+            #         "0.00011983246804447845",
+            #         "0.014999180100858212",
+            #         "0.00015637179603800178",
+            #         "-1.5730284322450263",
+            #         "0.019080586334886032",
+            #         "-1.574238659946616",
+            #         "camera",
+            #         "camera_color_optical_frame",
+            #         # RealSense: camera_color_optical_frame, OpenLoris: d400_color
+            #     ],
+            # ),
             # RViz
             Node(
                 condition=IfCondition(LaunchConfiguration("launch_rviz")),
