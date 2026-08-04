@@ -23,6 +23,9 @@
 #include "KeyFrame.h"
 #include "Converter.h"
 #include "ImuTypes.h"
+#include <algorithm>
+#include <cmath>
+#include <limits>
 #include <mutex>
 
 namespace ORB_SLAM3
@@ -208,13 +211,128 @@ namespace ORB_SLAM3
         return mCurrentFramePointClouds;
     }
 
+    void KeyFrame::SetAuxPointCloudFromDepth(const cv::Mat &auxDepth, double auxDepthTimestamp,
+                                             const std::string &auxDepthFrameId, float auxDepthMin,
+                                             float auxDepthMax, int auxDepthStride,
+                                             const std::string &auxDepthScaleMode)
+    {
+        if (auxDepth.empty() || auxDepth.type() != CV_32FC1)
+            return;
+
+        cv::Mat depth = auxDepth;
+        float depthScale = 1.0f;
+
+        if (auxDepthScaleMode == "map_median")
+        {
+            std::vector<float> mapDepths;
+            std::vector<float> auxDepths;
+            const Sophus::SE3f Tcw = GetPose();
+
+            for (size_t i = 0; i < mCurrentFrameMapPoints.size() && i < mvKeysUn.size(); ++i)
+            {
+                MapPoint *pMP = mCurrentFrameMapPoints[i];
+                if (!pMP || pMP->isBad())
+                    continue;
+
+                const cv::KeyPoint &kp = mvKeysUn[i];
+                const int u = cvRound(kp.pt.x);
+                const int v = cvRound(kp.pt.y);
+                if (u < 0 || v < 0 || u >= depth.cols || v >= depth.rows)
+                    continue;
+
+                const float aux = depth.at<float>(v, u);
+                if (!std::isfinite(aux) || aux <= 1e-6f)
+                    continue;
+
+                const Eigen::Vector3f Pc = Tcw * pMP->GetWorldPos();
+                if (Pc.z() <= auxDepthMin || Pc.z() >= auxDepthMax)
+                    continue;
+
+                mapDepths.push_back(Pc.z());
+                auxDepths.push_back(aux);
+            }
+
+            if (!mapDepths.empty() && mapDepths.size() == auxDepths.size())
+            {
+                std::nth_element(mapDepths.begin(), mapDepths.begin() + mapDepths.size() / 2, mapDepths.end());
+                std::nth_element(auxDepths.begin(), auxDepths.begin() + auxDepths.size() / 2, auxDepths.end());
+                const float medMap = mapDepths[mapDepths.size() / 2];
+                const float medAux = auxDepths[auxDepths.size() / 2];
+                if (medAux > 1e-6f)
+                    depthScale = medMap / medAux;
+            }
+        }
+
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+        cloud->width = depth.cols;
+        cloud->height = depth.rows;
+        cloud->is_dense = false;
+        cloud->points.resize(static_cast<size_t>(cloud->width) * cloud->height);
+
+        const int stride = std::max(1, auxDepthStride);
+        const float nan = std::numeric_limits<float>::quiet_NaN();
+
+        for (int v = 0; v < depth.rows; ++v)
+        {
+            for (int u = 0; u < depth.cols; ++u)
+            {
+                pcl::PointXYZRGB &pt = cloud->at(u, v);
+                pt.x = nan;
+                pt.y = nan;
+                pt.z = nan;
+
+                if ((u % stride) != 0 || (v % stride) != 0)
+                    continue;
+
+                const float z = depth.at<float>(v, u) * depthScale;
+                if (!std::isfinite(z) || z < auxDepthMin || z > auxDepthMax)
+                    continue;
+
+                pt.x = (static_cast<float>(u) - cx) * z * invfx;
+                pt.y = (static_cast<float>(v) - cy) * z * invfy;
+                pt.z = z;
+
+                if (!mImage.empty() && u < mImage.cols && v < mImage.rows)
+                {
+                    const cv::Vec3b bgr = mImage.channels() == 3 ? mImage.at<cv::Vec3b>(v, u) : cv::Vec3b(0, 0, 0);
+                    pt.r = bgr[2];
+                    pt.g = bgr[1];
+                    pt.b = bgr[0];
+                }
+            }
+        }
+
+        mAuxPointCloud = cloud;
+        mbHasAuxPointCloud = true;
+        mAuxDepthTimestamp = auxDepthTimestamp;
+        mAuxDepthFrameId = auxDepthFrameId;
+
+        // std::cout << "AuxDepth: projected and copied pointcloud into keyframe ID " << mnId
+        //           << " for segmented image, depth timestamp "
+        //           << mAuxDepthTimestamp << std::endl;
+    }
+
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr KeyFrame::getAuxPointCloud()
+    {
+        return mbHasAuxPointCloud ? mAuxPointCloud : nullptr;
+    }
+
     void KeyFrame::clearPointCloud()
     {
-        mCurrentFramePointClouds->clear();
-        mCurrentFramePointClouds = nullptr;
+        if (mCurrentFramePointClouds)
+        {
+            mCurrentFramePointClouds->clear();
+            mCurrentFramePointClouds = nullptr;
+        }
 
         // clear images
         mImage.release();
+        if (mAuxPointCloud)
+        {
+            mAuxPointCloud->clear();
+            mAuxPointCloud = nullptr;
+        }
+        mbHasAuxPointCloud = false;
     }
 
     std::vector<pcl::PointCloud<pcl::PointXYZRGBA>::Ptr> KeyFrame::getClsCloudPtrs() const

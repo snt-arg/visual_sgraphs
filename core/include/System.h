@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <functional>
 #include <string>
 #include <thread>
 #include <opencv2/core/core.hpp>
@@ -88,6 +89,7 @@ namespace ORB_SLAM3
     class Viewer;
     class FrameDrawer;
     class MapDrawer;
+    class KeyFrame;
     class Atlas;
     class Tracking;
     class LocalMapping;
@@ -167,7 +169,9 @@ namespace ORB_SLAM3
          */
         Sophus::SE3f TrackMonocular(const cv::Mat &im, const double &timestamp,
                                     const vector<IMU::Point> &vImuMeas = vector<IMU::Point>(), string filename = "",
-                                    const vector<Marker *> markers = vector<Marker *>{});
+                                    const vector<Marker *> markers = vector<Marker *>{}, const cv::Mat &mask = cv::Mat());
+
+        void SetKeyFrameCreatedCallback(std::function<void(const KeyFrame *)> callback);
 
         // This stops local mapping thread (map building) and performs only camera tracking.
         void ActivateLocalizationMode();
@@ -248,12 +252,19 @@ namespace ORB_SLAM3
         Sophus::SE3f GetCamTwc();
         Sophus::SE3f GetImuTwb();
         Eigen::Vector3f GetImuVwb();
+        IMU::Bias GetImuBias();
         bool isImuPreintegrated();
 
         // For debugging
         double GetTimeFromIMUInit();
         bool isLost();
         bool isFinished();
+
+        // Number of keyframes pending in LocalMapping's queue. Lets a caller feeding
+        // frames faster than real time (e.g. offline bag replay) apply backpressure so
+        // LocalMapping's IMU init/BA gets real wall-clock time to keep up, instead of
+        // racing far ahead of what it has actually processed.
+        int GetLocalMappingQueueSize();
 
         void ChangeDataset();
 
@@ -270,6 +281,10 @@ namespace ORB_SLAM3
          * @param tuple the address of the tuple of segmented image and pointcloud
          */
         void addSegmentedImage(std::tuple<uint64_t, cv::Mat, pcl::PCLPointCloud2::Ptr> *tuple);
+        void AttachAuxDepthToKeyFrame(uint64_t keyFrameId, const cv::Mat &auxDepth,
+                                      double auxDepthTimestamp, const std::string &auxDepthFrameId,
+                                      float auxDepthMin, float auxDepthMax, int auxDepthStride,
+                                      const std::string &auxDepthScaleMode);
 
         /**
          * @brief Get the skeleton cluster coming from the current map
@@ -296,6 +311,12 @@ namespace ORB_SLAM3
     private:
         bool SaveAtlas(int type);
         bool LoadAtlas(int type);
+
+        // Snapshot mCurrentFrame's tracked map points/keypoints into mTrackedMapPoints/
+        // mTrackedKeyPointsUn, excluding entries the tracker's own pose optimization has already
+        // flagged as outliers (mvbOutlier) this frame -- consumers (e.g. publishStaticMapPoints)
+        // must not receive point/pixel associations ORB-SLAM3 itself has already rejected.
+        void UpdateTrackedPointsFromCurrentFrame();
 
         string CalculateCheckSum(string filename, int type);
 

@@ -130,6 +130,9 @@ namespace ORB_SLAM3
             // the depth from points using Machine Learning to get a better plane estimate.
             pointcloud = getCloudFromSparsePoints(pKF->getCurrentFrameMapPoints()); // mCurrentFrame.mvpMapPoints
 
+        if (pointcloud == nullptr)
+            return extractedPlanes;
+
         // Convert the pointcloud to one with PointXYZRGBA for consistency
         pcl::PointCloud<pcl::PointXYZRGBA>::Ptr cloudRGBA(new pcl::PointCloud<pcl::PointXYZRGBA>);
         pcl::copyPointCloud(*pointcloud, *cloudRGBA);

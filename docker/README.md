@@ -64,3 +64,36 @@ ros2 launch vs_graphs rgbd.launch.py
 ```
 
 You can even use the **mprocs** tool provided inside the Docker image, by simply running `mprocs` (an alias for `mprocs -c [path]/visual_sgraphs/config/mprocs.yml`) and choose the prepared command sets there.
+
+### Solve cuda mismatch after build
+Remove wrong versions and Reinstall torch / numpy:
+```bash
+sudo rm -rf \
+  /usr/local/lib/python3.12/dist-packages/torch \
+  /usr/local/lib/python3.12/dist-packages/torch-* \
+  /usr/local/lib/python3.12/dist-packages/torchvision \
+  /usr/local/lib/python3.12/dist-packages/torchvision-* \
+  /usr/local/lib/python3.12/dist-packages/torchaudio \
+  /usr/local/lib/python3.12/dist-packages/torchaudio-* \
+  /usr/local/lib/python3.12/dist-packages/functorch \
+  /usr/local/lib/python3.12/dist-packages/torchgen
+
+python3 -m pip install --user --break-system-packages --no-cache-dir --force-reinstall \
+  torch torchvision torchaudio \
+  --index-url https://download.pytorch.org/whl/cu126
+
+rm -rf ~/.local/lib/python3.12/site-packages/numpy \
+       ~/.local/lib/python3.12/site-packages/numpy-*.dist-info \
+       ~/.local/lib/python3.12/site-packages/numpy.libs
+
+python3 -m pip install --user --break-system-packages --no-cache-dir "numpy==1.26.4"
+```
+verify:
+```bash
+python3 - <<'PY'
+import torch, numpy
+print("torch:", torch.__version__, torch.__file__, torch.version.cuda, torch.cuda.is_available())
+print("numpy:", numpy.__version__, numpy.__file__)
+PY
+```
+and build the workspace.

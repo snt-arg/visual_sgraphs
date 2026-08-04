@@ -31,6 +31,7 @@
 #include "Settings.h"
 #include "Types/SystemParams.h"
 
+#include <functional>
 #include <mutex>
 
 namespace ORB_SLAM3
@@ -45,11 +46,14 @@ namespace ORB_SLAM3
     {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        using KeyFrameCreatedCallback = std::function<void(const KeyFrame *)>;
+
         LocalMapping(System *pSys, Atlas *pAtlas, const float bMonocular, bool bInertial, const string &_strSeqName = std::string());
 
         void SetLoopCloser(LoopClosing *pLoopCloser);
 
         void SetTracker(Tracking *pTracker);
+        void SetKeyFrameCreatedCallback(KeyFrameCreatedCallback callback);
 
         // Main function
         void Run();
@@ -166,6 +170,7 @@ namespace ORB_SLAM3
         std::list<KeyFrame *> mlNewKeyFrames;
 
         KeyFrame *mpCurrentKeyFrame;
+        KeyFrameCreatedCallback mKeyFrameCreatedCallback;
 
         std::list<MapPoint *> mlpRecentAddedMapPoints;
 

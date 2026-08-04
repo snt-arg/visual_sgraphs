@@ -19,7 +19,7 @@ def generate_launch_description():
                 "semantic_scene_segmenter",
                 default_value="yoso",
                 description="The method to segment the semantic scene (if off, the baseline)",
-                choices=["yoso", "pfcn", "off"],
+                choices=["yoso", "pfcn", "eomt", "off"],
             ),
             # Topics
             DeclareLaunchArgument("camera_frame", default_value="camera"),
@@ -212,6 +212,28 @@ def generate_launch_description():
                     [
                         get_package_share_directory("segmenter_ros"),
                         "/config/cfg_pFCN.yaml",
+                    ],
+                ],
+            ),
+            Node(
+                condition=IfCondition(
+                    EqualsSubstitution(
+                        LaunchConfiguration("semantic_scene_segmenter"), "eomt"
+                    )
+                ),
+                name="segmenter_ros",
+                package="segmenter_ros",
+                executable="segmenter_eomt.py",
+                output="screen",
+                parameters=[
+                    {"visualize": LaunchConfiguration("visualize_segmented_scene")}
+                ],
+                arguments=[
+                    "--ros-args",
+                    "--params-file",
+                    [
+                        get_package_share_directory("segmenter_ros"),
+                        "/config/cfg_eomt.yaml",
                     ],
                 ],
             ),

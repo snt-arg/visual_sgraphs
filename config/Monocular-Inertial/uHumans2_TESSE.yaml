@@ -1,53 +1,60 @@
 %YAML:1.0
 
 #--------------------------------------------------------------------------------------------
-# Camera Parameters. Adjust them! (RealSense D435 camera - Serial Number: 044322070965)
+# Camera Parameters. TESSE simulator (uHumans2 dataset) - left_cam
+# Extracted directly from the recorded bag:
+#   /tesse/left_cam/camera_info  -> intrinsics (720x480, fx=fy=415.692, cx=360, cy=240, zero distortion)
+#   /tf_static (base_link_gt -> left_cam) -> IMU.T_b_c1 (t=[0,0.05,0], q=[0.5,-0.5,0.5,-0.5])
 #--------------------------------------------------------------------------------------------
 File.version: "1.0"
 
 Camera.type: "PinHole"
 
 # Rectified Camera calibration (OpenCV)
-Camera1.fx: 606.4905395507812
-Camera1.fy: 606.2596435546875
-Camera1.cx: 329.4786071777344
-Camera1.cy: 242.22344970703125
+Camera1.fx: 415.69219381653056
+Camera1.fy: 415.69219381653056
+Camera1.cx: 360.0
+Camera1.cy: 240.0
 
-# Distortion parameters
+# Distortion parameters (TESSE renders undistorted images)
 Camera1.k1: 0.0
 Camera1.k2: 0.0
 Camera1.p1: 0.0
 Camera1.p2: 0.0
 
 # Camera resolution
-Camera.width: 640
+Camera.width: 720
 Camera.height: 480
 
-# Camera frames per second 
-Camera.fps: 30
+# Camera frames per second (measured from consecutive /tesse/left_cam header stamps, median dt=0.1s)
+Camera.fps: 10
 
 # Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
 Camera.RGB: 1
 
-# Transformation from body-frame (imu) to left camera
+# Transformation from body-frame (imu, "base_link_gt") to left camera ("left_cam")
+# Derived from the bag's own /tf_static: t=[0, 0.05, 0], q=[x=0.5, y=-0.5, z=0.5, w=-0.5]
 IMU.T_b_c1: !!opencv-matrix
    rows: 4
    cols: 4
    dt: f
-   data: [1,0,0,-0.005,
-         0,1,0,-0.005,
-         0,0,1,0.0117,
+   data: [0.0, 0.0, 1.0, 0.0,
+         -1.0, 0.0, 0.0, 0.05,
+         0.0, -1.0, 0.0, 0.0,
          0.0, 0.0, 0.0, 1.0]
 
 # Do not insert KFs when recently lost
 IMU.InsertKFsWhenLost: 0
 
-# IMU noise (Use those from VINS-mono)
-IMU.Threshold: 0.5      # Default: 0.5
-IMU.NoiseGyro: 1e-3 # 2.44e-4 #1e-3 # rad/s^0.5
-IMU.NoiseAcc: 1e-2 # 1.47e-3 #1e-2 # m/s^1.5
-IMU.GyroWalk: 1e-6 # rad/s^1.5
-IMU.AccWalk: 1e-4 # m/s^2.5
+# IMU noise - TESSE's actual simulated noise model is not recorded in the bag;
+# these are generic starting values (same family as VINS-mono defaults used in the
+# other configs here). Tune IMU.NoiseGyro/NoiseAcc/GyroWalk/AccWalk against the
+# /tesse/imu/clean/imu vs /tesse/imu/noisy/imu topics if initialization remains unstable.
+IMU.Threshold: 0.5
+IMU.NoiseGyro: 1e-3
+IMU.NoiseAcc: 1e-2
+IMU.GyroWalk: 1e-6
+IMU.AccWalk: 1e-4
 IMU.Frequency: 200.0
 
 #--------------------------------------------------------------------------------------------
@@ -56,16 +63,16 @@ IMU.Frequency: 200.0
 # ORB Extractor: Number of features per image
 ORBextractor.nFeatures: 1250
 
-# ORB Extractor: Scale factor between levels in the scale pyramid 	
+# ORB Extractor: Scale factor between levels in the scale pyramid
 ORBextractor.scaleFactor: 1.2
 
-# ORB Extractor: Number of levels in the scale pyramid	
+# ORB Extractor: Number of levels in the scale pyramid
 ORBextractor.nLevels: 8
 
 # ORB Extractor: Fast threshold
 # Image is divided in a grid. At each cell FAST are extracted imposing a minimum response.
 # Firstly we impose iniThFAST. If no corners are detected we impose a lower value minThFAST
-# You can lower these values if your images have low contrast			
+# You can lower these values if your images have low contrast
 ORBextractor.iniThFAST: 20
 ORBextractor.minThFAST: 7
 

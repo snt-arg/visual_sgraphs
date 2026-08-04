@@ -13,6 +13,8 @@ ENV CUDA_HOME=/usr/local/cuda \
     ROS_DISTRO=jazzy \
     PIP_BREAK_SYSTEM_PACKAGES=1
 
+ENV PATH="/usr/src/tensorrt/bin:${PATH}"
+
 # --- Fix MPI issue ---
 RUN mkdir -p /opt/hpcx/ompi/lib/x86_64-linux-gnu \
     && ln -s /opt/hpcx/ompi /opt/hpcx/ompi/lib/x86_64-linux-gnu/openmpi \
@@ -65,9 +67,10 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # --- Python environment setup ---
 RUN pip3 install networkx==3.1
+RUN pip3 uninstall -y torch torchvision torchaudio || true
 RUN pip3 install --extra-index-url https://download.pytorch.org/whl/cu126 \
-    torch \
-    torchvision
+    torch==2.6.0+cu126 \
+    torchvision==0.21.0+cu126
 RUN apt remove --purge python3-typing-extensions -y
 RUN pip3 install typing-extensions==4.11.0
 
@@ -120,8 +123,7 @@ WORKDIR /home/$USERNAME/workspace/src
 RUN --mount=type=ssh git clone git@github.com:snt-arg/visual_sgraphs.git
 RUN --mount=type=ssh git clone git@github.com:snt-arg/situational_graphs_msgs.git
 RUN --mount=type=ssh git clone -b ros2-jazzy git@github.com:snt-arg/scene_segment_ros.git
-RUN --mount=type=ssh git clone -b ros2-master git@github.com:IntelRealSense/realsense-ros.git
-RUN --mount=type=ssh git clone git@github.com:snt-arg/object_tracker_3d_ros.git
+RUN --mount=type=ssh git clone -b r/4.57.2 --depth 1 git@github.com:IntelRealSense/realsense-ros.git
 # RUN --mount=type=ssh git clone -b humble-devel git@github.com:pal-robotics/aruco_ros.git
 
 # Repositories for GNN-based room detection and reasoning
@@ -134,9 +136,11 @@ RUN --mount=type=ssh git clone git@github.com:snt-arg/object_tracker_3d_ros.git
 WORKDIR /home/$USERNAME/workspace/src/visual_sgraphs/docker
 RUN pip3 install --break-system-packages --ignore-installed -r requirements.txt
 
-# Install object tracker dependencies
-RUN pip3 install --break-system-packages --ignore-installed \
-    -r /home/$USERNAME/workspace/src/object_tracker_3d_ros/requirements.txt
+# Install object tracker dependencies when the package is present in the workspace
+RUN if [ -f /home/$USERNAME/workspace/src/object_tracker_3d_ros/requirements.txt ]; then \
+      pip3 install --break-system-packages --ignore-installed \
+      -r /home/$USERNAME/workspace/src/object_tracker_3d_ros/requirements.txt ; \
+    fi
 
 # [Hint] Temp. fix for installing ROS2 Humble repositories (GNN-based room detection) in Jazzy
 # (Read more: https://github.com/ros2/ros2/issues/1702)
@@ -147,7 +151,13 @@ RUN pip3 install --break-system-packages --ignore-installed \
 # RUN mkdir -p /home/$USERNAME/workspace/install/situational_graphs_reasoning/share/situational_graphs_reasoning/reports \
 #     && chown -R $USERNAME:$USERNAME /home/$USERNAME/workspace/install/situational_graphs_reasoning/share/situational_graphs_reasoning/reports
 
-WORKDIR /home/$USERNAME/workspace/src/
+# Install the EOMT dependencies
+WORKDIR /home/$USERNAME/workspace/src/scene_segment_ros/src/
+RUN git clone https://github.com/tue-mps/eomt.git
+RUN pip3 install --ignore-installed -r /home/${USERNAME}/workspace/src/scene_segment_ros/src/eomt/requirements.txt
+RUN pip3 install "numpy<2.0" --force-reinstall
+
+# WORKDIR /home/$USERNAME/workspace/src/
 
 # Download the yoso checkpoint
 RUN wget https://github.com/hujiecpp/YOSO/releases/download/v0.1/yoso_res50_coco.pth
@@ -206,6 +216,54 @@ WORKDIR /home/$USERNAME/workspace/
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y \
     && . "$HOME/.cargo/env" \
     && cargo install mprocs
+
+
+# note: you might have to reinstall numpy and opencv python pkgs and rebuilding cause the system packages are pointed instead
+# note: torch version might be wrong (cu130 wheel), reinstall torch and torchvision with the correct versions if you encounter issues related to torch.
+RUN sudo rm -rf \
+  /usr/local/lib/python3.12/dist-packages/torch \
+  /usr/local/lib/python3.12/dist-packages/torch-* \
+  /usr/local/lib/python3.12/dist-packages/torchvision \
+  /usr/local/lib/python3.12/dist-packages/torchvision-* \
+  /usr/local/lib/python3.12/dist-packages/torchaudio \
+  /usr/local/lib/python3.12/dist-packages/torchaudio-* \
+  /usr/local/lib/python3.12/dist-packages/functorch \
+  /usr/local/lib/python3.12/dist-packages/torchgen
+
+RUN python3 -m pip install --user --break-system-packages --no-cache-dir --force-reinstall \
+  torch torchvision torchaudio \
+  --index-url https://download.pytorch.org/whl/cu126
+
+# Purge numpy/scipy from BOTH the user site and the system dist-packages before
+# reinstalling. Earlier layers install numpy/scipy system-wide with
+# `--ignore-installed`, which does not clean up files from a differently-laid-out
+# previous version. If those stale files are left in dist-packages, they can
+# shadow the pinned --user install below (e.g. a stray flat
+# scipy/sparse/linalg/_propack*.so shadowing the real _propack/ package),
+# breaking `import scipy` at runtime even though `pip list` looks correct.
+RUN rm -rf ~/.local/lib/python3.12/site-packages/numpy \
+       ~/.local/lib/python3.12/site-packages/numpy-*.dist-info \
+       ~/.local/lib/python3.12/site-packages/numpy.libs \
+       ~/.local/lib/python3.12/site-packages/scipy \
+       ~/.local/lib/python3.12/site-packages/scipy-*.dist-info \
+       ~/.local/lib/python3.12/site-packages/scipy.libs
+RUN sudo rm -rf \
+  /usr/local/lib/python3.12/dist-packages/numpy \
+  /usr/local/lib/python3.12/dist-packages/numpy-* \
+  /usr/local/lib/python3.12/dist-packages/numpy.libs \
+  /usr/local/lib/python3.12/dist-packages/scipy \
+  /usr/local/lib/python3.12/dist-packages/scipy-* \
+  /usr/local/lib/python3.12/dist-packages/scipy.libs
+
+RUN python3 -m pip install --user --break-system-packages --no-cache-dir "numpy==1.26.4"
+RUN python3 -m pip install --user --break-system-packages --no-cache-dir --force-reinstall --no-deps \
+  "scipy==1.13.1"
+RUN python3 -m pip install --user --break-system-packages --no-cache-dir --force-reinstall --no-deps \
+  "ultralytics==8.4.68"
+
+WORKDIR /home/$USERNAME/workspace/
+RUN /bin/bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release --packages-skip realsense2_ros_mqtt_bridge"
+RUN /bin/bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && colcon build --packages-select realsense2_ros_mqtt_bridge"
 
 # --------------------------
 # Aliases and Environment Setup

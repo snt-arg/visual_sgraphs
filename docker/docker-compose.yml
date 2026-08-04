@@ -3,7 +3,7 @@ services:
     image: vsgraphs_ros2
     build:
       context: .
-      dockerfile: Jazzy.Dockerfile
+      dockerfile: Jazzy_new.Dockerfile
       ssh:
         - default
       args:
@@ -14,7 +14,7 @@ services:
     environment:
       DISPLAY: $DISPLAY
       XAUTHORITY: $XAUTHORITY
-      SSH_AUTH_SOCK: $SSH_AUTH_SOCK
+      SSH_AUTH_SOCK: /ssh-agent
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
       TERM: $TERM
@@ -30,7 +30,7 @@ services:
       # - ~/.Xauthority:/home/user/.Xauthority:rw
       - $XAUTHORITY:$XAUTHORITY:rw
       # SSH
-      - $SSH_AUTH_SOCK:$SSH_AUTH_SOCK
+      - $SSH_AUTH_SOCK:/ssh-agent
       # TMUX
       - ~/.tmux:/home/$USERNAME/.tmux:ro
       - ~/.tmux.conf:/home/$USERNAME/.tmux.conf:ro
@@ -42,13 +42,27 @@ services:
       # - ~/.bash_history:/root/.bash_history
       # - container_home_cache:/root/.cache  # Optional: persist cache
       # Working Directory - vS-Graphs (** MODIFY **)
-      - "/home/$USERNAME/[PATH]/src/visual_sgraphs:/home/$USERNAME/workspace/src/visual_sgraphs:rw"
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/visual_sgraphs:/home/$USERNAME/workspace/src/visual_sgraphs:rw"
       # Working Directory - Scene Segmenter (** MODIFY **)
-      - "/home/$USERNAME/[PATH]/src/scene_segment_ros:/home/$USERNAME/workspace/src/scene_segment_ros:rw"
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/scene_segment_ros:/home/$USERNAME/workspace/src/scene_segment_ros:rw"
       # Working Directory - Situational Graphs Messages (** MODIFY **)
-      - "/home/$USERNAME/[PATH]/src/situational_graphs_msgs:/home/$USERNAME/workspace/src/situational_graphs_msgs:rw"
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/situational_graphs_msgs:/home/$USERNAME/workspace/src/situational_graphs_msgs:rw"
+      # Working Directory - 3D object tracker (** MODIFY **)
+      # - "/home/$USERNAME/workspaces/dv_sgraphs/src/object_tracker_3d_ros:/home/$USERNAME/workspace/src/object_tracker_3d_ros:rw"
+      # Working Directory - Dynamic keypoint tracker (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/dynamic_keypoint_tracker:/home/$USERNAME/workspace/src/dynamic_keypoint_tracker:rw"
+      # Working Directory - Keyframe depth estimator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/keyframe_depth_estimator:/home/$USERNAME/workspace/src/keyframe_depth_estimator:rw"
+      # Working Directory - Keyframe depth validator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/keyframe_depth_validator:/home/$USERNAME/workspace/src/keyframe_depth_validator:rw"
+      # Working Directory - Dynamic keypoint 3D lifter (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/dynamic_keypoint_3d_lifter:/home/$USERNAME/workspace/src/dynamic_keypoint_3d_lifter:rw"
+      # Working Directory - Object motion estimator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/object_motion_estimator:/home/$USERNAME/workspace/src/object_motion_estimator:rw"
+      # Working Directory - ORB-SLAM3 bag runner (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/orbslam3_bag_runner:/home/$USERNAME/workspace/src/orbslam3_bag_runner:rw"
       # Data Directory (** MODIFY **)
-      - "/media/$USERNAME/AT_SSD/Datasets:/home/$USERNAME/datasets:rw"
+      - "/media/$USERNAME/muffin/datasets:/home/$USERNAME/datasets:rw"
     network_mode: "host"
     command:
       tail -f /dev/null
@@ -57,13 +71,27 @@ services:
       - volume-init
   volume-init:
     image: busybox
-    command: ["chown", "-R", "1000:1000", "/workspace/src/visual_sgraphs"]
+    command: ["chown", "-R", "1000:1000", "/home/$USERNAME/workspace/src/visual_sgraphs"]
     volumes:
       # Working Directory - vS-Graphs (** MODIFY **)
-      - "/home/$USERNAME/[PATH]/src/visual_sgraphs:/home/$USERNAME/workspace/src/visual_sgraphs:rw"
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/visual_sgraphs:/home/$USERNAME/workspace/src/visual_sgraphs:rw"
       # Working Directory - Scene Segmenter (** MODIFY **)
-      - "/home/$USERNAME/[PATH]/src/scene_segment_ros:/home/$USERNAME/workspace/src/scene_segment_ros:rw"
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/scene_segment_ros:/home/$USERNAME/workspace/src/scene_segment_ros:rw"
       # Working Directory - Situational Graphs Messages (** MODIFY **)
-      - "/home/$USERNAME/[PATH]/src/situational_graphs_msgs:/home/$USERNAME/workspace/src/situational_graphs_msgs:rw"
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/situational_graphs_msgs:/home/$USERNAME/workspace/src/situational_graphs_msgs:rw"
+      # Working Directory - 3D object tracker (** MODIFY **)
+      # - "/home/$USERNAME/workspaces/dv_sgraphs/src/object_tracker_3d_ros:/home/$USERNAME/workspace/src/object_tracker_3d_ros:rw"
+      # Working Directory - Dynamic keypoint tracker (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/dynamic_keypoint_tracker:/home/$USERNAME/workspace/src/dynamic_keypoint_tracker:rw"
+      # Working Directory - Keyframe depth estimator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/keyframe_depth_estimator:/home/$USERNAME/workspace/src/keyframe_depth_estimator:rw"
+      # Working Directory - Keyframe depth validator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/keyframe_depth_validator:/home/$USERNAME/workspace/src/keyframe_depth_validator:rw"
+      # Working Directory - Dynamic keypoint 3D lifter (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/dynamic_keypoint_3d_lifter:/home/$USERNAME/workspace/src/dynamic_keypoint_3d_lifter:rw"
+      # Working Directory - Object motion estimator (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/object_motion_estimator:/home/$USERNAME/workspace/src/object_motion_estimator:rw"
+      # Working Directory - ORB-SLAM3 bag runner (** MODIFY **)
+      - "/home/$USERNAME/workspaces/dv_sgraphs/src/orbslam3_bag_runner:/home/$USERNAME/workspace/src/orbslam3_bag_runner:rw"
     entrypoint: ""
     restart: "no"

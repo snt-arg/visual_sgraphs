@@ -258,6 +258,24 @@ namespace ORB_SLAM3
         mpSemanticSegmentation->AddSegmentedFrameToBuffer(tuple);
     }
 
+    void System::AttachAuxDepthToKeyFrame(uint64_t keyFrameId, const cv::Mat &auxDepth,
+                                          double auxDepthTimestamp, const std::string &auxDepthFrameId,
+                                          float auxDepthMin, float auxDepthMax, int auxDepthStride,
+                                          const std::string &auxDepthScaleMode)
+    {
+        ORB_SLAM3::KeyFrame *pKF = mpAtlas->GetKeyFrameById(keyFrameId);
+        if (pKF == nullptr || pKF->isBad())
+        {
+            // std::cout << "AuxDepth: keyframe ID " << keyFrameId
+            //           << " not available for segmented pointcloud attachment" << std::endl;
+            return;
+        }
+
+        pKF->SetAuxPointCloudFromDepth(auxDepth, auxDepthTimestamp, auxDepthFrameId,
+                                       auxDepthMin, auxDepthMax, auxDepthStride,
+                                       auxDepthScaleMode);
+    }
+
     std::vector<std::vector<Eigen::Vector3d>> System::getSkeletonCluster()
     {
         return mpAtlas->GetSkeletoClusterPoints();
@@ -353,8 +371,7 @@ namespace ORB_SLAM3
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
-        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+        UpdateTrackedPointsFromCurrentFrame();
 
         return Tcw;
     }
@@ -429,13 +446,12 @@ namespace ORB_SLAM3
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
-        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+        UpdateTrackedPointsFromCurrentFrame();
         return Tcw;
     }
 
     Sophus::SE3f System::TrackMonocular(const cv::Mat &im, const double &timestamp, const vector<IMU::Point> &vImuMeas,
-                                        string filename, const std::vector<Marker *> markers)
+                                        string filename, const std::vector<Marker *> markers, const cv::Mat &mask)
     {
         // Multi-thread to prevent race conditions
         {
@@ -453,11 +469,14 @@ namespace ORB_SLAM3
 
         // Obtain the images
         cv::Mat imToFeed = im.clone();
+        cv::Mat maskToFeed = mask.clone();
         if (settings_ && settings_->needToResize())
         {
             cv::Mat resizedImage;
             cv::resize(im, resizedImage, settings_->newImSize());
             imToFeed = resizedImage;
+            if (!mask.empty())
+                cv::resize(mask, maskToFeed, settings_->newImSize(), 0, 0, cv::INTER_NEAREST);
         }
 
         // Check mode change
@@ -504,13 +523,36 @@ namespace ORB_SLAM3
             for (size_t i_imu = 0; i_imu < vImuMeas.size(); i_imu++)
                 mpTracker->GrabImuData(vImuMeas[i_imu]);
 
-        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename, markers, envDoors, envRooms);
+        Sophus::SE3f Tcw = mpTracker->GrabImageMonocular(imToFeed, timestamp, filename, markers, envDoors, envRooms, maskToFeed);
 
         unique_lock<mutex> lock2(mMutexState);
         mTrackingState = mpTracker->mState;
-        mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
-        mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+        UpdateTrackedPointsFromCurrentFrame();
         return Tcw;
+    }
+
+    void System::UpdateTrackedPointsFromCurrentFrame()
+    {
+        const Frame &f = mpTracker->mCurrentFrame;
+        const size_t n = std::min(f.mvpMapPoints.size(), f.mvKeysUn.size());
+
+        mTrackedMapPoints.clear();
+        mTrackedKeyPointsUn.clear();
+        mTrackedMapPoints.reserve(n);
+        mTrackedKeyPointsUn.reserve(n);
+
+        for (size_t i = 0; i < n; i++)
+        {
+            // mvbOutlier[i] is set by the tracker's own pose optimization (PoseOptimization /
+            // inertial variants) when this keypoint<->map-point association is rejected this
+            // frame; the map point pointer itself is left non-null (see Frame::mvbOutlier usage
+            // elsewhere, e.g. GetMapPointMatches), so it must be checked separately here.
+            if (i < f.mvbOutlier.size() && f.mvbOutlier[i])
+                continue;
+
+            mTrackedMapPoints.push_back(f.mvpMapPoints[i]);
+            mTrackedKeyPointsUn.push_back(f.mvKeysUn[i]);
+        }
     }
 
     void System::ActivateLocalizationMode()
@@ -523,6 +565,12 @@ namespace ORB_SLAM3
     {
         unique_lock<mutex> lock(mMutexMode);
         mbDeactivateLocalizationMode = true;
+    }
+
+    void System::SetKeyFrameCreatedCallback(std::function<void(const KeyFrame *)> callback)
+    {
+        if (mpLocalMapper)
+            mpLocalMapper->SetKeyFrameCreatedCallback(std::move(callback));
     }
 
     bool System::MapChanged()
@@ -1093,6 +1141,11 @@ namespace ORB_SLAM3
         return mpTracker->GetImuVwb();
     }
 
+    IMU::Bias System::GetImuBias()
+    {
+        return mpTracker->GetImuBias();
+    }
+
     bool System::isImuPreintegrated()
     {
         return mpTracker->isImuPreintegrated();
@@ -1123,6 +1176,11 @@ namespace ORB_SLAM3
     bool System::isFinished()
     {
         return (GetTimeFromIMUInit() > 0.1);
+    }
+
+    int System::GetLocalMappingQueueSize()
+    {
+        return mpLocalMapper->KeyframesInQueue();
     }
 
     void System::ChangeDataset()

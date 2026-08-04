@@ -31,6 +31,7 @@
 
 #include <set>
 #include <mutex>
+#include <cstdint>
 #include <unordered_map>
 #include <pangolin/pangolin.h>
 #include <boost/serialization/base_object.hpp>
@@ -167,6 +168,12 @@ namespace ORB_SLAM3
 
         void ApplyScaledRotation(const Sophus::SE3f &T, const float s, const bool bScaledVel = false);
 
+        // Last similarity correction (T, s) applied by ApplyScaledRotation, and a version counter
+        // that increments each time -- lets external consumers that keep their own world-frame
+        // state (e.g. object_motion_estimator) detect a rescale and apply the same correction.
+        void GetLastScaleCorrection(Sophus::SE3f &T, float &s);
+        uint64_t GetScaleCorrectionVersion();
+
         bool IsInertial();
         void SetIniertialBA1();
         void SetIniertialBA2();
@@ -256,6 +263,11 @@ namespace ORB_SLAM3
         bool mbIsInertial;
         bool mbIMU_BA1;
         bool mbIMU_BA2;
+
+        // Last similarity correction applied by ApplyScaledRotation -- see GetLastScaleCorrection
+        Sophus::SE3f mLastScaleCorrectionT;
+        float mLastScaleCorrectionS = 1.0f;
+        uint64_t mnScaleCorrectionVersion = 0;
 
         // Mutex
         std::mutex mMutexMap;

@@ -43,6 +43,7 @@ Once you have installed the required dependencies and configured the parameters,
 
 > 🛎️ Note: The current version of vS-Graphs supports **ROS2 Jazzy** and is primarily tested on Ubuntu 24.04.2 LTS.
 
+> 🛎️ Note: mono-inertial vS-Graphs is currently under development, having a stable version at commit ea5a79819e5f82a9a420cc4cc6b6709197dbf991
 ## 🐋 Docker
 
 For a fully reproducible, environment-independent setup, see the [Docker](/docker) section.
@@ -73,3 +74,13 @@ To evaluate vS-Graphs against other visual SLAM frameworks, read the [evaluation
 ## 🔑 License
 
 This project is licensed under the GPL-3.0 license - see the [LICENSE](/LICENSE) for more details.
+
+
+## Usage
+
+```bash
+ros2 launch vs_graphs mono-imu.launch.py \
+  launch_keyframe_depth_estimator:=false \
+  keyframe_depth_validator_use_offline_metric_depth:=true \
+  keyframe_depth_validator_offline_sync_tolerance_ms:=20.0
+```

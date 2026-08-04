@@ -95,7 +95,7 @@ namespace ORB_SLAM3
                                    const std::vector<Door *> doors, const std::vector<Room *> rooms);
         Sophus::SE3f GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename,
                                         const std::vector<Marker *> markers, const std::vector<Door *> doors,
-                                        const std::vector<Room *> rooms);
+                                        const std::vector<Room *> rooms, const cv::Mat &mask = cv::Mat());
 
         void GrabImuData(const IMU::Point &imuMeasurement);
 
@@ -124,6 +124,7 @@ namespace ORB_SLAM3
         Sophus::SE3f GetCamTwc();
         Sophus::SE3f GetImuTwb();
         Eigen::Vector3f GetImuVwb();
+        IMU::Bias GetImuBias();
         bool isImuPreintegrated();
 
         void CreateMapInAtlas();
@@ -269,6 +270,14 @@ namespace ORB_SLAM3
         bool PredictStateIMU();
 
         bool Relocalization();
+
+        // IMU-aided relocalization: attempted while RECENTLY_LOST (inertial sensors) to
+        // recover visual tracking via the IMU-predicted pose instead of only coasting on
+        // PredictStateIMU() until time_recently_lost expires.
+        bool mbImuAidedReloc = false;
+        unsigned int mnLastImuRelocFrameId = 0;
+        bool RelocalizationWithIMU();
+        bool VerifyRelocAgainstIMU(const Sophus::SE3f &Tcw_reloc);
 
         void UpdateLocalMap();
         void UpdateLocalPoints();

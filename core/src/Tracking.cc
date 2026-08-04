@@ -665,6 +665,7 @@ namespace ORB_SLAM3
         mImuFreq = settings->imuFrequency();
         imuThresh = settings->imuThreshold();
         mInsertKFsLost = settings->insertKFsWhenLost();
+        mbImuAidedReloc = settings->imuAidedReloc();
         mImuPer = 1.0 / static_cast<double>(mImuFreq);
         float Ng = settings->noiseGyro();
         float Na = settings->noiseAcc();
@@ -1636,7 +1637,7 @@ namespace ORB_SLAM3
 
     Sophus::SE3f Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp, string filename,
                                               const std::vector<Marker *> markers, const std::vector<Door *> doors,
-                                              const std::vector<Room *> rooms)
+                                              const std::vector<Room *> rooms, const cv::Mat &mask)
     {
         // Set arguments to local variables
         env_doors = doors;
@@ -1662,21 +1663,21 @@ namespace ORB_SLAM3
         {
             if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET || (lastID - initID) < mMaxFrames)
                 mCurrentFrame = Frame(im, mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
-                                      mpCamera, mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers);
+                                      mpCamera, mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers, mask);
             else
                 mCurrentFrame = Frame(im, mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary, mpCamera,
-                                      mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers);
+                                      mDistCoef, mbf, mThDepth, NULL, IMU::Calib(), markers, mask);
         }
         else if (mSensor == System::IMU_MONOCULAR)
         {
             if (mState == NOT_INITIALIZED || mState == NO_IMAGES_YET)
             {
                 mCurrentFrame = Frame(im, mImGray, timestamp, mpIniORBextractor, mpORBVocabulary,
-                                      mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers);
+                                      mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers, mask);
             }
             else
                 mCurrentFrame = Frame(im, mImGray, timestamp, mpORBextractorLeft, mpORBVocabulary,
-                                      mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers);
+                                      mpCamera, mDistCoef, mbf, mThDepth, &mLastFrame, *mpImuCalib, markers, mask);
         }
 
         if (mState == NO_IMAGES_YET)
@@ -2055,6 +2056,26 @@ namespace ORB_SLAM3
                             else
                                 bOK = false;
 
+                            // Attempt visual relocalization guided by the IMU-predicted pose,
+                            // instead of only coasting on PredictStateIMU() until the timeout
+                            // below expires and the map gets reset/recreated. Only after 0.5s
+                            // lost: shorter blips are recovered by TrackLocalMap on the
+                            // IMU-predicted pose alone (vanilla behavior), and triggering a
+                            // relocalization there needlessly activates the 30-frame
+                            // post-reloc vision-only grace window for a self-healing hiccup.
+                            if (mbImuAidedReloc && pCurrentMap->isImuInitialized() &&
+                                (mCurrentFrame.mTimeStamp - mTimeStampLost) >= 0.5 &&
+                                (mCurrentFrame.mnId - mnLastImuRelocFrameId) >= 5)
+                            {
+                                mnLastImuRelocFrameId = mCurrentFrame.mnId;
+                                if (RelocalizationWithIMU())
+                                {
+                                    mState = OK;
+                                    bOK = true;
+                                    std::cout << "[Tracking][IMU-Reloc] Relocalized at frame " << mCurrentFrame.mnId << std::endl;
+                                }
+                            }
+
                             if (mCurrentFrame.mTimeStamp - mTimeStampLost > time_recently_lost)
                             {
                                 mState = LOST;
@@ -2241,6 +2262,29 @@ namespace ORB_SLAM3
             {
                 if (bOK)
                 {
+                    // Post-relocalization grace window: TrackLocalMap optimizes these frames
+                    // vision-only, so their world velocity (mVw) is never re-estimated — it
+                    // stays whatever dead-reckoning predicted at the moment of the loss, and
+                    // propagates unchanged frame-to-frame via the Frame constructor. Handing
+                    // that ~1s-stale velocity to the first inertial optimization after the
+                    // window made its stiff inertial edge reject every visual match and
+                    // diverge to NaN (confirmed via gdb on Marco_Dynamics). Re-seed each
+                    // grace-window frame's velocity from the vision-tracked pose difference —
+                    // the lightweight version of what the ResetFrameIMU() stub below was
+                    // meant to do.
+                    if (mnLastRelocFrameId > 0 && mCurrentFrame.mnId > mnLastRelocFrameId &&
+                        mCurrentFrame.mnId <= (mnLastRelocFrameId + mnFramesToResetIMU) &&
+                        mCurrentFrame.HasPose() && mLastFrame.HasPose())
+                    {
+                        const double dt = mCurrentFrame.mTimeStamp - mLastFrame.mTimeStamp;
+                        if (dt > 1e-4)
+                        {
+                            const Eigen::Vector3f vwb =
+                                (mCurrentFrame.GetImuPosition() - mLastFrame.GetImuPosition()) / static_cast<float>(dt);
+                            mCurrentFrame.SetVelocity(vwb);
+                        }
+                    }
+
                     if (mCurrentFrame.mnId == (mnLastRelocFrameId + mnFramesToResetIMU))
                     {
                         cout << "RESETING FRAME!!!" << endl;
@@ -3052,7 +3096,14 @@ namespace ORB_SLAM3
             else
             {
                 // if(!mbMapUpdated && mState == OK) //  && (mnMatchesInliers>30))
-                if (!mbMapUpdated) //  && (mnMatchesInliers>30))
+                // The LastFrame variant builds an EdgePriorPoseImu from mpPrevFrame->mpcpi and
+                // dereferences it unconditionally. mpcpi is only stamped by these two inertial
+                // optimizers, so any frame that last went through vision-only PoseOptimization
+                // (each frame in the post-relocalization grace window above) has mpcpi == null,
+                // and using it as the previous frame crashes. Unreachable in vanilla inertial
+                // mapping (relocalization never fires there), reachable with IMU-aided reloc.
+                // The LastKeyFrame variant anchors on mpLastKeyFrame instead and needs no prior.
+                if (!mbMapUpdated && mCurrentFrame.mpPrevFrame && mCurrentFrame.mpPrevFrame->mpcpi) //  && (mnMatchesInliers>30))
                 {
                     Verbose::PrintMess("TLM: PoseInertialOptimizationLastFrame ", Verbose::VERBOSITY_DEBUG);
                     inliers = Optimizer::PoseInertialOptimizationLastFrame(&mCurrentFrame); // , !mpLastKeyFrame->GetMap()->GetIniertialBA1());
@@ -3100,7 +3151,7 @@ namespace ORB_SLAM3
         // Decide if the tracking was succesful
         // More restrictive if there was a relocalization recently
         mpLocalMapper->mnMatchesInliers = mnMatchesInliers;
-        if (mCurrentFrame.mnId < mnLastRelocFrameId + mMaxFrames && mnMatchesInliers < 50)
+        if (mCurrentFrame.mnId < mnLastRelocFrameId + mMaxFrames && mnMatchesInliers < 25)
             return false;
 
         if ((mnMatchesInliers > 10) && (mState == RECENTLY_LOST))
@@ -3108,7 +3159,7 @@ namespace ORB_SLAM3
 
         if (mSensor == System::IMU_MONOCULAR)
         {
-            if ((mnMatchesInliers < 15 && mpAtlas->isImuInitialized()) || (mnMatchesInliers < 50 && !mpAtlas->isImuInitialized()))
+            if ((mnMatchesInliers < 15 && mpAtlas->isImuInitialized()) || (mnMatchesInliers < 25 && !mpAtlas->isImuInitialized()))
             {
                 return false;
             }
@@ -3687,6 +3738,236 @@ namespace ORB_SLAM3
         }
     }
 
+    // Sanity-check a relocalization pose candidate against the IMU-predicted body state:
+    // rejects matches that are geometrically plausible (enough inliers) but land far from
+    // where the IMU says the sensor actually is, which would otherwise silently teleport
+    // the trajectory to an unrelated part of the map.
+    bool Tracking::VerifyRelocAgainstIMU(const Sophus::SE3f &Tcw_reloc)
+    {
+        Sophus::SE3f Tbc = mCurrentFrame.mImuCalib.mTbc;
+        Sophus::SE3f Twb_reloc = (Tcw_reloc * Tbc).inverse();
+
+        Eigen::Vector3f pos_reloc = Twb_reloc.translation();
+        Eigen::Vector3f pos_imu = mCurrentFrame.GetImuPosition();
+
+        float timeSinceLost = (float)(mCurrentFrame.mTimeStamp - mTimeStampLost);
+        float maxPosDist = max(3.0f, 2.0f + 1.0f * timeSinceLost);
+
+        float posDist = (pos_reloc - pos_imu).norm();
+        if (posDist > maxPosDist)
+        {
+            cout << "[Tracking][IMU-Reloc] Rejected: pos dist " << posDist << "m > " << maxPosDist << "m" << endl;
+            return false;
+        }
+
+        Eigen::Matrix3f R_reloc = Twb_reloc.rotationMatrix();
+        Eigen::Matrix3f R_imu = mCurrentFrame.GetImuRotation();
+        float traceVal = ((R_reloc.transpose() * R_imu).trace() - 1.0f) / 2.0f;
+        traceVal = min(1.0f, max(-1.0f, traceVal));
+        float angleDiff = acos(traceVal);
+        if (angleDiff > 0.35f)
+        {
+            cout << "[Tracking][IMU-Reloc] Rejected: angle diff " << angleDiff * 180.0f / M_PI << " deg > 20 deg" << endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    // Relocalization attempt used while RECENTLY_LOST on inertial sensors: instead of only
+    // coasting on IMU dead-reckoning (PredictStateIMU) until the timeout expires, actively
+    // search for a visual match, filtered and verified against the IMU-predicted pose so
+    // the platform can recover tracking without a map reset.
+    bool Tracking::RelocalizationWithIMU()
+    {
+        mCurrentFrame.ComputeBoW();
+
+        vector<KeyFrame *> vpCandidateKFs =
+            mpKeyFrameDB->DetectRelocalizationCandidates(&mCurrentFrame, mpAtlas->GetCurrentMap());
+
+        if (vpCandidateKFs.empty())
+            return false;
+
+        // Spatial filter: reject candidates far from the IMU-predicted position
+        Eigen::Vector3f imuPos = mCurrentFrame.GetCameraCenter();
+        float timeSinceLost = (float)(mCurrentFrame.mTimeStamp - mTimeStampLost);
+        float maxRadius = 3.0f + 1.0f * timeSinceLost;
+
+        vector<pair<float, KeyFrame *>> vDistKF;
+        for (KeyFrame *pKF : vpCandidateKFs)
+        {
+            if (!pKF || pKF->isBad())
+                continue;
+            float dist = (pKF->GetCameraCenter() - imuPos).norm();
+            vDistKF.push_back({dist, pKF});
+        }
+        sort(vDistKF.begin(), vDistKF.end());
+
+        vector<KeyFrame *> vpFilteredKFs;
+        for (auto &p : vDistKF)
+        {
+            if (p.first <= maxRadius)
+                vpFilteredKFs.push_back(p.second);
+        }
+
+        // Fallback: keep top 3 closest if the spatial filter rejected everything
+        if (vpFilteredKFs.empty())
+        {
+            for (int i = 0; i < min(3, (int)vDistKF.size()); i++)
+                vpFilteredKFs.push_back(vDistKF[i].second);
+        }
+
+        cout << "[Tracking][IMU-Reloc] " << vpFilteredKFs.size() << "/" << vpCandidateKFs.size()
+             << " candidates within " << maxRadius << "m (t_lost=" << timeSinceLost << "s)" << endl;
+
+        ORBmatcher matcher(0.9, true);
+
+        // Step A: projection-based matching using the IMU-predicted pose
+        for (KeyFrame *pKF : vpFilteredKFs)
+        {
+            set<MapPoint *> sFound;
+            int nProj = matcher.SearchByProjection(mCurrentFrame, pKF, sFound, 15, 100);
+
+            if (nProj < 20)
+                continue;
+
+            int nGood = Optimizer::PoseOptimization(&mCurrentFrame);
+
+            if (nGood < 10)
+                continue;
+
+            for (int io = 0; io < mCurrentFrame.N; io++)
+                if (mCurrentFrame.mvbOutlier[io])
+                    mCurrentFrame.mvpMapPoints[io] = static_cast<MapPoint *>(NULL);
+
+            // Progressive refinement
+            if (nGood < 50)
+            {
+                sFound.clear();
+                for (int ip = 0; ip < mCurrentFrame.N; ip++)
+                    if (mCurrentFrame.mvpMapPoints[ip])
+                        sFound.insert(mCurrentFrame.mvpMapPoints[ip]);
+                int nExtra = matcher.SearchByProjection(mCurrentFrame, pKF, sFound, 5, 64);
+
+                if (nGood + nExtra >= 30)
+                {
+                    nGood = Optimizer::PoseOptimization(&mCurrentFrame);
+
+                    for (int io = 0; io < mCurrentFrame.N; io++)
+                        if (mCurrentFrame.mvbOutlier[io])
+                            mCurrentFrame.mvpMapPoints[io] = static_cast<MapPoint *>(NULL);
+                }
+            }
+
+            if (nGood >= 30 && VerifyRelocAgainstIMU(mCurrentFrame.GetPose()))
+            {
+                mnLastRelocFrameId = mCurrentFrame.mnId;
+                cout << "[Tracking][IMU-Reloc] Projection success: " << nGood << " inliers with KF" << pKF->mnId << endl;
+                return true;
+            }
+        }
+
+        // Step B: BoW fallback with MLPnP RANSAC
+        ORBmatcher matcherBoW(0.75, true);
+        const int nKFs = vpFilteredKFs.size();
+        vector<MLPnPsolver *> vpSolvers(nKFs, nullptr);
+        vector<vector<MapPoint *>> vvpMatches(nKFs);
+        vector<bool> vbDiscarded(nKFs, false);
+        int nCandidates = 0;
+
+        for (int i = 0; i < nKFs; i++)
+        {
+            KeyFrame *pKF = vpFilteredKFs[i];
+            if (pKF->isBad())
+            {
+                vbDiscarded[i] = true;
+                continue;
+            }
+
+            int nmatches = matcherBoW.SearchByBoW(pKF, mCurrentFrame, vvpMatches[i]);
+            if (nmatches < 15)
+            {
+                vbDiscarded[i] = true;
+                continue;
+            }
+
+            vpSolvers[i] = new MLPnPsolver(mCurrentFrame, vvpMatches[i]);
+            vpSolvers[i]->SetRansacParameters(0.99, 10, 300, 6, 0.5, 5.991);
+            nCandidates++;
+        }
+
+        bool bMatch = false;
+        while (nCandidates > 0 && !bMatch)
+        {
+            for (int i = 0; i < nKFs; i++)
+            {
+                if (vbDiscarded[i])
+                    continue;
+
+                vector<bool> vbInliers;
+                int nInliers;
+                bool bNoMore;
+                Eigen::Matrix4f eigTcw;
+                bool bTcw = vpSolvers[i]->iterate(5, bNoMore, vbInliers, nInliers, eigTcw);
+
+                if (bNoMore)
+                {
+                    vbDiscarded[i] = true;
+                    nCandidates--;
+                }
+
+                if (bTcw)
+                {
+                    mCurrentFrame.SetPose(Sophus::SE3f(eigTcw));
+
+                    set<MapPoint *> sFound;
+                    const int np = vbInliers.size();
+                    for (int j = 0; j < np; j++)
+                    {
+                        if (vbInliers[j])
+                        {
+                            mCurrentFrame.mvpMapPoints[j] = vvpMatches[i][j];
+                            sFound.insert(vvpMatches[i][j]);
+                        }
+                        else
+                            mCurrentFrame.mvpMapPoints[j] = NULL;
+                    }
+
+                    int nGood = Optimizer::PoseOptimization(&mCurrentFrame);
+                    if (nGood < 10)
+                        continue;
+
+                    for (int io = 0; io < mCurrentFrame.N; io++)
+                        if (mCurrentFrame.mvbOutlier[io])
+                            mCurrentFrame.mvpMapPoints[io] = static_cast<MapPoint *>(NULL);
+
+                    if (nGood < 50)
+                    {
+                        int nadditional = matcher.SearchByProjection(mCurrentFrame, vpFilteredKFs[i], sFound, 10, 100);
+                        if (nadditional + nGood >= 30)
+                        {
+                            nGood = Optimizer::PoseOptimization(&mCurrentFrame);
+                            for (int io = 0; io < mCurrentFrame.N; io++)
+                                if (mCurrentFrame.mvbOutlier[io])
+                                    mCurrentFrame.mvpMapPoints[io] = NULL;
+                        }
+                    }
+
+                    if (nGood >= 30 && VerifyRelocAgainstIMU(mCurrentFrame.GetPose()))
+                    {
+                        bMatch = true;
+                        mnLastRelocFrameId = mCurrentFrame.mnId;
+                        cout << "[Tracking][IMU-Reloc] BoW success: " << nGood << " inliers with KF"
+                             << vpFilteredKFs[i]->mnId << endl;
+                        break;
+                    }
+                }
+            }
+        }
+
+        return bMatch;
+    }
+
     bool Tracking::Relocalization()
     {
         Verbose::PrintMess("Starting relocalization", Verbose::VERBOSITY_NORMAL);
@@ -3953,29 +4234,18 @@ namespace ORB_SLAM3
 
         mbReadyToInitializate = false;
 
-        unsigned int index = mnFirstFrameId;
-        for (Map *pMap : mpAtlas->GetAllMaps())
-            if (pMap->GetAllKeyFrames().size() > 0)
-                if (index > pMap->GetLowerKFID())
-                    index = pMap->GetLowerKFID();
-
-        // Count lost frames
-        std::list<bool> lbLost;
-        int lostFrameCount = 0;
-        for (list<bool>::iterator ilbL = mlbLost.begin(); ilbL != mlbLost.end(); ilbL++)
-        {
-            if (index < mnInitialFrameId)
-                lbLost.push_back(*ilbL);
-            else
-            {
-                lbLost.push_back(true);
-                lostFrameCount += 1;
-            }
-            index++;
-        }
+        // mpAtlas->clearMap() above deletes the KeyFrames of the map being reset, so any
+        // pointer to one of them in mlRelativeFramePoses/mlpReferences/mlFrameTimes/mlbLost
+        // is now dangling; walking those lists later (e.g. SaveTrajectoryTUM at shutdown)
+        // would be undefined behavior otherwise. Mirrors Tracking::Reset()'s unconditional
+        // clear of the same four lists.
+        const int lostFrameCount = static_cast<int>(mlbLost.size());
         std::cout << "[Tracking] " << lostFrameCount << " frames were set to lost!" << endl;
 
-        mlbLost = lbLost;
+        mlRelativeFramePoses.clear();
+        mlpReferences.clear();
+        mlFrameTimes.clear();
+        mlbLost.clear();
 
         mnInitialFrameId = mCurrentFrame.mnId;
         mnLastRelocFrameId = mCurrentFrame.mnId;
@@ -4159,6 +4429,11 @@ namespace ORB_SLAM3
     Eigen::Vector3f Tracking::GetImuVwb()
     {
         return mCurrentFrame.GetVelocity();
+    }
+
+    IMU::Bias Tracking::GetImuBias()
+    {
+        return mCurrentFrame.mImuBias;
     }
 
     bool Tracking::isImuPreintegrated()

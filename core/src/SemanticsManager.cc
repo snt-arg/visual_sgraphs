@@ -52,7 +52,8 @@ namespace ORB_SLAM3
             // Check for possible room candidates
             if (sysParams->room_seg.method == SystemParams::room_seg::Method::FREE_SPACE)
                 detectRoom_FreeSpaceCluster();
-            else if (sysParams->room_seg.method == SystemParams::room_seg::Method::GNN)
+            else if (sysParams->room_seg.method == SystemParams::room_seg::Method::GNN ||
+                     sysParams->room_seg.method == SystemParams::room_seg::Method::GNN_NEW)
                 detectRoom_GNN();
 
             // Re-associate rooms based on walls and clusters

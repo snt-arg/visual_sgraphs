@@ -50,7 +50,7 @@ namespace ORB_SLAM3
         try
         {
             // General Parameters
-            general.env_database = mConfig["general"]["env_database"].as<std::string>();
+            general.env_database = mConfig["general"]["env_database"].as<std::string>("");
             general.mode_of_operation = static_cast<general::ModeOfOperation>(mConfig["general"]["mode_of_operation"].as<int>());
 
             // Marker Parameters

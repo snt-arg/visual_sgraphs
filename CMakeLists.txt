@@ -46,6 +46,8 @@ find_package(Eigen3 3.1.0 REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(segmenter_ros REQUIRED)
+find_package(keyframe_depth_estimator REQUIRED)
+find_package(keyframe_depth_validator REQUIRED)
 find_package(image_transport REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(rviz_visual_tools REQUIRED)
@@ -66,6 +68,10 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/VSGraphsRoomData.msg"
   "msg/VSGraphsAllWallsData.msg"
   "msg/VSGraphsAllDetectdetRooms.msg"
+  "msg/MapResetEvent.msg"
+  "msg/MapReadyEvent.msg"
+  "msg/MapRescaleEvent.msg"
+  "msg/ImuBiasEstimate.msg"
   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
 )
 
@@ -83,6 +89,8 @@ include_directories(
   ${Pangolin_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${segmenter_ros_INCLUDE_DIRS}
+  ${keyframe_depth_estimator_INCLUDE_DIRS}
+  ${keyframe_depth_validator_INCLUDE_DIRS}
 )
 include_directories(${OPENGL_INCLUDE_DIRS})
 
@@ -210,6 +218,8 @@ ament_target_dependencies(${PROJECT_NAME}_lib
   image_transport
   rviz_visual_tools
   situational_graphs_msgs
+  keyframe_depth_estimator
+  keyframe_depth_validator
 )
 
 # Common source files
@@ -228,6 +238,8 @@ set(COMMON_DEPENDENCIES
   sensor_msgs
   geometry_msgs
   segmenter_ros
+  keyframe_depth_estimator
+  keyframe_depth_validator
   message_filters
   situational_graphs_msgs
 )
@@ -254,6 +266,7 @@ endfunction()
 # ROS2 nodes
 add_ros2_node(ros_rgbd          src/ros_rgbd.cc)
 add_ros2_node(ros_rgbd_inertial src/ros_rgbd_inertial.cc)
+add_ros2_node(ros_mono_inertial src/ros_mono_inertial.cc)
 
 # Install other resources
 install(

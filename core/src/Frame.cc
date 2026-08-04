@@ -46,7 +46,7 @@ namespace ORB_SLAM3
     // For stereo fisheye matching
     cv::BFMatcher Frame::BFmatcher = cv::BFMatcher(cv::NORM_HAMMING);
 
-    Frame::Frame() : mpcpi(NULL), mpImuPreintegrated(NULL), mpPrevFrame(NULL), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mbHasPose(false), mbHasVelocity(false)
+    Frame::Frame() : mpcpi(NULL), mpImuPreintegrated(NULL), mpPrevFrame(NULL), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
 #ifdef REGISTER_TIMES
         mTimeStereoMatch = 0;
@@ -109,7 +109,7 @@ namespace ORB_SLAM3
                  const std::vector<Marker *> markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractorLeft), mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
-          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
+          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
         // Setting the color image for Semantic Segmentation
         colorImg = imColor.clone();
@@ -130,8 +130,8 @@ namespace ORB_SLAM3
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
-        thread threadLeft(&Frame::ExtractORB, this, 0, imLeft, 0, 0);
-        thread threadRight(&Frame::ExtractORB, this, 1, imRight, 0, 0);
+        thread threadLeft(&Frame::ExtractORB, this, 0, imLeft, 0, 0, cv::Mat());
+        thread threadRight(&Frame::ExtractORB, this, 1, imRight, 0, 0, cv::Mat());
         threadLeft.join();
         threadRight.join();
 #ifdef REGISTER_TIMES
@@ -197,8 +197,6 @@ namespace ORB_SLAM3
             mVw.setZero();
         }
 
-        mpMutexImu = new std::mutex();
-
         // Set no stereo fisheye information
         Nleft = -1;
         Nright = -1;
@@ -218,7 +216,7 @@ namespace ORB_SLAM3
                  Frame *pPrevF, const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractorLeft), mpORBextractorRight(extractorRight), mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbImuPreintegrated(false), mpCamera(pCamera), mpCamera2(pCamera2),
-          mbHasPose(false), mbHasVelocity(false)
+          mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
 
     {
         imgLeft = imLeft.clone();
@@ -243,8 +241,8 @@ namespace ORB_SLAM3
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
-        thread threadLeft(&Frame::ExtractORB, this, 0, imLeft, static_cast<KannalaBrandt8 *>(mpCamera)->mvLappingArea[0], static_cast<KannalaBrandt8 *>(mpCamera)->mvLappingArea[1]);
-        thread threadRight(&Frame::ExtractORB, this, 1, imRight, static_cast<KannalaBrandt8 *>(mpCamera2)->mvLappingArea[0], static_cast<KannalaBrandt8 *>(mpCamera2)->mvLappingArea[1]);
+        thread threadLeft(&Frame::ExtractORB, this, 0, imLeft, static_cast<KannalaBrandt8 *>(mpCamera)->mvLappingArea[0], static_cast<KannalaBrandt8 *>(mpCamera)->mvLappingArea[1], cv::Mat());
+        thread threadRight(&Frame::ExtractORB, this, 1, imRight, static_cast<KannalaBrandt8 *>(mpCamera2)->mvLappingArea[0], static_cast<KannalaBrandt8 *>(mpCamera2)->mvLappingArea[1], cv::Mat());
         threadLeft.join();
         threadRight.join();
 #ifdef REGISTER_TIMES
@@ -309,8 +307,6 @@ namespace ORB_SLAM3
 
         AssignFeaturesToGrid();
 
-        mpMutexImu = new std::mutex();
-
         UndistortKeyPoints();
     }
 
@@ -324,7 +320,7 @@ namespace ORB_SLAM3
           mTimeStamp(timeStamp), mK(K.clone()), mK_(Converter::toMatrix3f(K)), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL),
           mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false),
-          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
+          mpCamera(pCamera), mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
         // Setting the color image for Semantic Segmentation
         colorImg = imColor.clone();
@@ -400,8 +396,6 @@ namespace ORB_SLAM3
         else
             mVw.setZero();
 
-        mpMutexImu = new std::mutex();
-
         // Set no stereo fisheye information
         Nleft = -1;
         Nright = -1;
@@ -417,11 +411,11 @@ namespace ORB_SLAM3
     // Monocular Frames Processing
     Frame::Frame(const cv::Mat &imColor, const cv::Mat &imGray, const double &timeStamp, ORBextractor *extractor, ORBVocabulary *voc,
                  GeometricCamera *pCamera, cv::Mat &distCoef, const float &bf, const float &thDepth, Frame *pPrevF,
-                 const IMU::Calib &ImuCalib, const std::vector<Marker *> markers)
+                 const IMU::Calib &ImuCalib, const std::vector<Marker *> markers, const cv::Mat &mask)
         : mpcpi(NULL), mpORBvocabulary(voc), mpORBextractorLeft(extractor), mpORBextractorRight(static_cast<ORBextractor *>(NULL)),
           mTimeStamp(timeStamp), mK(static_cast<Pinhole *>(pCamera)->toK()), mK_(static_cast<Pinhole *>(pCamera)->toK_()), mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
           mImuCalib(ImuCalib), mpImuPreintegrated(NULL), mpPrevFrame(pPrevF), mpImuPreintegratedFrame(NULL), mpReferenceKF(static_cast<KeyFrame *>(NULL)), mbIsSet(false), mbImuPreintegrated(false), mpCamera(pCamera),
-          mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false)
+          mpCamera2(nullptr), mbHasPose(false), mbHasVelocity(false), mpMutexImu(new std::mutex())
     {
         // Setting the color image for Semantic Segmentation
         colorImg = imColor.clone();
@@ -442,7 +436,7 @@ namespace ORB_SLAM3
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_StartExtORB = std::chrono::steady_clock::now();
 #endif
-        ExtractORB(0, imGray, 0, 1000);
+        ExtractORB(0, imGray, 0, 1000, mask);
 #ifdef REGISTER_TIMES
         std::chrono::steady_clock::time_point time_EndExtORB = std::chrono::steady_clock::now();
 
@@ -514,8 +508,6 @@ namespace ORB_SLAM3
         {
             mVw.setZero();
         }
-
-        mpMutexImu = new std::mutex();
     }
 
     void Frame::AssignFeaturesToGrid()
@@ -552,14 +544,19 @@ namespace ORB_SLAM3
         }
     }
 
-    void Frame::ExtractORB(int flag, const cv::Mat &imageGray, const int x0, const int x1)
+    void Frame::ExtractORB(int flag, const cv::Mat &imageGray, const int x0, const int x1, const cv::Mat &mask)
     {
         vector<int> vLapping = {x0, x1};
         // Compute ORB based on the flag (0: left, 1: right)
         if (flag == 0)
-            monoLeft = (*mpORBextractorLeft)(imageGray, cv::Mat(), mvKeys, mDescriptors, vLapping);
+        {
+            monoLeft = (*mpORBextractorLeft)(imageGray, mask, mvKeys, mDescriptors, vLapping);
+            FilterKeysAndDescriptorsByMask(mvKeys, mDescriptors, mask);
+        }
         else
+        {   
             monoRight = (*mpORBextractorRight)(imageGray, cv::Mat(), mvKeysRight, mDescriptorsRight, vLapping);
+        }
     }
 
     bool Frame::isSet() const
@@ -1310,6 +1307,42 @@ namespace ORB_SLAM3
     Eigen::Vector3f Frame::UnprojectStereoFishEye(const int &i)
     {
         return mRwc * mvStereo3Dpoints[i] + mOw;
+    }
+
+    void Frame::FilterKeysAndDescriptorsByMask(
+        std::vector<cv::KeyPoint>& keys,
+        cv::Mat& descriptors,
+        const cv::Mat& mask)
+    {
+        if (mask.empty())
+            return;
+
+        CV_Assert(mask.type() == CV_8UC1);
+
+        std::vector<cv::KeyPoint> keptKeys;
+        cv::Mat keptDescriptors;
+
+        keptKeys.reserve(keys.size());
+
+        for (int i = 0; i < static_cast<int>(keys.size()); ++i)
+        {
+            const int x = cvRound(keys[i].pt.x);
+            const int y = cvRound(keys[i].pt.y);
+
+            if (x < 0 || x >= mask.cols || y < 0 || y >= mask.rows)
+                continue;
+
+            if (mask.at<uchar>(y, x) == 0)
+                continue;
+
+            keptKeys.push_back(keys[i]);
+
+            if (!descriptors.empty())
+                keptDescriptors.push_back(descriptors.row(i));
+        }
+
+        keys.swap(keptKeys);
+        descriptors = keptDescriptors.clone();
     }
 
 } // namespace ORB_SLAM

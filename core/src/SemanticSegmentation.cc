@@ -49,11 +49,13 @@ namespace ORB_SLAM3
             KeyFrame *thisKF = mpAtlas->GetKeyFrameById(std::get<0>(segImgTuple));
             if (thisKF == nullptr || thisKF->isBad())
                 continue;
-            const pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisKFPointCloud = thisKF->getCurrentFramePointCloud();
+            pcl::PointCloud<pcl::PointXYZRGB>::Ptr thisKFPointCloud = thisKF->getCurrentFramePointCloud();
+            if (thisKFPointCloud == nullptr && thisKF->mbHasAuxPointCloud)
+                thisKFPointCloud = thisKF->getAuxPointCloud();
             if (thisKFPointCloud == nullptr)
             {
                 std::cout << "SemSeg: skipping KF ID: " << thisKF->mnId << ". Missing pointcloud..." << std::endl;
-                exit(1);
+                // exit(1);
                 continue;
             }
 

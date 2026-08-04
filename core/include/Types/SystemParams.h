@@ -160,7 +160,8 @@ namespace ORB_SLAM3
             {
                 GEOMETRIC = 0,
                 FREE_SPACE = 1,
-                GNN = 2
+                GNN = 2,
+                GNN_NEW = 3
             };
             Method method = FREE_SPACE;
 
